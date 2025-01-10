@@ -692,10 +692,10 @@ exports.getParentsOfSchool = async (req, res) => {
     };
 
     if(!studentName && !classs){
-      return res.status(200).json({message:'Parents list.', parents});
+      parentsList.push(parents)
+      return res.status(200).json({message:'Parents list.', parentsList});
     }    
     else if(studentName && classs){
-
     for (let parent of parents) {
       if (
         parent.parentProfile.parentOf.studentProfile.class === classs &&
