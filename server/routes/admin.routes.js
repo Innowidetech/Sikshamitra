@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsGenderRatio, promoteStudent, changeTeacherSalary, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice } = require('../controllers/admin.controller');
+const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getStudentsIsActiveRatio, getStudentsGenderRatio, promoteStudent, changeTeacherSalary, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, getParentsOfSchool } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -16,7 +16,7 @@ router.put('/student/:id/:isActive', protect, authorize('admin'), changeStudentS
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);
 router.get('/students', protect, authorize('admin'), getAllStudentsOfSchool);
 router.get('/student/:studentId',protect, authorize('admin'), getStudentById);
-router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
+router.get('/parents',protect, authorize('admin'), getParentsOfSchool);
 router.get('/count',protect,authorize('admin'), numberOfSPT);
 router.get('/students/isActive/:schoolId', protect, authorize('admin'), getStudentsIsActiveRatio);
 router.get('/students/gender', protect, authorize('admin'), getStudentsGenderRatio);

@@ -174,7 +174,7 @@ exports.createTeacher = async (req, res) => {
     const { username, email, password, employeeType, profile, education } = req.body;
 
     if (!username || !email || !password || !employeeType || !profile || !education) {
-      return res.status(400).send("Please enter all the details to register.")
+      return res.status(400).json({message:"Please enter all the details to register."})
     };
 
     if (!profile.subjects) {
@@ -662,9 +662,10 @@ exports.getStudentById = async (req, res) => {
 };
 
 
-//get all parents of that particular school
-exports.getAllParentsOfSchool = async (req, res) => {
+exports.getParentsOfSchool = async (req, res) => {
   try {
+    const { studentName, classs} = req.body;
+
     const adminId = req.user && req.user.id;
     if (!adminId) {
       return res.status(401).json({ message: 'Unauthorized. Only logged-in admins can perform this action.' });
@@ -680,31 +681,48 @@ exports.getAllParentsOfSchool = async (req, res) => {
       return res.status(404).json({ message: 'School not found.' });
     };
 
-    if (school.createdBy.toString() !== adminId.toString()) {
-      return res.status(403).json({ message: 'Access denied. You do not manage this school.' });
+    let parentsList = [];
+
+    const parents = await Parent.find({
+      schoolId: school._id,
+    }).populate('parentProfile.parentOf userId');
+
+    if (!parents.length) {
+      return res.status(404).json({ message: 'No parents found for the school.' });
     };
 
-    const parents = await Parent.find({ schoolId: school._id })
-      .populate({
-        path: 'userId',
-        select: 'email username role',
-      })
-      .populate({
-        path: 'parentProfile.parentOf',
-        model: 'Student',
-        select: 'studentProfile',
-      });
+    if(!studentName && !classs){
+      return res.status(200).json({message:'Parents list.', parents});
+    }    
+    else if(studentName && classs){
 
-    if (parents.length === 0) {
-      return res.status(404).json({ message: 'No parents found for this school.' });
+    for (let parent of parents) {
+      if (
+        parent.parentProfile.parentOf.studentProfile.class === classs &&
+        parent.parentProfile.parentOf.studentProfile.firstName === studentName
+      ) {
+        const parentDetails = {
+          fatherName: parent.parentProfile.fatherName,
+          fatherOccupation: parent.parentProfile.fatherOccupation,
+          fatherAddress: parent.parentProfile.fatherAddress,
+          fatherPhoneNumber: parent.parentProfile.fatherPhoneNumber,
+          parentEmail: parent.userId ? parent.userId.parentEmail : null,
+        };
+
+        parentsList.push(parentDetails);
+      }
+    };
+    if(!parentsList.length){
+      return res.status(200).json({ message: 'No parents.' });
     };
 
     res.status(200).json({
-      message: 'Parents retrieved successfully.',
-      parents,
+      message: 'Parents of the student and class fetched successfully.',
+      parentsList,
     });
-
-  } catch (err) {
+  }
+  }
+  catch (err) {
     res.status(500).json({
       message: 'An error occurred while retrieving parents.',
       error: err.message,
@@ -900,7 +918,7 @@ exports.getStudentsGenderRatio = async (req, res) => {
 
     res.status(200).json({
       message: 'Students gender ratio retrieved successfully.',
-      totalStudents:total,
+      totalStudents: total,
       male,
       female,
       maleRatio,
@@ -1549,8 +1567,8 @@ exports.deleteNotice = async (req, res) => {
   }
 };
 
-exports.attendanceSummary = async(req,res)=>{
-  try{
+exports.attendanceSummary = async (req, res) => {
+  try {
 
   }
   catch (err) {
