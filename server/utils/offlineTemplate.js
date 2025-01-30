@@ -1,4 +1,4 @@
-const offlineTemplate = (firstName, lastName, address, dob, phoneNumber, collegeName) => `
+const offlineTemplate = (firstName, lastName, address, dob, email, phoneNumber, schoolName) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,9 +70,9 @@ const offlineTemplate = (firstName, lastName, address, dob, phoneNumber, college
 </head>
 <body>
     <div class="container">
-        <h1>New Offline Application Received</h1>
+        <h1>New Offline Application Received.</h1>
         <div class="content">
-            <p>Dear Admissions Team of <strong>${collegeName}</strong>,</p>
+            <p>Dear Admissions Team - <strong>${schoolName}</strong>,</p>
             <p>You have received a new offline application. Below are the details of the applicant:</p>
             
             <div class="divider"></div>
@@ -80,13 +80,14 @@ const offlineTemplate = (firstName, lastName, address, dob, phoneNumber, college
             <p><strong>Applicant Details:</strong></p>
             <p><strong>First Name:</strong> ${firstName}</p>
             <p><strong>Last Name:</strong> ${lastName}</p>
+            <p><strong>Email:</strong> ${email}</p>
             <p><strong>Phone Number:</strong> ${phoneNumber}</p>
             <p><strong>Address:</strong> ${address}</p>
             <p><strong>Date of Birth:</strong> ${dob}</p>
 
             <div class="divider"></div>
 
-            <p class="j">Please refer to the applicant’s information for further processing and contact them via phone number (${phoneNumber}), Thank you.</p>
+            <p class="j">Please refer to the applicant’s information for further processing and contact them via phone number(${phoneNumber}) or email(${email}), Thank you.</p>
         </div>
 
         <div class="footer">

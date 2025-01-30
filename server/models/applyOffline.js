@@ -9,6 +9,10 @@ const offlineSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        email:{
+            type:String,
+            required:true
+        },
         phoneNumber:{
             type:String,
             required:true
@@ -21,7 +25,7 @@ const offlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        collegeName:{
+        schoolName:{
             type:String,
             required:true,
         }

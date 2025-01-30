@@ -20,8 +20,7 @@ const contactUsTemplate = (firstName, lastName, email, phoneNumber, message) => 
     <div class="container">
         <div style="border: 1px solid #ccc; border-radius: 5px; padding: 20px; max-width: 600px; font-family: Arial, sans-serif;">
           <h2 style="color: #333;">New Contact Us Form.</h2>
-          <p><strong>First Name :</strong> ${firstName}</p>
-          <p><strong>Last Name :</strong> ${lastName}</p>
+          <p><strong>Name :</strong> ${firstName} ${lastName}</p>
           <p><strong>Email :</strong> ${email}
           <p><strong>Contact Number :</strong> ${phoneNumber}</p>
           <p><strong>Message :</strong><span"> ${message}</span></p>         

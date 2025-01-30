@@ -8,7 +8,7 @@ const syllabusSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Teacher',
+        ref: 'User',
     },
     class: {
         type: String,
@@ -17,39 +17,11 @@ const syllabusSchema = new mongoose.Schema({
     section: {
         type: String,
         required: true,
+        uppercase:true
     },
     syllabus: {
-        subjects: [{
-            subjectType: {
-                type: String,
-                required: true,
-                enum: ['theory', 'practical']
-            },
-            subjectName: {
-                type: String,
-                required: true,
-            },
-            chapters: [{
-                chapterNumber: { // 1, 2, 3 ,.....
-                    type: Number,
-                    required: true,
-                },
-                chapterName: {
-                    type: String,
-                    required: true,
-                },
-                lessons: [{
-                    lessonNumber: { // 1.1, 1.2 ,.....
-                        type: String,
-                        required: true,
-                    },
-                    lessonName: {
-                        type: String,
-                        required: true,
-                    }
-                }]
-            }]
-        }]
+        type: String,
+        required: true,
     }
 },
     { timestamps: true }

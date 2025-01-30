@@ -1,17 +1,18 @@
 const mongoose = require('mongoose');
 
 const studentSchema = new mongoose.Schema({
+    schoolId:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:'School'
+    },
     userId:{
         type:mongoose.Schema.Types.ObjectId,
         required:true,
         ref:'User'
     },
     studentProfile: {
-        firstName: {
-            type: String,
-            required: true
-        },
-        lastName: {
+        fullname: {
             type: String,
             required: true
         },
@@ -32,6 +33,7 @@ const studentSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
+        about:String,
         registrationNumber: {
             type: String,
             required: true,
@@ -44,6 +46,7 @@ const studentSchema = new mongoose.Schema({
         section: {
             type: String,
             required: true,
+            uppercase:true,
         },
         classType:{
             type:String,
@@ -55,13 +58,18 @@ const studentSchema = new mongoose.Schema({
             required: true,
             ref: 'Parent',
         },
-        rollNumber:{
-            type:String,
-        },
+        rollNumber:String,
         fees:{
             type:String,
             required:true
         },
+        previousEducation:[
+            {
+                study:String, //class
+                schoolName:String,
+                duration:String, //from date to to date
+            }
+        ],
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -70,17 +78,10 @@ const studentSchema = new mongoose.Schema({
     },
     createdByModel: {
         type: String,
-        enum: ['User', 'Teacher'], // Either 'User' or 'Teacher'
+        enum: ['User', 'Teacher'],
     },
-    schoolId:{
-        type:mongoose.Schema.Types.ObjectId,
-        required:true,
-        ref:'School'
-    }
 }, {
     timestamps: true,
 });
 
 module.exports = mongoose.model('Student', studentSchema);
-
-//previous education - study, school name, duration year

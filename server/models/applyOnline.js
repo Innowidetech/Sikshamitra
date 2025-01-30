@@ -30,7 +30,7 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        collegeName: {
+        schoolName: {
             type: String,
             required: true,
         },
@@ -84,7 +84,7 @@ const onlineSchema = new mongoose.Schema({
         },
         motherName: {
             type: String,
-            required: true,
+            // required: true,
         },
         fatherPhone: {
             type: String,
@@ -92,7 +92,7 @@ const onlineSchema = new mongoose.Schema({
         },
         motherPhone: {
             type: String,
-            required: true,
+            // required: true,
         },
         email: {
             type: String,
@@ -102,18 +102,18 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        // aadharCard: {
-        //     type: String,
-            // required: true,
-        // },
-        // voterId: {
-        //     type: String,
-            // required: true,
-        // },
-        // panCard: {
-        //     type: String,
-            // required: true,
-        // },
+        aadharCard: {
+            type: String,
+            required: true,
+        },
+        voterId: {
+            type: String,
+            required: true,
+        },
+        panCard: {
+            type: String,
+            required: true,
+        },
     },
     paymentDetails: {
         razorpayOrderId: {

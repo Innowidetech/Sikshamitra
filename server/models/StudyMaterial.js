@@ -18,6 +18,7 @@ const StudeyMaterialSchema = new mongoose.Schema({
         section:{
             type:String,
             required:true,
+            uppercase:true
         },
         subject:{
             type:String,

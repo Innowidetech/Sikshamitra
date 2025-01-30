@@ -31,34 +31,35 @@ exports.getAllSchoolsName = async(req,res)=>{
 
 exports.applyOffline = async (req, res) => {
     try {
-        const { firstName, lastName, phoneNumber, dob, address, collegeName } = req.body;
-        if (!firstName || !lastName || !phoneNumber || !dob || !address || !collegeName) {
+        const { firstName, lastName, email, phoneNumber, dob, address, schoolName } = req.body;
+        if (!firstName || !lastName || !phoneNumber || !dob || !address || !schoolName) {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
 
-        const schoolExists = await School.findOne({ schoolName: collegeName });
+        const schoolExists = await School.findOne({ schoolName: schoolName });
         if (!schoolExists) {
-            return res.status(400).json({ message: 'Invalid college name. Please select a valid college.' });
+            return res.status(400).json({ message: 'Invalid school name. Please select a valid school.' });
         };
 
         const newApplication = new Offline({
             firstName,
             lastName,
+            email,
             phoneNumber,
             dob,
             address,
-            collegeName,
+            schoolName,
         });
 
         await newApplication.save();
 
         const user = await User.findById(schoolExists.createdBy);
-        const email = user.email;
+        const adminEmail = user.email;
 
-        await sendEmail(email, email, `New offline applicaion - ${firstName} ${lastName}`, offlineTemplete(firstName, lastName, address, dob, phoneNumber, collegeName));
+        await sendEmail(adminEmail, email, `New offline applicaion - ${firstName} ${lastName}`, offlineTemplete(firstName, lastName, address, dob, email, phoneNumber, schoolName));
 
         res.status(200).json({
-            message: `Application submitted successfully and notified to ${collegeName}.`,
+            message: `Application submitted successfully and notified to ${schoolName}.`,
             newApplication,
         });
     }
@@ -96,7 +97,6 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-
 exports.applyOnline = async (req, res) => {
     try {
         const studentDetails = JSON.parse(req.body.studentDetails);
@@ -112,7 +112,7 @@ exports.applyOnline = async (req, res) => {
             return res.status(400).json({ message: 'Missing data fields.'});
         };
 
-        const school = await School.findOne({ schoolName: studentDetails.collegeName });
+        const school = await School.findOne({ schoolName: studentDetails.schoolName });
         if (!school) {
             return res.status(404).json({ message: 'School not found' });
         };

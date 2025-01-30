@@ -5,18 +5,18 @@ const bcrypt = require('bcryptjs')
 //super admin to create account for admin/school
 exports.userRegister = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !email || !password) {
-      return res.send("Please enter all the details to register")
+    if (!email || !password) {
+      return res.send("Please enter all the details to register.")
     };
 
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
-    const createdBy = req.user && req.user.id; // Assuming `req.user` is populated by middleware
+    const createdBy = req.user && req.user.id;
     if (!createdBy) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -24,7 +24,6 @@ exports.userRegister = async (req, res) => {
     hpass = bcrypt.hashSync(password, 10);
 
     const user = new User({
-      username,
       email,
       password: hpass,
       role: 'admin',
@@ -37,7 +36,6 @@ exports.userRegister = async (req, res) => {
       message: 'Admin for school registered successfully',
       user: {
         id: user._id,
-        username: user.username,
         email: user.email,
         role: user.role,
         createdBy: user.createdBy

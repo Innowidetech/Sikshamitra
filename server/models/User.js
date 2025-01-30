@@ -1,31 +1,23 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    unique:true,
-  },
-  parentUsername:String,
   email: {
     type: String,
     required: true,
     unique:true,
   },
-  parentEmail:String,
   password: {
     type: String,
     required: true,
   },
-  parentPassword:String,
   role: {
     type: String,
-    enum: ['admin','teacher','student','parent'],
+    enum: ['superadmin','admin','teacher','student','parent'],
     required: true
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'non-teaching'],
+    enum: ['teaching', 'librarian', 'accountant'],
     required: function () {
       return this.role === 'teacher';
     },

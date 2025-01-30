@@ -35,7 +35,7 @@ exports.userLogin = async (req, res) => {
       message:'Login success',
       user:{
         id: user._id,
-        username: user.username,
+        email:user.email,
         role: user.role,
         employeeType:user.employeeType,
       },
@@ -121,18 +121,17 @@ exports.resetPassword = async(req,res)=>{
 
 // exports.register=async(req,res)=>{
 //   try{
-//     const {username,email,password,role} = req.body;
+//     const {email,password,role} = req.body;
 //     const hpass = bcrypt.hashSync(password, 10);
 
 //     const newUser = new User({
-//       username,email,password:hpass,role
+//       email,password:hpass,role
 //     });
 //     await newUser.save();
-
+//     res.status(201).json({message:"Successfully registered."})
 //   }
 //   catch(error) {
 //     res.status(500).json({ message: 'Registraion failed', error: error.message });
-
 //   }
 // };
 

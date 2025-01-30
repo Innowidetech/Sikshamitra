@@ -15,6 +15,7 @@ const opts = {
   overwrite: true,
   invalidate: true,
   resource_type: "auto",
+  access_mode: 'public',
 };
 
 exports.uploadImage = async (files) => {
@@ -25,7 +26,12 @@ exports.uploadImage = async (files) => {
       const uploadedFiles = await Promise.all(
         files.map((file) => 
           new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(opts, (error, result) => {
+            const isPdf = file.mimetype === 'application/pdf';
+                    const uploadOptions = {
+                        ...opts,
+                        resource_type: isPdf ? "raw" : "auto",
+                    };
+            cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
               if (result && result.secure_url) {
                 return resolve(result.secure_url);
               }

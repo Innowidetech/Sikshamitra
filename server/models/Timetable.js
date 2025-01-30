@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
 const timetableSchema = new mongoose.Schema({
-    createdBy: { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher',
-        required: true
-    },
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
@@ -17,7 +12,8 @@ const timetableSchema = new mongoose.Schema({
     },
     section: {
         type: String,
-        required: true
+        required: true,
+        uppercase:true
     },
     timetable: {
         monday: [{ period: String, timing: String, subject: String }],
@@ -27,6 +23,14 @@ const timetableSchema = new mongoose.Schema({
         friday: [{ period: String, timing: String, subject: String }],
         saturday: [{ period: String, timing: String, subject: String }],
     },
+    createdBy: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Teacher',
+        required: true
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Timetable', timetableSchema);
+
+
+//add time table for teacher by admin and also attendance   

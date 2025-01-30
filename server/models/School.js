@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+//add school banner to display at results 
 const schoolSchema = new mongoose.Schema({
   schoolName: {
     type: String,
@@ -10,12 +10,12 @@ const schoolSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  schoolBanner:{
+    type:String,
+    required:true,
+  },
   address: {
-    street: {
-      type: String,
-      required: true,
-    },
-    city: {
+    country: {
       type: String,
       required: true,
     },
@@ -23,11 +23,15 @@ const schoolSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    pincode: {
+    city: {
       type: String,
       required: true,
     },
-    country: {
+    street: {
+      type: String,
+      required: true,
+    },
+    pincode: {
       type: String,
       required: true,
     },
@@ -46,7 +50,7 @@ const schoolSchema = new mongoose.Schema({
     foundedYear: {
       type: Number,
     },
-    boardType: {
+    boardType: { //ssc, cbse, icse
       type: String,
       required: true,
     },
@@ -54,10 +58,6 @@ const schoolSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    type: {
-      type: String,
-      enum: ['primary', 'secondary', 'both']
-    }
   },
   status: {
     type: String,
@@ -67,10 +67,6 @@ const schoolSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-  },
-  email: {
-    type: String,
     required: true,
   },
   applicationFee: {

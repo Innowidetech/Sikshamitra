@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const parentSchema = new mongoose.Schema({
+    schoolId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'School'
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -22,30 +27,21 @@ const parentSchema = new mongoose.Schema({
             type: String,
         },
         fatherOccupation: {
-            // required: true,
+            required: true,
             type: String,
         },
         motherOccupation: {
             type: String,
         },
-        fatherAddress: { //or guardian
+        parentAddress: { //or guardian
             type: String,
             required: true,
         },
-        // guardianName: {
-        //     type: String,
-        // },
-        // guardianPhoneNumber: {
-        //     type: String,
-        // },
-        // guardianAddress: {
-        //     type: String,
-        // },
-        parentOf: {
+        parentOf: [{
             type: mongoose.Schema.Types.ObjectId,
             required: true,
             ref: 'Student',
-        }
+        }]
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -54,13 +50,8 @@ const parentSchema = new mongoose.Schema({
     },
     createdByModel: {
         type: String,
-        enum: ['User', 'Teacher'], // Either 'User' or 'Teacher'
+        enum: ['User', 'Teacher'],
     },
-    schoolId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'School'
-    }
 }, {
     timestamps: true,
 });

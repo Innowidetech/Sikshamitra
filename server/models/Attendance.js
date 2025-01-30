@@ -16,7 +16,8 @@ const attendanceSchema = new mongoose.Schema({
     },
     section: {
         type: String,
-        required: true
+        required: true,
+        uppercase:true
     },
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,7 +27,7 @@ const attendanceSchema = new mongoose.Schema({
     attendance: [
         {
             studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
-            status: { type: String, enum: ['Present', 'Absent', 'Holiday', 'Leave', 'Late'], required: true },
+            status: { type: String, enum: ['Present', 'Absent', 'Holiday'], required: true },
         },
     ],
 }, {

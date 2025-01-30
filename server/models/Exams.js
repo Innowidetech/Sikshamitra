@@ -18,22 +18,35 @@ const examSchema = new mongoose.Schema({
     section:{
         type:String,
         required:true,
+        uppercase:true
     },
     examType:{ // annual exam, quarterly, half yearly
         type:String,
         required:true
+    },
+    duration:{
+        type:String,
+        required:true,
     },
     schedule:[{
                 sNo:{
                     type:Number,
                     required:true,
                 },
-                subject:{
+                subjectCode:{
+                    type:String,
+                    required:true,
+                },
+                subject:{ //subjectName
+                    type:String,
+                    required:true,
+                },
+                syllabus:{
                     type:String,
                     required:true,
                 },
                 date:{
-                    type:String,
+                    type:Date,
                     required:true,
                 },
                 day:{
@@ -45,4 +58,3 @@ const examSchema = new mongoose.Schema({
 },{timestamps:true});
 
 module.exports = mongoose.model('Exams', examSchema);
-//subject code, syllabus

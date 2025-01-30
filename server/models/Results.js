@@ -18,6 +18,7 @@ const resultsSchema = new mongoose.Schema({
     section: {
         type: String,
         required: true,
+        uppercase:true
     },
     examType:{
         type:String,
@@ -33,7 +34,12 @@ const resultsSchema = new mongoose.Schema({
         required: true,
         ref: 'Student'
     },
-    result: [{
+    result: [{  //class and section, exam type
+        subjectCode: {
+            type: String,
+            required: true,
+            // unique:true,
+        },
         subject: {
             type: String,
             required: true,
@@ -46,22 +52,19 @@ const resultsSchema = new mongoose.Schema({
             type: Number,
             required: true,
         },
+        grade: {
+            type: String,
+            required: true,
+        },
     }],
     total: {
         type: String,
         required: true,
     },
-    // grade: {
-    //     type: String,
-    //     required: true,
-    // },
-
+    totalPercentage:{
+        type: String,
+        required: true,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Results', resultsSchema);
-
-//subject code, grade
-
-//specific search - fetch with roll number, name, father name, year
-
-// get contact and email

@@ -4,6 +4,8 @@ const Attendance = require('../models/Attendance');
 const Exams = require('../models/Exams'); 
 const Parent = require('../models/Parent');
 const { uploadImage } = require('../utils/multer');
+const Assignment = require('../models/assignment');
+const SubmitAssignment = require('../models/SubmitAssignment')
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -65,9 +67,6 @@ exports.editStudentProfile = async (req, res) => {
 };
 
 
-//get timetable for student from teacher controller
-
-
 //get annual attendance report
 exports.attendanceReport = async (req, res) => {
     try {
@@ -78,60 +77,81 @@ exports.attendanceReport = async (req, res) => {
 
         const loggedInUser = await User.findById(loggedInId);
         if (!loggedInUser || loggedInUser.role !== 'student') {
-            return res.status(403).json({ message: 'Access denied, Only logged-in students have access.' });
+            return res.status(403).json({ message: 'Access denied, only logged-in students have access.' });
         }
 
-        const student = await Student.findOne({ userId: loggedInUser });
+        const student = await Student.findOne({ userId: loggedInId });
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in ID' });
         }
 
-        const year = req.body.year || new Date().getFullYear();
-        const startDate = new Date(year, 3, 1); // April
-        const endDate = new Date(year + 1, 2, 31, 23, 59, 59); // March
+        const studentId = student._id;
+        const associatedSchool = student.schoolId;
+
+        const year = req.body.year || new Date().getFullYear() - 1;
+        const startDate = new Date(year, 3, 1); // April 1
+        const endDate = new Date(year + 1, 2, 31, 23, 59, 59); // March 31
 
         const attendanceRecords = await Attendance.find({
-            schoolId: student.schoolId,
+            schoolId: associatedSchool,
             date: { $gte: startDate, $lte: endDate },
-            'attendance.studentId': student._id,
+            'attendance.studentId': studentId,
         });
 
         if (!attendanceRecords.length) {
             return res.status(404).json({ message: 'No attendance records found for this student within the annual report period.' });
         }
 
-        const statusCounts = { //initially
-            Present: 0,
-            Absent: 0,
-            Holiday: 0,
-            Leave: 0,
-            Late: 0,
-        };
         let totalDays = 0;
+        let presentCount = 0;
 
-        const attendanceReport = attendanceRecords.map(record => {
+        const monthlyAttendance = Array(12).fill(null).map(() => ({
+            totalDays: 0,
+            presentDays: 0,
+        }));
+
+        attendanceRecords.forEach(record => {
             const studentAttendance = record.attendance.find(
-                entry => entry.studentId.toString() === student._id.toString()
+                entry => entry.studentId.toString() === studentId.toString()
             );
-            if (studentAttendance) {
-                statusCounts[studentAttendance.status] = (statusCounts[studentAttendance.status] || 0) + 1;
-                totalDays += 1;
-                return { date: record.date, status: studentAttendance.status };
-            }
-            return null;
-        }).filter(entry => entry !== null);
 
-        const percentages = {};
-        for (const [status, count] of Object.entries(statusCounts)) {
-            percentages[status] = totalDays > 0 ? ((count / totalDays) * 100).toFixed(2) : '0.00';
-        }
+            if (studentAttendance) {
+                const month = new Date(record.date).getMonth();
+
+                monthlyAttendance[month].totalDays++;
+                totalDays++;
+
+                if (studentAttendance.status === 'Present' || studentAttendance.status === 'Late') {
+                    monthlyAttendance[month].presentDays++;
+                    presentCount++;
+                }
+            }
+        });
+
+        const monthlyAttendanceReport = monthlyAttendance.map((monthData, index) => {
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' 
+            ];
+
+            const percentage = monthData.totalDays > 0
+                ? ((monthData.presentDays / monthData.totalDays) * 100).toFixed(2)
+                : '0.00';
+
+            return {
+                month: monthNames[index],
+                totalDays: monthData.totalDays,
+                presentDays: monthData.presentDays,
+                presentPercentage: `${percentage}%`,
+            };
+        });
+
+        const presentPercentage = totalDays > 0 ? ((presentCount / totalDays) * 100).toFixed(2) : '0.00';
 
         res.status(200).json({
-            message: 'Student annual attendance report fetched successfully',
+            message: 'Student annual and monthly attendance report fetched successfully',
             totalDays,
-            percentages,
-            attendanceReport,
-            // duration: 'From April till March',
+            presentPercentage: `${presentPercentage}%`,
+            monthlyAttendance: monthlyAttendanceReport,
         });
     } catch (err) {
         res.status(500).json({
@@ -166,7 +186,7 @@ exports.getAdmitCard = async(req,res)=>{
             const exam = await Exams.findOne({
                 schoolId:student.schoolId,
                 class:student.studentProfile.class,
-                section:{$regex:student.studentProfile.section, $options:'i'}
+                section:student.studentProfile.section
             });
             if(!exam){
                 return res.status(404).json({message:'No exams for the student.'})
@@ -188,7 +208,7 @@ exports.getAdmitCard = async(req,res)=>{
 
             const exam = await Exams.findOne({
                 class:student.studentProfile.class,
-                section:{$regex:student.studentProfile.section, $options:'i'}
+                section:student.studentProfile.section
             });
             if(!exam){
                 return res.status(404).json({message:'No exams for the student.'})
@@ -212,3 +232,44 @@ exports.getAdmitCard = async(req,res)=>{
         });
     }
 };
+
+
+exports.submitAssignment = async(req,res)=>{
+    try{
+        const {submittedBy} = req.body;
+        const {assignmentId} = req.params
+        if(!assignmentId || !submittedBy){
+            return res.status(400).json({message:"Provide the assignment id and student details."})
+        }
+
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in users can have access' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !=='student') {
+            return res.status(403).json({ message: 'Access denied, Only logged-in users have access.' });
+        };
+
+        const student = await Student.findOne({userId:loggedInId});
+        if(!student){
+            return res.status(404).json({message:'No student found with the logged-in id.'})
+        }
+
+        const assignment = await Assignment.findById(assignmentId);
+        if(!assignment){
+            return res.status(404).json({message:"No assignment found with the id."})
+        }
+
+        const Submit = new SubmitAssignment({
+            
+        })
+    }
+    catch(err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+}
