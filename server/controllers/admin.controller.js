@@ -312,16 +312,16 @@ exports.getClasses = async (req, res) => {
 
     const classData = await Promise.all(classes.map(async (classs) => {
       const studentCount = await Student.countDocuments({
-        schoolId: associatedSchool._id, 
-        'studentProfile.class': classs.class, 
-        'studentProfile.section': classs.section 
+        schoolId: associatedSchool._id,
+        'studentProfile.class': classs.class,
+        'studentProfile.section': classs.section
       });
 
       return {
-        classType:classs.classType,
-        class:classs.class,
-        section:classs.section,
-        teacher:classs.teacher,
+        classType: classs.classType,
+        class: classs.class,
+        section: classs.section,
+        teacher: classs.teacher,
         studentCount
       };
     }));
@@ -1007,12 +1007,12 @@ exports.getStudentsIsActiveRatio = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only admins can get the isActive data of students.' });
     };
 
-    const school = await School.findOne({createdBy:adminId});
+    const school = await School.findOne({ createdBy: adminId });
     if (!school) {
       return res.status(404).json({ message: 'School not found.' });
     };
 
-    const students = await Student.find({ schoolId: school._id }).populate({path: 'userId',select: 'isActive'});
+    const students = await Student.find({ schoolId: school._id }).populate({ path: 'userId', select: 'isActive' });
     if (students.length === 0) {
       return res.status(404).json({ message: 'No students found for this school.' });
     }
@@ -1838,7 +1838,7 @@ exports.createDynamicCalendar = async (req, res) => {
       }
 
       associatedSchool = teacher.schoolId
-      creator = loggedInId
+      creator = teacher._id
 
       if (!displayTo.includes('teacher')) {
         displayTo.push('teacher');
@@ -1879,45 +1879,89 @@ exports.getDynamicCalendar = async (req, res) => {
       return res.status(404).json({ message: "Access denied, only loggedin user's can access." });
     };
 
-    let associatedSchool
+    let calendars;
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ createdBy: loggedInId });
       if (!school) {
         return res.status(404).json({ message: 'Admin is not associated with any school.' });
       };
-      associatedSchool = school._id
+
+      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role }).sort({ date: 1 })
+      if (!calendars.length) {
+        return res.status(404).json({ message: "No events found." })
+      }
     }
     else if (loggedInUser.role === 'teacher') {
       const teacher = await Teacher.findOne({ userId: loggedInId })
       if (!teacher) {
         return res.status(404).json({ message: "No teacher found with the loggedin id." })
       }
-      associatedSchool = teacher.schoolId
+      const school = await School.findById(teacher.schoolId)
+
+      calendars = await Calendar.find({
+        $or: [
+          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
+          { createdBy: teacher._id }]
+      }).sort({ date: 1 })
+      if (!calendars.length) {
+        return res.status(404).json({ message: "No events found." })
+      }
     }
     else if (loggedInUser.role === 'student') {
-      const student = Student.findOne({ userId: loggedInId })
+      const student = await Student.findOne({ userId: loggedInId })
       if (!student) {
         return res.status(404).json({ message: "No student found with the logged-in id." })
       }
-      associatedSchool = student.schoolId
+      const school = await School.findById(student.schoolId)
+      const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section })
+
+      calendars = await Calendar.find({
+        $or: [
+          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
+          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role }]
+      }).sort({ date: 1 })
+      if (!calendars.length) {
+        return res.status(404).json({ message: "No events found." })
+      }
     }
     else if (loggedInUser.role === 'parent') {
-      const parent = Parent.findOne({ userId: loggedInId })
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
       if (!parent) {
         return res.status(404).json({ message: "No parent found with the logged-in id." })
       }
-      associatedSchool = parent.schoolId
-    }
 
-    const calendar = Calendar.find({ schoolId: associatedSchool, displayTo: loggedInUser.role }).sort({ date: 1 })
-    if (!calendar.length) {
-      return res.status(404).json({ message: "No events found." })
-    }
+      const children = parent.parentProfile.parentOf;
+      const school = parent.schoolId;
 
+      const classSectionPairs = children.map(child => ({
+        class: child.studentProfile.class,
+        section: child.studentProfile.section
+      }));
+
+      const teachers = await Teacher.find({
+        schoolId: school._id,
+        $or: classSectionPairs.map(({ class: cls, section }) => ({
+          'profile.class': cls,
+          'profile.section': section
+        }))
+      });
+
+      const teacherIds = teachers.map(teacher => teacher._id);
+
+      calendars = await Calendar.find({
+        $or: [
+          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
+          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role }
+        ]
+      }).sort({ date: 1 });
+      if (!calendars.length) {
+        return res.status(404).json({ message: "No events found." });
+      }
+    }
     res.status(200).json({
       message: 'Dynamic calendar data fetched successfully',
-      calendar
+      calendars
     });
   }
   catch (err) {
@@ -1927,6 +1971,123 @@ exports.getDynamicCalendar = async (req, res) => {
     })
   }
 };
+
+
+exports.getDynamicCalendarByDate = async (req, res) => {
+  try {
+    const {calendarDate} = req.params;
+    if(!calendarDate){
+      return res.status(400).json({message:"Provide the date to get data."})
+    }
+    
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(404).json({ message: "Access denied, only loggedin user's can access." });
+    };
+
+    let calendars;
+
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ createdBy: loggedInId });
+      if (!school) {
+        return res.status(404).json({ message: 'Admin is not associated with any school.' });
+      };
+
+      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role, date:calendarDate })
+      if (!calendars) {
+        return res.status(404).json({ message: "No event found on the date." })
+      }
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId })
+      if (!teacher) {
+        return res.status(404).json({ message: "No teacher found with the loggedin id." })
+      }
+      const school = await School.findById(teacher.schoolId)
+
+      calendars = await Calendar.find({
+        $or: [
+          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date:calendarDate },
+          { createdBy: teacher._id, date:calendarDate }]
+      })
+      if (!calendars) {
+        return res.status(404).json({ message: "No event found on the date." })
+      }
+    }
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId })
+      if (!student) {
+        return res.status(404).json({ message: "No student found with the logged-in id." })
+      }
+      const school = await School.findById(student.schoolId)
+      const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section })
+
+      calendars = await Calendar.find({
+        $or: [
+          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date:calendarDate },
+          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role, date:calendarDate }]
+      })
+      if (!calendars) {
+        return res.status(404).json({ message: "No event found on the date." })
+      }
+    }
+    else if (loggedInUser.role === 'parent') {
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
+      if (!parent) {
+        return res.status(404).json({ message: "No parent found with the logged-in id." })
+      }
+
+      const children = parent.parentProfile.parentOf;
+      const school = parent.schoolId;
+
+      const classSectionPairs = children.map(child => ({
+        class: child.studentProfile.class,
+        section: child.studentProfile.section
+      }));
+
+      const teachers = await Teacher.find({
+        schoolId: school._id,
+        $or: classSectionPairs.map(({ class: cls, section }) => ({
+          'profile.class': cls,
+          'profile.section': section
+        }))
+      });
+
+      if (!teachers || teachers.length === 0) {
+        return res.status(404).json({ message: "No teachers found for the specified classes and sections." });
+      }
+
+      const teacherIds = teachers.map(teacher => teacher._id);
+
+      const calendarQuery = {
+        $or: [
+          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date:calendarDate },
+          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role, date:calendarDate }
+        ]
+      };
+      calendars = await Calendar.find(calendarQuery).sort({ date: 1 });
+      if (!calendars.length) {
+        return res.status(404).json({ message: "No events found." });
+      }
+    }
+    res.status(200).json({
+      message: 'Dynamic calendar data fetched successfully',
+      calendars
+    });
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message,
+    })
+  }
+};
+
 
 // classes
 // exports.attendanceSummary = async (req, res) => {

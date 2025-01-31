@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, changeTeacherSalary, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createOrUpdateSyllabus, createClass, editClass, createDynamicCalendar, getClasses } = require('../controllers/admin.controller');
+const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, changeTeacherSalary, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createOrUpdateSyllabus, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -27,6 +27,8 @@ router.post('/notice', protect,authorize('admin'),createNotice);
 router.get('/notice', protect, authorize('admin'),getNotice);
 router.delete('/notice/:noticeId',protect, authorize('admin'), deleteNotice);
 router.post('/calendar', protect, authorize('admin'), createDynamicCalendar);
+router.get('/calendar', protect, authorize('admin'), getDynamicCalendar);
+router.get('/calendar/:calendarDate', protect, authorize('admin'), getDynamicCalendarByDate);
 router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('admin'), getSyllabus);
 router.put('/student/:id/:isActive', protect, authorize('admin'), changeStudentStatus);
