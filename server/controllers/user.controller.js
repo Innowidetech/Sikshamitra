@@ -7,7 +7,7 @@ const contactUsTemplate = require('../utils/contactUsTemplate');
 const Razorpay = require('razorpay');
 const Online = require('../models/applyOnline');
 const { uploadImage } = require('../utils/multer');
-
+const ClassWiseFees = require('../models/ClassWiseFees')
 
 exports.getAllSchoolsName = async(req,res)=>{
     try{
@@ -117,6 +117,9 @@ exports.applyOnline = async (req, res) => {
             return res.status(404).json({ message: 'School not found' });
         };
 
+        const classWiseFees = await ClassWiseFees.findOne({schoolId:school._id, class:studentDetails.classToJoin})
+        let applicationFee = Number(classWiseFees.admissionFees);
+
     let uploadedImages = await uploadImage(files.studentPhoto.concat(files.educationDocuments, files.aadharCard, files.voterId, files.panCard));
 
         if (!uploadedImages || uploadedImages.length < 5) {
@@ -134,8 +137,7 @@ exports.applyOnline = async (req, res) => {
         parentDetails.voterId = uploadedImages[uploadedImages.length - 2] ;
         parentDetails.panCard = uploadedImages[uploadedImages.length - 1] ;
 
-        const applicationFee = school.applicationFee;
-        studentDetails.amount = applicationFee;
+        studentDetails.admissionFees = applicationFee;
         const options = {
             amount: applicationFee,
             currency: 'INR',

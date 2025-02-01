@@ -34,7 +34,11 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        amount:{ //change to based on class
+        classToJoin: {
+            type: String,
+            required: true,
+        },
+        admissionFees:{ //change to based on class
             type:String,
             required:true
         },

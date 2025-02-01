@@ -54,7 +54,7 @@ const schoolSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    medium: {
+    medium: { // english, telugu
       type: String,
       required: true,
     },
@@ -69,10 +69,6 @@ const schoolSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  applicationFee: {   //remove it
-    type: Number,
-    required: true,
-},
 paymentDetails: {
     bankName: {
         type: String,

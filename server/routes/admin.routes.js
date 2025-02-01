@@ -15,7 +15,7 @@ router.patch('/class/:classId', protect, authorize('admin'), editClass);
 router.get('/classes', protect, authorize('admin'), getClasses);
 router.post('/classwisefees', protect, authorize('admin'), createClassWiseFees);
 router.get('/classwisefees', protect, authorize('admin'), getClassWiseFees);
-router.put('/classwisefees/:classWiseFessId', protect, authorize('admin'), editClassWiseFees);
+router.put('/classwisefees/:classWiseFessId', protect, authorize('admin'), editClassWiseFees);  
 router.post('/register', protect, authorize('admin'), upload.single('photo'), createTeacher);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);
 router.post('/registersp', protect, authorize('admin'), upload.single('photo'), createStudentAndParent);

@@ -73,8 +73,8 @@ exports.getProfile = async (req, res) => {
 //create School by admin
 exports.createSchool = async (req, res) => {
   try {
-    const { schoolName, schoolCode, address, contact, details, applicationFee, paymentDetails } = req.body;
-    if (!schoolName || !schoolCode || !address || !contact || !details || !applicationFee || !paymentDetails) {
+    const { schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
+    if (!schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
       return res.status(400).json({ message: 'Please provide all the details to create school.' })
     };
 
@@ -111,7 +111,6 @@ exports.createSchool = async (req, res) => {
       details,
       contact,
       createdBy: loggedInId,
-      applicationFee,
       paymentDetails,
     });
     await school.save()
@@ -607,6 +606,16 @@ exports.createStudentAndParent = async (req, res) => {
     const shashedPassword = bcrypt.hashSync(password, 10);
     const phashedPassword = bcrypt.hashSync(parentPassword, 10);
 
+    const classWiseFees = await ClassWiseFees.findOne({
+      schoolId: associatedSchool,
+      class: studentProfile.class,
+    });
+    if (!classWiseFees) {
+      return res.status(404).json({ message: 'Class-wise fee details not found for the selected class.' });
+    }
+
+    const studentFees = classWiseFees.tutionFees
+
     const studentUser = new User({
       email,
       password: shashedPassword,
@@ -629,6 +638,7 @@ exports.createStudentAndParent = async (req, res) => {
         ...studentProfile,
         childOf: savedParentUser._id,
         photo: uploadedPhotoUrl,
+        fees: studentFees,
       },
       createdBy,
       schoolId: associatedSchool,
@@ -731,6 +741,16 @@ exports.addStudentToExistingParent = async (req, res) => {
 
     const hashedPassword = bcrypt.hashSync(password, 10);
 
+    const classWiseFees = await ClassWiseFees.findOne({
+      schoolId: associatedSchool,
+      class: studentProfile.class,
+    });
+    if (!classWiseFees) {
+      return res.status(404).json({ message: 'Class-wise fee details not found for the selected class.' });
+    }
+
+    const studentFees = classWiseFees.tutionFees
+
     const studentUser = new User({
       email,
       password: hashedPassword,
@@ -745,6 +765,7 @@ exports.addStudentToExistingParent = async (req, res) => {
       studentProfile: {
         ...studentProfile,
         photo: uploadedPhotoUrl,
+        fees: studentFees,
         childOf: parentUser._id,
       },
       createdBy: creator,
