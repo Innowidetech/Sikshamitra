@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, changeTeacherSalary, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createOrUpdateSyllabus, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate } = require('../controllers/admin.controller');
+const { editSchool, createSchool, createTeacher, createStudentAndParent, changeStudentStatus, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getCurriculum, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createOrUpdateSyllabus, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -9,10 +9,13 @@ const router = express.Router()
 
 router.get('/getProfile', protect, authorize('admin'), getProfile);
 router.post('/create-school', protect, authorize('admin'), upload.single('photo'), createSchool);
+router.put('/edit', protect, authorize('admin'), upload.single('photo'), editSchool);
 router.post('/class', protect, authorize('admin'), createClass);
 router.patch('/class/:classId', protect, authorize('admin'), editClass);
 router.get('/classes', protect, authorize('admin'), getClasses);
-router.put('/edit', protect, authorize('admin'), upload.single('photo'), editSchool);
+router.post('/classwisefees', protect, authorize('admin'), createClassWiseFees);
+router.get('/classwisefees', protect, authorize('admin'), getClassWiseFees);
+router.put('/classwisefees/:classWiseFessId', protect, authorize('admin'), editClassWiseFees);
 router.post('/register', protect, authorize('admin'), upload.single('photo'), createTeacher);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);
 router.post('/registersp', protect, authorize('admin'), upload.single('photo'), createStudentAndParent);
@@ -33,7 +36,7 @@ router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), cr
 router.get('/syllabus', protect, authorize('admin'), getSyllabus);
 router.put('/student/:id/:isActive', protect, authorize('admin'), changeStudentStatus);
 router.post('/student/promote/:studentId', protect, authorize('admin'), updateStudentData);
-router.post('/teacher/salary/:teacherId', protect, authorize('admin'), changeTeacherSalary);
+router.post('/teacher/salary/:teacherId', protect, authorize('admin'), updateTeacherData);
 router.get('/newAdmission', protect, authorize('admin'), newAdmission);
 router.get('/curriculum', protect, authorize('admin'), getCurriculum);
 router.post('/createBook', protect, authorize('admin'), createBook);

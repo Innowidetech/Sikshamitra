@@ -11,6 +11,7 @@ const { uploadImage } = require('../utils/multer');
 const Notice = require('../models/Notice');
 const Class = require('../models/classes');
 const Calendar = require('../models/Calendar');
+const ClassWiseFees = require('../models/ClassWiseFees');
 
 //get profile
 exports.getProfile = async (req, res) => {
@@ -336,12 +337,129 @@ exports.getClasses = async (req, res) => {
 };
 
 
+exports.createClassWiseFees = async(req,res)=>{
+  try{
+    const {className, tutionFees, admissionFees, examFees} = req.body;
+    if(!className || !tutionFees || !admissionFees || !examFees){
+      return res.status(400).json({message:"Provide all the details to create fees for class."})
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(loggedInId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can create classes.' });
+    };
+
+    const school = await School.findOne({createdBy:loggedInId})
+    if(!school){
+      return res.status(404).json({message:"The admin is not associated with any school."})
+    }
+
+    const classFees = await ClassWiseFees.findOne({schoolId:school._id, class:className})
+    if(classFees){
+      return res.status(404).json({message:`The class wise fees for class - ${className} has already created.`})
+    }
+
+    const total = Number(tutionFees)+Number(admissionFees)+Number(examFees);
+
+    const newFees = new ClassWiseFees({ schoolId:school._id, class:className, tutionFees, admissionFees, examFees, totalFees:total, createdBy:loggedInId})
+    await newFees.save()
+
+    res.status(201).json({message:`Fees for class ${className} has been created.`, newFees})
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+};
+
+
+exports.getClassWiseFees = async(req,res)=>{
+  try{
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(loggedInId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can create classes.' });
+    };
+
+    const school = await School.findOne({createdBy:loggedInId})
+    if(!school){
+      return res.status(404).json({message:"The admin is not associated with any school."})
+    }
+
+    const classwisefees = await ClassWiseFees.find({schoolId:school._id, createdBy:loggedInId})
+    if(!classwisefees.length){
+      return res.status(404).json({message:"No class wise fees found for the school."})
+    }
+
+    res.status(200).json(classwisefees)
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+};
+
+
+exports.editClassWiseFees = async(req,res)=>{
+  try{
+    const {classWiseFessId} = req.params;
+    if(!classWiseFessId){
+      return res.status(400).json({message:"Provide the id to edit."})
+    }
+    const {newTutionFees, newAdmissionFees, newExamFees} = req.body
+    if(!newTutionFees && !newAdmissionFees && !newExamFees){
+      return res.status(400).json({message:"Provide atlease 1 data to update class wise fees!"})
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(loggedInId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can create classes.' });
+    };
+
+    const classwisefees = await ClassWiseFees.findOne({_id:classWiseFessId, createdBy:loggedInId})
+    if(!classwisefees){
+      return res.status(404).json({message:"No class wise fees found with the id for the school."})
+    }
+
+    classwisefees.schoolId = classwisefees.schoolId
+    classwisefees.createdBy = classwisefees.createdBy
+    classwisefees.class = classwisefees.class 
+    classwisefees.tutionFees = newTutionFees || classwisefees.tutionFees 
+    classwisefees.admissionFees = newAdmissionFees || classwisefees.admissionFees 
+    classwisefees.examFees = newExamFees || classwisefees.examFees
+    newTotalFees = Number(classwisefees.tutionFees)+Number(classwisefees.admissionFees)+Number(classwisefees.examFees)
+    classwisefees.totalFees = newTotalFees
+
+    await classwisefees.save()
+    res.status(201).json({message:"Class wise fees updated successfully",classwisefees})
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+};
+
+
 //create teacher account by particular school
 exports.createTeacher = async (req, res) => {
   try {
     const { email, password, employeeType, profile, education } = req.body;
 
-    if (!email || !password || !employeeType || !profile || !education) {
+    if (!email || !password || !employeeType || !profile || !education.length) {
       return res.status(400).json({ message: "Please enter all the details to register." })
     };
 
@@ -562,7 +680,7 @@ exports.addStudentToExistingParent = async (req, res) => {
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser) {
-      return res.status(403).json({ message: 'Only admins or teachers can create student accounts.' });
+      return res.status(403).json({ message: 'Only logged-in admins or teachers can create student accounts.' });
     }
 
     let associatedSchool, creator;
@@ -651,6 +769,28 @@ exports.addStudentToExistingParent = async (req, res) => {
 };
 
 
+// exports.getClassWiseFees = async(req,res)=>{
+//   try{
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized. Only logged-in admins or teachers can create accounts.' });
+//     }
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'admin') {
+//       return res.status(403).json({ message: 'Only admins can get the data.' });
+//     }
+
+//     // const 
+//   }
+//   catch (error) {
+//     res.status(500).json({
+//       message: 'Internal server error.',
+//       error: error.message,
+//     });
+//   }
+// }
+
 
 //change student status
 exports.changeStudentStatus = async (req, res) => {
@@ -728,11 +868,7 @@ exports.getAllTeachersOfSchool = async (req, res) => {
       return res.status(404).json({ message: 'School not found.' });
     };
 
-    const teachers = await Teacher.find({ schoolId: school._id, createdBy: adminId })
-      .populate({
-        path: 'userId',
-        select: 'email role',
-      }).sort({ createdAt: -1 });
+    const teachers = await Teacher.find({ schoolId: school._id, createdBy: adminId }).populate('userId').sort({ createdAt: -1 });
 
     if (teachers.length === 0) {
       return res.status(404).json({ message: 'No teachers found for this school.' });
@@ -1206,7 +1342,7 @@ exports.updateStudentData = async (req, res) => {
 
 
 //change teachers salary
-exports.changeTeacherSalary = async (req, res) => {
+exports.updateTeacherData = async (req, res) => {
   try {
     const { teacherId } = req.params;
     const { newSalary } = req.body;

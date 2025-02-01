@@ -73,7 +73,7 @@ const teacherSchema = new mongoose.Schema({
             required: true,
         },
     },
-    education: {
+    education: [{
         university: {
             type: String,
             required: true,
@@ -94,7 +94,7 @@ const teacherSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-    },
+    }],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,

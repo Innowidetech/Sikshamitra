@@ -69,7 +69,7 @@ const schoolSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  applicationFee: {
+  applicationFee: {   //remove it
     type: Number,
     required: true,
 },

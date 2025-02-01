@@ -63,6 +63,11 @@ const studentSchema = new mongoose.Schema({
             type:String,
             required:true
         },
+        additionalFees:{
+            type:String,
+            required:true,
+            default:'0'
+        },
         previousEducation:[
             {
                 study:String, //class

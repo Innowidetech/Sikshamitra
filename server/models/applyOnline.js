@@ -34,7 +34,7 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        amount:{
+        amount:{ //change to based on class
             type:String,
             required:true
         },
