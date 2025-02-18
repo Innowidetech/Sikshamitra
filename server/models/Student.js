@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+// dont allow to see exams and results if user is inactive
+// while student profile class is being updated, based on class, also update tution fees automatically
+//edit profiles of all by themself
 
 const studentSchema = new mongoose.Schema({
     schoolId:{
@@ -72,7 +75,7 @@ const studentSchema = new mongoose.Schema({
             {
                 study:String, //class
                 schoolName:String,
-                duration:String, //from date to to date
+                duration:String, //from date - to date
             }
         ],
     },

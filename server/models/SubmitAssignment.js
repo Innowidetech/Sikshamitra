@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
 
 const submitAssignmentSchema = new mongoose.Schema({
+    schoolId:{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'School'
+    },
+    class: {
+        type: String,
+        required: true,
+    },
+    section: {
+        type: String,
+        required: true,
+        uppercase:true,
+    },
     assignmentId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,

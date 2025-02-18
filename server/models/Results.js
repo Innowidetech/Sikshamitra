@@ -6,11 +6,6 @@ const resultsSchema = new mongoose.Schema({
         required: true,
         ref: 'School'
     },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        require: true,
-        ref: 'Teacher',
-    },
     class: {
         type: String,
         required: true,
@@ -20,16 +15,12 @@ const resultsSchema = new mongoose.Schema({
         required: true,
         uppercase:true
     },
-    examType:{
-        type:String,
-        required:true,
-    },
-    examId: {
+    exam: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'Exams'
     },
-    studentId: {
+    student: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'Student'
@@ -38,32 +29,35 @@ const resultsSchema = new mongoose.Schema({
         subjectCode: {
             type: String,
             required: true,
-            // unique:true,
         },
         subject: {
             type: String,
             required: true,
         },
-        marks: {
+        marksObtained: {
             type: Number,
             required: true,
         },
-        outOfMarks: {
+        totalMarks: {
             type: Number,
             required: true,
         },
         grade: {
             type: String,
             required: true,
+            uppercase:true,
+        },
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            require: true,
+            ref: 'Teacher',
         },
     }],
     total: {
         type: String,
-        required: true,
     },
     totalPercentage:{
         type: String,
-        required: true,
     },
 }, { timestamps: true });
 

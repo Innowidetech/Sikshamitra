@@ -5,55 +5,61 @@ const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Notice = require('../models/Notice');
-const Exam = require('../models/Exams');
-const Result = require('../models/Results');
+require('dotenv').config();
+const ParentExpenses = require('../models/ParentExpenses');
+const Razorpay = require('razorpay');
+// const crypto = require('crypto');
 
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-exports.editParentProfile = async(req,res)=>{
-    try{
-        const {updatedData} = req.body;
-        if(!updatedData){
-            return res.status(400).json({message:'No new data provided to update.'})
+exports.editParentProfile = async (req, res) => {
+  try {
+    const { updatedData } = req.body;
+    if (!updatedData) {
+      return res.status(400).json({ message: 'No new data provided to update.' })
+    };
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' })
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'parent') {
+      return res.status(403).json({ message: "Access denied, only logged-in parents can access." })
+    };
+
+    const parent = await Parent.findOne({ userId: loggedInId });
+    if (!parent) {
+      return res.status(404).json({ message: 'No parent found with the userId.' })
+    };
+
+    const restrictedFields = ['parentOf'];
+
+    for (let key in updatedData) {
+      if (parent.parentProfile.hasOwnProperty(key)) {
+        if (restrictedFields.includes(key)) {
+          return res.status(404).json({ message: 'You are not allowed to change the parentOf field' })
         };
-
-        const loggedInId = req.user && req.user.id;
-            if(!loggedInId){
-              return res.status(401).json({message:'Unauthorized'})
-            };
-        
-            const loggedInUser = await User.findById(loggedInId);
-            if(!loggedInUser || loggedInUser.role!=='parent'){
-              return res.status(403).json({message:"Access denied, only logged-in parents can access."})
-            };
-
-            const parent = await Parent.findOne({userId:loggedInId});
-            if(!parent){
-                return res.status(404).json({message:'No parent found with the userId.'})
-            };
-
-            const restrictedFields = ['parentOf'];
-
-            for (let key in updatedData){
-                if (parent.parentProfile.hasOwnProperty(key)){
-                    if(restrictedFields.includes(key)){
-                        return res.status(404).json({message:'You are not allowed to change the parentOf field'})
-                    };
-                    parent.parentProfile[key] = updatedData[key];
-                }
-            }
-            await parent.save();
-
-            res.status(200).json({
-                message:'Profile updated successfully',
-                updatedProfile:parent,
-            });
+        parent.parentProfile[key] = updatedData[key];
+      }
     }
-    catch (err) {
-        res.status(500).json({
-            message:'Internal server error.',
-            error:err.message,
-        });
-    }
+    await parent.save();
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      updatedProfile: parent,
+    });
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: err.message,
+    });
+  }
 };
 
 exports.parentDashboard = async (req, res) => {
@@ -68,7 +74,7 @@ exports.parentDashboard = async (req, res) => {
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const parentData = await Parent.findOne({userId:loggedInId}).populate('userId')
+    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email')
 
     const parent = await Parent.findOne({ userId: loggedInId }).populate('userId parentProfile.parentOf');
     if (!parent) {
@@ -169,8 +175,8 @@ exports.parentDashboard = async (req, res) => {
 };
 
 
-exports.getResultDetails = async (req,res)=>{
-  try{
+exports.getChildrenNames = async (req, res) => {
+  try {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -181,28 +187,172 @@ exports.getResultDetails = async (req,res)=>{
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const parent = await Parent.findOne({userId:loggedInId}).populate('userId parentProfile.parentOf');
-    if (!parent) {
-      return res.status(404).json({ message: 'No parent found with the logged-in ID.' });
-    }
+    const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf', 'studentProfile.fullname')
+    if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
-    const students = await Student.find({schoolId:parent.schoolId, 'studentProfile.childOf':loggedInId}).select('studentProfile.firstName _id');
-    if (!students.length) {
-      return res.status(404).json({ message: 'No students found for the parent.' });
-    }
-
-    const studentIds = students.map(student => student._id);
-
-    const examResults = await Result.find({
-      schoolId: parent.schoolId,
-      studentId: { $in: studentIds }
-    }).select('examType class section');
-    res.status(200).json({students, examResults})
-  }
-  catch (err) {
+    res.status(200).json({ children: parent.parentProfile.parentOf })
+  } catch (err) {
     res.status(500).json({
       message: 'Internal server error.',
       error: err.message,
     });
   }
-}
+};
+
+
+exports.payFees = async (req, res) => {
+  try {
+    const { studentName, amount, purpose } = req.body;
+    if (!studentName || !amount || !purpose) { return res.status(400).json({ message: "Proivde student name, amount and purpose of fee." }) }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'parent') {
+      return res.status(403).json({ message: 'Access denied, only parents can access this.' });
+    }
+
+    const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
+    if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+
+    const student = await Student.findOne({ 'studentProfile.fullname': studentName, schoolId: parent.schoolId });
+    if (!student) {
+      return res.status(404).json({ message: "No child found with the provided name." });
+    }
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+    });
+
+    const existingExpense = await ParentExpenses.findOne({
+      studentId: student._id,
+      class: student.studentProfile.class,
+      section: student.studentProfile.section,
+      paidBy: parent._id,
+    });
+
+    const newExpense = new ParentExpenses({
+      schoolId: parent.schoolId,
+      studentId: student._id,
+      class: student.studentProfile.class,
+      section: student.studentProfile.section,
+      amount: amount,
+      pendingAmount: existingExpense
+        ? existingExpense.pendingAmount  // If existing expense
+        : parseFloat(student.studentProfile.fees) + parseFloat(student.studentProfile.additionalFees), // If new
+      purpose: purpose,
+      paidBy: parent._id,
+      paymentDetails: {
+        razorpayOrderId: razorpayOrder.id,
+        razorpayPaymentId: '',
+        status: 'pending',
+      },
+    });
+
+    await newExpense.save();
+
+    res.status(200).json({
+      message: 'Payment order created successfully.',
+      newExpense
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: err.message,
+    });
+  }
+};
+
+
+exports.verifyFeesPayment = async (req, res) => {
+  try {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+    const body = razorpayOrderId + "|" + razorpayPaymentId;
+    const expectedSignature = razorpay.crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest('hex');
+
+    if (expectedSignature !== razorpaySignature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const paymentRecord = await ParentExpenses.findOne({ 'paymentDetails.razorpayOrderId': razorpayOrderId });
+    if (!paymentRecord) {
+      return res.status(404).json({ message: 'Payment record not found.' });
+    }
+
+    if (paymentRecord.paymentDetails.status === 'pending') {
+      paymentRecord.paymentDetails.razorpayPaymentId = razorpayPaymentId;
+      paymentRecord.paymentDetails.status = 'success';
+
+      const amountPaid = paymentRecord.amount;
+
+      paymentRecord.pendingAmount -= amountPaid;
+
+      await paymentRecord.save();
+
+      const school = await School.findById(paymentRecord.schoolId);
+      if (!school) {
+        return res.status(404).json({ message: 'School not found.' });
+      }
+      const payout = await razorpayInstance.payouts.create({ // to send the amount to schools' bank account after payment verification is success
+        account_number: school.paymentDetails.accountNumber,
+        ifsc: school.paymentDetails.ifscCode,
+        amount: amountPaid,
+        currency: 'INR',
+        purpose: paymentRecord.purpose,
+        notes: {
+          schoolId: school._id,
+          studentId: paymentRecord.studentId,
+          paymentId: razorpayPaymentId,
+        },
+      });
+
+      res.status(200).json({
+        message: 'Payment verified and amount transferred to the school.',
+        payoutId: payout,
+      });
+    } else {
+      return res.status(400).json({ message: 'Payment already processed or failed.' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: 'Internal server error during payment verification.',
+      error: err.message,
+    });
+  }
+};
+
+
+exports.getFeesReceipts = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'parent') {
+      return res.status(403).json({ message: 'Access denied, only parents can access this.' });
+    }
+
+    const parent = await Parent.findOne({ userId: loggedInId })
+    if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+
+    const feesReceipts = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id }).populate('studentId','studentProfile.fullname').sort({ createdAt: -1 })
+    if (!feesReceipts.length) { return res.status(200).json({ message: "No fees paid to get receipts." }) }
+    res.status(200).json({ feesReceipts })
+  } catch (err) {
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: err.message,
+    });
+  }
+};

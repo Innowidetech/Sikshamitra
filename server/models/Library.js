@@ -6,15 +6,13 @@ const librarySchema = new mongoose.Schema({
         required:true,
         ref:'School',
     },
-    bookId:{
-        type:mongoose.Schema.Types.ObjectId,
+    bookName:{
+        type:String,
         required:true,
-        ref:'Books'
     },
-    issuedBy:{ //employee._id
-        type:mongoose.Schema.Types.ObjectId,
+    issuedBy:{ 
+        type:String,
         required:true,
-        ref:'Teacher'
     },
     issuedTo:{ //student._id
         type:mongoose.Schema.Types.ObjectId,
@@ -26,11 +24,11 @@ const librarySchema = new mongoose.Schema({
         default: Date.now,
         required: true,
     },
-    returnDate:{ //book to be returned by the date
+    dueDate:{ //book to be returned by the date
         type:Date,
         required:true,
     },
-    returnedOn:{ //date when the book is returned
+    returnedDate:{ //date when the book is returned
         type:Date,
     }
 },{timestamps:true});

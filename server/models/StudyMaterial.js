@@ -6,10 +6,17 @@ const StudeyMaterialSchema = new mongoose.Schema({
             required:true,
             ref:'School',
         },
-        createdBy:{
-            type:mongoose.Schema.Types.ObjectId,
+        teacherName:{
+            type:String,
             required:true,
-            ref:'Teacher',
+        },
+        subject:{
+            type:String,
+            required:true,
+        },
+        chapter:{
+            type:String,
+            required:true,
         },
         class:{
             type:String,
@@ -20,18 +27,6 @@ const StudeyMaterialSchema = new mongoose.Schema({
             required:true,
             uppercase:true
         },
-        subject:{
-            type:String,
-            required:true,
-        },
-        chapter:{
-            type:String,
-            required:true,
-        },
-        description:{
-            type:String,
-            // required:true,
-        },
         material:[
             {
                 url: {
@@ -40,6 +35,11 @@ const StudeyMaterialSchema = new mongoose.Schema({
                 },
             },
         ],
+        createdBy:{
+            type:mongoose.Schema.Types.ObjectId,
+            required:true,
+            ref:'Teacher',
+        },
 },
 {timestamps:true});
 

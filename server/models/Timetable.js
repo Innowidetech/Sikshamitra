@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const timetableSchema = new mongoose.Schema({
+const ClassTimetableSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'School',
@@ -13,24 +13,16 @@ const timetableSchema = new mongoose.Schema({
     section: {
         type: String,
         required: true,
-        uppercase:true
+        uppercase: true
     },
     timetable: {
-        monday: [{ period: String, timing: String, subject: String }],
-        tuesday: [{ period: String, timing: String, subject: String }],
-        wednesday: [{ period: String, timing: String, subject: String }],
-        thursday: [{ period: String, timing: String, subject: String }],
-        friday: [{ period: String, timing: String, subject: String }],
-        saturday: [{ period: String, timing: String, subject: String }],
-    },
-    createdBy: { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Teacher',
-        required: true
-    },
+        monday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+        tuesday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+        wednesday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+        thursday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+        friday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+        saturday: [{ startTime: String, endTime: String, subject: String, teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' } }],
+    }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Timetable', timetableSchema);
-
-
-//add time table for teacher by admin and also attendance   
+module.exports = mongoose.model('ClassTimetable', ClassTimetableSchema);

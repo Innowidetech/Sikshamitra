@@ -34,7 +34,7 @@ const assignmentSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    dueDate: {
+    endDate: {
         type: Date,
         required: true
     },

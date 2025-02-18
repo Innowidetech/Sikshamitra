@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-//add school banner to display at results 
+
 const schoolSchema = new mongoose.Schema({
   schoolName: {
     type: String,
@@ -9,6 +9,10 @@ const schoolSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+  },
+  schoolLogo:{
+    type:String,
+    required:true,
   },
   schoolBanner:{
     type:String,

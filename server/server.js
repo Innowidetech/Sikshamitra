@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const {autoMarkHoliday} = require('./controllers/teacher.controller');
 dotenv.config();
 
 // Route imports
@@ -12,7 +13,6 @@ const adminRoute = require('./routes/admin.routes');
 const teacherRoute = require("./routes/teacher.routes");
 const studentRoute = require('./routes/student.routes');
 const parentRoute = require('./routes/parent.routes');
-const paymentRoute = require('./routes/payment.routes');
 
 
 
@@ -31,9 +31,8 @@ app.use('/api/admin',adminRoute);
 app.use('/api/teacher',teacherRoute);
 app.use('/api/student',studentRoute);
 app.use('/api/parent',parentRoute);
-app.use('/api/payment',paymentRoute);
 
-
+setInterval(autoMarkHoliday, 3600000)
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URL)

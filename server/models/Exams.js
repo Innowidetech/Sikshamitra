@@ -1,60 +1,63 @@
 const mongoose = require('mongoose');
 
 const examSchema = new mongoose.Schema({
-    schoolId:{
+    schoolId: {
         type: mongoose.Schema.Types.ObjectId,
-        required:true,
-        ref:'School'
+        required: true,
+        ref: 'School'
     },
-    createdBy:{
-        type:mongoose.Schema.Types.ObjectId,
-        require:true,
-        ref:'Teacher',
+    examType: { // annual exam, quarterly, half yearly
+        type: String,
+        required: true
     },
-    class:{
-        type:String,
-        required:true,
+    examDuration: {
+        type: String,
+        required: true,
     },
-    section:{
-        type:String,
-        required:true,
-        uppercase:true
+    fromDate:{
+        type: Date,
+        required: true,
     },
-    examType:{ // annual exam, quarterly, half yearly
-        type:String,
-        required:true
+    toDate:{
+        type: Date,
+        required: true,
     },
-    duration:{
-        type:String,
-        required:true,
+    numberOfSubjects:{
+        type: Number,
+        required: true,
     },
-    schedule:[{
-                sNo:{
-                    type:Number,
-                    required:true,
-                },
-                subjectCode:{
-                    type:String,
-                    required:true,
-                },
-                subject:{ //subjectName
-                    type:String,
-                    required:true,
-                },
-                syllabus:{
-                    type:String,
-                    required:true,
-                },
-                date:{
-                    type:Date,
-                    required:true,
-                },
-                day:{
-                    type:String,
-                    enum:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
-                    required:true,
-                },
-            }]
-},{timestamps:true});
+    class: {
+        type: String,
+        required: true,
+    },
+    section: {
+        type: String,
+        required: true,
+        uppercase: true
+    },
+    exam: [{
+        subjectCode: {
+            type: String,
+            required: true,
+        },
+        subject: { //subjectName
+            type: String,
+            required: true,
+        },
+        syllabus: {
+            type: String,
+            required: true,
+        },
+        date: {
+            type: Date,
+            required: true,
+        },
+    }],
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        require: true,
+        ref: 'Teacher',
+    },
+}, { timestamps: true });
 
 module.exports = mongoose.model('Exams', examSchema);

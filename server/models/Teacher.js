@@ -41,16 +41,13 @@ const teacherSchema = new mongoose.Schema({
         },
         class: {
             type: String,
-            // required:true,
         },
         section: {
             type: String,
-            // required:true,
             uppercase: true,
         },
         subjects: {
             type: [String],
-            // required:true
         },
         salary: {
             type: String,
