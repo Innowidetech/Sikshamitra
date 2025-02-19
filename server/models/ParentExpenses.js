@@ -20,18 +20,25 @@ const ParentExpensesSchema = new mongoose.Schema({
         required: true,
         uppercase: true
     },
-    amount: { // input field to pay
+    amount: { 
         type: Number,
         required: true,
     },
-    pendingAmount: { // after paying, sum of = student.studentProfile.(Number)fees + student.studentProfile.(Number)additionalFess - amount(only if the payment status is success)
+    pendingAmount: { 
         type: Number,
         required: true,
     },
-    purpose: {   // fees, uniform, other inventory items...
+    purpose: {   // fees, inventory
         type: String,
+        enum:['Fees','Inventory'],
         required: true
     },
+    itemName: {
+        type: String,
+        required: function () {
+          return this.purpose === 'Inventory';
+        },
+      },
     paymentDetails: {
         razorpayOrderId: {
             type: String,

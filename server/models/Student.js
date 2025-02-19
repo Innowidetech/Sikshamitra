@@ -3,6 +3,10 @@ const mongoose = require('mongoose');
 // while student profile class is being updated, based on class, also update tution fees automatically
 //edit profiles of all by themself
 
+//attendance
+//history of librarian and accountant
+//implement queries in parent
+
 const studentSchema = new mongoose.Schema({
     schoolId:{
         type:mongoose.Schema.Types.ObjectId,

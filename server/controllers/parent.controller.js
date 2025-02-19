@@ -202,7 +202,7 @@ exports.getChildrenNames = async (req, res) => {
 
 exports.payFees = async (req, res) => {
   try {
-    const { studentName, amount, purpose } = req.body;
+    const { studentName, amount, purpose, itemName } = req.body;
     if (!studentName || !amount || !purpose) { return res.status(400).json({ message: "Proivde student name, amount and purpose of fee." }) }
 
     const loggedInId = req.user && req.user.id;
@@ -246,6 +246,7 @@ exports.payFees = async (req, res) => {
         ? existingExpense.pendingAmount  // If existing expense
         : parseFloat(student.studentProfile.fees) + parseFloat(student.studentProfile.additionalFees), // If new
       purpose: purpose,
+      itemName,
       paidBy: parent._id,
       paymentDetails: {
         razorpayOrderId: razorpayOrder.id,
@@ -331,6 +332,33 @@ exports.verifyFeesPayment = async (req, res) => {
 };
 
 
+exports.getExpenses = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'parent') {
+      return res.status(403).json({ message: 'Access denied, only parents can access this.' });
+    }
+
+    const parent = await Parent.findOne({ userId: loggedInId })
+    if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+
+    const expenses = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id }).populate('studentId','studentProfile.fullname').sort({ createdAt: -1 })
+    if (!expenses.length) { return res.status(200).json({ message: "No expenses found." }) }
+    res.status(200).json({ expenses })
+  } catch (err) {
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: err.message,
+    });
+  }
+};
+
+
 exports.getFeesReceipts = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -346,7 +374,7 @@ exports.getFeesReceipts = async (req, res) => {
     const parent = await Parent.findOne({ userId: loggedInId })
     if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
-    const feesReceipts = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id }).populate('studentId','studentProfile.fullname').sort({ createdAt: -1 })
+    const feesReceipts = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id, purpose: 'Fees' }).populate('studentId','studentProfile.fullname').sort({ createdAt: -1 })
     if (!feesReceipts.length) { return res.status(200).json({ message: "No fees paid to get receipts." }) }
     res.status(200).json({ feesReceipts })
   } catch (err) {
