@@ -132,6 +132,8 @@ exports.attendanceReport = async (req, res) => {
         const presentPercentage = totalDays > 0 ? ((presentCount / totalDays) * 100).toFixed(2) : '0.00';
 
         const today = new Date();
+        const todayFormatted = today.toLocaleDateString(); 
+
         const todayAttendance = await Attendance.findOne({
             schoolId: associatedSchool,
             date: { $gte: new Date(today.setHours(0, 0, 0, 0)), $lte: new Date(today.setHours(23, 59, 59, 999)) },
@@ -155,6 +157,7 @@ exports.attendanceReport = async (req, res) => {
                 holiday: holidayCount,
                 presentPercentage: `${presentPercentage}%`,
             },
+            todayDate:todayFormatted,
             todayAttendance: todaysStatus,
         });
 
