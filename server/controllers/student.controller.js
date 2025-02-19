@@ -92,15 +92,28 @@ exports.attendanceReport = async (req, res) => {
 
         const reportMonth = month || currentDate.getMonth() + 1;
         const reportYear = year || currentDate.getFullYear();
+        const studentClass = student.studentProfile.class;
 
-        const startDate = new Date(reportYear, reportMonth - 1, 1);
-        const endDate = new Date(reportYear, reportMonth, 0);
+        let startDate, endDate;
 
-        const attendanceRecords = await Attendance.find({
+        if (month && year) {
+            startDate = new Date(reportYear, reportMonth - 1, 1);  // First day of the month
+            endDate = new Date(reportYear, reportMonth, 0);        // Last day of the month
+        } else {
+            // Fetch all records for the student (no date range filtering)
+            startDate = new Date(0); // January 1st, 1970, the earliest possible date
+            endDate = new Date();    // Current date
+        }
+
+        const query = {
             schoolId: associatedSchool,
+            class: studentClass, // Filter by the student's class
             date: { $gte: startDate, $lte: endDate },
             'attendance.studentId': studentId,
-        });
+        };
+
+        const attendanceRecords = await Attendance.find(query);
+
 
         if (!attendanceRecords.length) {
             return res.status(404).json({ message: 'No attendance records found for this student within the annual report period.' });
