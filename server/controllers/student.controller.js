@@ -26,7 +26,7 @@ exports.editStudentProfile = async (req, res) => {
             return res.status(404).json({ message: 'Student not found with the provided id.' });
         };
 
-        const restrictedFields = ['class', 'section', 'classType', 'rollNumber', 'childOf', 'registrationNumber', 'fees'];
+        const restrictedFields = ['class', 'section', 'classType', 'rollNumber', 'childOf', 'registrationNumber', 'fees', 'additionalFees'];
 
         let uploadedPhotoUrl = student.studentProfile.photo;
 
@@ -43,7 +43,7 @@ exports.editStudentProfile = async (req, res) => {
             if (student.studentProfile.hasOwnProperty(key)) {
                 if (restrictedFields.includes(key)) {
                     return res.status(403).json({
-                        message: 'You are not allowed to change your class nor section nor roll number nor registrationNumber nor fees!',
+                        message: 'You are not allowed to change it!',
                     });
                 }
                 student.studentProfile[key] = updatedData[key];
@@ -66,7 +66,6 @@ exports.editStudentProfile = async (req, res) => {
 };
 
 
-//get annual attendance report
 exports.attendanceReport = async (req, res) => {
     try {
         const { month, year } = req.body;
@@ -97,17 +96,16 @@ exports.attendanceReport = async (req, res) => {
         let startDate, endDate;
 
         if (month && year) {
-            startDate = new Date(reportYear, reportMonth - 1, 1);  // First day of the month
-            endDate = new Date(reportYear, reportMonth, 0);        // Last day of the month
+            startDate = new Date(reportYear, reportMonth - 1, 1); 
+            endDate = new Date(reportYear, reportMonth, 0);       
         } else {
-            // Fetch all records for the student (no date range filtering)
-            startDate = new Date(0); // January 1st, 1970, the earliest possible date
-            endDate = new Date();    // Current date
+            startDate = new Date(0);
+            endDate = new Date();
         }
 
         const query = {
             schoolId: associatedSchool,
-            class: studentClass, // Filter by the student's class
+            class: studentClass,
             date: { $gte: startDate, $lte: endDate },
             'attendance.studentId': studentId,
         };
