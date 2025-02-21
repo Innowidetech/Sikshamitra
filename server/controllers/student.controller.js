@@ -196,16 +196,20 @@ exports.getAdmitCard = async (req, res) => {
         let admitCard, student;
 
         if (loggedInUser.role === 'student') {
-            student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner');
+            student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner').populate('userId', 'isActive');
             if (!student) {
                 return res.status(404).json({ message: 'No student found with the logged-in id.' })
             };
+            if (!student.userId.isActive) {
+                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
+            }
 
             admitCard = await Exams.findOne({
                 schoolId: student.schoolId,
                 class: student.studentProfile.class,
-                section: student.studentProfile.section
-            }).sort({createdAt:-1});
+                section: student.studentProfile.section,
+                toDate: { $gte: currentDate }
+            }).sort({ toDate: 1 }).limit(1);
             if (!admitCard) {
                 return res.status(404).json({ message: 'No exams for the student.' })
             };

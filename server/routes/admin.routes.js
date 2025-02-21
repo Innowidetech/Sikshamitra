@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData } = require('../controllers/admin.controller');
+const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsIsActiveRatio, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPT, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, getAandLUpdatesHistory } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -28,6 +28,7 @@ router.get('/calendar/:calendarDate', protect, authorize('admin'), getDynamicCal
 router.post('/register', protect, authorize('admin'), upload.single('photo'), createTeacher);
 router.get('/teacherNames', protect, authorize('admin'), getTeacherNames);
 router.post('/authorityb', protect, authorize('admin'), updateAandLBody);
+router.get('/history', protect, authorize('admin'), getAandLUpdatesHistory);
 // router.post('/authorityp/:employeeType/:action/:position?', protect, authorize('admin'), updateAandLParams);
 router.post('/teacher/:teacherId', protect, authorize('admin'), updateTeacherData);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);

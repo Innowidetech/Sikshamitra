@@ -181,7 +181,7 @@ exports.getStudentsOfTeacher = async (req, res) => {
 };
 
 
-//assigning assignments to students
+//assigning assignments for students
 exports.assignmentForStudents = async (req, res) => {
     try {
         const { assignmentName, classs, section, subject, chapter, startDate, endDate } = req.body;
@@ -298,9 +298,8 @@ exports.getAssignment = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         if (!teacherAssignments.length && !classAssignments.length) {
-            return res.status(404).json({ message: 'No assignments found for the class.' });
+            return res.status(200).json({ message: 'No assignments found for the class.' });
         };
-
 
         res.status(200).json({
             message: 'Assignment fetched successfully.',
@@ -377,7 +376,7 @@ exports.getSubmittedAssignments = async (req, res) => {
             }
 
             res.status(200).json({
-                message: 'Submitted assignments fetched successfully.',
+                message: 'Submitted assignments of student fetched successfully.',
                 studentAssignments,
             });
         } else {
@@ -640,7 +639,7 @@ exports.viewAttendance = async (req, res) => {
             date: { $gte: startDate, $lte: endDate },
         })
         if (!attendance.length) {
-            return res.status(404).json({ message: 'No attendance found.' })
+            return res.status(200).json({ message: 'No attendance record.' })
         };
 
         const attendanceWithParentDetails = [];
@@ -872,51 +871,27 @@ exports.getTimetable = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        let timetable;
+        let schoolId, teacherId, teacherClass, teacherSection, studentId, studentClass, studentSection, teacherTimetable, classTimetable;
 
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
             if (!teacher) {
                 return res.status(404).json({ message: 'Teacher not found.' });
             }
-
-            timetable = await Lectures.findOne({ schoolId: teacher.schoolId, teacher: teacher._id });
-
-            if (timetable) {
-                timetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            }
+            schoolId = teacher.schoolId,
+                teacherId = teacher._id,
+                teacherClass = teacher.profile.class,
+                teacherSection = teacher.profile.section
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
             if (!student) {
                 return res.status(404).json({ message: 'Student not found.' });
             }
-
-            timetable = await ClassTimetable.findOne({
-                schoolId: student.schoolId,
-                class: student.studentProfile.class,
-                section: student.studentProfile.section
-            })
-                .populate('timetable.monday.teacher', 'profile.fullname')
-                .populate('timetable.tuesday.teacher', 'profile.fullname')
-                .populate('timetable.wednesday.teacher', 'profile.fullname')
-                .populate('timetable.thursday.teacher', 'profile.fullname')
-                .populate('timetable.friday.teacher', 'profile.fullname')
-                .populate('timetable.saturday.teacher', 'profile.fullname');
-
-            if (timetable) {
-                timetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-                timetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            }
+            schoolId = student.schoolId
+            studentId = student._id,
+                studentClass = student.studentProfile.class,
+                studentSection = student.studentProfile.section
 
         } else {
             return res.status(403).json({
@@ -924,13 +899,45 @@ exports.getTimetable = async (req, res) => {
             });
         }
 
-        if (!timetable) {
-            return res.status(404).json({ message: 'No timetable found.' });
+        teacherTimetable = await Lectures.findOne({ schoolId, teacher: teacherId });
+
+        if (teacherTimetable) {
+            teacherTimetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            teacherTimetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            teacherTimetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            teacherTimetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            teacherTimetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            teacherTimetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
         }
+
+        classTimetable = await ClassTimetable.findOne({
+            $or: [
+                { schoolId, class: studentClass, section: studentSection },
+                { schoolId, class: teacherClass, section: teacherSection }
+            ]
+        })
+            .populate('timetable.monday.teacher', 'profile.fullname')
+            .populate('timetable.tuesday.teacher', 'profile.fullname')
+            .populate('timetable.wednesday.teacher', 'profile.fullname')
+            .populate('timetable.thursday.teacher', 'profile.fullname')
+            .populate('timetable.friday.teacher', 'profile.fullname')
+            .populate('timetable.saturday.teacher', 'profile.fullname');
+
+        if (classTimetable) {
+            classTimetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            classTimetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            classTimetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            classTimetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            classTimetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            classTimetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+        }
+        if (!teacherTimetable) { res.status(200).json({ message: "No timetable found, please create." }) }
+        if (!classTimetable) { res.status(200).json({ message: 'No timetable found for the class.' }) }
 
         res.status(200).json({
             message: 'Timetable fetched successfully.',
-            timetable,
+            teacherTimetable,
+            classTimetable,
         });
     } catch (err) {
         res.status(500).json({
@@ -968,6 +975,90 @@ function convertToDate(time) {
 
     return date;
 }
+
+
+exports.deleteTimetablePeriod = async (req, res) => {
+    try {
+        const { periodId } = req.params;
+        if (!periodId) { return res.status(400).json({ message: "Provide the period id to delete it." }) }
+
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized. Only logged-in teachers can perform this action.' });
+        }
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied. Only teachers can create or update timetables.' });
+        }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: 'Teacher not found.' });
+        }
+
+        const teacherSubjects = teacher.profile.subjects;
+
+        const teacherTimetable = await Lectures.findOne({ teacher: teacher._id });
+        if (!teacherTimetable) {
+            return res.status(404).json({ message: 'Teacher timetable not found.' });
+        }
+
+        let foundPeriod = null;
+        let foundDay = null;
+
+        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        for (const day of daysOfWeek) {
+            const dayTimetable = teacherTimetable.timetable[day];
+            const periodIndex = dayTimetable.findIndex(period => period._id.toString() === periodId);
+            if (periodIndex !== -1) {
+                foundPeriod = dayTimetable[periodIndex];
+                foundDay = day;
+                dayTimetable.splice(periodIndex, 1);
+                break;
+            }
+        }
+
+        if (!foundPeriod) {
+            return res.status(404).json({ message: `Period with ID ${periodId} not found in teacher's timetable.` });
+        }
+
+        if (!teacherSubjects.includes(foundPeriod.subject)) {
+            return res.status(403).json({ message: `The subject ${foundPeriod.subject} is not part of your teaching subjects.` });
+        }
+
+        const { class: className, section, subject } = foundPeriod;
+
+        const classTimetable = await ClassTimetable.findOne({
+            schoolId: teacherTimetable.schoolId,
+            class: className,
+            section: section
+        });
+
+        if (!classTimetable) {
+            return res.status(404).json({ message: 'Class timetable not found.' });
+        }
+
+        const classDayTimetable = classTimetable.timetable[foundDay];
+        const classPeriodIndex = classDayTimetable.findIndex(period =>
+            period.subject === subject && period.teacher.toString() === teacher._id.toString()
+        );
+
+        if (classPeriodIndex === -1) {
+            return res.status(404).json({ message: `Period with ID ${periodId} not found in class timetable.` });
+        }
+
+        classDayTimetable.splice(classPeriodIndex, 1);
+
+        await teacherTimetable.save();
+        await classTimetable.save();
+
+        res.status(200).json({ message: `Period deleted successfully from teacher's and class's timetable.` });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Internal server error.", error: err.message })
+    }
+};
 
 
 exports.createOrUpdateSyllabus = async (req, res) => {
@@ -1421,12 +1512,12 @@ exports.getExams = async (req, res) => {
         }
 
         else if (loggedInUser.role === 'student') {
-            const student = await Student.findOne({ userId: loggedInId }).populate('userId', 'isActive');
+            const student = await Student.findOne({ userId: loggedInId });
             if (!student) {
                 return res.status(404).json({ message: 'No student found with logged-in id.' });
             }
             if (!student.userId.isActive) {
-                return res.status(404).json({ message: "Please contact your class teacher or admin of school." })
+                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
             schoolId = student.schoolId;
             className = student.studentProfile.class;
@@ -1611,7 +1702,7 @@ exports.getStudentsAndExams = async (req, res) => { // to post results
             res.status(404).json({ message: "No students found in the class." })
         }
 
-        const exams = await Exams.find({ schoolId: teacher.schoolId, class: classs, section: section }).select('examType fromDate toDate')
+        const exams = await Exams.find({ schoolId: teacher.schoolId, class: classs, section: section }).select('examType fromDate toDate').sort({createdAt:-1})
         if (!exams.length) {
             res.status(404).json({ message: "No exams found for this class." })
         }
@@ -1802,11 +1893,11 @@ exports.getResults = async (req, res) => {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
             if (!student.userId.isActive) {
-                return res.status(404).json({ message: "Please contact your class teacher or admin of school." })
+                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
 
             result = await Results.find({ student: student._id }).populate('student').populate('exam', 'examType fromDate toDate').sort({ createdAt: -1 })
-            if (!result) { return res.status(404).json({ message: "No results yet." }) }
+            if (!result.length) { return res.status(404).json({ message: "No results yet." }) }
         }
         else if (loggedInUser.role === 'parent') {
             const parent = await Parent.findOne({ userId: loggedInId });
@@ -1895,7 +1986,7 @@ exports.getResultById = async (req, res) => {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
             if (!student.userId.isActive) {
-                return res.status(404).json({ message: "Please contact your class teacher or admin of school." })
+                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
             banner = student.schoolId.schoolBanner;
 
@@ -2168,7 +2259,7 @@ exports.getClassAccounts = async (req, res) => {
             return res.status(404).json({ message: "Access denied, only logged-in class teachers have access." });
         }
         const teacher = await Teacher.findOne({ userId: loggedInId });
-        if (!teacher) { 
+        if (!teacher) {
             return res.status(404).json({ message: "No teacher found with the logged-in id." });
         }
         if (!teacher.profile.class || !teacher.profile.section) {
@@ -2194,11 +2285,11 @@ exports.getClassAccounts = async (req, res) => {
             const monthName = months[expenseDate.getMonth()];
             const year = expenseDate.getFullYear();
             const monthYear = `${monthName} ${year}`;
-            
+
             if (!monthlyData[monthYear]) {
                 monthlyData[monthYear] = { classIncome: 0, classExpense: 0 };
             }
-            
+
             monthlyData[monthYear].classExpense += expense.amount;
         }
 
@@ -2215,11 +2306,11 @@ exports.getClassAccounts = async (req, res) => {
             const monthName = months[incomeDate.getMonth()];
             const year = incomeDate.getFullYear();
             const monthYear = `${monthName} ${year}`;
-            
+
             if (!monthlyData[monthYear]) {
                 monthlyData[monthYear] = { classIncome: 0, classExpense: 0 };
             }
-            
+
             monthlyData[monthYear].classIncome += income.amount;
         }
 

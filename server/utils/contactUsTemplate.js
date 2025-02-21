@@ -26,7 +26,7 @@ const contactUsTemplate = (firstName, lastName, email, phoneNumber, message) => 
           <p><strong>Message :</strong><span"> ${message}</span></p>         
         </div>
         <div class="footer">
-            <p>&copy; 2024 Shikshamitra. All rights reserved.</p>
+            <p>&copy; 2025 Shikshamitra. All rights reserved.</p>
         </div>
     </div>
 </body>

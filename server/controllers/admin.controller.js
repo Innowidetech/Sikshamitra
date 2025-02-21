@@ -17,6 +17,7 @@ const Library = require('../models/Library');
 const Employee = require('../models/Employee');
 const AimObjective = require('../models/Aim&Objective');
 const AandL = require('../models/AdminAandL');
+const AandLUpdates = require('../models/AandLUpdates');
 const ParentExpenses = require('../models/ParentExpenses');
 const SchoolExpenses = require('../models/SchoolExpenses');
 const ClassExpenses = require('../models/ClassExpenses');
@@ -826,12 +827,12 @@ exports.updateAandLBody = async (req, res) => {
       return res.status(400).json({ message: 'Admin is not associated with any school.' });
     };
 
-    const { action, employeeType, teacherName, position } = req.body;
+    const { action, employeeType, teacherName, oldTeacher } = req.body;
     if (!action || !employeeType || !teacherName) {
       return res.status(400).json({ message: "Provide action (add or update), teacher name to proceed." })
     }
     if (action == 'update') {
-      if (!position) { return res.status(404).json({ message: "Please specify the position to update." }) }
+      if (!oldTeacher) { return res.status(404).json({ message: "Please specify the old Teacher to update." }) }
     }
 
     if (action == 'add' && (employeeType === 'accountant' || employeeType === 'librarian')) {
@@ -859,19 +860,30 @@ exports.updateAandLBody = async (req, res) => {
     else if (action == 'update' && (employeeType === 'accountant' || employeeType === 'librarian')) {
       const aandL = await AandL.findOne({ schoolId: associatedSchool._id })
       const targetArray = employeeType + "s";
-      if (!aandL[targetArray] || aandL[targetArray].length === 0 || position < 0 || position >= aandL[targetArray].length) {
-        return res.status(404).json({ message: `Invalid position in ${employeeType}s array.` });
+
+      const oldTeacherRecord = await Teacher.findOne({ schoolId: associatedSchool._id, 'profile.fullname': oldTeacher }).populate("userId");
+      if (!oldTeacherRecord) {
+        return res.status(404).json({ message: "Teacher not found in this school." });
       }
 
-      const oldTeacherId = aandL[targetArray][position];
-      const oldTeacher = await Teacher.findById(oldTeacherId).populate("userId");
+      const oldTeacherId = oldTeacherRecord._id;
 
-      if (oldTeacher.profile.subjects.length > 0) {
-        oldTeacher.userId.employeeType = "teaching";
+      const previousData = {
+        accountants: employeeType === 'accountant' ? [...aandL.accountants] : [],
+        librarians: employeeType === 'librarian' ? [...aandL.librarians] : []
+      };
+
+      const oldTeacherIndex = aandL[targetArray].indexOf(oldTeacherId);
+      if (oldTeacherIndex !== -1) {
+        aandL[targetArray].splice(oldTeacherIndex, 1);
+      }
+      
+      if (oldTeacherRecord.profile.subjects.length > 0) {
+        oldTeacherRecord.userId.employeeType = "teaching";
       } else {
-        oldTeacher.userId.employeeType = "-";
+        oldTeacherRecord.userId.employeeType = "-";
       }
-      await oldTeacher.userId.save();
+      await oldTeacherRecord.userId.save();
 
       const newTeacher = await Teacher.findOne({ schoolId: associatedSchool._id, 'profile.fullname': teacherName }).populate("userId");
       if (!newTeacher) {
@@ -880,8 +892,20 @@ exports.updateAandLBody = async (req, res) => {
       newTeacher.userId.employeeType = employeeType;
       await newTeacher.userId.save();
 
-      aandL[targetArray][position] = newTeacher._id;
+      aandL[targetArray].push(newTeacher._id);
       await aandL.save();
+
+      const updatedData = {
+        accountants: employeeType === 'accountant' ? [...aandL.accountants] : [],
+        librarians: employeeType === 'librarian' ? [...aandL.librarians] : []
+      };
+
+      const aandLUpdate = new AandLUpdates({
+        schoolId: associatedSchool._id,
+        previousData,
+        updatedData
+      });
+      await aandLUpdate.save();
 
       return res.status(200).json({
         message: `${employeeType.charAt(0).toUpperCase() + employeeType.slice(1)} updated successfully.`, aandL,
@@ -891,6 +915,52 @@ exports.updateAandLBody = async (req, res) => {
   }
   catch (error) {
     res.status(500).json({ message: 'Failed to update authority details.', error: error.message });
+  }
+};
+
+
+exports.getAandLUpdatesHistory = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const adminUser = await User.findById(loggedInId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins are allowed to update authority details.' });
+    };
+
+    const associatedSchool = await School.findOne({ createdBy: loggedInId });
+    if (!associatedSchool) {
+      return res.status(400).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const AandLHistory = await AandLUpdates.find({ schoolId: associatedSchool._id })
+      .populate({
+        path: 'previousData.accountants', 
+        select: 'profile.fullname profile.phoneNumber'
+      })
+      .populate({
+        path: 'previousData.librarians',
+        select: 'profile.fullname profile.phoneNumber'
+      })
+      .populate({
+        path: 'updatedData.accountants',
+        select: 'profile.fullname profile.phoneNumber'
+      })
+      .populate({
+        path: 'updatedData.librarians',
+        select: 'profile.fullname profile.phoneNumber'
+      })
+      .sort({ createdAt: -1 });
+
+    if (!AandLHistory.length) { res.status(200).json({ message: "No updates yet." }) }
+
+    res.status(200).json({ history: AandLHistory })
+  }
+  catch (err) {
+    return res.status(500).json({ message: "Internal server error.", error: err.message })
   }
 };
 
@@ -2863,8 +2933,8 @@ exports.getDynamicCalendarByDate = async (req, res) => {
       };
 
       calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role, date: calendarDate })
-      if (!calendars) {
-        return res.status(404).json({ message: "No event found on the date." })
+      if (!calendars.length) {
+        return res.status(200).json({ message: `No events on ${calendarDate}.` })
       }
     }
     else if (loggedInUser.role === 'teacher') {
@@ -2879,8 +2949,8 @@ exports.getDynamicCalendarByDate = async (req, res) => {
           { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
           { createdBy: teacher._id, date: calendarDate }]
       })
-      if (!calendars) {
-        return res.status(404).json({ message: "No event found on the date." })
+      if (!calendars.length) {
+        return res.status(200).json({ message: `No events on ${calendarDate}.` })
       }
     }
     else if (loggedInUser.role === 'student') {
@@ -2896,8 +2966,8 @@ exports.getDynamicCalendarByDate = async (req, res) => {
           { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
           { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role, date: calendarDate }]
       })
-      if (!calendars) {
-        return res.status(404).json({ message: "No event found on the date." })
+      if (!calendars.length) {
+        return res.status(200).json({ message: `No events on ${calendarDate}.` })
       }
     }
     else if (loggedInUser.role === 'parent') {
@@ -2935,8 +3005,9 @@ exports.getDynamicCalendarByDate = async (req, res) => {
         ]
       };
       calendars = await Calendar.find(calendarQuery).sort({ date: 1 });
+      
       if (!calendars.length) {
-        return res.status(404).json({ message: "No events found." });
+        return res.status(200).json({ message: `No events on ${calendarDate}.` })
       }
     }
     res.status(200).json({
@@ -3227,7 +3298,7 @@ exports.getAccounts = async (req, res) => {
 };
 
 
-exports.getAccountsData = async(req,res)=>{
+exports.getAccountsData = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
@@ -3260,10 +3331,10 @@ exports.getAccountsData = async(req,res)=>{
     const revenue = await ParentExpenses.find({ schoolId }).sort({ createdAt: -1 })
     if (!revenue.length) { res.status(200).json({ message: "No payment done yet." }) }
 
-    const admissions = await ApplyOnline.find({'studentDetails.schoolName':schoolName}).sort({createdAt:-1})
+    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName }).sort({ createdAt: -1 })
     if (!admissions.length) { res.status(200).json({ message: "No admissions done yet." }) }
 
-    const expenses = await SchoolExpenses.find({schoolId}).sort({createdAt:-1});
+    const expenses = await SchoolExpenses.find({ schoolId }).sort({ createdAt: -1 });
     if (!expenses.length) { res.status(200).json({ message: "No expenses yet." }) }
 
     res.status(200).json({ revenue, admissions, expenses })

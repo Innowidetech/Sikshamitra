@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, setBookAvailabilityTrue, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts } = require('../controllers/teacher.controller');
+const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, setBookAvailabilityTrue, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod } = require('../controllers/teacher.controller');
 const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, getStudentById, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -27,6 +27,7 @@ router.post('/attendance', protect, authorize('teacher'), markAndUpdateAttendanc
 router.get('/attendance', protect, authorize('teacher'), viewAttendance);
 router.post('/timetable', protect, authorize('teacher'), createOrUpdateTimetable);
 router.get('/timetable', protect, authorize('teacher'), getTimetable);
+router.delete('/timetable/:periodId', protect, authorize('teacher'), deleteTimetablePeriod);
 router.post('/syllabus', protect, authorize('teacher'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('teacher'), getSyllabus);
 router.post('/studyMaterial', upload.array('files'), protect, authorize('teacher'), uploadStudyMaterial);

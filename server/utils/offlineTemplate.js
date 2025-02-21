@@ -92,7 +92,7 @@ const offlineTemplate = (firstName, lastName, address, dob, email, phoneNumber, 
 
         <div class="footer">
             <p>If you have any questions or need further assistance, please contact Shikshamitra.</p>
-            <p>&copy; 2024 Shikshamitra. All rights reserved.</p>
+            <p>&copy; 2025 Shikshamitra. All rights reserved.</p>
         </div>
     </div>
 </body>

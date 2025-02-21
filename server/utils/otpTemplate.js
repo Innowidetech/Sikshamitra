@@ -75,7 +75,7 @@ const generateOtpTemplate = (otp) => `
       <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
     </div>
     <div class="email-footer">
-      <p>&copy; 2024 Shikshamitra. All rights reserved.</p>
+      <p>&copy; 2025 Shikshamitra. All rights reserved.</p>
     </div>
   </div>
 </body>
