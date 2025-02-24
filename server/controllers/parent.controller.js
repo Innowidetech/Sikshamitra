@@ -325,7 +325,6 @@ exports.verifyFeesPayment = async (req, res) => {
       return res.status(400).json({ message: 'Payment already processed or failed.' });
     }
   } catch (err) {
-    console.error(err);
     res.status(500).json({
       message: 'Internal server error during payment verification.',
       error: err.message,

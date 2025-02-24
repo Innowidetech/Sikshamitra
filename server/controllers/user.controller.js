@@ -10,6 +10,7 @@ const Online = require('../models/applyOnline');
 const { uploadImage } = require('../utils/multer');
 const ClassWiseFees = require('../models/ClassWiseFees');
 require('dotenv').config();
+const Blogs= require('../models/Blogs');
 
 
 exports.getAllSchoolsName = async (req, res) => {
@@ -175,7 +176,6 @@ exports.applyOnline = async (req, res) => {
             });
         });
     } catch (error) {
-        console.error(error);
         res.status(500).json({
             message: 'Internal server error',
             error: error.message,
@@ -245,17 +245,31 @@ exports.verifyRazorpayPayment = async (req, res) => {
                 });
 
             } catch (error) {
-                console.error(error);
                 res.status(500).json({ message: 'Error capturing the payment', error: error.message });
             }
         } else {
             res.status(400).json({ message: 'Invalid signature, payment verification failed' });
         }
     } catch (error) {
-        console.error(error);
         res.status(500).json({
             message: 'Internal server error',
             error: error.message,
+        });
+    }
+};
+
+
+exports.getBlogs = async(req,res)=>{
+    try{
+        const blogs = await Blogs.find().sort({createdAt:-1})
+        if(!blogs.length){
+            return res.status(200).json({message:"No blogs posted yet."})
+        }
+        res.status(200).json({blogs});
+    }
+    catch (error) {
+        res.status(500).json({
+            message: 'Internal server error', error: error.message,
         });
     }
 };

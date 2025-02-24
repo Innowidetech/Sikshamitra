@@ -1,10 +1,14 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getAllSchools, userRegister, changeSchoolStatus } = require('../controllers/superAdmin.controller');
+const { getAllSchools, registerAdmin, changeSchoolStatus, postBlog, deleteBlog } = require('../controllers/superAdmin.controller');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.post('/register', protect,authorize('superadmin'), userRegister);
+router.post('/register', protect,authorize('superadmin'), registerAdmin);
 router.get('/get-all-schools',protect,authorize('superadmin'),getAllSchools);
 router.put('/school/:id/:status', protect,authorize('superadmin'),changeSchoolStatus);
+router.post('/blog', upload.single('photo'), protect, authorize('superadmin'), postBlog);
+router.delete('/blog/:blogId', protect, authorize('superadmin'), deleteBlog);
 
 module.exports = router;
