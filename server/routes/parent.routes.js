@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getSyllabus, getExams, getResults, getResultById } = require('../controllers/teacher.controller');
+const { getSyllabus, getExams, getResults, getResultById, getClassPlan } = require('../controllers/teacher.controller');
 const { editParentProfile,parentDashboard, getChildrenNames, payFees, verifyFeesPayment, getExpenses, getFeesReceipts, postQuery } = require('../controllers/parent.controller');
 const { getAdmitCard } = require('../controllers/student.controller');
 const { getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective } = require('../controllers/admin.controller');
@@ -11,6 +11,7 @@ router.get('/calendar', protect, authorize('parent'), getDynamicCalendar);
 router.get('/calendar/:calendarDate', protect, authorize('parent'), getDynamicCalendarByDate);
 router.put('/editProfile', protect, authorize('parent'), editParentProfile);
 router.get('/syllabus', protect, authorize('parent'), getSyllabus);
+router.get('/classPlan', protect, authorize('parent'), getClassPlan);
 router.get('/exams', protect, authorize('parent'), getExams);
 router.get('/results/:studentName?',protect, authorize('parent'), getResults);
 router.get('/result/:studentName?/:resultId', protect, authorize('parent'), getResultById)

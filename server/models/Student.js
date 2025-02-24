@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+//mail after registration
 const studentSchema = new mongoose.Schema({ 
     schoolId:{
         type:mongoose.Schema.Types.ObjectId,

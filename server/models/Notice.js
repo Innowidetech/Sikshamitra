@@ -27,6 +27,6 @@ const noticeSchema = new mongoose.Schema({
         type: String,
         enum: ['User', 'Teacher'],
     },
-});
+},{timestamps:true});
 
 module.exports = mongoose.model('Notice', noticeSchema)
