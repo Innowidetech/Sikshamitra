@@ -517,7 +517,7 @@ exports.getClasses = async (req, res) => {
       return res.status(400).json({ message: 'Admin is not associated with any school.' });
     };
 
-    const classes = await Class.find({ schoolId: associatedSchool._id })
+    const classes = await Class.find({ schoolId: associatedSchool._id }).sort({class:1,section:1})
     if (!classes.length) {
       return res.status(404).json({ message: `No classes found in this school.` })
     }
@@ -604,7 +604,7 @@ exports.getClassWiseFees = async (req, res) => {
       return res.status(404).json({ message: "The admin is not associated with any school." })
     }
 
-    const classwisefees = await ClassWiseFees.find({ schoolId: school._id})
+    const classwisefees = await ClassWiseFees.find({ schoolId: school._id}).sort({class:1})
     if (!classwisefees.length) {
       return res.status(404).json({ message: "No class wise fees found for the school." })
     }
@@ -1916,8 +1916,7 @@ exports.newAdmission = async (req, res) => {
 
     const studentsWithParents = [];
 
-    const students = await Student.find({ schoolId: school._id, createdAt: { $gte: startDate, $lte: endDate } })
-      .populate('userId').sort({ createdAt: -1 })
+    const students = await Student.find({ schoolId: school._id, createdAt: { $gte: startDate, $lte: endDate } }).populate('userId').sort({ createdAt: -1 })
     if (!students.length) {
       res.status(200).json({ message: 'No admissions for this session year.' })
     };
@@ -2014,7 +2013,13 @@ exports.getEmployees = async (req, res) => {
     if (!employees.length) {
       return res.status(404).json({ message: "No employees found in the school." })
     }
-    res.status(200).json({ message: `Employees data of school:`, employees })
+
+    let totalEmployeesSalary = 0;
+    for(let employee of employees){
+      totalEmployeesSalary += employee.salary
+    }
+
+    res.status(200).json({ message: `Employees data of school:`, totalEmployeesSalary ,employees })
   }
   catch (err) {
     res.status(500).json({
@@ -2995,9 +3000,6 @@ exports.getDynamicCalendarByDate = async (req, res) => {
   }
 };
 
-
-//income - applyOnline, parentExpenses
-//expenses - salary and other(form , inventory items)
 
 exports.postSchoolExpensesForm = async (req, res) => {
   try {

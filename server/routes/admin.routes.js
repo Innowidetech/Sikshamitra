@@ -64,6 +64,5 @@ router.patch('/classRequest/:requestId', protect, authorize('admin'), updateTeac
 router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 
-
     
 module.exports = router;

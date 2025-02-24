@@ -2074,7 +2074,7 @@ exports.issueBook = async (req, res) => {
             const school = await School.findOne({ createdBy: loggedInId })
             if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
             schoolId = school._id
-            // issuedByName = 
+            issuedByName = school.schoolName+' school'
         }
         else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -2082,7 +2082,9 @@ exports.issueBook = async (req, res) => {
                 return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
             };
             schoolId = teacher.schoolId
+            issuedByName = teacher.profile.fullname
         }
+        else{ return res.status(403).json({message:"Only logged-in admins and librarians have access to issue book."})}
 
         const book = await Book.findOne({ bookName, schoolId });
         if (!book) {
@@ -2093,14 +2095,14 @@ exports.issueBook = async (req, res) => {
             return res.status(400).json({ message: 'The book is already issued to another student.' });
         }
 
-        const student = await Student.findOne({ 'studentProfile.registrationNumber': studentRegNo, schoolId: employee.schoolId });
+        const student = await Student.findOne({ 'studentProfile.registrationNumber': studentRegNo, schoolId});
         if (!student) {
             return res.status(404).json({ message: 'No student found with the id in this school.' })
         };
         const library = new Library({
             schoolId,
             bookName,
-            issuedBy: employee.profile.fullname,
+            issuedBy: issuedByName,
             issuedTo: student._id,
             dueDate
         });
@@ -2138,21 +2140,31 @@ exports.setBookAvailabilityTrue = async (req, res) => {
         };
 
         const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'teacher' || loggedInUser.employeeType !== 'librarian') {
-            return res.status(403).json({ message: 'Access denied. Only logged-in librarians have the access.' });
+
+
+        if (!loggedInUser) {
+            return res.status(403).json({ message: 'Access denied. Only logged-in users have the access.' });
         };
 
-        const employee = await Teacher.findOne({ userId: loggedInId });
-        if (!employee) {
-            return res.status(404).json({ message: 'No employee found with the logged-in id.' })
-        };
+        let schoolId;
 
-        const school = await School.findById(employee.schoolId);
-        if (!school) {
-            return res.status(404).json({ message: 'No school is associated with the logged-in user.' })
-        };
+        if (loggedInUser.role === 'admin') {
+            const school = await School.findOne({ createdBy: loggedInId });
+            if (!school) {
+                return res.status(404).json({ message: 'No school is associated with the logged-in admin.' })
+            }
+            schoolId =school._id
+        }
+        else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
+            const employee = await Teacher.findOne({ userId: loggedInId });
+            if (!employee) {
+                return res.status(404).json({ message: 'No employee found with the logged-in id.' })
+            };
+            schoolId = employee.schoolId
+        }
+        else{ return res.status(403).json({message:"Only logged-in admins and librarians have access to edit book availability."})}
 
-        const book = await Book.findOne({ _id: bookId, schoolId: employee.schoolId });
+        const book = await Book.findOne({ _id: bookId, schoolId});
         if (!book) {
             return res.status(404).json({ message: 'No book found with the id in this school.' })
         };
@@ -2164,7 +2176,7 @@ exports.setBookAvailabilityTrue = async (req, res) => {
         book.availability = true;
         book.save();
 
-        const library = await Library.findOne({ schoolId: school._id, bookName: book.bookName });
+        const library = await Library.findOne({ schoolId, bookName: book.bookName });
         library.returnedDate = new Date();
         library.save();
 
