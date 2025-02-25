@@ -6,6 +6,11 @@ const PasswordReset = require('../models/forgotPassword');
 const sendEmail = require('../utils/sendEmail');
 const generateOtpTemplate = require('../utils/otpTemplate')
 const {addRevokedToken} = require('../utils/tokenRevocation');
+const Student = require('../models/Student');
+const Parent = require('../models/Parent');
+const Teacher = require('../models/Teacher');
+const School = require('../models/School');
+
 
 //user login
 exports.userLogin = async (req, res) => {
@@ -24,6 +29,18 @@ exports.userLogin = async (req, res) => {
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Incorrect password!' });
     };
+
+    const loggedInUser = await School.findOne({createdBy:user._id}) || await Student.findOne({userId:user._id}).populate('schoolId') || await Teacher.findOne({userId:user._id}).populate('schoolId') || await Parent.findOne({userId:user._id}).populate('schoolId')
+    if(user.role !== 'admin'){
+      if(loggedInUser.schoolId.status !== 'active'){
+        return res.status(404).json({message:"Please contact your school admin."})
+      }
+    }
+    else{
+      if(loggedInUser.status !== 'active'){
+        return res.status(404).json({message:"Please contact the super admin to know details."})
+      }
+    }
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },

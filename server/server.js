@@ -14,8 +14,6 @@ const teacherRoute = require("./routes/teacher.routes");
 const studentRoute = require('./routes/student.routes');
 const parentRoute = require('./routes/parent.routes');
 
-
-
 const app = express();
 
 // Middleware
