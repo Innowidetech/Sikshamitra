@@ -83,7 +83,7 @@ exports.contactUs = async (req, res) => {
             return res.status(400).jsonb({ message: "Please provide all the details." })
         };
 
-        await sendEmail(process.env.EMAIL, email, `Shikshamitra - New Contact Us Form - ${firstName} ${lastName}`, contactUsTemplate(firstName, lastName, email, phoneNumber, message));
+        await sendEmail(process.env.EMAIL, email, `Shikshamitra - New Contact Us Form`, contactUsTemplate(firstName, lastName, email, phoneNumber, message));
 
         res.status(200).json({ message: 'Contact Us Form submitted successfully.' });
     }

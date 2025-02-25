@@ -14,12 +14,21 @@ const queryTemplate = (schoolName,parentName, parentPhone, studentName, studentC
         .footer p {
             margin-top: 10px;
         }
+            h2 {
+            font-size: 26px;
+            background-color: #ff9f1c;
+            color: #ffffff;
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div style="border: 1px solid #ccc; border-radius: 5px; padding: 20px; max-width: 600px; font-family: Arial, sans-serif;">
-          <<h2 style="color: #333;">New Query Form Submission.</h2>
+          <h2>New Query Form Submission</h2>
           <p>We have received a new query submitted by ${parentName}, a parent of ${studentName}, from ${schoolName} School. Below are the details of the query:</p>
           <p><strong>Parent Name :</strong> ${parentName}</p>
           <p><strong>parent Phone Number :</strong> ${parentPhone}</p>

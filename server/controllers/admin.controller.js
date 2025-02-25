@@ -4,6 +4,8 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const Parent = require('../models/Parent');
 const Student = require('../models/Student');
+const { sendEmail } = require('../utils/sendEmail');
+const registrationTemplate = require('../utils/registrationTemplate');
 const Books = require('../models/Books');
 const { uploadImage } = require('../utils/multer');
 const Notice = require('../models/Notice');
@@ -1160,15 +1162,16 @@ exports.createStudentAndParent = async (req, res) => {
       return res.status(403).json({ message: 'Only admins or teachers can create student accounts.' });
     };
 
-    let createdBy, associatedSchool;
+    let createdBy, associatedSchool, schoolName;
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ createdBy: loggedInId })
       if (!school) {
-        return res.status(404).json({ message: 'No school is associated with the logged-in user.' })
+        return res.status(404).json({ message: 'No school is associated with the logged-in admin.' })
       };
       createdBy = loggedInId;
       associatedSchool = school._id;
+      schoolName = school.schoolName
     };
 
     if (loggedInUser.role === 'teacher') {
@@ -1176,8 +1179,10 @@ exports.createStudentAndParent = async (req, res) => {
       if (!teacher) {
         return res.status(404).json({ message: 'No teacher found.' })
       };
+      const school = await School.findById(teacher.schoolId)
       createdBy = teacher._id;
       associatedSchool = teacher.schoolId;
+      schoolName = school.schoolName
     };
 
     const existingStudent = await User.findOne({ email });
@@ -1257,6 +1262,13 @@ exports.createStudentAndParent = async (req, res) => {
     });
     await parent.save();
 
+    var adminEmail = loggedInUser.email
+    var studentName = student.studentProfile.fullname
+    var parentName = parent.parentProfile.fatherName
+
+    await sendEmail(email, adminEmail, `Account registration - Shikshamitra`, registrationTemplate(studentName, schoolName, email, password));
+    await sendEmail(parentEmail, adminEmail, `Account registration - Shikshamitra`, registrationTemplate(parentName, schoolName, parentEmail, parentPassword));
+
     res.status(201).json({
       message: 'Student and parent accounts created successfully.',
       student,
@@ -1294,23 +1306,26 @@ exports.addStudentToExistingParent = async (req, res) => {
       return res.status(403).json({ message: 'Only logged-in admins or teachers can create student accounts.' });
     }
 
-    let associatedSchool, creator;
+    let associatedSchool, creator, schoolName;
 
     if (loggedInUser.role === 'admin') {
-      const school = await School.findOne({ createdBy: loggedInId });
+      const school = await School.findOne({ createdBy: loggedInId }).populate('createdBy');
       if (!school) {
         return res.status(404).json({ message: "No school is associated with the logged-in user." })
       }
       creator = loggedInId;
       associatedSchool = school._id;
+      schoolName = school.schoolName;
     }
     else if (loggedInUser.role === 'teacher') {
       const teacher = await Teacher.findOne({ userId: loggedInId });
       if (!teacher) {
         return res.status(404).json({ message: "No teacher found with the logged-in id." })
       }
+      const school = await School.findById(teacher.schoolId)
       creator = loggedInId;
       associatedSchool = teacher.schoolId;
+      schoolName = school.schoolName
     }
 
     const parentUser = await User.findOne({ email: parentEmail });
@@ -1377,6 +1392,11 @@ exports.addStudentToExistingParent = async (req, res) => {
 
     parent.parentProfile.parentOf.push(student._id);
     await parent.save();
+  
+    var adminEmail = loggedInUser.email
+    var studentName = student.studentProfile.fullname
+
+    await sendEmail(email, adminEmail, `Account registration - Shikshamitra`, registrationTemplate(studentName, schoolName, email, password));
 
     res.status(201).json({
       message: 'Student account created and added to existing parent successfully.',
