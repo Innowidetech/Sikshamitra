@@ -40,7 +40,7 @@ exports.registerAdmin = async (req, res) => {
     await user.save();
 
     res.status(201).json({
-      message: 'Admin for school registered successfully',
+      message: 'Admin for school registered successfully', 
       user: {
         id: user._id,
         email: user.email,
@@ -82,6 +82,40 @@ exports.getAllSchools = async (req, res) => {
     });
   }
 };
+
+
+exports.getSchoolById = async (req, res) => {
+  try {
+    const {schoolId} = req.params;
+    if(!schoolId){return res.status(400).json({message:"Please select school to get complete data."})}
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
+    };
+
+    const school = await School.findById(schoolId).select('-paymentDetails').populate('createdBy')
+    if (!school) {
+      return res.status(200).json({ message: 'No school found with the id.' })
+    };
+    res.status(200).json({
+      message: 'School data',
+      school
+    })
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message
+    });
+  }
+};
+
 
 //change school status
 exports.changeSchoolStatus = async (req, res) => {
