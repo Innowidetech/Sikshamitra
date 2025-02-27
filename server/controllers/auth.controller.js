@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const PasswordReset = require('../models/forgotPassword');
-const sendEmail = require('../utils/sendEmail');
+const {sendEmail} = require('../utils/sendEmail');
 const generateOtpTemplate = require('../utils/otpTemplate')
 const {addRevokedToken} = require('../utils/tokenRevocation');
 const Student = require('../models/Student');
@@ -95,7 +95,7 @@ exports.forgotPassword = async(req,res)=>{
   
       await PasswordReset.create({ email, otp });
   
-      await sendEmail(email, 'Password Reset OTP from Shikshamitra', generateOtpTemplate(otp));
+      await sendEmail(email, email, 'Password Reset OTP from Shikshamitra', generateOtpTemplate(otp));
   
       res.status(200).json({ message: 'OTP sent to email, It will expires in 5 minutes.' });
     } catch (err) {
