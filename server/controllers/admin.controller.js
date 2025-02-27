@@ -805,10 +805,10 @@ exports.updateAandLBody = async (req, res) => {
 
     const { action, employeeType, teacherName, oldTeacher } = req.body;
     if (!action || !employeeType || !teacherName) {
-      return res.status(400).json({ message: "Provide action (add or update), teacher name to proceed." })
+      return res.status(400).json({ message: "Provide all the details to update." })
     }
     if (action == 'update') {
-      if (!oldTeacher) { return res.status(404).json({ message: "Please specify the old Teacher to update." }) }
+      if (!oldTeacher) { return res.status(404).json({ message: "Please specify old Teacher name to update." }) }
     }
 
     if (action == 'add' && (employeeType === 'accountant' || employeeType === 'librarian')) {
@@ -2340,7 +2340,7 @@ exports.getBooks = async (req, res) => {
       return res.status(404).json({ message: 'No books found.' })
     };
 
-    res.status(201).json({
+    res.status(200).json({
       message: "Books data fetched successfully.",
       books,
     });
@@ -2406,7 +2406,7 @@ exports.deleteBook = async (req, res) => {
 
     await Books.deleteOne({ _id: bookId });
 
-    res.status(201).json({
+    res.status(200).json({
       message: "Book deleted successfully.",
     });
   }
@@ -2464,7 +2464,7 @@ exports.getLibraryData = async (req, res) => {
       return res.status(404).json({ message: 'No books found.' })
     };
 
-    res.status(201).json({
+    res.status(200).json({
       message: "Books data fetched successfully.",
       library,
     });

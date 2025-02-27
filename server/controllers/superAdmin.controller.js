@@ -10,27 +10,22 @@ exports.registerAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.send("Please enter all the details to register.")
+      return res.status(400).json({ message: "Please enter all the details to register." })
     };
 
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-        return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
     };
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Access denied. Only superadmin can register admin.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can register admin.' });
     };
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists' });
-    }
-
-    const createdBy = req.user && req.user.id;
-    if (!createdBy) {
-      return res.status(401).json({ message: 'Unauthorized' });
     }
 
     hpass = bcrypt.hashSync(password, 10);
@@ -39,7 +34,7 @@ exports.registerAdmin = async (req, res) => {
       email,
       password: hpass,
       role: 'admin',
-      createdBy
+      createdBy:loggedInId
     });
 
     await user.save();
@@ -63,12 +58,12 @@ exports.getAllSchools = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-        return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
     };
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
     };
 
     const schools = await School.find().select('-paymentDetails').populate('createdBy').sort({ createdAt: -1 });
@@ -101,12 +96,12 @@ exports.changeSchoolStatus = async (req, res) => {
 
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-        return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
     };
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Access denied. Only superadmin can change the school status.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can change the school status.' });
     };
 
     const school = await School.findOneAndUpdate(id);
@@ -138,12 +133,12 @@ exports.postBlog = async (req, res) => {
 
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-        return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
     };
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
     };
 
     let uploadedPhotoUrl;
@@ -156,10 +151,10 @@ exports.postBlog = async (req, res) => {
       }
     };
 
-    const blog = new Blogs({ title, description, photo:uploadedPhotoUrl});
+    const blog = new Blogs({ title, description, photo: uploadedPhotoUrl });
     await blog.save()
 
-    res.status(201).json({message:"Blog posted successfully.", blog })
+    res.status(201).json({ message: "Blog posted successfully.", blog })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })
@@ -174,16 +169,16 @@ exports.deleteBlog = async (req, res) => {
 
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-        return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
     };
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
     };
 
     await Blogs.findByIdAndDelete(blogId);
-    res.status(200).json({message:"Blog deleted successfully." })
+    res.status(200).json({ message: "Blog deleted successfully." })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })
