@@ -102,13 +102,11 @@ exports.createSchool = async (req, res) => {
       return res.status(404).json({ message: 'Access denied, only admins have access to create school.' });
     };
 
-    let uploadedLogoUrl, uploadedBannerUrl;
     let logo, banner;
 
     if (req.files && req.files.logo) {
       try {
         const [logoUrl] = await uploadImage(req.files.logo);
-        uploadedLogoUrl = logoUrl;
         logo = logoUrl;
       } catch (error) {
         return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
@@ -118,7 +116,6 @@ exports.createSchool = async (req, res) => {
     if (req.files && req.files.banner) {
       try {
         const [bannerUrl] = await uploadImage(req.files.banner);
-        uploadedBannerUrl = bannerUrl;
         banner = bannerUrl;
       } catch (error) {
         return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });

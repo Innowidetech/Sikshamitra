@@ -1318,7 +1318,7 @@ exports.getStudyMaterial = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'Student not found.' });
             }
-            if (!student.userId.isActive) {
+            if (student.userId.isActive == 'false') {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get data." })
             }
             schoolId = student.schoolId;
@@ -1532,7 +1532,7 @@ exports.getExams = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'No student found with logged-in id.' });
             }
-            if (!student.userId.isActive) {
+            if (student.userId.isActive == 'false') {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
             schoolId = student.schoolId;
@@ -1928,7 +1928,7 @@ exports.getResults = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
-            if (!student.userId.isActive) {
+            if (student.userId.isActive == 'false') {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
 
@@ -2021,7 +2021,7 @@ exports.getResultById = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
-            if (!student.userId.isActive) {
+            if (student.userId.isActive == 'false') {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
             banner = student.schoolId.schoolBanner;

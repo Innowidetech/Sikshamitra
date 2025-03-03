@@ -19,30 +19,27 @@ const opts = {
 };
 
 exports.uploadImage = async (files) => {
-    try {
-        if (!Array.isArray(files)) {
-            files = [files];
-          }
-      const uploadedFiles = await Promise.all(
-        files.map((file) => 
-          new Promise((resolve, reject) => {
-            const isPdf = file.mimetype === 'application/pdf';
-                    const uploadOptions = {
-                        ...opts,
-                        resource_type: isPdf ? "raw" : "auto",
-                    };
-            cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-              if (result && result.secure_url) {
-                return resolve(result.secure_url);
-              }
-              return reject(new Error(error.message));
-            })
-            .end(file.buffer);
-          })
-        )
-      );  
-      return uploadedFiles;
-    } catch (error) {
-      throw new Error(error.message);
+  try {
+    if (!Array.isArray(files)) {
+      files = [files];
     }
-  };
+    const uploadedFiles = await Promise.all(
+      files.map((file) =>
+        new Promise((resolve, reject) => {
+          const isPdf = file.mimetype === 'application/pdf';
+          const uploadOptions = {...opts, resource_type: isPdf ? "raw" : "auto" };
+          cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+            if (result && result.secure_url) {
+              return resolve(result.secure_url);
+            }
+            return reject(new Error(error.message));
+          })
+            .end(file.buffer);
+        })
+      )
+    );
+    return uploadedFiles;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};

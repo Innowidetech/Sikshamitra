@@ -70,7 +70,7 @@ exports.logout = async(req,res)=>{
     
     addRevokedToken(token);
     
-    res.status(200).json({ message: 'Logout successful' }); 
+    res.status(200).json({ message: 'Logout successful.' }); 
   }
   catch (error) {
     res.status(500).json({ message: 'Logout failed', error: error.message });
@@ -133,7 +133,6 @@ exports.resetPassword = async(req,res)=>{
       res.status(500).json({ message: 'Error resetting password.', error: err.message });
     }
 };
-
 
 
 // exports.register=async(req,res)=>{
