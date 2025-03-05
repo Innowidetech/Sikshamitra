@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import Header from "./layout/Header";
+import Header from "./layout/Header"; // Ensure this is correctly exported
 import { Search } from "lucide-react";
+
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setSelectedStudent } from '../../redux/parent/pkidsSlice';
 import { Pie } from 'react-chartjs-2';
@@ -32,7 +33,7 @@ function ParentDashboard() {
     return <div>Error: {error}</div>;
   }
 
-  // Example data for the pie chart
+  // Example data for the pie chart (could be dynamic based on the student's data)
   const pieData = {
     labels: ['Present', 'Absent', 'Late'],
     datasets: [
@@ -78,66 +79,66 @@ function ParentDashboard() {
           className="ml-4 px-4 py-2 rounded-lg w-36 bg-[#D8E7F5]"
         >
           <option value="">Select a student</option>
-          <option value="student1">Student 1</option>
-          <option value="student2">Student 2</option>
+          {profile?.students?.map((student) => (
+            <option key={student.id} value={student.id}>
+              {student.name}
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Main Content Section: Left Box (Pie Chart & 4 Boxes) */}
-      <div className="flex justify-start my-6 bg-white shadow-lg rounded-lg p-6 w-1/2 ">
-  {/* Left Side: Pie Chart */}
-  <div className="flex justify-center items-center w-1/4 h-full">
-    <Pie
-      data={pieData}
-      options={{
-        responsive: true,
-        plugins: {
-          tooltip: {
-            enabled: true,
-          },
-        },
-        maintainAspectRatio: false,
-        aspectRatio: 1, // Makes the pie chart circular
-        height: 150, // Set the height of the pie chart
-        width: 150,  // Set the width of the pie chart
-      }}
-    />
-  </div>
+      <div className="flex justify-start my-6 bg-white shadow-lg rounded-lg p-6 w-full md:w-3/4 lg:w-1/2">
+        {/* Left Side: Pie Chart */}
+        <div className="flex justify-center items-center w-full sm:w-1/4 h-full">
+          <Pie
+            data={pieData}
+            options={{
+              responsive: true,
+              plugins: {
+                tooltip: {
+                  enabled: true,
+                },
+              },
+              maintainAspectRatio: false,
+              aspectRatio: 1, // Keeps the pie chart circular
+            }}
+          />
+        </div>
 
-  {/* Right Side: 4 Boxes */}
-  <div className="w-3/4 flex flex-col gap-6">
-    {/* First row: Box 1 and Box 2 */}
-    <div className="flex gap-6">
-      {/* Box 1 */}
-      <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
-        <h3 className="text-lg font-semibold text-[#1982C4]">Box 1</h3>
-        <p className="mt-4 text-sm text-gray-600">Content for box 1</p>
+        {/* Right Side: 4 Boxes */}
+        <div className="w-full sm:w-3/4 flex flex-col gap-6">
+          {/* First row: Box 1 and Box 2 */}
+          <div className="flex gap-6">
+            {/* Box 1 */}
+            <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
+              <h3 className="text-lg font-semibold text-[#1982C4]">Box 1</h3>
+              <p className="mt-4 text-sm text-gray-600">Content for box 1</p>
+            </div>
+
+            {/* Box 2 */}
+            <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
+              <h3 className="text-lg font-semibold text-[#1982C4]">Box 2</h3>
+              <p className="mt-4 text-sm text-gray-600">Content for box 2</p>
+            </div>
+          </div>
+
+          {/* Second row: Box 3 and Box 4 */}
+          <div className="flex gap-6">
+            {/* Box 3 */}
+            <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
+              <h3 className="text-lg font-semibold text-[#1982C4]">Box 3</h3>
+              <p className="mt-4 text-sm text-gray-600">Content for box 3</p>
+            </div>
+
+            {/* Box 4 */}
+            <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
+              <h3 className="text-lg font-semibold text-[#1982C4]">Box 4</h3>
+              <p className="mt-4 text-sm text-gray-600">Content for box 4</p>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Box 2 */}
-      <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
-        <h3 className="text-lg font-semibold text-[#1982C4]">Box 2</h3>
-        <p className="mt-4 text-sm text-gray-600">Content for box 2</p>
-      </div>
-    </div>
-
-    {/* Second row: Box 3 and Box 4 */}
-    <div className="flex gap-6">
-      {/* Box 3 */}
-      <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
-        <h3 className="text-lg font-semibold text-[#1982C4]">Box 3</h3>
-        <p className="mt-4 text-sm text-gray-600">Content for box 3</p>
-      </div>
-
-      {/* Box 4 */}
-      <div className="w-1/2 bg-[#D8E7F5] p-4 rounded-lg shadow-md h-32">
-        <h3 className="text-lg font-semibold text-[#1982C4]">Box 4</h3>
-        <p className="mt-4 text-sm text-gray-600">Content for box 4</p>
-      </div>
-    </div>
-  </div>
-</div>
-
     </>
   );
 }
