@@ -1,59 +1,46 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// Async thunks for API calls
+// Initial state
+const initialState = {
+  attendance: [], // Will store attendance data per month
+  notices: [],
+  loading: false,
+  error: null,
+};
+
+// Async action to fetch attendance data for a specific month and year
 export const fetchAttendance = createAsyncThunk(
   'studentDashboard/fetchAttendance',
-  async () => {
-    const token = localStorage.getItem('token'); 
-    const response = await fetch('https://sikshamitra.onrender.com/api/student/attendance', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch attendance data');
+  async ({ month, year }) => {
+    try {
+      const response = await axios.get('https://sikshamitra.onrender.com/api/student/attendance', {
+        params: {
+          month: month, // Pass month to API
+          year: year,   // Pass year to API
+        },
+      });
+      
+      // Assuming API response structure
+      return response.data.attendance; // Make sure 'attendance' exists in the response body
+    } catch (error) {
+      throw new Error('Error fetching attendance data');
     }
-    
-    const data = await response.json();
-    return data;
   }
 );
 
+// Async action to fetch notices
 export const fetchNotices = createAsyncThunk(
   'studentDashboard/fetchNotices',
   async () => {
-    const token = localStorage.getItem('token'); 
-    const response = await fetch('https://sikshamitra.onrender.com/api/student/notice', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch notices');
+    try {
+      const response = await axios.get('https://sikshamitra.onrender.com/api/student/notices');
+      return response.data;
+    } catch (error) {
+      throw new Error('Error fetching notices');
     }
-
-    const data = await response.json();
-    return data;
   }
 );
-
-const initialState = {
-  attendance: {
-    overall: 0,
-    monthly: [],
-    loading: false,
-    error: null
-  },
-  notices: {
-    data: [],
-    loading: false,
-    error: null
-  }
-};
 
 const studentDashboardSlice = createSlice({
   name: 'studentDashboard',
@@ -61,32 +48,31 @@ const studentDashboardSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Attendance cases
       .addCase(fetchAttendance.pending, (state) => {
-        state.attendance.loading = true;
-        state.attendance.error = null;
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchAttendance.fulfilled, (state, action) => {
-        state.attendance.loading = false;
-        state.attendance.overall = action.payload.overall;
-        state.attendance.monthly = action.payload.monthly;
+        state.loading = false;
+        state.attendance = action.payload; // Store the attendance data
       })
       .addCase(fetchAttendance.rejected, (state, action) => {
-        state.attendance.loading = false;
-        state.attendance.error = action.error.message;
-      })
-      // Notice cases
+        state.loading = false;
+        state.error = action.error.message;
+      });
+
+    builder
       .addCase(fetchNotices.pending, (state) => {
-        state.notices.loading = true;
-        state.notices.error = null;
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchNotices.fulfilled, (state, action) => {
-        state.notices.loading = false;
-        state.notices.data = action.payload;
+        state.loading = false;
+        state.notices = action.payload;
       })
       .addCase(fetchNotices.rejected, (state, action) => {
-        state.notices.loading = false;
-        state.notices.error = action.error.message;
+        state.loading = false;
+        state.error = action.error.message;
       });
   },
 });
