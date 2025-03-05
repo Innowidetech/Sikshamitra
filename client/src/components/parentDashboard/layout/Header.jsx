@@ -33,7 +33,7 @@ const Header = () => {
   };
 
   return (
-    <div className="bg-white p-4 flex md:justify-between items-center py-16">
+    <div className="bg-white p-4 flex md:justify-between items-center">
       <div className="md:flex items-center justify-between w-full">
         <div className="md:hidden -mx-6">
           <button
