@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import Header from "./layout/Header";
 import { Search } from "lucide-react";
-import Calendar from '../adminDashboard/Calendar';
+// import Calendar from '../adminDashboard/Calendar';
 import { GraduationCap, SplitSquareVertical, UserCheck, User, Phone } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData, setSelectedStudent } from '../../redux/parent/pkidsSlice';
@@ -260,7 +260,7 @@ function ParentDashboard() {
             )}
           </div>
           <div>
-            <Calendar />
+            
           </div>
         </div>
       </div>
