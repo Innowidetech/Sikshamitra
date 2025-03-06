@@ -93,6 +93,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
+        
+        
 
         {/* Protected Routes */}
         <Route
@@ -130,6 +132,7 @@ function App() {
 
         {/* Catch all route - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
+        
       </Routes>
       
       {!isNoNavbarFooter && <Footer />}

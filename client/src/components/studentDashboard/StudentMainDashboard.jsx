@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import StudentSidebar from './layout/StudentSidebar';
 import StudentDashboard from './StudentDashboard';
 import Results from './Results';
@@ -8,11 +9,32 @@ import StudyMaterial from './StudyMaterial';
 import Syllabus from './Syllabus';
 import Exams from './Exams';
 import AdmitCard from './AdmitCard';
+import StudentHeader from './layout/Header';
+import StudentProfile from './StudentProfile';
+
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    const renderContent = () => {
+      useEffect(() => {
+            if (location.pathname === '/student') {
+                setActiveTab('dashboard');
+            }
+        }, [location.pathname]);
+    
+        const handleTabChange = (tabId) => {
+            setActiveTab(tabId);
+            if (location.pathname === '/student/profile') {
+                navigate('/student');
+            }
+        };
+
+        const renderContent = () => {
+            if (location.pathname === '/student/profile') {
+                return <StudentProfile />;
+            }
         switch (activeTab) {
             case 'dashboard':
                 return <StudentDashboard />;
@@ -36,10 +58,16 @@ const MainDashboard = () => {
     };
 
     return (
-        <div className="flex min-h-screen">
-        <StudentSidebar setActiveSection={setActiveTab} activeTab={activeTab} />
-        <main className="flex-1 overflow-y-auto ml-64">
-            {renderContent()}
+        <div className="flex min-h-screen bg-gray-50">
+        <StudentSidebar 
+            setActiveSection={handleTabChange} 
+            activeTab={activeTab}
+        />
+        <main className="flex-1 md:ml-64 overflow-y-auto">
+            <StudentHeader  />
+            <div className="mt-20 md:mt-16">
+                {renderContent()}
+            </div>
         </main>
     </div>
     );

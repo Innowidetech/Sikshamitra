@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Search } from 'lucide-react';
-import Header from './layout/Header';
+// import Header from './layout/Header';
 import { fetchAttendance, fetchNotices } from '../../redux/student/studashboardSlice';
 
 const StudentDashboard = () => {
@@ -48,7 +48,7 @@ const StudentDashboard = () => {
             className="pl-10 pr-4 py-2 rounded-full bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#1982C4]/20 md:w-40 lg:w-64 shadow-[4px_4px_8px_rgba(0,0,0,0.15)]"
           />
         </div>
-        <Header />
+        {/* <Header /> */}
       </div>
 
       {/* Attendance Section */}
