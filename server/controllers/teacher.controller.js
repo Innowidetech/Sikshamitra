@@ -1147,23 +1147,22 @@ exports.getSyllabus = async (req, res) => {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
             return res.status(401).json({ message: 'Unauthorized, only logged-in users can access this.' });
-        };
+        }
 
         const loggedInUser = await User.findById(loggedInId);
         if (!loggedInUser) {
             return res.status(404).json({ message: 'User not found.' });
-        };
+        }
 
-        let syllabus;
+        let syllabus = [];
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId })
+            const school = await School.findOne({ createdBy: loggedInId });
             if (!school) {
-                return res.status(404).json({ message: "Admin is not associated with any school." })
+                return res.status(404).json({ message: "Admin is not associated with any school." });
             }
             syllabus = await Syllabus.find({ schoolId: school._id });
-        }
-        else {
+        } else {
             let schoolId, className, section;
 
             if (loggedInUser.role === 'teacher') {
@@ -1176,7 +1175,6 @@ exports.getSyllabus = async (req, res) => {
                 section = teacher.profile.section;
 
                 syllabus = await Syllabus.findOne({ schoolId, class: className, section });
-
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
                 if (!student) {
@@ -1187,7 +1185,6 @@ exports.getSyllabus = async (req, res) => {
                 section = student.studentProfile.section;
 
                 syllabus = await Syllabus.findOne({ schoolId, class: className, section });
-
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
                 if (!parent) {
@@ -1205,20 +1202,27 @@ exports.getSyllabus = async (req, res) => {
                         section: student.studentProfile.section,
                     }).sort({ createdAt: -1 });
 
-                    childSyllabus = childSyllabus.concat(syllabuss);
-                    syllabus = childSyllabus
+                    if (syllabuss) {
+                        childSyllabus = childSyllabus.concat(syllabuss);
+                    }
                 }
+                syllabus = childSyllabus;
             }
         }
-        if (!syllabus || syllabus.length === 0) {
-            return res.status(404).json({ message: 'No syllabus found.' });
-        };
-        res.status(200).json({
+
+        syllabus = syllabus.filter(item => item !== null);
+
+        if (syllabus.length === 0) {
+            return res.status(404).json({ message: 'No syllabus yet.' });
+        }
+
+        return res.status(200).json({
             message: 'Syllabus fetched successfully.',
             syllabus,
         });
     } catch (err) {
-        res.status(500).json({
+        console.error(err);
+        return res.status(500).json({
             message: 'Internal server error.',
             error: err.message,
         });
