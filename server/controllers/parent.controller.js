@@ -19,7 +19,7 @@ const razorpay = new Razorpay({
 
 exports.editParentProfile = async (req, res) => {
   try {
-    const { updatedData } = req.body;
+    const updatedData = req.body;
     if (!updatedData) {
       return res.status(400).json({ message: 'No new data provided to update.' })
     };
