@@ -1,270 +1,274 @@
-import React, { useEffect } from "react";
-import Header from "./layout/Header";
-import { Search } from "lucide-react";
-// import Calendar from '../adminDashboard/Calendar';
-import { GraduationCap, SplitSquareVertical, UserCheck, User, Phone } from "lucide-react";
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboardData, setSelectedStudent } from '../../redux/parent/pkidsSlice';
+import { fetchParentDetails, fetchCalendar } from '../../redux/parent/parentdashboardSlice';
+import Header from './layout/Header';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import Calendar from './Calendar';
+
+// Register chart elements for Pie chart
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 function ParentDashboard() {
   const dispatch = useDispatch();
-  const { profile, selectedStudent, status, error } = useSelector((state) => state.pkids);
+  const { parent, students, calendar, loading, error } = useSelector((state) => state.parent);
+
+  const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.studentId || null); // Default to first student
+  const [selectedStudentData, setSelectedStudentData] = useState(students[0] || null);
 
   useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchDashboardData());
+    // Fetch both parent details and calendar events when component mounts
+    dispatch(fetchParentDetails());
+    dispatch(fetchCalendar());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedStudentId) {
+      const studentData = students.find((student) => student.studentId === selectedStudentId);
+      setSelectedStudentData(studentData);
     }
-  }, [status, dispatch]);
+  }, [selectedStudentId, students]);
 
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, options);
+  const handleStudentChange = (e) => {
+    setSelectedStudentId(e.target.value); // Update selected student by ID
   };
 
-  const handleStudentChange = (studentData) => {
-    dispatch(setSelectedStudent(studentData));
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  const pieData = {
+    datasets: [
+      {
+        data: [
+          selectedStudentData?.counts?.Present || 0,
+          selectedStudentData?.counts?.Absent || 0,
+          selectedStudentData?.counts?.Holiday || 0,
+        ],
+        backgroundColor: ['#4CAF50', '#F44336', '#FFC107'],
+        borderColor: '#fff',
+        borderWidth: 2,
+      },
+    ],
   };
 
-  if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
-
-  if (status === 'failed') {
-    return <div>Error: {error}</div>;
-  }
-
-  const circumference = 100;
-  const percentage = selectedStudent?.sumOfPresentAndLatePercentage || 0;
-  const dashLength = (parseFloat(percentage) / 100) * circumference;
+  const handleCalendarEventAdded = () => {
+    dispatch(fetchCalendar());
+  };
 
   return (
-    <>
-      <div className="flex justify-between items-center mx-8 overflow-x-hidden">
-        <div className="flex justify-between items-center py-6 px-8">
-          <h1 className="text-xl font-bold text-[#1982C4] xl:text-[36px]" style={{ fontFamily: "Poppins" }}>
-            Dashboard
-          </h1>
-        </div>
-        <div className="relative flex items-center space-x-6">
-          <Search className="absolute left-10 top-1/2 transform -translate-y-1/2 text-[#146192] w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search here..."
-            className="pl-10 pr-4 py-2 rounded-full bg-white border-none focus:outline-none focus:ring-2 focus:ring-[#1982C4]/20 md:w-40 lg:w-64 shadow-[4px_4px_8px_rgba(0,0,0,0.15)]"
-          />
-        </div>
-        <div>
-          <Header />
-        </div>
+    <div>
+      <Header />
+
+      {/* Dropdown to select student */}
+      <div className="flex justify-start items-center mx-8 mt-6">
+        <label htmlFor="student-dropdown" className="text-lg font-semibold text-[#121313]">
+          Select Student:
+        </label>
+        <select
+          id="student-dropdown"
+          value={selectedStudentId}
+          onChange={handleStudentChange}
+          className="ml-4 px-4 py-2 rounded-lg w-48 bg-[#D8E7F5]"
+        >
+          {students.map((student) => (
+            <option key={student.studentId} value={student.studentId}>
+              {student.student.studentProfile.fullname}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Student Images Section */}
-      <div className="flex justify-center gap-6 mb-8 mx-8">
-        {profile?.students?.map((studentData) => (
-          <div
-            key={studentData.studentId}
-            onClick={() => handleStudentChange(studentData)}
-            className={`relative cursor-pointer group transition-all duration-300`}
-          >
-            <div className={`relative w-24 h-24 rounded-full overflow-hidden border-4 transition-all duration-300 ${
-              selectedStudent?.studentId === studentData.studentId
-                ? 'border-[#1982C4] scale-110 shadow-lg'
-                : 'border-transparent hover:border-[#1982C4]/50'
-            }`}>
-              <img
-                src={studentData.student.studentProfile.photo}
-                alt={`${studentData.student.studentProfile.firstName} ${studentData.student.studentProfile.lastName}`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className={`mt-2 text-center transition-all duration-300 ${
-              selectedStudent?.studentId === studentData.studentId
-                ? 'text-[#1982C4] font-semibold'
-                : 'text-gray-600'
-            }`}>
-              <p className="text-sm">{studentData.student.studentProfile.firstName}</p>
-              <p className="text-sm">{studentData.student.studentProfile.lastName}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="md:flex md:justify-between md:mx-8 px-8 overflow-x-hidden md:gap-4">
-        <div className="grid">
-          <div className="grid space-y-6 mb-6 xl:w-[600px]">
-            {/* Attendance Report Card */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="lg:flex items-start gap-8">
-                <div className="relative w-32 h-32 mb-4 lg:mb-0">
-                  <svg className="w-full h-full" viewBox="0 0 36 36">
-                    <path
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#E8F3F9"
-                      strokeWidth="3"
+      {/* Main content */}
+      <div className="flex mx-8 mt-6">
+        {/* Left side: Attendance and Notices */}
+        <div className="w-1/2">
+          {selectedStudentData && (
+            <div className="attendance-section border rounded-md shadow-lg p-5">
+              <h2 className="text-xl font-semibold">{selectedStudentData.student.studentProfile.fullname}'s Attendance</h2>
+              <div className="flex gap-4 mb-4">
+                {/* Donut Chart */}
+                <div className="w-1/3 flex justify-center items-center">
+                  <div className="relative w-32 h-32">
+                    <Pie
+                      data={pieData}
+                      options={{
+                        responsive: true,
+                        plugins: {
+                          tooltip: {
+                            enabled: true,
+                          },
+                        },
+                        maintainAspectRatio: false,
+                        aspectRatio: 1,
+                        cutout: '70%',
+                      }}
                     />
-                    <path
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#1982C4"
-                      strokeWidth="3"
-                      strokeDasharray={`${dashLength}, ${circumference}`}
-                    />
-                  </svg>
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                    <span className="text-2xl font-bold text-[#1982C4]">
-                      {selectedStudent?.sumOfPresentAndLatePercentage || '0'}%
-                    </span>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-white">
+                      Attendance
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 grid grid-cols-3 gap-4">
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Total days</span>
+
+                {/* Attendance data */}
+                <div className="w-2/3">
+                  <div className="flex gap-4 mb-4">
+                    <div className="w-1/2 bg-white rounded-lg shadow-lg p-4 text-center">
+                      <h3 className="text-xs font-bold">Total Days</h3>
+                      <p className="text-2xl font-bold text-[#5FE33E]">{selectedStudentData.totalDays}</p>
                     </div>
-                    <span className="text-2xl font-medium text-[#5FE33E]">
-                      {selectedStudent?.totalDays || 0}
-                    </span>
+                    <div className="w-1/2 bg-white rounded-lg shadow-lg p-4 text-center">
+                      <h3 className="text-xs font-bold">Present</h3>
+                      <p className="text-2xl font-bold text-[#5FE33E]">{selectedStudentData.counts.Present}</p>
+                    </div>
                   </div>
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Absent days</span>
+                  <div className="flex gap-4">
+                    <div className="w-1/2 bg-white rounded-lg shadow-lg p-4 text-center">
+                      <h3 className="text-xs font-bold">Absent</h3>
+                      <p className="text-2xl font-bold text-[#5FE33E]">{selectedStudentData.counts.Absent}</p>
                     </div>
-                    <span className="text-2xl font-medium text-[#EC6767]">
-                      {selectedStudent?.counts?.Absent || 0}
-                    </span>
-                  </div>
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Present days</span>
+                    <div className="w-1/2 bg-white rounded-lg shadow-lg p-4 text-center">
+                      <h3 className="text-xs font-bold">Holiday</h3>
+                      <p className="text-2xl font-bold text-[#5FE33E]">{selectedStudentData.counts.Holiday}</p>
                     </div>
-                    <span className="text-2xl font-medium text-[#5DD9D4]">
-                      {selectedStudent?.counts?.Present || 0}
-                    </span>
-                  </div>
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Sick Leave</span>
-                    </div>
-                    <span className="text-2xl font-medium text-[#37778f]">
-                      {selectedStudent?.counts?.Sickleave || 0}
-                    </span>
-                  </div>
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Late</span>
-                    </div>
-                    <span className="text-2xl font-medium text-[#FF05C8]">
-                      {selectedStudent?.counts?.Late || 0}
-                    </span>
-                  </div>
-                  <div className="p-1 lg:p-2 border rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs lg:text-sm">Holiday</span>
-                    </div>
-                    <span className="text-2xl font-medium text-[#f0b968f4]">
-                      {selectedStudent?.counts?.Holiday || 0}
-                    </span>
                   </div>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Notices Section */}
-            <div className="space-y-4 border shadow-lg rounded-md p-4">
-              <h1 className="xl:text-[20px] font-medium" style={{ fontFamily: 'Poppins' }}>Notices</h1>
-              {selectedStudent?.notices?.length > 0 ? (
-                selectedStudent.notices.map((notice) => (
-                  <div
-                    key={notice._id}
-                    className="border-b border-gray-500 rounded-sm p-4 hover:shadow-md transition-shadow xl:w-[500px]"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-gray-800">{notice.title}</h3>
-                      <span className="text-sm text-gray-500">
-                        {formatDate(notice.date)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{notice.noticeMessage}</p>
-                    <p className="text-xs text-gray-500 italic">{notice.createdByText}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No notices available at the moment
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          {/* Notices section below Attendance */}
+          <div className="notices-section mt-6 border rounded-md shadow-lg p-5">
+            <h2 className="text-xl font-semibold mb-4">Notices</h2>
+            {selectedStudentData?.notices?.length > 0 ? (
+              selectedStudentData.notices.map((notice, index) => {
+                const bgColors = [
+                  "bg-[#14619259]",
+                  "bg-[#FF9F1C80]",
+                  "bg-[#14619259]",
+                ];
 
-        <div className="grid xl:w-[450px]">
-          <div className="border mb-6 rounded-md p-4">
-            {selectedStudent && (
-              <div className="space-y-4">
-                <div className="grid items-center justify-center">
-                  <img
-                    src={selectedStudent.student.studentProfile.photo}
-                    alt={`${selectedStudent.student.studentProfile.firstName} ${selectedStudent.student.studentProfile.lastName}`}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <div>
-                    <h2 className="text-xl font-semibold text-center">
-                      {selectedStudent.student.studentProfile.firstName} {selectedStudent.student.studentProfile.lastName}
-                    </h2>
+                const bgColor = bgColors[index % bgColors.length];
+
+                return (
+                  <div key={notice._id} className={`${bgColor} p-4 mb-4 rounded-lg shadow-lg`}>
+                    <h3 className="font-bold text-center text-lg">{notice.title}</h3>
+                    <p className="text-semibold text-[#000000] text-center">{notice.createdByText}</p>
+                    <p className=" mt-2 text-center text-base">{notice.noticeMessage}</p>
+                    <p className="text-xs text-[#000000]  mt-2">{new Date(notice.date).toLocaleDateString()}</p>
                   </div>
-                </div>
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-[#1982C4]" />
-                      <p className="text-sm text-gray-600">Class</p>
-                    </div>
-                    <p className="font-medium">{selectedStudent.student.studentProfile.class || '-'}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <SplitSquareVertical className="w-5 h-5 text-[#1982C4]" />
-                      <p className="text-sm text-gray-600">Section</p>
-                    </div>
-                    <p className="font-medium">{selectedStudent.student.studentProfile.section || '-'}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5 text-[#1982C4]" />
-                      <p className="text-sm text-gray-600">Attendance</p>
-                    </div>
-                    <p className="font-medium">{selectedStudent.percentages?.Present || '0'}%</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <User className="w-5 h-5 text-[#1982C4]" />
-                      <p className="text-sm text-gray-600">Parent Name</p>
-                    </div>
-                    <p className="font-medium">{profile?.parentData?.parentProfile?.fatherName || '-'}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-5 h-5 text-[#1982C4]" />
-                      <p className="text-sm text-gray-600">Parent Number</p>
-                    </div>
-                    <p className="font-medium">{profile?.parentData?.parentProfile?.fatherPhoneNumber || '-'}</p>
-                  </div>
-                </div>
-              </div>
+                );
+              })
+            ) : (
+              <p>No notices available.</p>
             )}
           </div>
-          <div>
-            
+        </div>
+
+        {/* Right side: Student Details */}
+        <div className="w-1/2 pl-6">
+          <div className="bg-white rounded-lg shadow mb-5">
+            <Calendar
+              events={calendar || []}
+              onEventAdded={handleCalendarEventAdded}
+            />
           </div>
+          {selectedStudentData && (
+            <div className="bg-white border shadow-md p-7 rounded-lg">
+              {/* Profile Section */}
+              <div className="flex flex-col items-center mb-4">
+                <img
+                  src={selectedStudentData.student.studentProfile.photo}
+                  alt="Student"
+                  className="w-32 h-32 rounded-full mb-4"
+                />
+                <h2 className="text-xl font-semibold">
+                  {selectedStudentData.student.studentProfile.fullname}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {selectedStudentData.student.studentProfile.class} - {selectedStudentData.student.studentProfile.section}
+                </p>
+              </div>
+
+              {/* Personal details in an unordered list format */}
+              <div className="bg-gradient-to-r from-[#bad8ec] to-[#f8e3b7] shadow-lg rounded-lg p-6 border border-[#DBDBDB]">
+              <h1 className='text-lg text-[#146192] font-bold  underline'>Personal Details</h1>
+
+                <ul className="list-none">
+                  <li className="flex justify-between py-1">
+                    <span className=" text-[#146192]">Name:</span>
+                    <span>{selectedStudentData.student.studentProfile.fullname}</span>
+                  </li>
+
+                  <li className="flex justify-between py-1">
+  <span className="text-[#146192]">Email:</span>
+  <span>{selectedStudentData?.student?.userId?.email}</span>
+</li>
+
+
+                  <li className="flex justify-between py-1">
+                    <span className=" text-[#146192]">Date of Birth:</span>
+                    <span>{new Date(selectedStudentData.student.studentProfile.dob).toLocaleDateString()}</span>
+                  </li>
+
+                  <li className="flex justify-between py-1">
+                    <span className=" text-[#146192]">Address:</span>
+                    <span>{selectedStudentData.student.studentProfile.address}</span>
+                  </li>
+
+                  <li className="flex justify-between py-1">
+                    <span className=" text-[#146192] ">Phone:</span>
+                    <span>{selectedStudentData.student.studentProfile.registrationphone}</span>
+                  </li>
+
+                  <li className="flex justify-between py-1">
+                    <span className=" text-[#146192]" >Gender:</span>
+                    <span>{selectedStudentData.student.studentProfile.gender}</span>
+                  </li>
+
+                  
+
+                  {/* Previous Education */}
+                  <li className="mb-4">
+                    <span className=" font-bold text-lg  underline text-[#146192]">Previous Education:</span>
+                    <div>
+                      {selectedStudentData.student.studentProfile.previousEducation.length > 0 ? (
+                        selectedStudentData.student.studentProfile.previousEducation.map((edu, index) => (
+                          <div key={edu._id} className="mb-2">
+                            <ul>
+                              <li className="flex justify-between py-1">
+                                <span className='text-[#146192]'>School Name:{edu.schoolName || "N/A"}</span>
+                              </li>
+                              <li className="flex justify-between py-1">
+                                <span className='text-[#146192]'>Duration:{edu.duration || "N/A"}</span>
+                              </li>
+                            </ul>
+                          </div>
+                        ))
+                      ) : (
+                        <p>No previous education details available.</p>
+                      )}
+                    </div>
+                  </li>
+
+                  {/* About section */}
+                  <span className=" font-bold text-lg  underline text-[#146192]">Students Details:</span>
+                  <li className=" flex justify-between py-1">
+                    <span className="text-[#146192]">Registration Number:</span>
+                    <p>{selectedStudentData.student.studentProfile.registrationNumber}</p>
+                  </li>
+                  <li className=" flex justify-between py-1">
+                    <span className="text-[#146192]">Joining Date:</span>
+                    <p>{selectedStudentData.student.studentProfile.joiningDate}</p>
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
+
   );
 }
 

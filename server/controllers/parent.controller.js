@@ -19,7 +19,7 @@ const razorpay = new Razorpay({
 
 exports.editParentProfile = async (req, res) => {
   try {
-    const { updatedData } = req.body;
+    const updatedData = req.body;
     if (!updatedData) {
       return res.status(400).json({ message: 'No new data provided to update.' })
     };
@@ -220,7 +220,7 @@ exports.payFees = async (req, res) => {
     const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
     if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
-    const student = await Student.findOne({ 'studentProfile.fullname': studentName, schoolId: parent.schoolId });
+    const student = await Student.findOne({ 'studentProfile.fullname': studentName, schoolId: parent.schoolId, 'studentProfile.childOf':loggedInId });
     if (!student) {
       return res.status(404).json({ message: "No child found with the provided name." });
     }

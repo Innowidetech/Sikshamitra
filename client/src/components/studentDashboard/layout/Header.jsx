@@ -1,126 +1,98 @@
-import React, { useState } from 'react';
-import { Bell, Settings, UserCircle } from 'lucide-react';
-import { FaBars } from 'react-icons/fa'; 
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { Bell, Settings, UserCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../../../redux/authSlice';
 
-const Header = () => {
-  const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [mobileMenuVisible, setMobileMenuVisible] = useState(false); 
-  const [userDropdownVisible, setUserDropdownVisible] = useState(false); 
+const StudentHeader = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user, token } = useSelector((state) => state.auth); // Assuming token and user are in state.auth
 
+  // Handle logout
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log("No token found for logout.");
-        return;
-      }
-
-      await axios.post('https://sikshamitra.onrender.com/api/auth/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-      navigate('/login');
+      await dispatch(logoutUser()).unwrap();
+      navigate('/login', { replace: true });
     } catch (error) {
-      console.log("Logout failed:", error);
+      console.error('Logout failed:', error);
     }
   };
 
+  // Navigate to student profile page
+  const handleProfileClick = () => {
+    navigate('/student/profile');
+  };
+
+  // Check if the token is present and redirect to login if not
+  useEffect(() => {
+    if (!token) {
+      navigate('/login', { replace: true });
+    }
+  }, [token, navigate]);
+
   return (
-    <div className="bg-white p-4 flex md:justify-between items-center py-16">
-      <div className="md:flex items-center justify-between w-full">
-        <div className="md:hidden -mx-6">
-          <button
-            onClick={() => setMobileMenuVisible(!mobileMenuVisible)} 
-            className="p-2 text-[#1982C4] text-xl">
-            <FaBars />
-          </button>
+    <header className="text-gray-800 p-4 flex justify-between items-center flex-wrap md:flex-nowrap fixed top-0 left-0 right-0 z-20 opacity-100 md:backdrop-blur-xl">
+      {/* Mobile: Logo */}
+      <div className="md:hidden flex items-center ml-8">
+        <img
+          src="/Assets/logo.png"
+          alt="Logo"
+          className="h-6"
+          onClick={() => navigate('/student')}
+        />
+      </div>
+
+      {/* Left Side for Desktop (Search Bar) */}
+      <div className="hidden md:flex items-center bg-[#1982C4]/10 p-3 rounded-3xl w-1/3 mb-4 md:mb-0 ml-64">
+        <Search className="text-[#1982C4] mr-2 h-5 w-5" />
+        <input
+          type="text"
+          placeholder="Search..."
+          className="bg-transparent border-none outline-none text-gray-600 placeholder-gray-600 w-full"
+        />
+      </div>
+
+      {/* Right Side: Actions */}
+      <div className="flex items-center space-x-4">
+        {/* Mobile: Search Icon */}
+        <div className="md:hidden">
+          <Search className="text-[#1982C4] h-5 w-5" />
         </div>
 
-        {/* For Desktop View */}
-        <div className="hidden md:flex items-center z-50 md:h-24">
-          <div className="p-2 cursor-pointer">
-          </div>
-          <div className="p-2 cursor-pointer">
-            <div className="relative inline-flex items-center justify-center bg-[#1982C4]/10 rounded-full p-2 xl:p-4">
-              <Settings className="text-[#1982C4]" />
+        {/* Profile Button - Both Mobile and Desktop */}
+        <div className="relative group">
+          <button 
+            onClick={handleProfileClick}
+            className="flex items-center space-x-2 bg-[#1982C4]/10 px-4 py-2 rounded-full hover:bg-[#1982C4]/20 transition-colors"
+          >
+            <UserCircle className="text-[#1982C4] h-5 w-5" />
+            <span className="text-[#1982C4] hidden md:inline">
+              {user?.fullname || 'User'} {/* Show user name */}
+            </span>
+          </button>
+
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all">
+            <div className="py-1">
+              <button
+                onClick={handleProfileClick}
+                className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+              >
+                Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
+              >
+                Logout
+              </button>
             </div>
-          </div>
-          <div className="relative p-2 cursor-pointer" onClick={() => setDropdownVisible(!dropdownVisible)}>
-            <div className="relative inline-flex items-center justify-center bg-[#1982C4]/10 rounded-full p-2 xl:p-4">
-              <UserCircle className="text-[#1982C4]" />
-            </div>
-            {dropdownVisible && (
-              <div className="absolute top-18 right-0 w-40 bg-white shadow-md rounded-lg border border-[#1982C4]/20">
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="w-full py-2 text-left px-4 text-[#303972] rounded-t-lg hover:bg-[#f0f0f0]"
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full py-2 text-left px-4 text-[#E40046] hover:bg-[#f0f0f0] rounded-b-lg"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
-
-      {/* Mobile Dropdown Menu */}
-      {mobileMenuVisible && (
-      <div className="md:hidden absolute top-28 right-0 w-[200px] bg-white shadow-md rounded-lg border border-[#1982C4]/20">
-          <div className="flex flex-col">
-            <button
-              onClick={() => alert('Notifications clicked')}
-              className="w-full py-2 text-left px-4 text-[#303972] hover:bg-[#f0f0f0]"
-            >
-              <Bell className="mr-2 inline" /> Notifications
-            </button>
-            <button
-              onClick={() => alert('Settings clicked')}
-              className="w-full py-2 text-left px-4 text-[#303972] hover:bg-[#f0f0f0]"
-            >
-              <Settings className="mr-2 inline" /> Settings
-            </button>
-            <button
-              onClick={() => setUserDropdownVisible(!userDropdownVisible)} 
-              className="w-full py-2 text-left px-4 text-[#303972] hover:bg-[#f0f0f0]"
-            >
-              <UserCircle className="mr-2 inline" /> User
-            </button>
-
-            {/* User Dropdown Menu when clicked */}
-            {userDropdownVisible && (
-              <div className="ml-8 mt-2 bg-white shadow-md rounded-lg border border-[#1982C4]/20">
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="w-full py-2 text-left px-4 text-[#303972] rounded-t-lg hover:bg-[#f0f0f0]"
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full py-2 text-left px-4 text-[#E40046] hover:bg-[#f0f0f0] rounded-b-lg"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    </header>
   );
-}
+};
 
-export default Header;
+export default StudentHeader;

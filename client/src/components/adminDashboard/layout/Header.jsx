@@ -1,95 +1,87 @@
-import React,{useState,useEffect} from 'react';
-import { Bell, Settings, UserCircle, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '../../../redux/authSlice';
+import React, { useState } from 'react';
+import { UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Importing useNavigate from react-router-dom
 
 const Header = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { user,token } = useSelector((state) => state.auth);
+  const [dropdownVisible, setDropdownVisible] = useState(false); // To manage dropdown visibility
+  const navigate = useNavigate(); // Initialize the navigate function
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser()).unwrap();
-      navigate('/login', { replace: true });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  // Toggle the visibility of the dropdown
+  const handleDropdownToggle = () => {
+    setDropdownVisible(!dropdownVisible);
   };
 
+  // Navigate to the Profile page when the Profile button is clicked
   const handleProfileClick = () => {
-    navigate('/admin/profile');
+    navigate('/profile'); // This will navigate to /profile
+    setDropdownVisible(false); // Close the dropdown after clicking Profile
   };
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/login', { replace: true });
-    }
-  }, [token, navigate]);
-
+  // Optionally, you could add a logout function here
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // Remove token from localStorage
+    navigate('/login'); // Navigate to login page after logout
+  };
 
   return (
-    <header className="text-gray-800 p-4 flex justify-between items-center flex-wrap md:flex-nowrap fixed top-0 left-0 right-0 z-20 opacity-100 md:backdrop-blur-xl ">
-      {/* Mobile: Logo */}
-      <div className="md:hidden flex items-center ml-8">
-        <img
-          src="/Assets/logo.png" 
-          alt="Logo"
-          className="h-6"
-          onClick={() => navigate('/admin')}
-        />
-      </div>
-
-      {/* Left Side for Desktop (Search Bar) */}
-      <div className="hidden md:flex items-center bg-[#1982C4]/10 p-3 rounded-3xl w-1/3 mb-4 md:mb-0 ml-64">
-        <Search className="text-[#1982C4] mr-2 h-5 w-5" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="bg-transparent border-none outline-none text-gray-600 placeholder-gray-600 w-full"
-        />
-      </div>
-
-      {/* Right Side: Actions */}
-      <div className="flex items-center space-x-4">
-        {/* Mobile: Search Icon */}
-        <div className="md:hidden">
-          <Search className="text-[#1982C4] h-5 w-5" />
+    <div className="bg-white p-4 flex md:justify-between items-center py-16">
+      <div className="md:flex items-center justify-between w-full">
+        <div className="md:hidden -mx-6">
+          <button
+            onClick={() => setDropdownVisible(!dropdownVisible)} // Toggle dropdown visibility on mobile
+            className="p-2 text-[#1982C4] text-xl"
+          >
+            <UserCircle />
+          </button>
         </div>
 
-        {/* Profile Button - Both Mobile and Desktop */}
-        <div className="relative group">
-          <button 
-            onClick={handleProfileClick}
-            className="flex items-center space-x-2 bg-[#1982C4]/10 px-4 py-2 rounded-full hover:bg-[#1982C4]/20 transition-colors"
-          >
-            <UserCircle className="text-[#1982C4] h-5 w-5" />
-            <span className="text-[#1982C4] hidden md:inline">
-              {user?.fullname || 'User'}
-            </span>
-          </button>
-
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all">
-            <div className="py-1">
-              <button
-                onClick={handleProfileClick}
-                className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
-              >
-                Profile
-              </button>
-              <button
-                onClick={handleLogout}
-                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
-              >
-                Logout
-              </button>
+        {/* For Desktop View */}
+        <div className="hidden md:flex items-center z-50 md:h-24">
+          <div className="relative p-2 cursor-pointer" onClick={handleDropdownToggle}>
+            <div className="relative inline-flex items-center justify-center bg-[#1982C4]/10 rounded-full p-2 xl:p-4">
+              <UserCircle className="text-[#1982C4]" />
             </div>
+            {/* Dropdown menu */}
+            {dropdownVisible && (
+              <div className="absolute top-18 right-0 w-40 bg-white shadow-md rounded-lg border border-[#1982C4]/20">
+                <button
+                  onClick={handleProfileClick} // Navigate to profile
+                  className="w-full py-2 text-left px-4 text-[#303972] rounded-t-lg hover:bg-[#f0f0f0]"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={handleLogout} // Logout function
+                  className="w-full py-2 text-left px-4 text-[#E40046] hover:bg-[#f0f0f0] rounded-b-lg"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </header>
+
+      {/* Optional Mobile Dropdown */}
+      {dropdownVisible && (
+        <div className="md:hidden absolute top-28 right-0 w-[200px] bg-white shadow-md rounded-lg border border-[#1982C4]/20">
+          <div className="flex flex-col">
+            <button
+              onClick={handleProfileClick} // Navigate to profile
+              className="w-full py-2 text-left px-4 text-[#303972] hover:bg-[#f0f0f0]"
+            >
+              Profile
+            </button>
+            <button
+              onClick={handleLogout} // Logout function
+              className="w-full py-2 text-left px-4 text-[#E40046] hover:bg-[#f0f0f0]"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

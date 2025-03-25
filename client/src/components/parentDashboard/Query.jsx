@@ -1,34 +1,12 @@
 import React from 'react';
 import Header from './layout/Header';
+import contactImage from "../../assets/contact.png";
 import { MessageCircle, User } from 'lucide-react';
 
 function Query() {
-  const testimonials = [
-    {
-      id: 1,
-      name: "Erik Runbeck",
-      role: "Admin",
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    },
-    {
-      id: 2,
-      name: "Erik Runbeck",
-      role: "Student",
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    },
-    {
-      id: 3,
-      name: "Erik Runbeck",
-      role: "Student",
-      content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      avatar: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    }
-  ];
-
   return (
     <div className='min-h-screen'>
+      {/* Header Section */}
       <div className="flex justify-between items-center mx-8 pt-6">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Queries</h1>
@@ -39,108 +17,92 @@ function Query() {
           </h1>
         </div>
         <div>
-          <Header/>
+          <Header />
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left Section - Testimonials */}
-          <div className="space-y-8">
-            <h2 className="text-3xl xl:text-4xl font-bold text-[#146192] mb-8">
-              Make Your Doubts Clear !
-            </h2>
-            
-            <div className="space-y-6">
-              {testimonials.map((testimonial) => (
-                <div 
-                  key={testimonial.id}
-                  className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <img 
-                      src={testimonial.avatar} 
-                      alt={testimonial.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h3 className="font-medium text-gray-900">{testimonial.name}</h3>
-                      <p className="text-sm text-gray-500">{testimonial.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600">{testimonial.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Main Content Section */}
+      <div className="flex justify-between mx-8 mt-8">
+        {/* Left Side - Query Related Text and Form */}
+        <div className="w-2/3 pr-8">
+          <h2 className="text-xl font-semibold text-[#146192] mb-4">Have a question or query?</h2>
+          <p className="text-lg text-gray-700 mb-4">
+            Please feel free to reach out to us. Fill out the form below and we'll get back to you as soon as possible.
+          </p>
+          {/* Query Form */}
+          <form className="space-y-4">
+  {/* Parent Name and Parent Mobile Number */}
+  <div className="flex items-center space-x-4">
+    <div className="w-1/2">
+      <label className="block text-sm font-semibold text-[#146192]" htmlFor="parentName">Parent Name</label>
+      <input
+        type="text"
+        id="parentName"
+        className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
+        placeholder="Enter parent name"
+      />
+    </div>
+    <div className="w-1/2">
+      <label className="block text-sm font-semibold text-[#146192]" htmlFor="parentMobile">Parent Mobile No</label>
+      <input
+        type="tel"
+        id="parentMobile"
+        className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
+        placeholder="Enter parent mobile number"
+      />
+    </div>
+  </div>
 
-          {/* Right Section - Query Form */}
-          <div className="bg-white rounded-xl shadow-xl p-8 max-w-2xl mx-auto">
-            <div className="">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Help us to get know you!
-              </h2>
-              
-              <form className="space-y-6">
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="fullName"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#146192] focus:border-[#146192]"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                </div>
+  {/* Student Name and Query Message */}
+  <div className=" items-center space-x-4 mt-4">
+    <div className="w-1/1">
+      <label className="block text-sm font-semibold text-[#146192]" htmlFor="studentName">Student Name</label>
+      <input
+        type="text"
+        id="studentName"
+        className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
+        placeholder="Enter student name"
+      />
+    </div>
+    <div className="w-1/1">
+      <label className="block text-sm font-semibold text-[#146192]" htmlFor="queryMessage">Your Query</label>
+      <textarea
+        id="queryMessage"
+        rows="4"
+        className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
+        placeholder="Enter your query here"
+      ></textarea>
+    </div>
+  </div>
 
-                <div>
-                  <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Student Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="studentName"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#146192] focus:border-[#146192]"
-                      placeholder="Enter student name"
-                    />
-                  </div>
-                </div>
+  {/* Submit Button */}
+  <div className="flex items-center justify-center mt-4">
+    <button
+      type="submit"
+      className="px-6 py-2 bg-[#146192] text-white rounded-md hover:bg-[#0a4e6f]"
+    >
+      Submit Query
+    </button>
+  </div>
+</form>
 
-                <div>
-                  <label htmlFor="queryDetails" className="block text-sm font-medium text-gray-700 mb-1">
-                    Query details
-                  </label>
-                  <div className="relative">
-                    <div className="absolute top-3 left-3 pointer-events-none">
-                      <MessageCircle className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <textarea
-                      id="queryDetails"
-                      rows={4}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-[#146192] focus:border-[#146192]"
-                      placeholder="Enter your query details"
-                    />
-                  </div>
-                </div>
+        </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-[#146192] text-white py-2 px-4 rounded-md hover:bg-[#0f4d74] transition-colors duration-200"
-                >
-                  Submit
-                </button>
-              </form>
-            </div>
+        {/* Right Side - Image and Contact Information */}
+        <div className="w-1/2">
+          <img
+             src={contactImage}  // Use the imported image // Placeholder image, replace with your own
+            alt="Query image"
+            className="w-full h-auto rounded-lg mb-4"
+          />
+          <div>
+            <h3 className="text-lg font-semibold text-[#146192] mb-2">Contact Information</h3>
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>Location:</strong> 1234 Main Street, City, Country
+            </p>
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>Email:</strong> support@example.com
+            </p>
           </div>
         </div>
       </div>
