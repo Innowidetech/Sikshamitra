@@ -28,8 +28,7 @@
   }
 
 
-
-  /* Hide scrollbar while keeping scrollable */
+/* Hide scrollbar while keeping scrollable */
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
@@ -37,11 +36,39 @@
 .scrollbar-hidden {
   -ms-overflow-style: none;  /* For Internet Explorer 10+ */
   scrollbar-width: none;  /* For Firefox */
-<<<<<<< HEAD
 }
 
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari */
+}
 
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+  scrollbar-width: none;  /* Hide scrollbar for Firefox */
+}
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-section,
+  .print-section * {
+    visibility: visible;
+  }
+  .print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  @page {
+    size: auto;
+    margin: 20mm;
+  }
+}
+
+/* Additional styles for the form */
 @media (max-width: 768px) { 
   .form-container {
     display: flex;
@@ -61,15 +88,12 @@
   }
 }
 
-
-
-
-/* Style for the profile box (right side) */
+/* Profile box styles */
 .profile-box {
-  width: 400px; /* Adjust the width for the profile box */
-  height: auto; /* Adjust the height to be dynamic */
-  background-color: #f8f9fa; /* Light background color */
-  border-radius: 10px; /* Rounded corners */
+  width: 400px; 
+  height: auto;
+  background-color: #f8f9fa;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,46 +103,24 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Style for the profile image container */
 .profile-image-container {
-  width: 150px;  /* You can adjust this value as needed */
-  height: 150px; /* You can adjust this value as needed */
-  display: flex; /* Use flexbox to center the content */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
+  width: 150px;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 10px;
 }
 
-
-/* Style for the profile image */
 .profile-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Make sure the image covers the area */
+  object-fit: cover;
 }
 
-/* Style for the profile name */
 .profile-name h2 {
   text-align: center;
   font-size: 18px;
   color: #285A87;
   font-weight: bold;
 }
-
-
-
-
-=======
-}    
-
-
-/* Hide scrollbar but keep scrolling */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome, Safari */
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
-  scrollbar-width: none;  /* Hide scrollbar for Firefox */
-}
->>>>>>> be8d826470830be9dc42fb9dceb9945211e24ebd
