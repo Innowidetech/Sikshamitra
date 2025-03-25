@@ -11,6 +11,8 @@ import dashboardReducer from './dashboard';
 import adminProfileReducer from './adminprofile';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
+import studentProfileReducer from './student/studentProfileSlice';
+import examSliceReducer from './student/examSlice';
 
 
 const store = configureStore({
@@ -27,6 +29,8 @@ const store = configureStore({
     adminProfile: adminProfileReducer,
     auth: authReducer,
     adminFees: adminFeesReducer,
+    studentProfile: studentProfileReducer,
+    exam: examSliceReducer,
   },
 });
 
