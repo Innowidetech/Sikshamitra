@@ -37,6 +37,7 @@
 .scrollbar-hidden {
   -ms-overflow-style: none;  /* For Internet Explorer 10+ */
   scrollbar-width: none;  /* For Firefox */
+<<<<<<< HEAD
 }
 
 
@@ -107,3 +108,17 @@
 
 
 
+=======
+}    
+
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari */
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+  scrollbar-width: none;  /* Hide scrollbar for Firefox */
+}
+>>>>>>> be8d826470830be9dc42fb9dceb9945211e24ebd

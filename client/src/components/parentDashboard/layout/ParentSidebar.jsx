@@ -12,7 +12,7 @@ const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'kids', icon: GiBodySwapping, label: 'Kids' },
   { id: 'results', icon: FaClipboardList, label: 'Results' },
-  { id: 'annualresult', icon: FaClipboardList, label: 'Annual Result' },
+  // { id: 'annualresult', icon: FaClipboardList, label: 'Annual Result' },
   { id: 'expenses', icon: GoChecklist, label: 'Expenses' },
   { id: 'curriculam', icon: Library, label: 'Curriculam' },
   { id: 'exams', icon: HiMiniUserGroup, label: 'Exams' },
@@ -57,21 +57,21 @@ const ParentSidebar = ({ setActiveSection, activeTab }) => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+        <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`flex items-center space-x-4 xl:py-4 w-full md:px-6 p-3 rounded-l-3xl mb-2 transition-colors duration-200
+                className={`flex items-center w-full space-x-4 p-3 rounded-lg mb-2 transition-all duration-200
                   ${activeTabState === item.id
-                    ? 'bg-white text-[#1982C4]'  
-                    : 'hover:bg-white/50'        
+                    ? 'bg-white text-[#FF9F1C] shadow-md'
+                    : 'hover:bg-white/10'
                   }`}
               >
-                <Icon size={20} />
-                <span className="hidden sm:inline xl:text-md" style={{fontFamily:'Poppins'}}>{item.label}</span>
+                <Icon size={20} className="min-w-[20px]" />
+                <span className="text-lg" style={{ fontFamily: 'Poppins' }}>{item.label}</span>
               </button>
             );
           })}
