@@ -11,7 +11,8 @@ import dashboardReducer from './dashboard';
 import adminProfileReducer from './adminprofile';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
-
+import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
+import feesReducer from './parent/feesSlice';
 
 const store = configureStore({
   reducer: {
@@ -21,12 +22,14 @@ const store = configureStore({
     admissions: admissionsReducer,
     pkids: pkidsReducer,
     ParentResults: resultsReducer,
-    exams:examReducer,
+    exams: examReducer,
     studentDashboard: studentDashboardReducer,
     dashboard: dashboardReducer,
     adminProfile: adminProfileReducer,
     auth: authReducer,
     adminFees: adminFeesReducer,
+    parent: parentdashboardReducer, // Add parentdashboardReducer here
+    fees : feesReducer
   },
 });
 

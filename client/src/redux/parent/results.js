@@ -1,15 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-export const fetchStudentResults = createAsyncThunk(
-  'parent/fetchStudentResults',
-  async ({ classParam, section, examType, studentName }) => {
+// Fetch children (students) of the logged-in parent
+export const fetchChildren = createAsyncThunk(
+  'parent/fetchChildren',
+  async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       throw new Error('No token found');
     }
 
-    // URL parameters reordered to match class/section/examtype/studentname
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -17,10 +17,35 @@ export const fetchStudentResults = createAsyncThunk(
     };
 
     try {
-      const response = await axios.get(
-        `https://sikshamitra.onrender.com/api/parent/results/${classParam}/${section}/${examType}/${encodeURIComponent(studentName)}`,
-        config
-      );
+      const response = await axios.get('https://sikshamitra.onrender.com/api/parent/children', config);
+      return response.data.children;  // Ensure we return just the children array
+    } catch (error) {
+      throw error.response?.data?.message || 'Failed to fetch children';
+    }
+  }
+);
+
+// Fetch student results (with optional resultId)
+export const fetchStudentResults = createAsyncThunk(
+  'parent/fetchStudentResults',
+  async ({ studentId, resultId }) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    try {
+      let url = `https://sikshamitra.onrender.com/api/parent/results/${studentId}`;
+      if (resultId) {
+        url = `https://sikshamitra.onrender.com/api/parent/result/${studentId}/${resultId}`;
+      }
+      const response = await axios.get(url, config);
       return response.data;
     } catch (error) {
       throw error.response?.data?.message || 'Failed to fetch results';
@@ -29,6 +54,7 @@ export const fetchStudentResults = createAsyncThunk(
 );
 
 const initialState = {
+  children: [],
   results: {
     theory: [],
     labs: [],
@@ -50,6 +76,19 @@ const resultsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchChildren.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchChildren.fulfilled, (state, action) => {
+        state.loading = false;
+        state.children = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchChildren.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
       .addCase(fetchStudentResults.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -68,6 +107,7 @@ const resultsSlice = createSlice({
 
 export const { clearResults } = resultsSlice.actions;
 
+export const selectChildren = (state) => state.ParentResults.children;
 export const selectResults = (state) => state.ParentResults.results;
 export const selectResultsLoading = (state) => state.ParentResults.loading;
 export const selectResultsError = (state) => state.ParentResults.error;

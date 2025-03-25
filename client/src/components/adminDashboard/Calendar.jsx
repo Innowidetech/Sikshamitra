@@ -12,7 +12,7 @@ const Calendar = ({ events, onEventAdded }) => {
     description: '',
     date: '',
     displayTo: []
-  });
+  });                                                                                                                                                                                                                     
 
   // Get days in month
   const getDaysInMonth = (year, month) => {

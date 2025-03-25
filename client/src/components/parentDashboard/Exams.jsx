@@ -1,108 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchExams, clearExams } from '../../redux/parent/examSlice';
 import Header from './layout/Header';
-import { fetchExams } from '../../redux/parent/examSlice';
-import Calendar from '../adminDashboard/Calendar';
 
 function Exams() {
+  // State for dropdown selections
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedExamType, setSelectedExamType] = useState('');
+
+  // Redux state for exams
   const dispatch = useDispatch();
   const { examList, loading, error } = useSelector((state) => state.exams);
-  const [filter, setFilter] = useState('all');
-  
-  const studentClass = "8";
-  const studentSection = "c";
 
+  // Trigger fetchExams when component mounts
   useEffect(() => {
     dispatch(fetchExams());
+
+    // Clear exams when the component unmounts (optional)
+    return () => {
+      dispatch(clearExams());
+    };
   }, [dispatch]);
 
-  const getStudentExams = () => {
-    if (!examList?.exams || !Array.isArray(examList.exams)) return [];
-    
-    return examList.exams.filter(exam => 
-      exam.class === studentClass && 
-      exam.section === studentSection
+  // Filter exams based on dropdown selections
+  const filteredExams = examList.filter((exam) => {
+    return (
+      (selectedClass ? exam.class === selectedClass : true) && // Filter by selected class if any
+      (selectedExamType ? exam.examType === selectedExamType : true) // Filter by selected exam type if any
     );
+  });
+
+  // Function to download exam details as a CSV file
+  const downloadExamDetails = () => {
+    const headers = ['Date', 'Timing', 'Subject Name', 'Syllabus'];
+    const rows = filteredExams.flatMap((exam) =>
+      exam.exam.map((subject) => [
+        exam.fromDate,
+        exam.examDuration,
+        subject.subject,
+        subject.syllabus,
+      ])
+    );
+
+    // Create a CSV string
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.join(',')),
+    ].join('\n');
+
+    // Create a Blob and download it as a CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      // Create a download link and trigger the download
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'exam_details.csv');
+      link.click();
+    }
   };
-
-  const getCurrentExam = () => {
-    const studentExams = getStudentExams();
-    if (studentExams.length === 0) return null;
-
-    const currentDate = new Date();
-    let currentExam = null;
-    let earliestDate = new Date('9999-12-31');
-
-    studentExams.forEach(exam => {
-      if (exam.schedule && Array.isArray(exam.schedule)) {
-        exam.schedule.forEach(schedule => {
-          const scheduleDate = new Date(schedule.date);
-          if (scheduleDate >= currentDate && scheduleDate < earliestDate) {
-            earliestDate = scheduleDate;
-            currentExam = {
-              ...exam,
-              currentSchedule: exam.schedule
-            };
-          }
-        });
-      }
-    });
-
-    return currentExam;
-  };
-
-  const getExamTypeSummaries = () => {
-    const studentExams = getStudentExams();
-    const examTypeSummaries = [];
-    const colors = [
-      { bg: 'rgba(77, 193, 82, 0.6)', text: '#2D7331' },  
-      { bg: 'rgba(246, 173, 43, 0.6)', text: '#8B5E0F' }, 
-      { bg: 'rgba(246, 43, 43, 0.6)', text: '#8B1717' }   
-    ];
-    const currentDate = new Date();
-    
-    const examsByType = studentExams.reduce((acc, exam) => {
-      if (!acc[exam.examType]) {
-        acc[exam.examType] = [];
-      }
-      
-      const futureSchedules = exam.schedule.filter(s => new Date(s.date) >= currentDate);
-      if (futureSchedules.length > 0) {
-        acc[exam.examType].push({
-          ...exam,
-          schedule: futureSchedules
-        });
-      }
-      
-      return acc;
-    }, {});
-
-    Object.entries(examsByType).forEach(([examType, exams], index) => {
-      if (exams.length > 0) {
-        const allDates = exams.flatMap(exam => 
-          exam.schedule.map(s => new Date(s.date))
-        ).sort((a, b) => a - b);
-
-        if (allDates.length > 0) {
-          examTypeSummaries.push({
-            examType,
-            startDate: allDates[0],
-            endDate: allDates[allDates.length - 1],
-            duration: exams[0].duration,
-            colors: colors[index % colors.length]
-          });
-        }
-      }
-    });
-
-    return examTypeSummaries.sort((a, b) => a.startDate - b.startDate);
-  };
-
-  const currentExam = getCurrentExam();
-  const examTypeSummaries = getExamTypeSummaries();
-
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
 
   return (
     <div className="min-h-screen">
@@ -119,101 +75,117 @@ function Exams() {
           <Header />
         </div>
 
-        <div className="mt-8 grid lg:grid-cols-2 gap-6">
-          {/* Current Exam Timetable */}
-          <div className="w-full">
-            <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                  Current Exam TimeTable - {currentExam?.examType}
-                </h2>
-                <div className="overflow-x-auto -mx-6">
-                  <div className="inline-block min-w-full align-middle">
-                    <table className="min-w-full divide-y divide-gray-200" style={{fontFamily:'Poppins'}}>
-                      <thead className="bg-[#285A87]">
-                        <tr>
-                          <th scope="col" className="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
-                            Date-Time
-                          </th>
-                          <th scope="col" className="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
-                            Subject
-                          </th>
-                          <th scope="col" className="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
-                            Subject Code
-                          </th>
-                          <th scope="col" className="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
-                            Syllabus
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {currentExam?.currentSchedule.map((schedule, index) => (
-                          <tr key={schedule._id || index}>
-                            <td className="py-3 px-4 whitespace-nowrap">
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium text-[#146192]">
-                                  {new Date(schedule.date).toLocaleDateString()}
-                                </span>
-                                <span className="text-sm text-[#146192] font-medium">{currentExam.duration}</span>
-                                <span className="text-xs text-[#146192] font-medium">{schedule.day}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-[#146192] font-medium">
-                              {schedule.subject}
-                            </td>
-                            <td className="py-3 px-4 whitespace-nowrap text-sm text-[#146192] font-medium">
-                              {schedule.subjectCode}
-                            </td>
-                            <td className="py-3 px-4 text-sm text-[#146192] font-medium">
-                              {schedule.syllabus}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+        {/* Upcoming Exams Section */}
+        <div className="mt-8 border border-gray-200 rounded-lg p-10 ml-3 mr-3 shadow-lg">
+          <h2 className="text-xl font-medium text-[#146192] mb-4">Upcoming Exams</h2>
+
+          {/* Container for the boxes */}
+          <div className="flex space-x-4">
+            {loading ? (
+              <p>Loading...</p>
+            ) : error ? (
+              <p>{error}</p>
+            ) : (
+              filteredExams.slice(0, 3).map((exam, index) => (
+                <div
+                  key={index}
+                  className={`flex-1 p-4 border shadow-lg ${exam.examType === 'Half Yearly' ? 'bg-[#FF9F1C63]' : exam.examType === 'Final Exam' ? 'bg-[#BF156C0D]' : 'bg-[#FF543E4D]'}`}
+                >
+                  <div className="flex justify-between mb-4">
+                    <p className="font-semibold">Exam Type:</p>
+                    <p>{exam.examType}</p>
+                  </div>
+                  <div className="flex justify-between mb-4">
+                    <p className="font-semibold">From Date:</p>
+                    <p>{new Date(exam.fromDate).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex justify-between mb-4">
+                    <p className="font-semibold">To Date:</p>
+                    <p>{new Date(exam.toDate).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex justify-between mb-4">
+                    <p className="font-semibold">Class:</p>
+                    <p>{exam.class} {exam.section}</p>
                   </div>
                 </div>
-              </div>
-            </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Dropdown Section (Placed After the 3 Boxes) */}
+        <div className="mt-8 flex gap-10 justify-start ml-3">
+          {/* Class Dropdown */}
+          <div>
+            <label htmlFor="class" className="text-lg font-medium text-[#146192]">Class:</label>
+            <select
+              id="class"
+              className="ml-2 p-2 border rounded-md"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+            >
+              <option value="">All Classes</option>
+              <option value="6">6th</option>
+              {/* Add other classes as needed */}
+            </select>
           </div>
 
-          {/* Calendar and Upcoming Exams */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <Calendar />
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6" style={{fontFamily:'Poppins'}}>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Upcoming Exams</h3>
-              </div>
-              
-              <div className="space-y-4">
-                {examTypeSummaries.map((examSummary, index) => (
-                  <div 
-                    key={index}
-                    className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200"
-                    style={{ 
-                      background: examSummary.colors.bg,
-                      color: examSummary.colors.text
-                    }}
-                  >
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <h4 className="font-medium text-black">{examSummary.examType}</h4>
-                        <p className="text-sm opacity-90 text-black">{examSummary.duration}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-medium text-black">
-                          {examSummary.startDate.toLocaleDateString()} - {examSummary.endDate.toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Exam Type Dropdown */}
+          <div>
+            <label htmlFor="examType" className="text-lg font-medium text-[#146192]">Exam Type:</label>
+            <select
+              id="examType"
+              className="ml-2 p-2 border rounded-md"
+              value={selectedExamType}
+              onChange={(e) => setSelectedExamType(e.target.value)}
+            >
+              <option value="">All Exam Types</option>
+              <option value="Half Yearly">Half Yearly</option>
+              <option value="Unit Test">Unit Test</option>
+              <option value="Final Exam">Final Exam</option>
+            </select>
           </div>
+        </div>
+
+        {/* Timetable Section */}
+        <div className="mt-8 border border-gray-200 rounded-lg p-6 shadow-lg">
+          <h2 className="text-xl font-medium text-[#146192] mb-4">Timetable</h2>
+          {filteredExams.length > 0 ? (
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2">Date</th>
+                  <th className="border px-4 py-2">Timing</th>
+                  <th className="border px-4 py-2">Subject Name</th>
+                  <th className="border px-4 py-2">Syllabus</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredExams.flatMap((exam) =>
+                  exam.exam.map((subject, index) => (
+                    <tr key={index}>
+                      <td className="border px-4 py-2">{new Date(subject.date).toLocaleDateString()}</td>
+                      <td className="border px-4 py-2">{exam.examDuration}</td>
+                      <td className="border px-4 py-2">{subject.subject}</td>
+                      <td className="border px-4 py-2">{subject.syllabus}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <p>No exams found based on your selection.</p>
+          )}
+        </div>
+
+        {/* Download Button */}
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={downloadExamDetails}
+            className="px-6 py-2 bg-[#146192] text-white rounded-md hover:bg-[#0a4e6f]"
+          >
+            Download Exam Details
+          </button>
         </div>
       </div>
     </div>
