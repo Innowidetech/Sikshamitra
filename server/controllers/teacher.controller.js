@@ -945,8 +945,8 @@ exports.getTimetable = async (req, res) => {
             classTimetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
             classTimetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
         }
-        if (!teacherTimetable) { res.status(200).json({ message: "No timetable found, please create." }) }
-        if (!classTimetable) { res.status(200).json({ message: 'No timetable found for the class.' }) }
+        if (!teacherTimetable && !classTimetable) { return res.status(200).json({ message: "No timetable found, please create." }) }
+        if (!classTimetable) { return res.status(200).json({ message: 'No timetable found for the class.' }) }
 
         res.status(200).json({
             message: 'Timetable fetched successfully.',
