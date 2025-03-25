@@ -21,7 +21,7 @@ export const fetchTeachers = createAsyncThunk(
       }
       return response.data.teachers;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -94,7 +94,52 @@ export const addTeacherAsync = createAsyncThunk(
         }
       };
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const updateTeacherAsync = createAsyncThunk(
+  'teachers/updateTeacher',
+  async ({ teacherId, updateData }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('Authorization token is missing');
+      }
+
+      // Match the backend's expected structure
+      const payload = {
+        isActive: updateData.isActive,
+        fullname: updateData.profile.fullname,
+        phoneNumber: updateData.profile.phoneNumber,
+        gender: updateData.profile.gender,
+        employeeId: updateData.profile.employeeId,
+        class: updateData.profile.class,
+        section: updateData.profile.section,
+        subjects: updateData.profile.subjects,
+        salary: updateData.profile.salary
+      };
+
+      const response = await axios.post(
+        `https://sikshamitra.onrender.com/api/admin/teacher/${teacherId}`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.data.updatedTeacher) {
+        throw new Error('No updated teacher data received');
+      }
+
+      return response.data.updatedTeacher;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -112,8 +157,8 @@ const teachersSlice = createSlice({
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload;
       state.filteredTeachers = state.teachers.filter(teacher => {
-        const nameMatch = teacher.profile.firstName.toLowerCase().includes(state.searchQuery.toLowerCase());
-        const emailMatch = teacher.userId.email.toLowerCase().includes(state.searchQuery.toLowerCase());
+        const nameMatch = teacher.profile.firstName?.toLowerCase().includes(state.searchQuery.toLowerCase());
+        const emailMatch = teacher.userId.email?.toLowerCase().includes(state.searchQuery.toLowerCase());
         return nameMatch || emailMatch;
       });
     }
@@ -143,6 +188,22 @@ const teachersSlice = createSlice({
         state.filteredTeachers = state.teachers;
       })
       .addCase(addTeacherAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateTeacherAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateTeacherAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.teachers.findIndex(teacher => teacher._id === action.payload._id);
+        if (index !== -1) {
+          state.teachers[index] = action.payload;
+          state.filteredTeachers = [...state.teachers];
+        }
+      })
+      .addCase(updateTeacherAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

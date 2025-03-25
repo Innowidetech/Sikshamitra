@@ -60,7 +60,7 @@ const AdminSidebar = ({ setActiveSection, activeTab }) => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+        <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (

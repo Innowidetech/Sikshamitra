@@ -11,8 +11,18 @@ import dashboardReducer from './dashboard';
 import adminProfileReducer from './adminprofile';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
+import inventoryReducer from './adminInventory';
+import libraryReducer from './librarySlice';
+import adminClassesReducer from './adminClasses';
+import adminEmployeeReducer from './adminEmployee';
+import adminResultsReducer from './adminResults';
+import adminCurriculumReducer from './curriculum';
+import studentProfileReducer from './student/studentProfileSlice';
+import examSliceReducer from './student/examSlice';
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
+
+
 
 const store = configureStore({
   reducer: {
@@ -28,8 +38,17 @@ const store = configureStore({
     adminProfile: adminProfileReducer,
     auth: authReducer,
     adminFees: adminFeesReducer,
+    inventory: inventoryReducer,
+    library: libraryReducer,
+    adminClasses: adminClassesReducer,
+    adminEmployee: adminEmployeeReducer,
+    adminResults: adminResultsReducer,
+    adminCurriculum: adminCurriculumReducer,
+    studentProfile: studentProfileReducer,
+    exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer
+
   },
 });
 

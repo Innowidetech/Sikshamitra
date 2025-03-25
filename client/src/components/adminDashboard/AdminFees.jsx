@@ -201,22 +201,22 @@ function AdminFees() {
             <table className="min-w-full divide-y border-2">
               <thead className="" style={{ fontFamily: "Poppins" }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192] border-r">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                     Class
                   </th>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192] border-r">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                     Tution Fees
                   </th>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192] border-r">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                     Admission Fees
                   </th>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192] border-r">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                     Exam Fees
                   </th>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192] border-r">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                     Total Fees
                   </th>
-                  <th className="px-6 py-3 text-left text-lg font-medium text-[#146192]">
+                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192]">
                     Actions
                   </th>
                 </tr>
@@ -224,34 +224,34 @@ function AdminFees() {
               <tbody className="bg-white">
                 {displayFees.map((fee) => (
                   <tr key={fee._id}>
-                    <td className="px-6 py-4 whitespace-nowrap border-r">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap border-r">
                       {fee.class || fee.className}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap border-r">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap border-r">
                       ₹
                       {typeof fee.tutionFees === "number"
                         ? fee.tutionFees.toLocaleString()
                         : fee.tutionFees}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap border-r">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap border-r">
                       ₹
                       {typeof fee.admissionFees === "number"
                         ? fee.admissionFees.toLocaleString()
                         : fee.admissionFees}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap border-r">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap border-r">
                       ₹
                       {typeof fee.examFees === "number"
                         ? fee.examFees.toLocaleString()
                         : fee.examFees}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap border-r">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap border-r">
                       ₹
                       {typeof fee.totalFees === "number"
                         ? fee.totalFees.toLocaleString()
                         : fee.totalFees}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2  text-sm whitespace-nowrap">
                       <button
                         onClick={() => handleEdit(fee)}
                         className="text-[#146192] hover:text-[#0f4c7a]"

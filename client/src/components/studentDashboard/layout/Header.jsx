@@ -1,4 +1,4 @@
-import React,{useState,useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Settings, UserCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,8 +7,9 @@ import { logoutUser } from '../../../redux/authSlice';
 const StudentHeader = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user,token } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth); // Assuming token and user are in state.auth
 
+  // Handle logout
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser()).unwrap();
@@ -18,23 +19,24 @@ const StudentHeader = () => {
     }
   };
 
+  // Navigate to student profile page
   const handleProfileClick = () => {
     navigate('/student/profile');
   };
 
+  // Check if the token is present and redirect to login if not
   useEffect(() => {
     if (!token) {
       navigate('/login', { replace: true });
     }
   }, [token, navigate]);
 
-
   return (
-    <header className="text-gray-800 p-4 flex justify-between items-center flex-wrap md:flex-nowrap fixed top-0 left-0 right-0 z-20 opacity-100 md:backdrop-blur-xl ">
+    <header className="text-gray-800 p-4 flex justify-between items-center flex-wrap md:flex-nowrap fixed top-0 left-0 right-0 z-20 opacity-100 md:backdrop-blur-xl">
       {/* Mobile: Logo */}
       <div className="md:hidden flex items-center ml-8">
         <img
-          src="/Assets/logo.png" 
+          src="/Assets/logo.png"
           alt="Logo"
           className="h-6"
           onClick={() => navigate('/student')}
@@ -66,7 +68,7 @@ const StudentHeader = () => {
           >
             <UserCircle className="text-[#1982C4] h-5 w-5" />
             <span className="text-[#1982C4] hidden md:inline">
-              {user?.fullname || 'User'}
+              {user?.fullname || 'User'} {/* Show user name */}
             </span>
           </button>
 
