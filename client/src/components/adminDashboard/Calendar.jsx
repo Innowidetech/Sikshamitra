@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -24,6 +24,16 @@ const Calendar = ({ events, onEventAdded }) => {
     return new Date(year, month, 1).getDay();
   };
 
+  // Get events for a specific date
+  const getEventsForDate = (dateString) => {
+    if (!Array.isArray(events)) return [];
+    return events.filter(event => {
+      const eventDate = new Date(event.date);
+      const adjustedDateString = eventDate.toISOString().split('T')[0];
+      return adjustedDateString === dateString;
+    });
+  };
+
   // Generate calendar days
   const generateCalendarDays = () => {
     const year = currentDate.getFullYear();
@@ -41,23 +51,16 @@ const Calendar = ({ events, onEventAdded }) => {
     
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
+      // Create date at noon to avoid timezone issues
+      const date = new Date(year, month, day, 12, 0, 0);
       const dateString = date.toISOString().split('T')[0];
-      
-      // Check if this day has events
-      const hasEvent = events.some(event => {
-        const eventDate = new Date(event.date);
-        return (
-          eventDate.getDate() === day &&
-          eventDate.getMonth() === month &&
-          eventDate.getFullYear() === year
-        );
-      });
+      const dayEvents = getEventsForDate(dateString);
       
       days.push({
         day,
         date: dateString,
-        hasEvent,
+        hasEvent: dayEvents.length > 0,
+        events: dayEvents,
         isEmpty: false
       });
     }
@@ -75,10 +78,16 @@ const Calendar = ({ events, onEventAdded }) => {
 
   const handleDateClick = (date) => {
     if (date) {
-      setSelectedDate(date);
+      // Create date object at noon to avoid timezone issues
+      const selectedDate = new Date(date);
+      const exactDate = date; // Keep the exact date string for the form
+      
+      setSelectedDate(exactDate);
       setEventData({
-        ...eventData,
-        date: date
+        title: '',
+        description: '',
+        date: exactDate,
+        displayTo: []
       });
       setIsModalOpen(true);
     }
@@ -125,11 +134,9 @@ const Calendar = ({ events, onEventAdded }) => {
     const updatedDisplayTo = [...eventData.displayTo];
     
     if (updatedDisplayTo.includes(role)) {
-      // Remove role if already selected
       const index = updatedDisplayTo.indexOf(role);
       updatedDisplayTo.splice(index, 1);
     } else {
-      // Add role if not selected
       updatedDisplayTo.push(role);
     }
     
@@ -139,17 +146,9 @@ const Calendar = ({ events, onEventAdded }) => {
     });
   };
 
-  const getEventForDate = (dateString) => {
-    return events.find(event => {
-      const eventDate = new Date(event.date).toISOString().split('T')[0];
-      return eventDate === dateString;
-    });
-  };
-
   const formatEventTitles = (events) => {
     if (!events || events.length === 0) return '';
-    if (events.length === 1) return events[0].title;
-    return events.map(e => e.title).join(', ');
+    return events.map(event => event.title).join('\n');
   };
 
   return (
@@ -183,32 +182,30 @@ const Calendar = ({ events, onEventAdded }) => {
       </div>
       
       <div className="grid grid-cols-7 gap-1">
-        {generateCalendarDays().map((day, index) => {
-          const event = day.date ? getEventForDate(day.date) : null;
-          
-          return (
-            <div 
-              key={index} 
-              className={`
-                h-10 flex items-center justify-center relative
-                ${day.isEmpty ? 'text-gray-300' : 'cursor-pointer hover:bg-gray-100'}
-                ${day.hasEvent ? 'bg-blue-100' : ''}
-                ${selectedDate === day.date ? 'ring-2 ring-blue-500' : ''}
-                rounded-md
-              `}
-              onClick={() => !day.isEmpty && handleDateClick(day.date)}
-              title={event?.title || ''}
-            >
-              {day.day}
-              {day.hasEvent && (
-                <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-              )}
-            </div>
-          );
-        })}
+        {generateCalendarDays().map((day, index) => (
+          <div 
+            key={index} 
+            className={`
+              h-10 flex items-center justify-center relative
+              ${day.isEmpty ? 'text-gray-300' : 'cursor-pointer hover:bg-gray-100'}
+              ${day.hasEvent ? 'bg-blue-100' : ''}
+              ${selectedDate === day.date ? 'ring-2 ring-blue-500' : ''}
+              rounded-md
+            `}
+            onClick={() => !day.isEmpty && handleDateClick(day.date)}
+            title={day.events ? formatEventTitles(day.events) : ''}
+          >
+            {day.day}
+            {day.hasEvent && (
+              <div className="absolute bottom-1 flex gap-0.5 justify-center">
+                {day.events.slice(0, 3).map((_, i) => (
+                  <span key={i} className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-
-      
       
       {/* Event Creation Modal */}
       {isModalOpen && (

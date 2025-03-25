@@ -15,8 +15,35 @@ export const fetchStudents = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log(response.data.studentsWithTeachers)
       return response.data.studentsWithTeachers;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const updateStudentAsync = createAsyncThunk(
+  'students/updateStudent',
+  async ({ studentId, updateData }, { rejectWithValue, dispatch }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.post(
+        `https://sikshamitra.onrender.com/api/admin/student/${studentId}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Fetch updated students list after successful update
+      await dispatch(fetchStudents());
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -32,31 +59,26 @@ export const fetchStudentDetails = createAsyncThunk(
         return rejectWithValue('No token found.');
       }
 
-      // First try to find the student in the existing state
       const state = getState();
-      const existingStudent = state.students.filteredStudents.find(student => 
-        student._id === studentId || 
+      const existingStudent = state.students.filteredStudents.find(student =>
+        student._id === studentId ||
         student.parent?.parentOf?.some(child => child.student?._id === studentId)
       );
 
       if (existingStudent) {
-        // If found in state, use that data
         return existingStudent;
       }
 
-      // If not found in state, fetch from API
       const response = await axios.get(`https://sikshamitra.onrender.com/api/admin/student/${studentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log( response.data.studentData)
       return response.data.studentData;
     } catch (error) {
-      // If API fails, try to find student in existing state as fallback
       const state = getState();
-      const existingStudent = state.students.filteredStudents.find(student => 
-        student._id === studentId || 
+      const existingStudent = state.students.filteredStudents.find(student =>
+        student._id === studentId ||
         student.parent?.parentOf?.some(child => child.student?._id === studentId)
       );
 
@@ -83,11 +105,21 @@ const studentsSlice = createSlice({
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload;
       state.filteredStudents = state.students.filter(student => {
-        const firstName = student.studentProfile?.firstName?.toLowerCase() || '';
-        const lastName = student.studentProfile?.lastName?.toLowerCase() || '';
-        const searchTerm = action.payload.toLowerCase();
-        console.log('Filtered Students:', state.firstName);
-        return firstName.includes(searchTerm) || lastName.includes(searchTerm);
+        const parent = student.parent?.parentProfile;
+        const children = parent?.parentOf || [];
+
+        return children.some(child => {
+          const studentData = child?.student?.studentProfile;
+          if (!studentData) return false;
+
+          const searchTerm = action.payload.toLowerCase();
+          return (
+            studentData.fullname?.toLowerCase().includes(searchTerm) ||
+            studentData.registrationNumber?.toLowerCase().includes(searchTerm) ||
+            studentData.class?.toString().toLowerCase().includes(searchTerm) ||
+            studentData.section?.toLowerCase().includes(searchTerm)
+          );
+        });
       });
     },
     setSelectedStudent: (state, action) => {
@@ -119,6 +151,18 @@ const studentsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchStudentDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateStudentAsync.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateStudentAsync.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(updateStudentAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
