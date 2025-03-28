@@ -1175,6 +1175,7 @@ exports.getSyllabus = async (req, res) => {
                 section = teacher.profile.section;
 
                 syllabus = await Syllabus.findOne({ schoolId, class: className, section });
+                syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
                 if (!student) {
@@ -1185,6 +1186,7 @@ exports.getSyllabus = async (req, res) => {
                 section = student.studentProfile.section;
 
                 syllabus = await Syllabus.findOne({ schoolId, class: className, section });
+                syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
                 if (!parent) {
@@ -1210,6 +1212,7 @@ exports.getSyllabus = async (req, res) => {
             }
         }
 
+        syllabus = Array.isArray(syllabus) ? syllabus : [];
         syllabus = syllabus.filter(item => item !== null);
 
         if (syllabus.length === 0) {
