@@ -1505,18 +1505,7 @@ exports.getExams = async (req, res) => {
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
-            schoolId = school._id;
-            exams = await Exams.aggregate([
-                { $match: { schoolId } },
-                { $sort: { createdAt: -1 } },
-                {
-                    $group: {
-                        _id: { class: "$class", section: "$section" },
-                        latestExam: { $first: "$$ROOT" }
-                    }
-                },
-                { $replaceRoot: { newRoot: "$latestExam" } }
-            ]);
+            exams = await Exams.find({schoolId:school._id, toDate: { $gte: currentDate }}).sort({ toDate: 1 });
         }
         else if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1531,7 +1520,7 @@ exports.getExams = async (req, res) => {
                 class: className,
                 section: section,
                 toDate: { $gte: currentDate },
-            }).sort({ createdAt: -1 });
+            }).sort({ toDate: 1 });
         }
 
         else if (loggedInUser.role === 'student') {
@@ -1550,7 +1539,7 @@ exports.getExams = async (req, res) => {
                 class: className,
                 section: section,
                 toDate: { $gte: currentDate },
-            }).sort({ toDate: 1 }).limit(1);
+            }).sort({ toDate: 1 });
         }
 
         else if (loggedInUser.role === 'parent') {
