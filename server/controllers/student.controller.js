@@ -194,6 +194,7 @@ exports.getAdmitCard = async (req, res) => {
         };
 
         let admitCard, student;
+        const currentDate = new Date();
 
         if (loggedInUser.role === 'student') {
             student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner').populate('userId', 'isActive');
