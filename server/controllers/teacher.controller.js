@@ -1902,10 +1902,11 @@ exports.getResults = async (req, res) => {
             if (!result.length) { res.status(404).json({ message: "No results found" }) }
         }
         else if (loggedInUser.role === 'teacher') {
-            const teacher = await Teacher.findOne({ userId: loggedInId });
+            const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner');
             if (!teacher) {
                 return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
             };
+            banner = teacher.schoolId.schoolBanner;
             if (!teacher.profile.class || !teacher.profile.section) {
                 return res.status(404).json({ message: "You do not have access to get results." })
             }
@@ -1920,22 +1921,23 @@ exports.getResults = async (req, res) => {
             };
         }
         else if (loggedInUser.role === 'student') {
-            const student = await Student.findOne({ userId: loggedInId }).populate('schoolId').populate('userId', 'isActive')
+            const student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner').populate('userId', 'isActive')
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
             if (student.userId.isActive == 'false') {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
-
+            banner = student.schoolId.schoolBanner
             result = await Results.find({ student: student._id }).populate('student').populate('exam', 'examType fromDate toDate').sort({ createdAt: -1 })
             if (!result.length) { return res.status(404).json({ message: "No results yet." }) }
         }
         else if (loggedInUser.role === 'parent') {
-            const parent = await Parent.findOne({ userId: loggedInId });
+            const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner');
             if (!parent) {
                 return res.status(404).json({ message: 'No parent found with the logged-in ID.' });
             }
+            banner = parent.schoolId.schoolBanner
 
             const { studentName } = req.params;
             const students = await Student.find({ _id: { $in: parent.parentProfile.parentOf } });
@@ -1960,8 +1962,9 @@ exports.getResults = async (req, res) => {
 
         res.status(200).json({
             message: 'Results fetched successfully.',
-            result,
-            banner
+            banner,
+            result
+            
         });
     }
     catch (err) {
