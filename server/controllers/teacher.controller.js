@@ -1659,12 +1659,18 @@ exports.getClassPlan = async (req, res) => {
             if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
 
             classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: teacher.profile.class, section: teacher.profile.section })
+            if (!classPlan) {
+                return res.status(200).json({ message: "No class plan found for the class." });
+            }
         }
         else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId })
             if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
 
             classPlan = await ClassPlan.findOne({ schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section })
+            if (!classPlan) {
+                return res.status(200).json({ message: "No class plan found for the class." });
+            }
         }
         else if (loggedInUser.role === 'parent') {
             const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
@@ -1690,10 +1696,11 @@ exports.getClassPlan = async (req, res) => {
                     childClassPlans.push(childClassPlan);
                 }
             }
+            if (childClassPlans.length === 0) {
+                return res.status(200).json({ message: "No class plan found for any child." });
+            }
             classPlan = childClassPlans;
         }
-
-        if (!classPlan || !classPlan.length) { res.status(200).json({ message: "No class plan found for the class." }) }
 
         res.status(200).json({
             message: 'Class Plan fetched successfully.',
