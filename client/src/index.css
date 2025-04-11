@@ -135,3 +135,20 @@
   color: #285A87;
   font-weight: bold;
 }
+<<<<<<< HEAD
+=======
+
+ 
+
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari */
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+  scrollbar-width: none;  /* Hide scrollbar for Firefox */
+}
+
+>>>>>>> 8da7adf0ba6421deec68b9c659c641e2e7a432cb
