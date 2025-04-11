@@ -89,6 +89,8 @@ const initialState = {
   profile: null,
   attendance: [],
   notices: [],
+  calendar: [],
+  calendarByDate: null,
   loading: false,
   error: null,
 };
@@ -97,19 +99,14 @@ const initialState = {
 export const fetchProfile = createAsyncThunk(
   'studentDashboard/fetchProfile',
   async (_, { getState }) => {
-    // Get token from Redux state or localStorage
     const token = getState().auth.token || localStorage.getItem('token');
-    
-    // Make sure token exists
-    if (!token) {
-      throw new Error('No token found');
-    }
+    if (!token) throw new Error('No token found');
 
     const response = await fetch('https://sikshamitra.onrender.com/api/student/getProfile', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // Pass the token in the Authorization header
+        'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -118,24 +115,19 @@ export const fetchProfile = createAsyncThunk(
   }
 );
 
-// Fetch student attendance (optional month and year)
+// Fetch student attendance
 export const fetchAttendance = createAsyncThunk(
   'studentDashboard/fetchAttendance',
   async ({ month = '', year = '' }, { getState }) => {
-    // Get token from Redux state or localStorage
     const token = getState().auth.token || localStorage.getItem('token');
-    
-    // Make sure token exists
-    if (!token) {
-      throw new Error('No token found');
-    }
+    if (!token) throw new Error('No token found');
 
-    const url = `https://sikshamitra.onrender.com/api/student/attendance?month=${month}&year=${year}`;
+    const url = `https://sikshamitra.onrender.com/api/student/attendance`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // Pass the token in the Authorization header
+        'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -148,23 +140,59 @@ export const fetchAttendance = createAsyncThunk(
 export const fetchNotices = createAsyncThunk(
   'studentDashboard/fetchNotices',
   async (_, { getState }) => {
-    // Get token from Redux state or localStorage
     const token = getState().auth.token || localStorage.getItem('token');
-    
-    // Make sure token exists
-    if (!token) {
-      throw new Error('No token found');
-    }
+    if (!token) throw new Error('No token found');
 
     const response = await fetch('https://sikshamitra.onrender.com/api/student/notice', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // Pass the token in the Authorization header
+        'Authorization': `Bearer ${token}`,
       },
     });
 
     if (!response.ok) throw new Error('Failed to fetch notices');
+    const data = await response.json();
+    return data;
+  }
+);
+
+// Fetch full calendar
+export const fetchCalendar = createAsyncThunk(
+  'studentDashboard/fetchCalendar',
+  async (_, { getState }) => {
+    const token = getState().auth.token || localStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await fetch('https://sikshamitra.onrender.com/api/student/calendar', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch calendar');
+    return response.json();
+  }
+);
+
+// Fetch calendar by date
+export const fetchCalendarByDate = createAsyncThunk(
+  'studentDashboard/fetchCalendarByDate',
+  async (calendarDate, { getState }) => {
+    const token = getState().auth.token || localStorage.getItem('token');
+    if (!token) throw new Error('No token found');
+
+    const response = await fetch(`https://sikshamitra.onrender.com/api/student/calendar/${calendarDate}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch calendar by date');
     return response.json();
   }
 );
@@ -209,9 +237,37 @@ const studentDashboardSlice = createSlice({
     });
     builder.addCase(fetchNotices.fulfilled, (state, action) => {
       state.loading = false;
-      state.notices = action.payload;
+      state.notices = action.payload.Notices || [];
     });
     builder.addCase(fetchNotices.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+
+    // Calendar
+    builder.addCase(fetchCalendar.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchCalendar.fulfilled, (state, action) => {
+      state.loading = false;
+      state.calendar = action.payload.Calendar || [];
+    });
+    builder.addCase(fetchCalendar.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+
+    // Calendar by Date
+    builder.addCase(fetchCalendarByDate.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchCalendarByDate.fulfilled, (state, action) => {
+      state.loading = false;
+      state.calendarByDate = action.payload.Calendar || null;
+    });
+    builder.addCase(fetchCalendarByDate.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });

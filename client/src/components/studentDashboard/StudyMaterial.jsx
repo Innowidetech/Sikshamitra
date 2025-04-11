@@ -1,40 +1,47 @@
-import React from 'react';
-import Header from './layout/Header';
-import { FaBookOpen } from 'react-icons/fa'; // Import the download icon
-import { AiOutlineArrowUp, AiOutlineArrowDown } from 'react-icons/ai'; // Up/Down arrow icon
+import React, { useEffect } from "react";
+import { FaBookOpen } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { fetchStudyMaterials } from "../../redux/student/studyMaterialSlice";
+import Header from "./layout/Header";
 
 function StudyMaterial() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { studyMaterials, loading, error } = useSelector((state) => state.studyMaterial);
+  const classMaterial = studyMaterials?.classMaterial || [];
+
+  useEffect(() => {
+    dispatch(fetchStudyMaterials());
+  }, [dispatch]);
+
   return (
     <>
-      {/* Full-Width Horizontal Line */}
+      {/* Header */}
       <hr className="border-[#146192] border-[1px] w-full my-4" />
-
-      <div className="flex justify-between items-center mx-8">
+      <div className="flex justify-between items-center mx-4 md:mx-8">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Study Material</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
           <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {'>'}
+            <span className="xl:text-[17px] text-xl">Home</span> {" > "}
             <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Study Material</span>
           </h1>
         </div>
-        <div>
-          <Header />
-        </div>
+        <Header />
       </div>
 
-      {/* Content Section */}
-      <div className="flex justify-between items-center mx-8 mt-8 p-4">
-        {/* Left Side with Book Open Icon and Heading */}
-        <div className="flex flex-col items-start">
-          <div className="flex items-center">
-            <FaBookOpen className="text-black text-4xl mr-4" />
-            <h2 className="text-xl font-medium text-black">Teachers' Syllabus Uploaded Information</h2>
-          </div>
+      {/* Content Heading */}
+      <div className="flex justify-between items-center mx-4 md:mx-8 mt-8 p-4">
+        <div className="flex items-center">
+          <FaBookOpen className="text-black text-4xl mr-4" />
+          <h2 className="text-xl font-medium text-black">Teachers' Syllabus Uploaded Information</h2>
         </div>
-
-        {/* Right Side with View Syllabus and Arrow */}
-        <div className="flex items-center cursor-pointer text-blue-600">
+        <div
+          className="flex items-center cursor-pointer text-blue-600"
+          onClick={() => navigate("/student/syllabus")}
+        >
           <span className="mr-2 text-lg">View Syllabus</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -42,92 +49,143 @@ function StudyMaterial() {
         </div>
       </div>
 
-      {/* Horizontal Line Below Content */}
-      <hr className="border-[#CED8E5] border-[1px] w-full mt-8" />
+      <hr className="border-[#CED8E5] border-[1px] w-full mt-4" />
 
-      {/* Table Section with Smaller Table Size */}
-      <table className="table-auto w-[90%] mx-auto mt-8  text-sm h-[400px]">
-        <thead>
-          <tr>
-            {/* Teacher Column with Up/Down Arrow to the Right of Text */}
-            <th className="  px-2 py-1 ">
-              Teacher
-              <div className="inline-flex items-center  ml-2">
-                <AiOutlineArrowUp className="text-gray-600 cursor-pointer" />
-                <AiOutlineArrowDown className="text-gray-600 cursor-pointer " />
-              </div>
-            </th>
+      {/* Conditional Rendering */}
+      {loading ? (
+        <p className="text-center mt-6">Loading...</p>
+      ) : error ? (
+        <p className="text-center text-red-600 mt-6">{error}</p>
+      ) : (
+        <>
+          {/* Table View for Desktop */}
+          <div className="hidden md:block overflow-x-auto px-8 mt-8">
+            <table className="min-w-full border border-gray-200 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left">Teacher Name ⇅</th>
+                  <th className="px-4 py-2 text-left">Chapter</th>
+                  <th className="px-4 py-2 text-left">Class</th>
+                  <th className="px-4 py-2 text-left">Section</th>
+                  <th className="px-4 py-2 text-left">Subject Name ⇅</th>
+                  <th className="px-4 py-2 text-left">Date ⇅</th>
+                  <th className="px-4 py-2 text-left">Time ⇅</th>
+                  <th className="px-4 py-2 text-left">Download ⇅</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classMaterial.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="text-center py-4">No study materials found.</td>
+                  </tr>
+                ) : (
+                  classMaterial.map((item, idx) => {
+                    const date = new Date(item.createdAt);
+                    return (
+                      <tr key={item._id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-100"}>
+                        <td className="px-4 py-2">{item.teacherName}</td>
+                        <td className="px-4 py-2">{item.chapter?.padStart(2, "0")}</td>
+                        <td className="px-4 py-2">{item.class?.padStart(2, "0")}</td>
+                        <td className="px-4 py-2">{item.section}</td>
+                        <td className="px-4 py-2">{item.subject}</td>
+                        <td className="px-4 py-2">
+                          {date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-4 py-2">
+                          {date.toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-4 py-2">
+                          {item.material?.map((file, fileIdx) => (
+                            <a
+                              key={file._id || fileIdx}
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
+                            >
+                              Download
+                            </a>
+                          ))}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Chapter Column */}
-            <th className="  px-2 py-1 ">Chapter</th>
-
-            {/* Class Column */}
-            <th className=" px-2 py-1 ">Class</th>
-
-            {/* Section Column */}
-            <th className="  px-2 py-1 ">Section</th>
-
-            {/* Subject Name Column with Up/Down Arrow to the Right of Text */}
-            <th className="  px-2 py-1 ">
-              Subject Name
-              <div className="inline-flex items-center  ml-2">
-                <AiOutlineArrowUp className="text-gray-600 cursor-pointer" />
-                <AiOutlineArrowDown className="text-gray-600 cursor-pointer" />
-              </div>
-            </th>
-
-            {/* Date Column with Up/Down Arrow to the Right of Text */}
-            <th className="  px-2 py-1">
-              Date
-              <div className="inline-flex items-center  ml-2">
-                <AiOutlineArrowUp className="text-gray-600 cursor-pointer" />
-                <AiOutlineArrowDown className="text-gray-600 cursor-pointer" />
-              </div>
-            </th>
-
-            {/* Time Column with Time Icon */}
-            <th className="  px-2 py-1">
-              Time
-              <div className="inline-flex items-center s ml-2">
-                <AiOutlineArrowUp className="text-gray-600 cursor-pointer" />
-                <AiOutlineArrowDown className="text-gray-600 cursor-pointer" />
-              </div>
-              
-            </th>
-
-            {/* Download Column with Download Icon */}
-            <th className="  px-2 py-1 ">
-              Download
-              <div className="inline-flex items-center  ml-2">
-                <AiOutlineArrowUp className="text-gray-600 cursor-pointer" />
-                <AiOutlineArrowDown className="text-gray-600 cursor-pointer" />
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* Rows 1 to 8 */}
-          {Array.from({ length: 8 }).map((_, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className={rowIndex % 2 === 1 ? 'bg-[#F4F6F7]' : ''}  // Background color for rows 2, 4, 6, 8
-            >
-              <td className="  px-2 py-1 text-center">Dr. Riya Kapoor {rowIndex + 1}</td>
-              <td className="  px-2 py-1 text-center"> {rowIndex + 1}</td>
-              <td className="  px-2 py-1 text-center">{rowIndex + 1}</td>
-              <td className="  px-2 py-1 text-center">A {rowIndex + 1}</td>
-              <td className="  px-2 py-1 text-center">Math {rowIndex + 1}</td>
-              <td className="  px-2 py-1 text-center">Jan 25, 2025 </td>
-              <td className="  px-2 py-1 text-center">10:00 AM</td>
-              <td className="px-2 py-1 text-center">
-  <div className="inline-block px-4 py-1 text-[#61A249] bg-[#CBF0D3] rounded-sm cursor-pointer">
-    Download
-  </div>
-</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          {/* Card View for Mobile & Tablet */}
+          <div className="block md:hidden px-4 mt-8 space-y-4">
+            {classMaterial.length === 0 ? (
+              <p className="text-center">No study materials found.</p>
+            ) : (
+              classMaterial.map((item, idx) => {
+                const date = new Date(item.createdAt);
+                return (
+                  <div
+                    key={item._id || idx}
+                    className="border border-gray-300 rounded-lg p-4 shadow-sm bg-white"
+                  >
+                    <div className="mb-2">
+                      <strong>Teacher Name:</strong> {item.teacherName}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Chapter:</strong> {item.chapter?.padStart(2, "0")}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Class:</strong> {item.class?.padStart(2, "0")}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Section:</strong> {item.section}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Subject Name:</strong> {item.subject}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Date:</strong>{" "}
+                      {date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
+                    <div className="mb-2">
+                      <strong>Time:</strong>{" "}
+                      {date.toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <div className="mt-3">
+                      {item.material?.map((file, fileIdx) => (
+                        <a
+                          key={file._id || fileIdx}
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium inline-block"
+                        >
+                          Download
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }

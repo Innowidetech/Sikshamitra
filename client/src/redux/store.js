@@ -11,14 +11,24 @@ import dashboardReducer from './dashboard';
 import adminProfileReducer from './adminprofile';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
-<<<<<<< HEAD
+import inventoryReducer from './adminInventory';
+import libraryReducer from './librarySlice';
+import adminClassesReducer from './adminClasses';
+import adminEmployeeReducer from './adminEmployee';
+import adminResultsReducer from './adminResults';
+import adminCurriculumReducer from './curriculum';
 import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
-
-=======
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
->>>>>>> be8d826470830be9dc42fb9dceb9945211e24ebd
+import timeTableSliceReducer from './student/timeTableSlice';
+import studyMaterialReducer from './student/studyMaterialSlice';
+import admitCardSliceReducer from './student/admitCardSlice';
+import assignmentSliceReducer from './student/assignmentSlice';
+import syllabusSliceReducer from './student/syllabusSlice';
+import syllabusViewSliceReducer from './student/syllabusViewSlice';
+import classPlanSliceReducer from './student/classPlanSlice';
+import resultSliceReducer from './student/resultSlice';
 
 const store = configureStore({
   reducer: {
@@ -34,13 +44,27 @@ const store = configureStore({
     adminProfile: adminProfileReducer,
     auth: authReducer,
     adminFees: adminFeesReducer,
-<<<<<<< HEAD
+    inventory: inventoryReducer,
+    library: libraryReducer,
+    adminClasses: adminClassesReducer,
+    adminEmployee: adminEmployeeReducer,
+    adminResults: adminResultsReducer,
+    adminCurriculum: adminCurriculumReducer,
     studentProfile: studentProfileReducer,
     exam: examSliceReducer,
-=======
     parent: parentdashboardReducer, // Add parentdashboardReducer here
-    fees : feesReducer
->>>>>>> be8d826470830be9dc42fb9dceb9945211e24ebd
+    fees : feesReducer,
+    timeTable: timeTableSliceReducer,
+    studyMaterial: studyMaterialReducer,
+    admitCard : admitCardSliceReducer,
+    assignment : assignmentSliceReducer,
+    syllabus : syllabusSliceReducer,
+    syllabusView : syllabusViewSliceReducer,
+    classPlan : classPlanSliceReducer,
+    results : resultSliceReducer,
+   
+   
+
   },
 });
 
