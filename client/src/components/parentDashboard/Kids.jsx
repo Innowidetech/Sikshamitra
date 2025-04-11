@@ -28,8 +28,8 @@ function Kids() {
 
   return (
     <>
-      <div className="flex justify-between items-center mx-10">
-        <div>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mx-4 lg:mx-10  gap-4 mt-20 ">
+        <div className="md:ml-64">
           <h1 className="text-2xl font-light text-black xl:text-[38px]">My Kids</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
           <h1 className="mt-2">
@@ -42,20 +42,22 @@ function Kids() {
         </div>
       </div>
 
-      <div className="bg-[#285A87] h-[100px] xl:h-[120px] lg:max-w-3xl xl:max-w-5xl xl:mx-auto rounded-tl-lg rounded-tr-lg">
-        <div className="flex gap-6 mt-8 mx-10 items-center pt-16">
+      <div className="bg-[#285A87] h-[100px] xl:h-[120px] max-w-5xl md:ml-72 rounded-tl-lg rounded-tr-lg">
+
+        <div className="flex gap-6 mt-8 mx-4 md:mx-10 items-center pt-16 overflow-x-auto pb-4">
           {students.length > 0 ? (
             students.map((student, index) => (
               <div
                 key={student.studentId}
                 onClick={() => setSelectedStudent(student)}
-                className="cursor-pointer text-center"
+                className="cursor-pointer text-center min-w-[100px]"
               >
                 <div
-                  className={`w-24 h-24 rounded-full bg-[#FF9F1C] overflow-hidden border-4 p-2 ${selectedStudent?.studentId === student.studentId
+                  className={`w-24 h-24 rounded-full bg-[#FF9F1C] overflow-hidden border-4 p-2 ${
+                    selectedStudent?.studentId === student.studentId
                       ? "border-white scale-110 "
                       : "border-transparent"
-                    }`}
+                  }`}
                 >
                   <img
                     src={student.studentProfile.photo} // Make sure 'photo' exists
@@ -64,10 +66,11 @@ function Kids() {
                   />
                 </div>
                 <h3
-                  className={`mt-2 font-bold lg:text-xl ${selectedStudent?.studentId === student.studentId
+                  className={`mt-2 font-bold lg:text-xl ${
+                    selectedStudent?.studentId === student.studentId
                       ? "text-[#146192]"
                       : "text-gray-600"
-                    }`}
+                  }`}
                 >
                   {student.studentProfile.fullname}
                 </h3>
@@ -84,9 +87,9 @@ function Kids() {
 
       {/* Student Details Card */}
       {selectedStudent && (
-        <div className="flex justify-between mt-28 mb-10 mx-10">
+        <div className="flex flex-col lg:flex-row justify-between gap-8 mt-28 mb-10 mx-4 lg:mx-10">
           {/* Left Card Section (Student Profile) */}
-          <div className="w-full lg:w-1/2">
+          <div className="w-full lg:w-1/2 md:ml-64">
             <div className="bg-gradient-to-r from-[#bad8ec] to-[#f8e3b7] shadow-lg rounded-lg p-6 border border-[#DBDBDB]">
               <h4 className="text-xl font-semibold text-[#285A87] underline decoration-[#285A87] p-6">
                 Personal Details
@@ -104,7 +107,7 @@ function Kids() {
                   <span className="text-lg text-[#285A87]">Phone:</span>
                   <span>
                     {selectedStudent && parentData?.parentProfile?.fatherPhoneNumber
-                      ? parentData.parentProfile.fatherPhoneNumber // Use fatherPhoneNumber or motherPhoneNumber based on preference
+                      ? parentData.parentProfile.fatherPhoneNumber
                       : "Phone number not available"}
                   </span>
                 </p>
@@ -114,31 +117,26 @@ function Kids() {
                 </p>
                 <p className="flex justify-between py-1">
                   <span className="text-lg text-[#285A87]">DOB:</span>
-                  <span>{new Date (selectedStudent.studentProfile.dob). toLocaleDateString()}</span>
+                  <span>{new Date(selectedStudent.studentProfile.dob).toLocaleDateString()}</span>
                 </p>
                 <p className="flex justify-between py-1">
                   <span className="text-lg text-[#285A87]">Address:</span>
                   <span>{selectedStudent.studentProfile.address}</span>
                 </p>
-
                 <p className="flex justify-between py-1">
                   <span className="text-lg text-[#285A87]">Class:</span>
                   <span>{selectedStudent.studentProfile.class}</span>
                 </p>
-
-
                 <p className="flex justify-between py-1">
                   <span className="text-lg text-[#285A87]">Section:</span>
                   <span>{selectedStudent.studentProfile.section}</span>
                 </p>
               </div>
             </div>
-
-
           </div>
 
           {/* Right Section (Previous Education Details) */}
-          <div className="pl-10 w-full lg:w-1/2">
+          <div className="w-full lg:w-1/2">
             <h4 className="text-xl font-semibold text-[#285A87] underline decoration-[#285A87] mb-5">
               Previous Education Details:
             </h4>

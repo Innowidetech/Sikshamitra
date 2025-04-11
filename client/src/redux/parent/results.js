@@ -18,17 +18,17 @@ export const fetchChildren = createAsyncThunk(
 
     try {
       const response = await axios.get('https://sikshamitra.onrender.com/api/parent/children', config);
-      return response.data.children;  // Ensure we return just the children array
+      return response.data.children;
     } catch (error) {
       throw error.response?.data?.message || 'Failed to fetch children';
     }
   }
 );
 
-// Fetch student results (with optional resultId)
+// Fetch student results (optional studentName & resultId)
 export const fetchStudentResults = createAsyncThunk(
   'parent/fetchStudentResults',
-  async ({ studentId, resultId }) => {
+  async ({ studentName, resultId }) => {
     const token = localStorage.getItem('token');
     if (!token) {
       throw new Error('No token found');
@@ -41,10 +41,14 @@ export const fetchStudentResults = createAsyncThunk(
     };
 
     try {
-      let url = `https://sikshamitra.onrender.com/api/parent/results/${studentId}`;
-      if (resultId) {
-        url = `https://sikshamitra.onrender.com/api/parent/result/${studentId}/${resultId}`;
+      let url = 'https://sikshamitra.onrender.com/api/parent/results';
+      if (studentName) {
+        url = `https://sikshamitra.onrender.com/api/parent/results/${studentName}`;
       }
+      if (resultId) {
+        url = `https://sikshamitra.onrender.com/api/parent/result/${studentName}/${resultId}`;
+      }
+      
       const response = await axios.get(url, config);
       return response.data;
     } catch (error) {
@@ -59,10 +63,10 @@ const initialState = {
     theory: [],
     labs: [],
     totalMarks: 0,
-    percentage: 0
+    percentage: 0,
   },
   loading: false,
-  error: null
+  error: null,
 };
 
 const resultsSlice = createSlice({
@@ -72,7 +76,7 @@ const resultsSlice = createSlice({
     clearResults: (state) => {
       state.results = initialState.results;
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -83,7 +87,6 @@ const resultsSlice = createSlice({
       .addCase(fetchChildren.fulfilled, (state, action) => {
         state.loading = false;
         state.children = action.payload;
-        state.error = null;
       })
       .addCase(fetchChildren.rejected, (state, action) => {
         state.loading = false;
@@ -96,13 +99,12 @@ const resultsSlice = createSlice({
       .addCase(fetchStudentResults.fulfilled, (state, action) => {
         state.loading = false;
         state.results = action.payload;
-        state.error = null;
       })
       .addCase(fetchStudentResults.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });
-  }
+  },
 });
 
 export const { clearResults } = resultsSlice.actions;

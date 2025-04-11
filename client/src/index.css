@@ -117,14 +117,3 @@
 
  
 
-
-/* Hide scrollbar but keep scrolling */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome, Safari */
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
-  scrollbar-width: none;  /* Hide scrollbar for Firefox */
-}
-

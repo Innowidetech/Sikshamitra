@@ -21,8 +21,9 @@ import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
-
-
+import expensesReducer from './parent/expensesSlice'
+import queryReducer from './parent/querySlice'
+import curriculumReducer from './parent/curriculumSlice'
 
 const store = configureStore({
   reducer: {
@@ -47,7 +48,10 @@ const store = configureStore({
     studentProfile: studentProfileReducer,
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
-    fees : feesReducer
+    fees : feesReducer,
+    expenses:expensesReducer,
+    query: queryReducer,
+    curriculum: curriculumReducer,
 
   },
 });

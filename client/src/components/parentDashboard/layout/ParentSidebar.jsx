@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Library } from 'lucide-react';
+import { 
+  LayoutDashboard, Library, X, Menu 
+} from 'lucide-react';
 import { GiBodySwapping } from "react-icons/gi";
 import { FaClipboardList } from "react-icons/fa";
 import { GoChecklist } from "react-icons/go";
 import { HiMiniUserGroup } from "react-icons/hi2";
 import { FiFileText } from "react-icons/fi";
 import { SiGooglebigquery } from "react-icons/si";
-import { X, Menu } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'kids', icon: GiBodySwapping, label: 'Kids' },
   { id: 'results', icon: FaClipboardList, label: 'Results' },
-  // { id: 'annualresult', icon: FaClipboardList, label: 'Annual Result' },
   { id: 'expenses', icon: GoChecklist, label: 'Expenses' },
   { id: 'curriculam', icon: Library, label: 'Curriculam' },
   { id: 'exams', icon: HiMiniUserGroup, label: 'Exams' },
@@ -85,6 +85,7 @@ const ParentSidebar = ({ setActiveSection, activeTab }) => {
           onClick={() => setIsOpen(false)}
         />
       )}
+      
     </>
   );
 };
