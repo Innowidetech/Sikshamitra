@@ -387,42 +387,64 @@ exports.getFeesReceipts = async (req, res) => {
 exports.postQuery = async (req, res) => {
   try {
     const { parentName, parentPhone, studentName, query, sendTo } = req.body;
-    if (!parentName || !parentPhone || !studentName || !query || !sendTo) { return res.status(400).json({ message: 'Please provide all the details.' }) }
+    
+    if (!parentName || !parentPhone || !studentName || !query || !Array.isArray(sendTo)) {
+      return res.status(400).json({ message: 'Please provide all the details.' });
+    }
 
     const loggedInId = req.user && req.user.id;
-    if (!loggedInId) { return res.status(401).json({ message: "Unauthorized." }) }
+    if (!loggedInId) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'parent') { return res.status(403).json({ message: "Access denied, only logged-in parents can access." }) }
-
-    const parent = await Parent.findOne({ userId: loggedInId })
-    if (!parent) { return res.status(404).json({ message: 'No parent found with the logged-in id.' }) }
-
-    const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId')
-
-    const admin = await User.findOne({ _id: student.schoolId.createdBy })
-
-    const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId')
-    if (!teacher) { return res.status(404).json({ message: "No class teacher for your child, please contact the admin." }) }
-
-    parentEmail = loggedInUser.email,
-    adminEmail = admin.email,
-    teacherEmail = teacher.userId.email,
-    studentClass = student.studentProfile.class,
-    studentSection = student.studentProfile.section,
-    schoolName = student.schoolId.schoolName
-
-    if (sendTo == 'admin') {
-      await sendEmail(adminEmail, parentEmail, `New Query Submission from ${parentName}`, queryTemplate(schoolName,parentName, parentPhone, studentName, studentClass, studentSection, query));
+    if (!loggedInUser || loggedInUser.role !== 'parent') {
+      return res.status(403).json({ message: "Access denied, only logged-in parents can access." });
     }
-    else if (sendTo == 'class teacher') {
-      await sendEmail(teacherEmail, parentEmail, `New Query Submission from ${parentName}`, queryTemplate(schoolName,parentName, parentPhone, studentName, studentClass, studentSection, query));
-    }
-    else { return res.status(404).json({ message: "Invalid sendTo request." }) }
 
-    res.status(201).json({message: `An email has been sent to ${sendTo}. Once they view it, they will contact you shortly.`});
+    const parent = await Parent.findOne({ userId: loggedInId });
+    if (!parent) {
+      return res.status(404).json({ message: 'No parent found with the logged-in id.' });
+    }
+
+    const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId');
+    const admin = await User.findOne({ _id: student.schoolId.createdBy });
+    const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId');
+    
+    if (!teacher) {
+      return res.status(404).json({ message: "No class teacher for your child, please contact the admin." });
+    }
+
+    const parentEmail = loggedInUser.email;
+    const adminEmail = admin.email;
+    const teacherEmail = teacher.userId.email;
+    const studentClass = student.studentProfile.class;
+    const studentSection = student.studentProfile.section;
+    const schoolName = student.schoolId.schoolName;
+
+    const emailContent = queryTemplate(schoolName, parentName, parentPhone, studentName, studentClass, studentSection, query);
+
+    const recipients = [];
+    if (sendTo.includes('admin')) {
+      recipients.push(adminEmail);
+    }
+    if (sendTo.includes('class teacher')) {
+      recipients.push(teacherEmail);
+    }
+
+    if (recipients.length === 0) {
+      return res.status(404).json({ message: "Invalid sendTo request." });
+    }
+
+    for (const recipientEmail of recipients) {
+      await sendEmail(recipientEmail, parentEmail,` New Query Submission from ${parentName}`, emailContent);
+    }
+
+    res.status(201).json({
+      message: `An email has been sent to ${sendTo.join(' and ')}. Once they view it, they will contact you shortly.`
+    });
   }
   catch (err) {
-    res.status(500).json({ message: "Internal server error.", error: err.message })
-  }
+    res.status(500).json({ message: "Internal server error.", error: err.message });
+  }
 };

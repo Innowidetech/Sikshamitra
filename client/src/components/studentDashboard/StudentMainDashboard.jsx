@@ -11,30 +11,44 @@ import Exams from './Exams';
 import AdmitCard from './AdmitCard';
 import StudentHeader from './layout/Header';
 import StudentProfile from './StudentProfile';
-
+import SyllabusView from './SyllabusView'; // ✅ import
+import ClassPlanView from './ClassPlanView'; // ✅ import
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const location = useLocation();
     const navigate = useNavigate();
 
-      useEffect(() => {
-            if (location.pathname === '/student') {
-                setActiveTab('dashboard');
-            }
-        }, [location.pathname]);
-    
-        const handleTabChange = (tabId) => {
-            setActiveTab(tabId);
-            if (location.pathname === '/student/profile') {
-                navigate('/student');
-            }
-        };
+    useEffect(() => {
+        if (location.pathname === '/student') {
+            setActiveTab('dashboard');
+        }
+    }, [location.pathname]);
 
-        const renderContent = () => {
-            if (location.pathname === '/student/profile') {
-                return <StudentProfile />;
-            }
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId);
+        if (
+            location.pathname === '/student/profile' ||
+            location.pathname === '/student/syllabus-view' ||
+            location.pathname === '/student/class-plan'
+        ) {
+            navigate('/student');
+        }
+    };
+
+    const renderContent = () => {
+        if (location.pathname === '/student/profile') {
+            return <StudentProfile />;
+        }
+
+        if (location.pathname === '/student/syllabus-view') {
+            return <SyllabusView />;
+        }
+
+        if (location.pathname === '/student/class-plan') {
+            return <ClassPlanView />;
+        }
+
         switch (activeTab) {
             case 'dashboard':
                 return <StudentDashboard />;
@@ -59,17 +73,17 @@ const MainDashboard = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-50">
-        <StudentSidebar 
-            setActiveSection={handleTabChange} 
-            activeTab={activeTab}
-        />
-        <main className="flex-1 md:ml-64 overflow-y-auto">
-            <StudentHeader  />
-            <div className="mt-20 md:mt-16">
-                {renderContent()}
-            </div>
-        </main>
-    </div>
+            <StudentSidebar
+                setActiveSection={handleTabChange}
+                activeTab={activeTab}
+            />
+            <main className="flex-1 md:ml-64 overflow-y-auto">
+                <StudentHeader />
+                <div className="mt-20 md:mt-16">
+                    {renderContent()}
+                </div>
+            </main>
+        </div>
     );
 };
 

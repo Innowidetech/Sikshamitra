@@ -21,9 +21,20 @@ import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
+<<<<<<< HEAD
 import expensesReducer from './parent/expensesSlice'
 import queryReducer from './parent/querySlice'
 import curriculumReducer from './parent/curriculumSlice'
+=======
+import timeTableSliceReducer from './student/timeTableSlice';
+import studyMaterialReducer from './student/studyMaterialSlice';
+import admitCardSliceReducer from './student/admitCardSlice';
+import assignmentSliceReducer from './student/assignmentSlice';
+import syllabusSliceReducer from './student/syllabusSlice';
+import syllabusViewSliceReducer from './student/syllabusViewSlice';
+import classPlanSliceReducer from './student/classPlanSlice';
+import resultSliceReducer from './student/resultSlice';
+>>>>>>> f91a1abe8496bc10630c29759b94b5fe9ddcb972
 
 const store = configureStore({
   reducer: {
@@ -49,9 +60,22 @@ const store = configureStore({
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer,
+<<<<<<< HEAD
     expenses:expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
+=======
+    timeTable: timeTableSliceReducer,
+    studyMaterial: studyMaterialReducer,
+    admitCard : admitCardSliceReducer,
+    assignment : assignmentSliceReducer,
+    syllabus : syllabusSliceReducer,
+    syllabusView : syllabusViewSliceReducer,
+    classPlan : classPlanSliceReducer,
+    results : resultSliceReducer,
+   
+   
+>>>>>>> f91a1abe8496bc10630c29759b94b5fe9ddcb972
 
   },
 });
