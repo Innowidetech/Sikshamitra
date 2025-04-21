@@ -1237,8 +1237,7 @@ exports.getSyllabus = async (req, res) => {
 exports.uploadStudyMaterial = async (req, res) => {
     try {
         const { subject, chapter, classs, section } = req.body;
-        const files = req.files;
-        if (!subject || !chapter || !files || files.length == 0 || !classs || !section) {
+        if (!subject || !chapter || !classs || !section) {
             return res.status(400).json({ message: 'Provide all the details and files to upload study material.' })
         };
 
@@ -1265,11 +1264,15 @@ exports.uploadStudyMaterial = async (req, res) => {
             return res.status(404).json({ message: `You are not allowed to upload study material with subject - ${subject}` })
         }
 
-        const uploadedFiles = await uploadImage(files);
-
-        const material = uploadedFiles.map((fileUrl) => ({
-            url: fileUrl,
-        }));
+        let uploadedPhotoUrl = '';
+        if (req.file) {
+            try {
+                const [photoUrl] = await uploadImage(req.file);
+                uploadedPhotoUrl = photoUrl;
+            } catch (error) {
+                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+            }
+        };
 
         const studyMaterial = new StudyMaterial({
             schoolId: teacher.schoolId,
@@ -1278,7 +1281,7 @@ exports.uploadStudyMaterial = async (req, res) => {
             chapter,
             class: classs,
             section,
-            material: material,
+            material: uploadedPhotoUrl,
             createdBy: teacher._id,
         });
 
@@ -1388,36 +1391,13 @@ exports.deleteStudyMaterial = async (req, res) => {
             return res.status(404).json({ message: 'No teacher found with the logged-in ID.' });
         }
 
-        const studyMaterial = await StudyMaterial.findOne({
-            createdBy: teacher._id,
-            'material._id': materialId,
-        });
-
-        if (!studyMaterial) {
-            return res.status(404).json({ message: 'Material not found with the id.' });
+        const studyMaterial = await StudyMaterial.findOneAndDelete({schoolId:teacher.schoolId, createdBy:teacher._id, _id:materialId});
+        if(!studyMaterial){
+            return res.status(404).json({message:"No material found with the id."})
         }
 
-        const materialToDelete = studyMaterial.material.find((m) => String(m._id) === materialId);
-        if (!materialToDelete) {
-            return res.status(404).json({ message: 'Material object not found.' });
-        }
-
-        const publicId = materialToDelete.url.split('/').pop().split('.')[0];
-        await cloudinary.uploader.destroy(publicId);
-
-        studyMaterial.material = studyMaterial.material.filter((m) => String(m._id) !== materialId);
-
-        if (studyMaterial.material.length === 0) {
-            await studyMaterial.deleteOne();
-            return res.status(200).json({
-                message: 'Material deleted successfully and study material record removed as it is now empty.',
-            });
-        } else {
-            await studyMaterial.save();
-            return res.status(200).json({
-                message: 'Material deleted successfully.',
-            });
-        }
+        res.status(200).json({message:"Material deleted successfully."})
+        
     } catch (err) {
         res.status(500).json({
             message: 'Internal server error',

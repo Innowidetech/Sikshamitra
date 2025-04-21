@@ -30,7 +30,7 @@ router.get('/timetable', protect, authorize('teacher'), getTimetable);
 router.delete('/timetable/:periodId', protect, authorize('teacher'), deleteTimetablePeriod);
 router.post('/syllabus', protect, authorize('teacher'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('teacher'), getSyllabus);
-router.post('/studyMaterial', upload.array('files'), protect, authorize('teacher'), uploadStudyMaterial);
+router.post('/studyMaterial', upload.single('photo'), protect, authorize('teacher'), uploadStudyMaterial);
 router.get('/studyMaterial', protect, authorize('teacher'), getStudyMaterial);
 router.delete('/studyMaterial/:materialId', protect, authorize('teacher'), deleteStudyMaterial);
 router.post('/exams', protect, authorize('teacher'), createExams);
