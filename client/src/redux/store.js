@@ -34,6 +34,11 @@ import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import classPlanSliceReducer from './student/classPlanSlice';
 import resultSliceReducer from './student/resultSlice';
 
+import aboutSliceReducer from './teacher/aboutSlice'
+import createExamSliceReducer from './teacher/createExamSlice'
+import studyMSliceReducer from './teacher/studyMSlice';
+
+
 
 const store = configureStore({
   reducer: {
@@ -72,7 +77,10 @@ const store = configureStore({
     classPlan : classPlanSliceReducer,
     results : resultSliceReducer,
    
-  
+    about : aboutSliceReducer,
+    createExam :createExamSliceReducer,
+    studyMaterial : studyMSliceReducer,
+    
 
   },
 });
