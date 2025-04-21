@@ -11,9 +11,10 @@ cloudinary.config({
   api_secret: api_secret,
 });
 
-const baseOpts = {
+const opts = {
   overwrite: true,
   invalidate: true,
+  resource_type: "auto",
   access_mode: 'public',
 };
 
@@ -22,32 +23,21 @@ exports.uploadImage = async (files) => {
     if (!Array.isArray(files)) {
       files = [files];
     }
-
     const uploadedFiles = await Promise.all(
       files.map((file) =>
         new Promise((resolve, reject) => {
           const isPdf = file.mimetype === 'application/pdf';
-          
-          const uploadOpts = {
-            ...baseOpts,
-            resource_type: isPdf ? 'raw' : 'auto',
-            format: isPdf ? 'pdf' : null,
-            transformation: isPdf ? [{
-              flags: "attachment:false"
-            }] : null
-          };
-
-          cloudinary.uploader.upload_stream(uploadOpts, (error, result) => {
+          const uploadOptions = {...opts, resource_type: isPdf ? "raw" : "auto" };
+          cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
             if (result && result.secure_url) {
               return resolve(result.secure_url);
             }
-            return reject(new Error(error ? error.message : 'Upload failed'));
+            return reject(new Error(error.message));
           })
             .end(file.buffer);
         })
       )
     );
-
     return uploadedFiles;
   } catch (error) {
     throw new Error(error.message);
