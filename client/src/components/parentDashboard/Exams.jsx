@@ -2,66 +2,63 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExams, clearExams } from '../../redux/parent/examSlice';
 import Header from './layout/Header';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function Exams() {
-  // State for dropdown selections
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedExamType, setSelectedExamType] = useState('');
 
-  // Redux state for exams
   const dispatch = useDispatch();
   const { examList, loading, error } = useSelector((state) => state.exams);
 
-  // Trigger fetchExams when component mounts
   useEffect(() => {
     dispatch(fetchExams());
-
-    // Clear exams when the component unmounts (optional)
     return () => {
       dispatch(clearExams());
     };
   }, [dispatch]);
 
-  // Filter exams based on dropdown selections
+  const uniqueExamTypes = [...new Set(examList.map(exam => exam.examType))];
+
   const filteredExams = examList.filter((exam) => {
-    return (
-      (selectedClass ? exam.class === selectedClass : true) && // Filter by selected class if any
-      (selectedExamType ? exam.examType === selectedExamType : true) // Filter by selected exam type if any
-    );
+    const classMatch = selectedClass ? exam.class === selectedClass : true;
+    const examTypeMatch = selectedExamType ? exam.examType === selectedExamType : true;
+    return classMatch && examTypeMatch;
   });
 
-  // Function to download exam details as a CSV file
   const downloadExamDetails = () => {
-    const headers = ['Date', 'Timing', 'Subject Name', 'Syllabus'];
-    const rows = filteredExams.flatMap((exam) =>
-      exam.exam.map((subject) => [
-        exam.fromDate,
-        exam.examDuration,
-        subject.subject,
-        subject.syllabus,
-      ])
-    );
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Exam Timetable", 14, 22);
 
-    // Create a CSV string
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.join(',')),
-    ].join('\n');
+    const tableColumn = ["Date", "Timing", "Subject Name", "Syllabus"];
+    const tableRows = [];
 
-    // Create a Blob and download it as a CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      // Create a download link and trigger the download
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'exam_details.csv');
-      link.click();
-    }
+    filteredExams.forEach((exam) => {
+      exam.exam.forEach((subject) => {
+        const rowData = [
+          new Date(subject.date).toLocaleDateString(),
+          exam.examDuration,
+          subject.subject,
+          subject.syllabus,
+        ];
+        tableRows.push(rowData);
+      });
+    });
+
+    autoTable(doc, {
+      startY: 30,
+      head: [tableColumn],
+      body: tableRows,
+      styles: { fontSize: 10 },
+    });
+
+    doc.save("exam_timetable.pdf");
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen mt-20 md:ml-64">
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -75,21 +72,22 @@ function Exams() {
           <Header />
         </div>
 
-        {/* Upcoming Exams Section */}
-        <div className="mt-8 border border-gray-200 rounded-lg p-10 ml-3 mr-3 shadow-lg">
+        <div className="mt-8 border border-gray-200 rounded-lg p-10  mr-3 shadow-lg">
           <h2 className="text-xl font-medium text-[#146192] mb-4">Upcoming Exams</h2>
-
-          {/* Container for the boxes */}
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             {loading ? (
               <p>Loading...</p>
             ) : error ? (
               <p>{error}</p>
             ) : (
-              filteredExams.slice(0, 3).map((exam, index) => (
+              filteredExams.slice(0, 3).map((exam) => (
                 <div
-                  key={index}
-                  className={`flex-1 p-4 border shadow-lg ${exam.examType === 'Half Yearly' ? 'bg-[#FF9F1C63]' : exam.examType === 'Final Exam' ? 'bg-[#BF156C0D]' : 'bg-[#FF543E4D]'}`}
+                  key={exam._id}
+                  className={`flex-1 p-4 border shadow-lg rounded-lg ${
+                    exam.examType.includes('Half Yearly') ? 'bg-[#FF9F1C63]' :
+                    exam.examType.includes('Unit Test') ? 'bg-[#FF543E4D]' :
+                    'bg-[#BF156C0D]'
+                  }`}
                 >
                   <div className="flex justify-between mb-4">
                     <p className="font-semibold">Exam Type:</p>
@@ -113,11 +111,9 @@ function Exams() {
           </div>
         </div>
 
-        {/* Dropdown Section (Placed After the 3 Boxes) */}
-        <div className="mt-8 flex gap-10 justify-start ml-3">
-          {/* Class Dropdown */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-6 ml-3">
           <div>
-            <label htmlFor="class" className="text-lg font-medium text-[#146192]">Class:</label>
+            <label htmlFor="class" className="text-lg font-medium text-[#146192]">Class - </label>
             <select
               id="class"
               className="ml-2 p-2 border rounded-md"
@@ -126,13 +122,12 @@ function Exams() {
             >
               <option value="">All Classes</option>
               <option value="6">6th</option>
-              {/* Add other classes as needed */}
+              <option value="10">10th</option>
             </select>
           </div>
 
-          {/* Exam Type Dropdown */}
           <div>
-            <label htmlFor="examType" className="text-lg font-medium text-[#146192]">Exam Type:</label>
+            <label htmlFor="examType" className="text-lg font-medium text-[#146192]">Exam Type - </label>
             <select
               id="examType"
               className="ml-2 p-2 border rounded-md"
@@ -140,45 +135,77 @@ function Exams() {
               onChange={(e) => setSelectedExamType(e.target.value)}
             >
               <option value="">All Exam Types</option>
-              <option value="Half Yearly">Half Yearly</option>
-              <option value="Unit Test">Unit Test</option>
-              <option value="Final Exam">Final Exam</option>
+              {uniqueExamTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* Timetable Section */}
         <div className="mt-8 border border-gray-200 rounded-lg p-6 shadow-lg">
           <h2 className="text-xl font-medium text-[#146192] mb-4">Timetable</h2>
           {filteredExams.length > 0 ? (
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr>
-                  <th className="border px-4 py-2">Date</th>
-                  <th className="border px-4 py-2">Timing</th>
-                  <th className="border px-4 py-2">Subject Name</th>
-                  <th className="border px-4 py-2">Syllabus</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredExams.flatMap((exam) =>
-                  exam.exam.map((subject, index) => (
-                    <tr key={index}>
-                      <td className="border px-4 py-2">{new Date(subject.date).toLocaleDateString()}</td>
-                      <td className="border px-4 py-2">{exam.examDuration}</td>
-                      <td className="border px-4 py-2">{subject.subject}</td>
-                      <td className="border px-4 py-2">{subject.syllabus}</td>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block">
+                <table className="min-w-full table-auto">
+                  <thead>
+                    <tr>
+                      <th className="border px-4 py-2">Date</th>
+                      <th className="border px-4 py-2">Timing</th>
+                      <th className="border px-4 py-2">Subject Name</th>
+                      <th className="border px-4 py-2">Syllabus</th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    {filteredExams.flatMap((exam) =>
+                      exam.exam.map((subject, index) => (
+                        <tr key={`${exam._id}-${index}`}>
+                          <td className="border px-4 py-2">{new Date(subject.date).toLocaleDateString()}</td>
+                          <td className="border px-4 py-2">{exam.examDuration}</td>
+                          <td className="border px-4 py-2">{subject.subject}</td>
+                          <td className="border px-4 py-2">{subject.syllabus}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4">
+                {filteredExams.flatMap((exam, examIndex) =>
+                  exam.exam.map((subject, index) => (
+                    <div
+                      key={`${exam._id}-${index}`}
+                      className="border rounded-lg p-4 shadow-sm"
+                    >
+                      <div className="flex justify-between mb-2">
+                        <span className="font-bold uppercase">Date</span>
+                        <span>{new Date(subject.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-bold uppercase">Subject Name</span>
+                        <span>{subject.subject}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-bold uppercase">Timings</span>
+                        <span>{exam.examDuration}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-bold uppercase">Syllabus</span>
+                        <span>{subject.syllabus}</span>
+                      </div>
+                    </div>
                   ))
                 )}
-              </tbody>
-            </table>
+              </div>
+            </>
           ) : (
             <p>No exams found based on your selection.</p>
           )}
         </div>
 
-        {/* Download Button */}
         <div className="mt-6 flex justify-center">
           <button
             onClick={downloadExamDetails}
@@ -193,3 +220,4 @@ function Exams() {
 }
 
 export default Exams;
+

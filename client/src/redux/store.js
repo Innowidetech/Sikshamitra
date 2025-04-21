@@ -21,6 +21,10 @@ import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
+import expensesReducer from './parent/expensesSlice'
+import queryReducer from './parent/querySlice'
+import curriculumReducer from './parent/curriculumSlice'
+
 import timeTableSliceReducer from './student/timeTableSlice';
 import studyMaterialReducer from './student/studyMaterialSlice';
 import admitCardSliceReducer from './student/admitCardSlice';
@@ -29,6 +33,12 @@ import syllabusSliceReducer from './student/syllabusSlice';
 import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import classPlanSliceReducer from './student/classPlanSlice';
 import resultSliceReducer from './student/resultSlice';
+
+import aboutSliceReducer from './teacher/aboutSlice'
+import createExamSliceReducer from './teacher/createExamSlice'
+import studyMSliceReducer from './teacher/studyMSlice';
+
+
 
 const store = configureStore({
   reducer: {
@@ -54,6 +64,10 @@ const store = configureStore({
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer,
+
+    expenses:expensesReducer,
+    query: queryReducer,
+    curriculum: curriculumReducer,
     timeTable: timeTableSliceReducer,
     studyMaterial: studyMaterialReducer,
     admitCard : admitCardSliceReducer,
@@ -63,7 +77,10 @@ const store = configureStore({
     classPlan : classPlanSliceReducer,
     results : resultSliceReducer,
    
-   
+    about : aboutSliceReducer,
+    createExam :createExamSliceReducer,
+    studyMaterial : studyMSliceReducer,
+    
 
   },
 });

@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Header from './layout/Header';
-import classImage from "../../assets/class.png"; 
-import syllabusImage from '../../assets/Syllabus.jpg'
+import classImage from '../../assets/class.png';
+import syllabusImage from '../../assets/Syllabus.jpg';
+import {
+  fetchAimObjective,
+  fetchSyllabus,
+  fetchClassPlans,
+} from '../../redux/parent/curriculumSlice';
 
-function Curriculam() {
+function Curriculam({ setActiveTab }) {
+  const dispatch = useDispatch();
+  const { aimObjective, syllabus, classPlans } = useSelector((state) => state.curriculum);
+
+  useEffect(() => {
+    dispatch(fetchAimObjective());
+    dispatch(fetchSyllabus());
+    dispatch(fetchClassPlans());
+  }, [dispatch]);
+
   return (
     <>
-      <div className="flex justify-between items-center mx-8">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mx-6 md:mx-10 mt-20 md:ml-72">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Curriculam</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
@@ -15,63 +31,84 @@ function Curriculam() {
             <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Curriculam</span>
           </h1>
         </div>
-        <div>
-          <Header />
+        <Header />
+      </div>
+
+      {/* Aims and Objectives Section */}
+      <div className="my-10 mx-6 md:mx-10 bg-white rounded-xl shadow-lg py-8 px-4 md:ml-72">
+        <h1 className="text-xl font-semibold text-center underline mb-6 text-black">
+          School Aims and Objectives
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {aimObjective?.aimObjectives?.length > 0 ? (
+            aimObjective.aimObjectives.map((aim) => (
+              <div
+                key={aim._id}
+                className="bg-[#285A87] rounded-lg p-6 h-full flex flex-col justify-center text-white shadow-md"
+              >
+                <h2 className="text-lg font-semibold underline text-center mb-4">{aim.title}</h2>
+                <p className="text-sm text-center">{aim.description || 'No description available.'}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-center col-span-3">No aim and objectives available.</p>
+          )}
         </div>
       </div>
 
-      {/* Container with 3 horizontal boxes */}
-      <div className="my-10 mx-10 bg-[#94A7B829] h-96 rounded-lg shadow-lg">
-        <h1 className="p-6 font-semibold text-center text-black text-xl underline">School Aim And Objectives</h1>
-        {/* Container for the 3 boxes */}
-        <div className="flex justify-between items-center space-x-4 ml-10 mr-10">
-          {/* Box 1 */}
-          <div className="flex flex-col justify-center items-center border p-6 mt-16 rounded-lg shadow-md bg-[#285A87] w-full sm:w-1/3">
-            <h2 className="text-center text-lg font-semibold text-white underline">Academic Excellence</h2>
-            <p className="text-center text-sm text-white mt-4">
-              Focusing on high-quality education that nurtures critical thinking, creativity, and academic success.
-            </p>
+      {/* Syllabus and Class Plan Section */}
+      <div className="my-10 mx-6 md:mx-10 md:ml-72">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Syllabus Card */}
+          <div
+            className="relative h-[220px] rounded-lg overflow-hidden shadow-md"
+            style={{
+              backgroundImage: `url(${syllabusImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-black opacity-30"></div>
+            <div className="relative z-10 h-full flex flex-col items-center justify-center">
+              <h2 className="text-white text-xl mb-4">Syllabus</h2>
+              {syllabus?.syllabus?.length > 0 ? (
+                <button
+                  onClick={() => setActiveTab('syllabus')}
+                  className="px-6 py-2 border border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition"
+                >
+                  View Syllabus
+                </button>
+              ) : (
+                <p className="text-white">No syllabus available.</p>
+              )}
+            </div>
           </div>
 
-          {/* Box 2 */}
-          <div className="flex flex-col justify-center items-center border p-6 mt-16 rounded-lg shadow-md bg-[#285A87] w-full sm:w-1/3">
-            <h2 className="text-center text-lg font-semibold text-white underline">Holistic Development</h2>
-            <p className="text-center text-sm text-white mt-4">
-              Promoting personal growth, physical well-being, emotional intelligence, and leadership skills.
-            </p>
-          </div>
-
-          {/* Box 3 */}
-          <div className="flex flex-col justify-center items-center border p-6 mt-16 rounded-lg shadow-md bg-[#285A87] w-full sm:w-1/3">
-            <h2 className="text-center text-lg font-semibold text-white underline">Social Responsibility</h2>
-            <p className="text-center text-sm text-white mt-4">
-              Encouraging students to engage in community service and develop a sense of social responsibility.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* New Container with 2 horizontal boxes */}
-      <div className="my-10 mx-10 h-80">
-
-        <div className="flex justify-between items-center space-x-4 ml-10 mr-10">
-          {/* Box 1 */}
-          <div className="relative flex flex-col justify-center items-center border p-8 mt-16 rounded-lg shadow-md w-full sm:w-1/2">
-            {/* Image as background with opacity */}
-            <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url(${syllabusImage})` }}></div>
-            
-            
-            <button className="relative mt-4 px-6 py-2 bg-[#146192] text-white font-semibold rounded-md">View Syllabus</button>
-          </div>
-
-          {/* Box 2 */}
-          <div className="relative flex flex-col justify-center items-center border p-8 mt-16 rounded-lg shadow-md w-full sm:w-1/2">
-            {/* Image as background with opacity */}
-            <div className="absolute inset-0 bg-cover bg-center opacity-40 " style={{ backgroundImage: `url(${classImage})` }}></div>
-            
-           
-            <button className="relative mt-4 px-6 py-2 bg-[#146192] text-white font-semibold rounded-md">View Class Plan</button>
-          
+          {/* Class Plan Card */}
+          <div
+            className="relative h-[220px] rounded-lg overflow-hidden shadow-md"
+            style={{
+              backgroundImage: `url(${classImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-black opacity-30"></div>
+            <div className="relative z-10 h-full flex flex-col items-center justify-center">
+              <h2 className="text-white text-xl mb-4">Class Plan</h2>
+              {classPlans?.classPlan?.length > 0 ? (
+                <button
+                  onClick={() => setActiveTab('classplans')}
+                  className="px-6 py-2 border border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition"
+                >
+                  View Class Plan
+                </button>
+              ) : (
+                <p className="text-white">No class plans available.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
