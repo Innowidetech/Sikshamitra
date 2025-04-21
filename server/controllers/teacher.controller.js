@@ -1505,7 +1505,7 @@ exports.getExams = async (req, res) => {
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
-            exams = await Exams.find({schoolId:school._id, toDate: { $gte: currentDate }}).sort({ toDate: 1 });
+            exams = await Exams.find({ schoolId: school._id, toDate: { $gte: currentDate } }).sort({ toDate: 1 });
         }
         else if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1909,7 +1909,7 @@ exports.getResults = async (req, res) => {
             if (!result.length) { res.status(404).json({ message: "No results found" }) }
         }
         else if (loggedInUser.role === 'teacher') {
-            const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner');
+            const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner');
             if (!teacher) {
                 return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
             };
@@ -1928,7 +1928,7 @@ exports.getResults = async (req, res) => {
             };
         }
         else if (loggedInUser.role === 'student') {
-            const student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner').populate('userId', 'isActive')
+            const student = await Student.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner').populate('userId', 'isActive')
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
@@ -1940,7 +1940,7 @@ exports.getResults = async (req, res) => {
             if (!result.length) { return res.status(404).json({ message: "No results yet." }) }
         }
         else if (loggedInUser.role === 'parent') {
-            const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner');
+            const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner');
             if (!parent) {
                 return res.status(404).json({ message: 'No parent found with the logged-in ID.' });
             }
@@ -1971,7 +1971,7 @@ exports.getResults = async (req, res) => {
             message: 'Results fetched successfully.',
             banner,
             result
-            
+
         });
     }
     catch (err) {
@@ -2276,7 +2276,7 @@ exports.requestExpense = async (req, res) => {
     try {
         const { item, purpose } = req.body;
         if (!item || !purpose) {
-            return res.status(400).json({ message: 'Please item and purpose to request expenses.' })
+            return res.status(400).json({ message: 'Please provide item name and purpose to request.' })
         };
 
         const loggedInId = req.user && req.user.id;
@@ -2293,16 +2293,45 @@ exports.requestExpense = async (req, res) => {
         if (!teacher.profile.class || !teacher.profile.section) { return res.status(404).json({ message: "Only class teachers have access." }) }
 
         const newExpense = new ClassExpenses({
-            schoolId: teacher.schoolId, item, purpose, class: teacher.profile.class, section: teacher.profile.section
+            schoolId: teacher.schoolId, item, purpose, class: teacher.profile.class, section: teacher.profile.section, createdBy: teacher._id
         });
         await newExpense.save()
 
-        res.status(201).json({ message: "Item request created successfully, please wait until admin confirms.", newExpense })
+        res.status(201).json({ message: "Item request created successfully, please wait until the management confirms.", newExpense })
     } catch (err) {
         res.status(500).json({
             message: 'Internal server error',
             error: err.message,
         });
+    }
+};
+
+
+exports.getItemRequests = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied. Only teachers can edit their profiles.' });
+        };
+
+        const teacher = await Teacher.findOne({ userId: loggedInId })
+        if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+
+        const teacherRequests = await ClassExpenses.find({ schoolId:teacher.schoolId, createdBy: teacher._id }).sort({ createdAt: -1 })
+        if (!teacherRequests.length) { return res.status(200).json({ message: "No requests yet." }) }
+
+        res.status(200).json({ teacherRequests })
+    }
+    catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        })
     }
 };
 

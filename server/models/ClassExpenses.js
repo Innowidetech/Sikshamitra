@@ -29,9 +29,14 @@ const ClassExpensesSchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        enum:['pending','success'],
+        enum:['pending','success', 'failed'],
         required:true,
         default:'pending'
+    },
+    createdBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:'Teacher'
     }
 }, { timestamps: true});
 

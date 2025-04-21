@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, getAandLUpdatesHistory } = require('../controllers/admin.controller');
+const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, getAandLUpdatesHistory, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams, issueBook, setBookAvailabilityTrue } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -59,9 +59,11 @@ router.put('/bookAvailability/:bookId', protect, authorize('admin'), setBookAvai
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
+router.patch('/expenses/:expenseId', protect, authorize('admin'), editSchoolExpense);
+router.delete('/expenses/:expenseId', protect, authorize('admin'), deleteSchoolExpense);
 router.get('/classRequest', protect, authorize('admin'), getTeacherItemRequest);
 router.patch('/classRequest/:requestId', protect, authorize('admin'), updateTeacherItemRequest);
-// router.delete('/classRequest/:requestId')
+// router.delete('/classRequest/:requestId', protect, authorize('admin'), deleteTeacherItemRequest)
 router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 
