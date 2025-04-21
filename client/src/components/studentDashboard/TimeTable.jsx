@@ -25,13 +25,22 @@ function TimeTable() {
   const generatePDF = () => {
     const timetableElement = document.getElementById('timetable');
     const options = {
-      margin: 10,
+      margin: 5,
       filename: 'timetable.pdf',
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 4 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      html2canvas: {
+        scale: 2,
+        useCORS: true
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a3', // Adjust to a3 or a1 if needed
+        orientation: 'landscape'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
-    html2pdf().from(timetableElement).set(options).save();
+
+    html2pdf().set(options).from(timetableElement).save();
   };
 
   useEffect(() => {
@@ -78,7 +87,7 @@ function TimeTable() {
     <>
       <div className="flex justify-between items-center mx-8">
         <div>
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Time Table</h1>
+          <h1 className="text-2xl font-light text-black xl:text-[38px] mt-10">Time Table</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
           <h1 className="mt-2">
             <span className="xl:text-[17px] text-xl">Home</span> {'>'}
@@ -96,7 +105,7 @@ function TimeTable() {
           <i className="fas fa-download mr-2"></i> Download
         </button>
         {isDropdownOpen && (
-          <div className="absolute bg-white shadow-md mt-2 right-10 border border-[#146192] rounded-md">
+          <div className="absolute bg-white shadow-md mt-2 right-10 border border-[#146192] rounded-md z-50">
             <ul className="text-center py-2">
               <li
                 onClick={() => handleDownload('PDF')}
@@ -111,10 +120,10 @@ function TimeTable() {
 
       {/* Desktop/Laptop View */}
       <div className="hidden xl:flex justify-center mt-12 mx-8" id="timetable">
-        <div className="w-[90%] p-6 rounded-xl shadow-xl h-[800px]">
+        <div className="w-[90%] p-6 rounded-xl shadow-xl">
           <h2 className="text-3xl font-bold text-center mb-6 text-[#146192]">CLASS TIMETABLE</h2>
           <div className="overflow-x-auto p-4 border-2 border-[#146192] rounded-lg">
-            <table className="table-auto w-full text-center border-collapse" style={{ height: '600px' }}>
+            <table className="table-auto w-full text-center border-collapse">
               <thead>
                 <tr className="text-black">
                   <th className="border-b-2 border-[#146192] py-2 bg-[#1982C438]">Day</th>

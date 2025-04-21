@@ -16,6 +16,8 @@ export const fetchSyllabusView = createAsyncThunk(
         }
       );
 
+      console.log("Syllabus data fetched:", response.data); // Log the API response
+
       return response.data;
     } catch (error) {
       return rejectWithValue(

@@ -8,6 +8,8 @@ import {
 } from '../../redux/student/studashboardSlice';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -18,12 +20,13 @@ const StudentDashboard = () => {
     attendance,
     notices,
     calendar,
-    loading,
-    error,
   } = useSelector((state) => state.studentDashboard);
 
   const [month, setMonth] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -34,14 +37,22 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (month && year) {
       dispatch(fetchAttendance({ month, year }));
+    } else {
+      dispatch(fetchAttendance());
     }
   }, [month, year, dispatch]);
 
   const monthlySummary = attendance?.monthlySummary || {};
-  const { totalDays, present, absent, holiday, presentPercentage } = monthlySummary;
+  const {
+    totalDays = 0,
+    present = 0,
+    absent = 0,
+    holiday = 0,
+    presentPercentage = '0%',
+  } = monthlySummary;
 
   const attendanceData = {
-    labels: [],
+    labels: ['Present', 'Absent', 'Holiday'],
     datasets: [
       {
         data: [present, absent, holiday],
@@ -66,7 +77,26 @@ const StudentDashboard = () => {
   const handleMonthChange = (e) => setMonth(e.target.value);
   const handleYearChange = (e) => setYear(e.target.value);
 
-  const calendarData = Array.isArray(calendar?.calendars) ? calendar.calendars : [];
+  const calendarData = Array.isArray(calendar) ? calendar : [];
+
+  const todayDate = attendance?.todayDate || 'No date';
+  const todayAttendance = attendance?.todayAttendance || 'No Record';
+
+  const handleDateClick = (date) => {
+    const eventOnDate = calendarData.find(
+      (event) => new Date(event.date).toDateString() === date.toDateString()
+    );
+    if (eventOnDate) {
+      setSelectedDate(date);
+      setSelectedEvent(eventOnDate);
+      setShowPopup(true);
+    }
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-4">
@@ -102,14 +132,17 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {month && year && (
+          {totalDays > 0 ? (
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex justify-center items-center w-full lg:w-1/3">
-                <div className="relative w-32 h-32">
-                  <Pie data={attendanceData} options={pieChartOptions} />
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl font-semibold text-black">
-                    {presentPercentage ? `${presentPercentage}` : 'No data'}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32">
+                    <Pie data={attendanceData} options={pieChartOptions} />
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl font-semibold text-black">
+                      {presentPercentage}
+                    </div>
                   </div>
+                  <p className="text-sm mt-2 font-medium text-center">Present Percentage</p>
                 </div>
               </div>
 
@@ -124,6 +157,8 @@ const StudentDashboard = () => {
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="text-center text-gray-500 font-medium">No attendance data available.</div>
           )}
         </div>
 
@@ -132,10 +167,8 @@ const StudentDashboard = () => {
           <h3 className="text-[#285A87] text-lg font-bold mb-2">Today's Attendance</h3>
           <div className="flex items-center justify-between bg-[#F0F7FF] rounded-md p-4 relative">
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black transform -translate-x-1/2" />
-            <p className="flex-1 text-center font-semibold">{attendance?.todayDate || 'No date'}</p>
-            <p className="flex-1 text-center font-semibold">
-              {attendance?.todayAttendance || 'No Record'}
-            </p>
+            <p className="flex-1 text-center font-semibold">{todayDate}</p>
+            <p className="flex-1 text-center font-semibold">{todayAttendance}</p>
           </div>
         </div>
 
@@ -159,25 +192,46 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* Calendar */}
-        <div className="bg-white rounded-lg shadow-xl p-6 border min-h-[300px]">
-          <h2 className="text-xl font-bold text-[#000000] mb-3">Academic Calendar</h2>
-          {calendarData.length > 0 ? (
-            calendarData.map((event) => (
-              <div
-                key={event._id}
-                className="shadow p-4 border border-[#14619259] rounded-md mb-4 bg-[#E6F0FA]"
-              >
-                <h3 className="text-lg font-semibold text-[#146192]">
-                  {event.title} - {new Date(event.date).toLocaleDateString()}
-                </h3>
-                <p className="text-sm text-[#333]">{event.description}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-500">No calendar events available.</p>
-          )}
-        </div>
+        <div className="bg-white rounded-lg shadow-xl p-6 border min-h-[300px] relative w-full">
+  <h2 className="text-xl font-bold text-[#000000] mb-3">Academic Calendar</h2>
+  <div className={showPopup ? 'blur-sm pointer-events-none' : ''}>
+    {/* Flex container to ensure calendar stretches */}
+    <div className="w-full" style={{ display: 'flex', justifyContent: 'center' }}>
+      <Calendar
+        onClickDay={handleDateClick}
+        tileClassName={({ date }) => {
+          const eventOnDate = calendarData.some(
+            (event) => new Date(event.date).toDateString() === date.toDateString()
+          );
+          return eventOnDate ? 'bg-[#FFE082] rounded-md text-black font-bold' : '';
+        }}
+        style={{
+          width: '100% !important',  // Force full width
+          maxWidth: '98% !important', // Increased maximum width to make it wider
+          minWidth: '400px',  // Set a larger minimum width to keep it wide
+          margin: '0 auto', // Center the calendar
+        }}
+      />
+    </div>
+  </div>
+  {showPopup && selectedEvent && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+        <h3 className="text-lg font-bold mb-2">Event Details:</h3>
+        <p><strong>Title:</strong> {selectedEvent.title}</p>
+        <p><strong>Date:</strong> {new Date(selectedEvent.date).toLocaleDateString()}</p>
+        <p><strong>Description:</strong> {selectedEvent.description}</p>
+        <button
+          className="mt-4 px-4 py-2 bg-[#146192] text-white rounded hover:bg-[#0e3e62]"
+          onClick={closePopup}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+
       </div>
 
       {/* Right Side - Profile */}
@@ -186,7 +240,7 @@ const StudentDashboard = () => {
           <img
             src={profile?.Data?.studentProfile?.photo || 'default-profile.jpg'}
             alt="Profile"
-            className="mx-auto rounded-full w-32 h-32 "
+            className="mx-auto rounded-full w-32 h-32 object-cover"
           />
           <h2 className="mt-4 text-lg font-bold">{profile?.Data?.studentProfile?.fullname || 'Name Not Available'}</h2>
         </div>
@@ -238,8 +292,8 @@ const Section = ({ title, children }) => (
 );
 
 const Detail = ({ label, value }) => (
-  <div className="flex justify-between py-1">
-    <span className="text-[#146192]">{label}:</span>
+  <div className="flex justify-between text-sm mb-2">
+    <span className="font-semibold">{label}:</span>
     <span>{value || 'N/A'}</span>
   </div>
 );
