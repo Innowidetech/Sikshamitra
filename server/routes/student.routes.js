@@ -13,7 +13,7 @@ router.get('/calendar', protect, authorize('student'), getDynamicCalendar);
 router.get('/calendar/:calendarDate', protect, authorize('student'), getDynamicCalendarByDate);
 router.put('/editProfile', protect, authorize('student'), upload.single('photo'), editStudentProfile);
 router.get('/timetable',protect,authorize('student'), getTimetable);
-router.get('/attendance',protect,authorize('student'), attendanceReport);
+router.get('/attendance/:month?/:year?',protect,authorize('student'), attendanceReport);
 router.get('/assignment', protect, authorize('student'), getAssignment);
 router.post('/assignment/:assignmentId', protect, authorize('student'), upload.single('photo'), submitAssignment)
 router.get('/submittedAssignments', protect, authorize('student'), getSubmittedAssignments);

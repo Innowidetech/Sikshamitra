@@ -27,14 +27,10 @@ const StudeyMaterialSchema = new mongoose.Schema({
             required:true,
             uppercase:true
         },
-        material:[
-            {
-                url: {
-                    type: String,
-                    required: true,
-                },
-            },
-        ],
+        material: {
+            type: String,
+            required: true,
+        },
         createdBy:{
             type:mongoose.Schema.Types.ObjectId,
             required:true,
