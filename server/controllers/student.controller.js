@@ -68,7 +68,7 @@ exports.editStudentProfile = async (req, res) => {
 
 exports.attendanceReport = async (req, res) => {
     try {
-        const { month, year } = req.body;
+        const { month, year } = req.params;
         const currentDate = new Date();
 
         const loggedInId = req.user && req.user.id;

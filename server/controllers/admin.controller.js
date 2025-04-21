@@ -3155,6 +3155,54 @@ exports.updateTeacherItemRequest = async (req, res) => {
 };
 
 
+// exports.deleteTeacherItemRequest = async (req, res) => {
+//   try {
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized' });
+//     };
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser) {
+//       return res.status(403).json({ message: "Access denied, only logged-in users' have access." })
+//     }
+
+//     const {requestId} = req.params;
+//     if(!requestId){
+//       return res.status(400).json({message:"Please provide the request id to delete."})
+//     } 
+
+//     let schoolId;
+
+//     if (loggedInUser.role === 'admin') {
+//       const school = await School.findOne({ createdBy: loggedInId });
+//       if (!school) {
+//         return res.status(404).json({ message: 'Admin is not associated with any school.' });
+//       };
+//       schoolId = school._id
+//     }
+//     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'accountant') {
+//       const teacher = await Teacher.findOne({ userId: loggedInId })
+//       if (!teacher) { return res.status(404).json({ message: "No accountant found with the logged-in id." }) }
+//       schoolId = teacher.schoolId
+//     }
+//     else { return res.status(404).json({ message: "Only admin and accountants have access." }) }
+
+//     const teacherRequest = await ClassExpenses.findOne({ schoolId, _id:requestId });
+//     if (!teacherRequest) { return res.status(404).json({ message: "No request found with the provided id." }) }
+
+//     await teacherRequest.deleteOne()
+//     res.status(200).json({message:"Teacher request deleted successfully."})
+//   }
+//   catch (err) {
+//     res.status(500).json({
+//       message: 'Internal server error',
+//       error: err.message,
+//     })
+//   }
+// };
+
+
 exports.getAccounts = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
