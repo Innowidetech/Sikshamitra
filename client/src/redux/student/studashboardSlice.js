@@ -1,93 +1,8 @@
-// import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// import axios from 'axios';
-
-// // Initial state
-// const initialState = {
-//   attendance: [], // Will store attendance data per month
-//   notices: [],
-//   loading: false,
-//   error: null,
-// };
-
-// // Async action to fetch attendance data for a specific month and year
-// export const fetchAttendance = createAsyncThunk(
-//   'studentDashboard/fetchAttendance',
-//   async ({ month, year }) => {
-//     try {
-//       const response = await axios.get('https://sikshamitra.onrender.com/api/student/attendance', {
-//         params: {
-//           month: month, // Pass month to API
-//           year: year,   // Pass year to API
-//         },
-//       });
-      
-//       // Assuming API response structure
-//       return response.data.attendance; // Make sure 'attendance' exists in the response body
-//     } catch (error) {
-//       throw new Error('Error fetching attendance data');
-//     }
-//   }
-// );
-
-// // Async action to fetch notices
-// export const fetchNotices = createAsyncThunk(
-//   'studentDashboard/fetchNotices',
-//   async () => {
-//     try {
-//       const response = await axios.get('https://sikshamitra.onrender.com/api/student/notices');
-//       return response.data;
-//     } catch (error) {
-//       throw new Error('Error fetching notices');
-//     }
-//   }
-// );
-
-// const studentDashboardSlice = createSlice({
-//   name: 'studentDashboard',
-//   initialState,
-//   reducers: {},
-//   extraReducers: (builder) => {
-//     builder
-//       .addCase(fetchAttendance.pending, (state) => {
-//         state.loading = true;
-//         state.error = null;
-//       })
-//       .addCase(fetchAttendance.fulfilled, (state, action) => {
-//         state.loading = false;
-//         state.attendance = action.payload; // Store the attendance data
-//       })
-//       .addCase(fetchAttendance.rejected, (state, action) => {
-//         state.loading = false;
-//         state.error = action.error.message;
-//       });
-
-//     builder
-//       .addCase(fetchNotices.pending, (state) => {
-//         state.loading = true;
-//         state.error = null;
-//       })
-//       .addCase(fetchNotices.fulfilled, (state, action) => {
-//         state.loading = false;
-//         state.notices = action.payload;
-//       })
-//       .addCase(fetchNotices.rejected, (state, action) => {
-//         state.loading = false;
-//         state.error = action.error.message;
-//       });
-//   },
-// });
-
-// export default studentDashboardSlice.reducer;
-
-
-// src/redux/student/studentDashboardSlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// Initial state for the student dashboard
 const initialState = {
   profile: null,
-  attendance: [],
+  attendance: null,
   notices: [],
   calendar: [],
   calendarByDate: null,
@@ -103,40 +18,61 @@ export const fetchProfile = createAsyncThunk(
     if (!token) throw new Error('No token found');
 
     const response = await fetch('https://sikshamitra.onrender.com/api/student/getProfile', {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) throw new Error('Failed to fetch profile');
-    return response.json();
+    return await response.json();
   }
 );
 
-// Fetch student attendance
+// Fetch attendance
 export const fetchAttendance = createAsyncThunk(
   'studentDashboard/fetchAttendance',
-  async ({ month = '', year = '' }, { getState }) => {
-    const token = getState().auth.token || localStorage.getItem('token');
-    if (!token) throw new Error('No token found');
+  async ({ month, year } = {}, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token || localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
 
-    const url = `https://sikshamitra.onrender.com/api/student/attendance`;
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+      let url = 'https://sikshamitra.onrender.com/api/student/attendance';
+      if (month && year) {
+        url += `/${month}/${year}`;
+      }
 
-    if (!response.ok) throw new Error('Failed to fetch attendance');
-    return response.json();
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data || !data.monthlySummary || Object.keys(data.monthlySummary).length === 0) {
+        return {
+          monthlySummary: {
+            totalDays: 0,
+            present: 0,
+            absent: 0,
+            holiday: 0,
+            presentPercentage: '0%',
+          },
+          todayAttendance: 'No Record',
+          todayDate: new Date().toISOString(),
+        };
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch attendance');
+    }
   }
 );
 
-// Fetch notices
+// Fetch all notices
 export const fetchNotices = createAsyncThunk(
   'studentDashboard/fetchNotices',
   async (_, { getState }) => {
@@ -144,10 +80,9 @@ export const fetchNotices = createAsyncThunk(
     if (!token) throw new Error('No token found');
 
     const response = await fetch('https://sikshamitra.onrender.com/api/student/notice', {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -157,7 +92,7 @@ export const fetchNotices = createAsyncThunk(
   }
 );
 
-// Fetch full calendar
+// Fetch academic calendar
 export const fetchCalendar = createAsyncThunk(
   'studentDashboard/fetchCalendar',
   async (_, { getState }) => {
@@ -165,15 +100,14 @@ export const fetchCalendar = createAsyncThunk(
     if (!token) throw new Error('No token found');
 
     const response = await fetch('https://sikshamitra.onrender.com/api/student/calendar', {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) throw new Error('Failed to fetch calendar');
-    return response.json();
+    return await response.json();
   }
 );
 
@@ -185,92 +119,93 @@ export const fetchCalendarByDate = createAsyncThunk(
     if (!token) throw new Error('No token found');
 
     const response = await fetch(`https://sikshamitra.onrender.com/api/student/calendar/${calendarDate}`, {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) throw new Error('Failed to fetch calendar by date');
-    return response.json();
+    return await response.json();
   }
 );
 
+// Slice creation
 const studentDashboardSlice = createSlice({
   name: 'studentDashboard',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // Profile
-    builder.addCase(fetchProfile.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchProfile.fulfilled, (state, action) => {
-      state.loading = false;
-      state.profile = action.payload;
-    });
-    builder.addCase(fetchProfile.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+    builder
+      // Profile
+      .addCase(fetchProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
 
-    // Attendance
-    builder.addCase(fetchAttendance.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchAttendance.fulfilled, (state, action) => {
-      state.loading = false;
-      state.attendance = action.payload;
-    });
-    builder.addCase(fetchAttendance.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+      // Attendance
+      .addCase(fetchAttendance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAttendance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.attendance = action.payload;
+      })
+      .addCase(fetchAttendance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-    // Notices
-    builder.addCase(fetchNotices.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchNotices.fulfilled, (state, action) => {
-      state.loading = false;
-      state.notices = action.payload.Notices || [];
-    });
-    builder.addCase(fetchNotices.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+      // Notices
+      .addCase(fetchNotices.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchNotices.fulfilled, (state, action) => {
+        state.loading = false;
+        state.notices = action.payload.Notices || [];
+      })
+      .addCase(fetchNotices.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
 
-    // Calendar
-    builder.addCase(fetchCalendar.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchCalendar.fulfilled, (state, action) => {
-      state.loading = false;
-      state.calendar = action.payload.Calendar || [];
-    });
-    builder.addCase(fetchCalendar.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+      // Calendar
+      .addCase(fetchCalendar.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCalendar.fulfilled, (state, action) => {
+        state.loading = false;
+        state.calendar = action.payload.calendars || []; // 🔥 Correct key here
+      })
+      .addCase(fetchCalendar.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
 
-    // Calendar by Date
-    builder.addCase(fetchCalendarByDate.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(fetchCalendarByDate.fulfilled, (state, action) => {
-      state.loading = false;
-      state.calendarByDate = action.payload.Calendar || null;
-    });
-    builder.addCase(fetchCalendarByDate.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
+      // Calendar by date
+      .addCase(fetchCalendarByDate.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCalendarByDate.fulfilled, (state, action) => {
+        state.loading = false;
+        state.calendarByDate = action.payload.calendars || null; // Adjusted key too
+      })
+      .addCase(fetchCalendarByDate.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
   },
 });
 

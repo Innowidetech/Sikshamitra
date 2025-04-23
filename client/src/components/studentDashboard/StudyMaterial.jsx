@@ -16,6 +16,19 @@ function StudyMaterial() {
     dispatch(fetchStudyMaterials());
   }, [dispatch]);
 
+  // Function to handle file download
+  const handleDownload = (fileUrl, fileName) => {
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.target = "_blank"; // Open in new tab if necessary
+    link.download = fileName || "download"; // Provide a default filename if not specified
+
+    // Trigger the download action
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       {/* Header */}
@@ -69,14 +82,13 @@ function StudyMaterial() {
                   <th className="px-4 py-2 text-left">Section</th>
                   <th className="px-4 py-2 text-left">Subject Name ⇅</th>
                   <th className="px-4 py-2 text-left">Date ⇅</th>
-                  <th className="px-4 py-2 text-left">Time ⇅</th>
                   <th className="px-4 py-2 text-left">Download ⇅</th>
                 </tr>
               </thead>
               <tbody>
                 {classMaterial.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-4">No study materials found.</td>
+                    <td colSpan="7" className="text-center py-4">No study materials found.</td>
                   </tr>
                 ) : (
                   classMaterial.map((item, idx) => {
@@ -96,24 +108,12 @@ function StudyMaterial() {
                           })}
                         </td>
                         <td className="px-4 py-2">
-                          {date.toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </td>
-                        <td className="px-4 py-2">
-                          {item.material?.map((file, fileIdx) => (
-                            <a
-                              key={file._id || fileIdx}
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download
-                              className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
-                            >
-                              Download
-                            </a>
-                          ))}
+                          <button
+                            onClick={() => handleDownload(item.material, `${item.subject}_${item.chapter}_Material`)}
+                            className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
+                          >
+                            Download
+                          </button>
                         </td>
                       </tr>
                     );
@@ -158,26 +158,13 @@ function StudyMaterial() {
                         year: "numeric",
                       })}
                     </div>
-                    <div className="mb-2">
-                      <strong>Time:</strong>{" "}
-                      {date.toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
                     <div className="mt-3">
-                      {item.material?.map((file, fileIdx) => (
-                        <a
-                          key={file._id || fileIdx}
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium inline-block"
-                        >
-                          Download
-                        </a>
-                      ))}
+                      <button
+                        onClick={() => handleDownload(item.material, `${item.subject}_${item.chapter}_Material`)}
+                        className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
+                      >
+                        Download
+                      </button>
                     </div>
                   </div>
                 );
