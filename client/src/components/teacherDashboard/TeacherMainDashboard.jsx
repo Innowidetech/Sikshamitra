@@ -13,22 +13,25 @@ import CreateExams from './CreateExams';
 import Exams from './Exams'; // ✅ import
 import About from './About';
 import MaterialPage from './MaterialPage';
+import Tsyllabus from './Tsyllabus';
+import TclassPlans from './Tclassplans';
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const location = useLocation();
-    const navigate = useNavigate();
+    
 
     // Sync tab with URL path
     useEffect(() => {
-        const path = location.pathname.split('/')[2]; // e.g. 'exams'
-        if (path) setActiveTab(path);
-    }, [location.pathname]);
-
-    const handleTabChange = (tabId) => {
-        setActiveTab(tabId);
-        navigate(`/teacher/${tabId}`);
-    };
+       if (location.pathname === '/teacher') {
+         setActiveTab('dashboard');
+       }
+     }, [location.pathname]);
+   
+     const handleTabChange = (tabId) => {
+       setActiveTab(tabId); // ✅ This is enough — no navigation needed
+     };
+   
 
     const renderContent = () => {
         switch (activeTab) {
@@ -45,9 +48,13 @@ const MainDashboard = () => {
             case 'lectures':
                 return <Lectures />;
             case 'curriculam':
-                return <Curriculum />;
+                return <Curriculum setActiveTab={handleTabChange} />;
             case 'studymaterial':
                 return <StudyMaterial />;
+            case 'tsyllabus':
+                return <Tsyllabus />;
+             case 'tclassplans':
+                return <TclassPlans />;
              case 'materialPage':
                     return <MaterialPage />;
             case 'createexam':

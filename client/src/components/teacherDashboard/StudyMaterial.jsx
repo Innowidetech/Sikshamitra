@@ -42,19 +42,43 @@ function StudyMaterial() {
     }
   };
 
-  const handleDownload = (materialArray) => {
-    if (!materialArray || materialArray.length === 0) {
-      alert('No materials available to download.');
+  const handleDownload = async (fileUrl) => {
+    if (!fileUrl) {
+      alert('No material available to download.');
       return;
     }
-    materialArray.forEach((fileUrl) => {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.setAttribute('download', '');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
+
+    try {
+      // Check if the URL ends with .pdf to distinguish it from other file types (e.g., video)
+      const isPDF = fileUrl.endsWith('.pdf');
+      
+      // Fetch the file with headers (if needed, e.g., for authorization)
+      const response = await fetch(fileUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // If token is required for authorization
+        }
+      });
+
+      // If the response isn't successful, show an error
+      if (!response.ok) {
+        throw new Error('Failed to fetch the file.');
+      }
+
+      // Convert the response to a Blob (binary data)
+      const blob = await response.blob();
+
+      // Open the file in a new tab
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank'); // This opens the file in a new tab
+
+      // If it's a PDF, the browser will try to render it in the new tab
+      // No need to create a download link here for a new tab
+      window.URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
+    } catch (error) {
+      alert(`Error downloading file: ${error.message}`);
+      console.error("Error downloading file:", error);
+    }
   };
 
   const TableHeader = ({ label }) => (
@@ -163,7 +187,7 @@ function StudyMaterial() {
                   <TableHeader label="Section" />
                   <TableHeader label="Subject Name" />
                   <TableHeader label="Date" />
-                  <TableHeader label="Download" />
+                  <TableHeader label="View" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -184,7 +208,7 @@ function StudyMaterial() {
                           onClick={() => handleDownload(item.material)}
                           disabled={loading}
                         >
-                          Download
+                          View
                         </button>
                         <button
                           onClick={() => handleDelete(item._id)}

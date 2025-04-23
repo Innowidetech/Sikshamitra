@@ -37,6 +37,7 @@ import resultSliceReducer from './student/resultSlice';
 import aboutSliceReducer from './teacher/aboutSlice'
 import createExamSliceReducer from './teacher/createExamSlice'
 import studyMSliceReducer from './teacher/studyMSlice';
+import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 
 
 
@@ -80,6 +81,7 @@ const store = configureStore({
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
+    tcurriculum: tcurriculumSliceReducer, 
     
 
   },
