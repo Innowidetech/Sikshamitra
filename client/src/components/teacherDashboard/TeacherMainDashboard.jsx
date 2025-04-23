@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import TeacherSidebar from './layout/TeacherSidebar';
 import TeacherDashboard from './TeacherDashboard';
 import MyStudents from './MyStudents';
-import Assignment from './Assignments';
+import Assignments from './Assignments';
 import Results from './Results';
 import Attendence from './Attendence';
 import Lectures from './Lectures';
@@ -13,6 +13,7 @@ import CreateExams from './CreateExams';
 import Exams from './Exams'; // ✅ import
 import About from './About';
 import MaterialPage from './MaterialPage';
+import UploadAssignment from './UploadAssignment';
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -37,7 +38,9 @@ const MainDashboard = () => {
             case 'mystudents':
                 return <MyStudents />;
             case 'assignments':
-                return <Assignment />;
+                return <Assignments handleTabChange={handleTabChange} />; // ✅ Pass prop
+            case 'uploadassignment': // ✅ Add this
+                return <UploadAssignment />;
             case 'results':
                 return <Results />;
             case 'attendence':
@@ -48,8 +51,8 @@ const MainDashboard = () => {
                 return <Curriculum />;
             case 'studymaterial':
                 return <StudyMaterial />;
-             case 'materialPage':
-                    return <MaterialPage />;
+            case 'materialPage':
+                return <MaterialPage />;
             case 'createexam':
                 return <CreateExams />;
             case 'exams':
@@ -60,6 +63,7 @@ const MainDashboard = () => {
                 return <TeacherDashboard />;
         }
     };
+    
 
     return (
         <div className="flex min-h-screen">

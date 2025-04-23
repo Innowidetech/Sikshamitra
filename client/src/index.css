@@ -156,7 +156,7 @@
   -ms-overflow-style: none;       /* IE/Edge */
 }
 
-<<<<<<< HEAD
+
 /* For event date highlighting */
 .react-calendar__tile.highlighted-event {
   border: 2px solid rgba(0, 123, 255, 0.6);
@@ -203,8 +203,8 @@
 
 
 
-=======
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;                  /* Chrome, Safari, Opera */
 }
->>>>>>> 9c2f0e133ebfe408923ee6940f28f4cb857fd99b
+
