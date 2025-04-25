@@ -19,20 +19,22 @@ import TclassPlans from './Tclassplans';
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const location = useLocation();
-    
+    const navigate = useNavigate(); // Add navigate hook
 
     // Sync tab with URL path
     useEffect(() => {
-       if (location.pathname === '/teacher') {
-         setActiveTab('dashboard');
-       }
-     }, [location.pathname]);
-   
-     const handleTabChange = (tabId) => {
-       setActiveTab(tabId); // ✅ This is enough — no navigation needed
-     };
-   
+        const path = location.pathname.split('/teacher/')[1]; // Extract the active tab from the URL path
+        const tab = path || 'dashboard'; // Default to 'dashboard' if no path found
+        setActiveTab(tab);
+    }, [location.pathname]);
 
+    // Handle tab change and URL navigation
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId); // Update the active tab state
+        navigate(`/teacher/${tabId}`); // Update the URL to reflect the active tab
+    };
+
+    // Render the appropriate content based on the active tab
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
@@ -53,10 +55,10 @@ const MainDashboard = () => {
                 return <StudyMaterial />;
             case 'tsyllabus':
                 return <Tsyllabus />;
-             case 'tclassplans':
+            case 'tclassplans':
                 return <TclassPlans />;
-             case 'materialPage':
-                    return <MaterialPage />;
+            case 'materialPage':
+                return <MaterialPage />;
             case 'createexam':
                 return <CreateExams />;
             case 'exams':
@@ -72,7 +74,7 @@ const MainDashboard = () => {
         <div className="flex min-h-screen">
             <TeacherSidebar setActiveSection={handleTabChange} activeTab={activeTab} />
             <main className="flex-1">
-                {renderContent()}
+                {renderContent()} {/* Render the content based on the active tab */}
             </main>
         </div>
     );

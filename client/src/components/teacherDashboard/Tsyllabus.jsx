@@ -1,13 +1,15 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTeacherSyllabus } from '../../redux/teacher/tcurriculumSlice';
 import { FaBookOpen } from 'react-icons/fa';
-import Header from './layout/Header';
+import Header from '../adminDashboard/layout/Header';
 
 const Tsyllabus = () => {
   const dispatch = useDispatch();
   const { syllabus, loading, errorMessage } = useSelector((state) => state.tcurriculum);
+
+  // State to manage visibility of the upload form
+  const [isUploadFormVisible, setIsUploadFormVisible] = useState(false);
 
   useEffect(() => {
     dispatch(fetchTeacherSyllabus());
@@ -15,10 +17,20 @@ const Tsyllabus = () => {
 
   const syllabusList = syllabus?.syllabus || [];
 
+  // Toggle the upload form visibility
+  const handleReplaceClick = () => {
+    setIsUploadFormVisible(true); // Show the upload form when Replace button is clicked
+  };
+
+  // Close the modal
+  const handleCloseModal = () => {
+    setIsUploadFormVisible(false);
+  };
+
   return (
     <div className="font-sans text-sm text-gray-800">
       {/* Header Section */}
-      <div className="flex justify-between items-center mx-6 md:mx-10  md:ml-72">
+      <div className="flex justify-between items-center mx-6 md:mx-10 md:ml-72">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Curriculum</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
@@ -41,10 +53,60 @@ const Tsyllabus = () => {
           <p className="text-gray-600 text-lg">Loading syllabus...</p>
         ) : errorMessage ? (
           <p className="text-red-600 text-lg">Error: {errorMessage}</p>
-        ) : syllabusList.length === 0 ? (
-          <p className="text-gray-600 text-lg">No syllabus available.</p>
         ) : (
           <>
+            {/* Buttons Section */}
+            <div className="flex justify-end mb-4 md:ml-72">
+              {syllabusList.length === 0 ? (
+                <button className="bg-blue-600 text-white px-4 py-2 rounded">Create Syllabus</button>
+              ) : (
+                <button
+                  onClick={handleReplaceClick}
+                  className="bg-[#146192] text-white px-4 py-2 rounded"
+                >
+                  Replace
+                </button>
+              )}
+            </div>
+
+            {/* Modal Section */}
+            {isUploadFormVisible && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+                <div className="bg-white p-6 rounded-lg shadow-lg w-full sm:w-[400px] md:w-[500px] lg:w-[600px]">
+                  <h3 className="text-xl font-semibold text-black mb-4">Upload</h3>
+                  <form>
+                    <div className="flex flex-col gap-4">
+                      <label htmlFor="syllabusFile" className="text-black ">
+                        Syllabus File
+                      </label>
+                      <input
+                        type="file"
+                        id="syllabusFile"
+                        name="syllabusFile"
+                        accept=".pdf"
+                        className="border border-red-500 p-8 rounded"
+                      />
+                      <div className="flex gap-4 mt-4">
+                        <button
+                          type="submit"
+                          className="bg-blue-600 text-white px-4 py-2 rounded"
+                        >
+                          Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCloseModal} // Close the modal when Cancel is clicked
+                          className="bg-gray-600 text-white px-4 py-2 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
             {/* Desktop Table */}
             <div className="hidden md:block md:ml-72 overflow-x-auto">
               <table className="min-w-full border border-black text-sm bg-[#FFF4E9]">
