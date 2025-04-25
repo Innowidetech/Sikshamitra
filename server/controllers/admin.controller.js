@@ -2815,7 +2815,7 @@ exports.getDynamicCalendar = async (req, res) => {
         return res.status(404).json({ message: 'Admin is not associated with any school.' });
       };
 
-      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role }).sort({ date: 1 })
+      calendars = await Calendar.find({ schoolId: school._id, displayTo: { $in: [loggedInUser.role] } }).sort({ date: 1 })
       if (!calendars.length) {
         return res.status(404).json({ message: "No events found." })
       }
@@ -2829,7 +2829,7 @@ exports.getDynamicCalendar = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
+          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
           { createdBy: teacher._id }]
       }).sort({ date: 1 })
       if (!calendars.length) {
@@ -2846,8 +2846,8 @@ exports.getDynamicCalendar = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
-          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role }]
+          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
+          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: { $in: [loggedInUser.role] } }]
       }).sort({ date: 1 })
       if (!calendars.length) {
         return res.status(404).json({ message: "No events found." })
@@ -2879,8 +2879,8 @@ exports.getDynamicCalendar = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
-          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role }
+          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
+          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: { $in: [loggedInUser.role] } }
         ]
       }).sort({ date: 1 });
       if (!calendars.length) {
@@ -2888,7 +2888,7 @@ exports.getDynamicCalendar = async (req, res) => {
       }
     }
     res.status(200).json({
-      message: 'Dynamic calendar data fetched successfully',
+      message: 'Dynamic calendar data fetched successfully', 
       calendars
     });
   }
@@ -2926,7 +2926,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
         return res.status(404).json({ message: 'Admin is not associated with any school.' });
       };
 
-      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role, date: calendarDate })
+      calendars = await Calendar.find({ schoolId: school._id, displayTo: { $in: [loggedInUser.role] }, date: calendarDate })
       if (!calendars.length) {
         return res.status(200).json({ message: `No events on ${calendarDate}.` })
       }
@@ -2940,7 +2940,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
+          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] }, date: calendarDate },
           { createdBy: teacher._id, date: calendarDate }]
       })
       if (!calendars.length) {
@@ -2957,8 +2957,8 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
-          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role, date: calendarDate }]
+          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] }, date: calendarDate },
+          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: { $in: [loggedInUser.role] }, date: calendarDate }]
       })
       if (!calendars.length) {
         return res.status(200).json({ message: `No events on ${calendarDate}.` })
@@ -2994,8 +2994,8 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
       const calendarQuery = {
         $or: [
-          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
-          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role, date: calendarDate }
+          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] }, date: calendarDate },
+          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: { $in: [loggedInUser.role] }, date: calendarDate }
         ]
       };
       calendars = await Calendar.find(calendarQuery).sort({ date: 1 });
