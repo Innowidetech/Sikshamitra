@@ -34,6 +34,23 @@ import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import classPlanSliceReducer from './student/classPlanSlice';
 import resultSliceReducer from './student/resultSlice';
 
+import aboutSliceReducer from './teacher/aboutSlice'
+import createExamSliceReducer from './teacher/createExamSlice'
+import studyMSliceReducer from './teacher/studyMSlice';
+import myStudentsReducer from './teacher/myStudentsSlice';
+import assignmentsReducer from './teacher/assignmentsSlice';
+import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+<<<<<<< HEAD
+
+=======
+<<<<<<< HEAD
+import lectureSliceReducer from './teacher/lectureSlice';
+=======
+>>>>>>> f8a2267d0a703a300841997028d2fe806658056e
+>>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
+
+>>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
+
 
 const store = configureStore({
   reducer: {
@@ -72,7 +89,26 @@ const store = configureStore({
     classPlan : classPlanSliceReducer,
     results : resultSliceReducer,
    
-  
+    about : aboutSliceReducer,
+    createExam :createExamSliceReducer,
+    studyMaterial : studyMSliceReducer,
+
+    students: myStudentsReducer,
+    assignments: assignmentsReducer,
+    
+
+    tcurriculum: tcurriculumSliceReducer, 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+   
+    lecture: lectureSliceReducer,
+
+=======
+>>>>>>> f8a2267d0a703a300841997028d2fe806658056e
+>>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
+>>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
+    
 
   },
 });

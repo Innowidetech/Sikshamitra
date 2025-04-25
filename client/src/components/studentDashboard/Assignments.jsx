@@ -11,7 +11,6 @@ function Assignments() {
   const dispatch = useDispatch();
   const { classAssignments, loading, error } = useSelector((state) => state.assignment.assignments);
   const uploadStatus = useSelector((state) => state.assignment.uploadStatus);
-
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
 
   useEffect(() => {
@@ -40,13 +39,38 @@ function Assignments() {
     }
   };
 
-  const downloadFile = (url) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'assignment';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadFile = async (url) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Authorization token is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch file.');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `assignment-${new Date().getTime()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      console.error("Error downloading file:", error);
+    }
   };
 
   return (
@@ -85,7 +109,7 @@ function Assignments() {
           <p className="text-red-500">Error: {error}</p>
         ) : (
           <>
-            {/* Desktop/Laptop Table */}
+            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto rounded-lg shadow-md">
               <table className="min-w-[900px] w-full border border-gray-300 text-sm md:text-base bg-white">
                 <thead className="bg-[#f0f8ff] text-[#146192] font-semibold">
@@ -146,22 +170,20 @@ function Assignments() {
             <div className="md:hidden flex flex-col gap-6 mt-6">
               {classAssignments.map((assignment) => (
                 <div key={assignment._id} className="border rounded-lg shadow-md bg-white p-4">
-                  {[
-                    ['Assignment Name', assignment.assignmentName],
-                    ['Teacher Name', assignment.teacherName],
-                    ['Class', assignment.class],
-                    ['Section', assignment.section],
-                    ['Subject Name', assignment.subject],
-                    ['Chapter Name', assignment.chapter],
-                    ['Start Date', assignment.startDate.slice(0, 10)],
-                    ['End Date', assignment.endDate.slice(0, 10)],
+                  {[['Assignment Name', assignment.assignmentName],
+                  ['Teacher Name', assignment.teacherName],
+                  ['Class', assignment.class],
+                  ['Section', assignment.section],
+                  ['Subject Name', assignment.subject],
+                  ['Chapter Name', assignment.chapter],
+                  ['Start Date', assignment.startDate.slice(0, 10)],
+                  ['End Date', assignment.endDate.slice(0, 10)],
                   ].map(([label, value]) => (
                     <div className="flex justify-between py-1 border-b last:border-none" key={label}>
                       <span className="text-[#146192] font-semibold">{label}</span>
                       <span className="text-right">{value}</span>
                     </div>
                   ))}
-
                   <div className="flex justify-between gap-2 mt-4">
                     <button
                       onClick={() => downloadFile(assignment.assignment)}

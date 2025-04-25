@@ -14,8 +14,38 @@ function SyllabusView() {
     dispatch(fetchSyllabusView());
   }, [dispatch]);
 
-  const handleDownloadPDF = (url) => {
-    window.open(url, "_blank");
+  const handleDownloadPDF = async (url) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Authorization token is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF.');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `syllabus-${new Date().getTime()}.pdf`; // Download file with timestamped name
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      console.error("Error downloading file:", error);
+    }
   };
 
   return (

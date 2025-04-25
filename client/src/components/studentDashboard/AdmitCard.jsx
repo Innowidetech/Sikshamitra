@@ -12,24 +12,31 @@ const sampleData = {
       fullname: "unnati walke",
       gender: "female",
       dob: "2004-12-27T00:00:00.000Z",
-      photo: "https://res.cloudinary.com/dixhganq6/image/upload/v1738228878/ar3qsxsyvnsshd0iqnzq.jpg",
-      address: "Hyderabad",
+      photo: "https://res.cloudinary.com/dixhganq6/image/upload/v1744874338/yghvtvvc1qaxrtvdhf0y.png",
+      address: "mumbai",
       registrationNumber: "Reg16a1",
       class: "6",
       section: "A",
       classType: "secondary",
       childOf: "679b448ff7ccf1742a3b1067",
       fees: "70000",
-      previousEducation: [
-        {
-          schoolName: "",
-          duration: "",
-          _id: "67d91b2be03af716f9098acf"
-        }
-      ],
       additionalFees: "0",
       about: "Hello I am a Student of 6th class.",
-      rollNumber: ""
+      rollNumber: "",
+      previousEducation: [
+        {
+          study: "6",
+          schoolName: "vidyabharti",
+          duration: "2015-2018",
+          _id: "6800d749fa31828d67c8b034"
+        },
+        {
+          study: "9",
+          schoolName: "model juniar school",
+          duration: "2021-2023",
+          _id: "6800d749fa31828d67c8b035"
+        }
+      ]
     },
     _id: "679b448ff7ccf1742a3b1069",
     schoolId: {
@@ -42,11 +49,11 @@ const sampleData = {
     },
     createdBy: "67986e3bd7a5e04dc550ba31",
     createdAt: "2025-01-30T09:21:19.479Z",
-    updatedAt: "2025-03-20T12:09:16.417Z",
-    __v: 1
+    updatedAt: "2025-04-17T10:26:17.046Z",
+    __v: 18
   },
   admitCard: {
-    _id: "67a1ee4db423cad6f47a8d3d",
+    _id: "6800e7c2fa31828d67c8ba87",
     schoolId: "67987506ac1a5dcfa3056aee",
     examType: "Half Yearly Test 2",
     examDuration: "10am - 1pm",
@@ -88,7 +95,7 @@ const sampleData = {
 function AdmitCard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dispatch = useDispatch();
-  const { admitCard, loading, error } = useSelector((state) => state.admitCard);
+  const { loading, error } = useSelector((state) => state.admitCard);
 
   useEffect(() => {
     dispatch(fetchAdmitCard(sampleData));
@@ -119,6 +126,9 @@ function AdmitCard() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
+  const photoUrl = sampleData.student.studentProfile.photo;
+  const isValidPhoto = photoUrl && photoUrl.startsWith("http");
+
   return (
     <>
       <div className="flex justify-between items-center mx-4 md:mx-8 flex-wrap gap-y-4">
@@ -143,7 +153,7 @@ function AdmitCard() {
 
       <div className="flex justify-center mt-8 px-2">
         <div className="w-full max-w-6xl p-4 md:p-6 rounded-3xl shadow-2xl">
-          <h2 className="text-xl font-medium text-start mb-6">Exam Result Card</h2>
+          <h2 className="text-xl font-medium text-start mb-6">Exam Admit Card</h2>
 
           <div className="flex flex-col md:flex-row items-center justify-between pt-4 pb-4 shadow-lg gap-4" id="admit-card-container">
             <div className="w-full md:w-[35%] px-4">
@@ -184,9 +194,10 @@ function AdmitCard() {
               </div>
 
               <img
-                src={sampleData.student.studentProfile.photo || avatar}
-                alt="Avatar"
-                className="w-36 h-36 rounded-lg border-2 border-gray-300 mt-4 sm:mt-0"
+                src={isValidPhoto ? photoUrl : avatar}
+                alt="Student"
+                onError={(e) => e.target.src = avatar}
+                className="w-36 h-36 rounded-lg border-2 border-gray-300 mt-4 sm:mt-0 object-cover"
               />
             </div>
           </div>
@@ -212,6 +223,25 @@ function AdmitCard() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="flex justify-center mt-6 relative download-dropdown">
+            <button
+              onClick={toggleDropdown}
+              className="bg-[#146192] text-white px-6 py-2 rounded-lg hover:bg-[#0e4a6f] transition duration-200"
+            >
+              Download
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute mt-12 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <button
+                  onClick={() => handleDownloadOption('PDF')}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Download as PDF
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

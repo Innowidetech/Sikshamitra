@@ -1,74 +1,109 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProfile, editProfile } from "../../redux/student/studentProfileSlice";
+import { FaTrash } from 'react-icons/fa'; // FontAwesome for the delete icon
+import {
+  fetchProfile,
+  editProfile,
+  clearUpdateStatus,
+} from '../../redux/student/studentProfileSlice';
 
 const StudentProfile = () => {
   const dispatch = useDispatch();
-  const { profile, loading, error } = useSelector((state) => state.studentProfile);
+  const { profile, loading, error, updateSuccess } = useSelector(
+    (state) => state.studentProfile
+  );
 
   const [formData, setFormData] = useState({
     fullname: '',
     gender: '',
     address: '',
-    previousEducation: {
-      studyClass: '',
-      schoolName: '',
-      duration: '',
-    },
+    previousEducation: [],
     photo: null,
-    mobileNumber: '',
-    studentClass: '',
-    section: '',
-    rollNo: '',
-    previousSchool: '',
+    dob: '',
+    about: '',
     fatherName: '',
+    fatherPhoneNumber: '',
+    class: '',
+    section: '',
+    rollNumber: '',
   });
 
+  const [originalData, setOriginalData] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
 
-  const restrictedFields = ['studentClass', 'section', 'classType', 'rollNo', 'childOf', 'registrationNumber', 'fees', 'additionalFees'];
-
-  const studentProfile = profile?.Data;
+  const studentProfile = profile?.Data?.studentProfile;
+  const parentProfile = profile?.ParentData?.parentProfile;
+  const userEmail = profile?.Data?.userId?.email;
 
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
   useEffect(() => {
-    if (profile) {
-      const student = studentProfile?.studentProfile;
-      const parent = profile?.ParentData?.parentProfile;
+    if (studentProfile && parentProfile) {
+      const profileData = {
+        fullname: studentProfile.fullname || '',
+        gender: studentProfile.gender || '',
+        address: studentProfile.address || '',
+        previousEducation: Array.isArray(studentProfile.previousEducation)
+          ? [...studentProfile.previousEducation]
+          : [],
+        dob: studentProfile.dob
+          ? new Date(studentProfile.dob).toISOString().split('T')[0]
+          : '',
+        about: studentProfile.about || '',
+        fatherName: parentProfile.fatherName || '',
+        fatherPhoneNumber: parentProfile.fatherPhoneNumber || '',
+        class: studentProfile.class || '',
+        section: studentProfile.section || '',
+        rollNumber: studentProfile.rollNumber || '',
+        photo: null,
+      };
 
-      setFormData({
-        fullname: student?.fullname || '',
-        gender: student?.gender || '',
-        address: student?.address || '',
-        previousEducation: profile.previousEducation || {
-          studyClass: '',
-          schoolName: '',
-          duration: '',
-        },
-        photo: student?.photo || null,
-        mobileNumber: parent?.fatherPhoneNumber || '',
-        studentClass: profile.studentClass || '',
-        section: profile.section || '',
-        rollNo: profile.rollNo || '',
-        previousSchool: profile.previousSchool || '',
-        fatherName: parent?.fatherName || '',
-      });
-
-      setPreviewImage(student?.photo || null);
+      setFormData(profileData);
+      setOriginalData(profileData);
+      setPreviewImage(studentProfile.photo || null);
     }
-  }, [profile]);
+  }, [studentProfile, parentProfile]);
+
+  useEffect(() => {
+    if (updateSuccess) {
+      setIsEditing(false);
+      dispatch(fetchProfile());
+      setTimeout(() => {
+        dispatch(clearUpdateStatus());
+      }, 3000);
+    }
+  }, [updateSuccess, dispatch]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleEducationChange = (index, field, value) => {
+    const updatedEducation = [...formData.previousEducation];
+    updatedEducation[index] = {
+      ...updatedEducation[index],
+      [field]: value,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      previousEducation: updatedEducation,
+    }));
+  };
+
+  const addEducationField = () => {
+    setFormData((prev) => ({
+      ...prev,
+      previousEducation: [
+        ...prev.previousEducation,
+        { schoolName: '', duration: '', study: '' },
+      ],
     }));
   };
 
@@ -83,216 +118,230 @@ const StudentProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      const form = new FormData();
-      for (const key in formData) {
-        if (key === "photo" && formData.photo instanceof File) {
-          form.append("photo", formData.photo);
-        } else if (typeof formData[key] !== "object") {
-          form.append(key, formData[key]);
-        }
-      }
+    const form = new FormData();
+    const allowedFields = ['fullname', 'gender', 'address', 'dob', 'about', 'photo'];
 
-      await dispatch(editProfile(form));
-      setSuccessMessage("Profile updated successfully!");
-      setIsEditing(false);
-      setTimeout(() => setSuccessMessage(null), 3000);
-      dispatch(fetchProfile());
-    } catch (error) {
-      setErrorMessage("Error updating profile. Please try again later.");
-      console.error("Error saving profile:", error);
-    }
+    allowedFields.forEach((key) => {
+      if (key === 'photo' && formData.photo instanceof File) {
+        form.append('photo', formData.photo);
+      } else if (formData[key]) {
+        form.append(key, formData[key]);
+      }
+    });
+
+    formData.previousEducation.forEach((edu, index) => {
+      form.append(`previousEducation[${index}][schoolName]`, edu.schoolName || '');
+      form.append(`previousEducation[${index}][duration]`, edu.duration || '');
+      form.append(`previousEducation[${index}][study]`, edu.study || '');
+    });
+
+    dispatch(editProfile(form));
   };
 
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const getInputClasses = (name) => {
-    const base = "w-full p-2 bg-gray-100 border rounded-md focus:ring-[#1982C4]";
-    return isEditing && !restrictedFields.includes(name)
-      ? `${base} border-blue-500`
-      : `${base} border-gray-300`;
+  const handleCancel = () => {
+    setFormData(originalData);
+    setPreviewImage(studentProfile?.photo || null);
+    setIsEditing(false);
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleDeleteEducation = (index) => {
+    const updatedEducation = formData.previousEducation.filter((_, idx) => idx !== index);
+    setFormData((prev) => ({
+      ...prev,
+      previousEducation: updatedEducation,
+    }));
+  };
+
+  if (loading) return <div className="text-center py-4">Loading...</div>;
 
   return (
-    <div className="flex justify-center items-center bg-gray-50">
-      <div className="w-full p-6 rounded-lg">
-        <div className="bg-gradient-to-r from-[#FFF5A1] to-[#1982C4] text-white p-4 text-center rounded-lg mb-6 w-full max-w-4xl mx-auto">
-          <h1 className="text-xl font-semibold">About Me</h1>
+    <div className="flex justify-center items-center bg-gray-50 min-h-screen py-8">
+      <div className="w-full max-w-4xl p-6 bg-white rounded-lg shadow-lg">
+        <div className="bg-gradient-to-r from-[#FFF5A1] to-[#1982C4] text-white p-4 text-center rounded-lg mb-6">
+          <h1 className="text-2xl font-semibold">Student Profile</h1>
         </div>
 
-        {successMessage && (
-          <div className="bg-green-100 text-green-800 p-4 rounded-md mb-4 text-center">
-            {successMessage}
-          </div>
-        )}
-        {errorMessage && (
-          <div className="bg-red-100 text-red-800 p-4 rounded-md mb-4 text-center">
-            {errorMessage}
+        {error && (
+          <div className="bg-red-100 text-red-800 p-4 rounded-md mb-4">
+            {error}
           </div>
         )}
 
-        <div className="flex items-center space-x-6 mb-8">
-          <div className="relative">
-            <img
-              src={previewImage || "/placeholder.png"}
-              alt="Profile"
-              className="h-24 w-24 rounded-full  border"
-            />
-            {isEditing && (
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="mt-2 text-sm text-gray-600"
-              />
-            )}
+        {updateSuccess && (
+          <div className="bg-green-100 text-green-800 p-4 rounded-md mb-4">
+            Profile updated successfully!
           </div>
-          <div>
-            <h1 className="text-xl font-semibold">{studentProfile?.studentProfile?.fullname}</h1>
-            <h2 className="text-lg text-gray-600">{studentProfile?.userId?.email}</h2>
-          </div>
-        </div>
+        )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="flex space-x-4 mb-8">
-            <div className="flex-1">
-              <label className="block text-gray-700">Full Name</label>
-              <input
-                type="text"
-                className={getInputClasses('fullname')}
-                value={formData.fullname}
-                onChange={handleInputChange}
-                name="fullname"
-                disabled={!isEditing}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <img
+                src={previewImage || '/placeholder.png'}
+                alt="Profile"
+                className="h-24 w-24 rounded-full object-cover border"
               />
+              {isEditing && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="mt-2 text-sm"
+                />
+              )}
             </div>
-            <div className="flex-1">
-              <label className="block text-gray-700">Father's Name</label>
-              <input
-                type="text"
-                className={getInputClasses('fatherName')}
-                value={formData.fatherName}
-                onChange={handleInputChange}
-                name="fatherName"
-                disabled={!isEditing}
-              />
+            <div>
+              <h2 className="text-xl font-semibold">{studentProfile?.fullname}</h2>
+              <p className="text-gray-600">{userEmail}</p>
             </div>
           </div>
 
-          <div className="flex space-x-4 mb-8">
-            <div className="flex-1">
-              <label className="block text-gray-700">Gender</label>
-              <input
-                type="text"
-                className={getInputClasses('gender')}
-                value={formData.gender}
-                onChange={handleInputChange}
-                name="gender"
-                disabled={!isEditing}
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Input Fields */}
+            {[ 
+              ['Full Name', 'fullname', 'text', false], 
+              ["Father's Name", 'fatherName', 'text', true],
+              ['Phone Number', 'fatherPhoneNumber', 'tel', true],
+              ['Gender', 'gender', 'select', false],
+              ['Class', 'class', 'text', true],
+              ['Section', 'section', 'text', true],
+              ['Roll Number', 'rollNumber', 'text', true],
+              ['Date of Birth', 'dob', 'date', false],
+            ].map(([label, name, type, disabled]) => (
+              <div key={name}>
+                <label className="block text-sm font-medium text-gray-700">{label}</label>
+                {type === 'select' ? (
+                  <select
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleInputChange}
+                    disabled={disabled || !isEditing}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                ) : (
+                  <input
+                    type={type}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleInputChange}
+                    disabled={disabled || !isEditing}
+                    className={`mt-1 block w-full rounded-md ${
+                      disabled ? 'bg-gray-100' : ''
+                    } border-gray-300 shadow-sm`}
+                  />
+                )}
+              </div>
+            ))}
 
-            <div className="flex-1">
-              <label className="block text-gray-700">Mobile Number</label>
-              <input
-                type="text"
-                className={getInputClasses('mobileNumber')}
-                value={formData.mobileNumber}
-                onChange={handleInputChange}
-                name="mobileNumber"
-                disabled={!isEditing}
-              />
-            </div>
-          </div>
-
-          <div className="flex space-x-4 mb-8">
-            <div className="flex-1">
-              <label className="block text-gray-700">Class</label>
-              <input
-                type="text"
-                className={getInputClasses('studentClass')}
-                value={formData.studentClass}
-                onChange={handleInputChange}
-                name="studentClass"
-                disabled={!isEditing || restrictedFields.includes('studentClass')}
-              />
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-gray-700">Section</label>
-              <input
-                type="text"
-                className={getInputClasses('section')}
-                value={formData.section}
-                onChange={handleInputChange}
-                name="section"
-                disabled={!isEditing || restrictedFields.includes('section')}
-              />
-            </div>
-          </div>
-
-          <div className="flex space-x-4 mb-8">
-            <div className="flex-1">
-              <label className="block text-gray-700">Roll No</label>
-              <input
-                type="text"
-                className={getInputClasses('rollNo')}
-                value={formData.rollNo}
-                onChange={handleInputChange}
-                name="rollNo"
-                disabled={!isEditing || restrictedFields.includes('rollNo')}
-              />
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-gray-700">Address</label>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Address</label>
               <textarea
-                className={getInputClasses('address')}
+                name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                name="address"
                 disabled={!isEditing}
+                rows="3"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               />
             </div>
           </div>
 
-          <div className="flex space-x-4 mb-8">
-            <div className="flex-1">
-              <label className="block text-gray-700">Previous School</label>
-              <input
-                type="text"
-                className={getInputClasses('previousSchool')}
-                value={formData.previousSchool}
-                onChange={handleInputChange}
-                name="previousSchool"
-                disabled={!isEditing}
-              />
-            </div>
+          {/* Previous Education */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Previous Education</label>
+            {formData.previousEducation.map((edu, idx) => (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">School Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter school name"
+                    value={edu.schoolName || ''}
+                    onChange={(e) => handleEducationChange(idx, 'schoolName', e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2018-2022"
+                    value={edu.duration || ''}
+                    onChange={(e) => handleEducationChange(idx, 'duration', e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Class</label>
+                  <input
+                    type="text"
+                    placeholder="Class number"
+                    value={edu.study || ''}
+                    onChange={(e) => handleEducationChange(idx, 'study', e.target.value)}
+                    disabled={!isEditing}
+                    className="w-full rounded-md border-gray-300 shadow-sm text-sm p-2"
+                  />
+                </div>
+
+                {/* Delete Button */}
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteEducation(idx)}
+                    className="flex justify-end items-center col-span-3 mt-2"
+                  >
+                    <FaTrash className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            {isEditing && (
+              <button
+                type="button"
+                onClick={addEducationField}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2"
+              >
+                + Add Education
+              </button>
+            )}
           </div>
 
-          <div className="flex space-x-4 justify-end mt-4">
-            {!isEditing && (
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4">
+            {!isEditing ? (
               <button
                 type="button"
                 onClick={handleEdit}
-                className="bg-[#146192] text-white p-2 rounded-md hover:bg-[#0d4f6c] transition"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                Edit
+                Edit Profile
               </button>
-            )}
-
-            {isEditing && (
-              <button
-                type="submit"
-                className="bg-[#146192] text-white p-2 rounded-md hover:bg-[#0d4f6c] transition"
-              >
-                Save
-              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+              </>
             )}
           </div>
         </form>
