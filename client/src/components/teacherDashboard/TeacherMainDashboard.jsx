@@ -20,6 +20,7 @@ import TclassPlans from './Tclassplans';
 import AddStudentResult from './AddStudentResult'; // 👈 Import the new page
 
 const MainDashboard = () => {
+<<<<<<< HEAD
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const location = useLocation();
@@ -85,6 +86,82 @@ const MainDashboard = () => {
       <main className="flex-1">{renderContent()}</main>
     </div>
   );
+=======
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const location = useLocation();
+    const navigate = useNavigate(); // Add navigate hook
+
+    // Sync tab with URL path
+    useEffect(() => {
+        const path = location.pathname.split('/teacher/')[1]; // Extract the active tab from the URL path
+        const tab = path || 'dashboard'; // Default to 'dashboard' if no path found
+        setActiveTab(tab);
+    }, [location.pathname]);
+
+    // Handle tab change and URL navigation
+    const handleTabChange = (tabId) => {
+        setActiveTab(tabId); // Update the active tab state
+        navigate(`/teacher/${tabId}`); // Update the URL to reflect the active tab
+    };
+
+    // Render the appropriate content based on the active tab
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'dashboard':
+                return <TeacherDashboard />;
+            case 'mystudents':
+                return <MyStudents />;
+            case 'assignments':
+                return <Assignments handleTabChange={handleTabChange} />; // ✅ Pass prop
+            case 'uploadassignment': // ✅ Add this
+                return <UploadAssignment />;
+            case 'results':
+                return <Results />;
+            case 'attendence':
+                return <Attendence />;
+            case 'lectures':
+                return <Lectures />;
+            case 'curriculam':
+                return <Curriculum setActiveTab={handleTabChange} />;
+            case 'studymaterial':
+                return <StudyMaterial />;
+<<<<<<< HEAD
+            case 'materialPage':
+                return <MaterialPage />;
+=======
+            case 'tsyllabus':
+                return <Tsyllabus />;
+            case 'tclassplans':
+                return <TclassPlans />;
+<<<<<<< HEAD
+            case 'materialPage':
+                return <MaterialPage />;
+=======
+             case 'materialPage':
+                    return <MaterialPage />;
+>>>>>>> f8a2267d0a703a300841997028d2fe806658056e
+>>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
+            case 'createexam':
+                return <CreateExams />;
+            case 'exams':
+                return <Exams />;
+            case 'about':
+                return <About />;
+            default:
+                return <TeacherDashboard />;
+        }
+    };
+    
+
+    return (
+        <div className="flex min-h-screen">
+            <TeacherSidebar setActiveSection={handleTabChange} activeTab={activeTab} />
+            <main className="flex-1">
+                {renderContent()} {/* Render the content based on the active tab */}
+            </main>
+        </div>
+    );
+>>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
 };
 
 export default MainDashboard;

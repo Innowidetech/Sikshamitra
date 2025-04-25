@@ -4,7 +4,7 @@ import { fetchTeacherClassPlans } from '../../redux/teacher/tcurriculumSlice';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import Header from './layout/Header';
+import Header from '../adminDashboard/layout/Header';
 
 const formatDate = (isoDate) => {
   const date = new Date(isoDate);

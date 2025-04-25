@@ -122,7 +122,7 @@ const MaterialPage = () => {
             type="file"
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             onChange={handleFileChange}
-            className="w-full px-3 py-2 border border-red-400 rounded-md"
+            className="w-full px-3 py-10 border border-dashed border-red-400 rounded-md"
             required
           />
         </div>
@@ -153,7 +153,7 @@ const MaterialPage = () => {
       <div className="text-center">
         <button
           onClick={handleResetStatus}
-          className="text-blue-500 underline mt-4"
+          className="text-blue-500 underline mt-4 "
         >
           Reset Upload Status
         </button>
