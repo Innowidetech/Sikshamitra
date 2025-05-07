@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, setBookAvailabilityTrue, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod, getItemRequests } = require('../controllers/teacher.controller');
+const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod, getItemRequests, returnBook } = require('../controllers/teacher.controller');
 const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -37,7 +37,7 @@ router.post('/exams', protect, authorize('teacher'), createExams);
 router.get('/exams', protect, authorize('teacher'), getExams);
 router.post('/classPlan', protect, authorize('teacher'), createOrUpdateClassPlan);
 router.get('/classPlan', protect, authorize('teacher'), getClassPlan);
-router.get('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
+router.post('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
 router.post('/results', protect, authorize('teacher'), createResults);
 router.get('/results', protect, authorize('teacher'), getResults);
 router.get('/result/:resultId', protect, authorize('teacher'), getResultById);
@@ -46,7 +46,7 @@ router.get('/students', protect, authorize('teacher'), getAllStudentsOfSchool);/
 router.get('/books', protect, authorize('teacher'), getBooks);// librarian
 router.post('/issueBook', protect, authorize('teacher'), issueBook);// librarian
 router.get('/library', protect, authorize('teacher'), getLibraryData);// librarian
-router.put('/bookAvailability/:bookId', protect, authorize('teacher'), setBookAvailabilityTrue);// librarian
+router.put('/bookAvailability/:bookId', protect, authorize('teacher'), returnBook);// librarian
 router.delete('/book/:bookId', protect, authorize('teacher'), deleteBook);// librarian
 router.get('/aimobjective', protect, authorize('teacher'), getAimObjective);
 router.get('/dashboard', protect, authorize('teacher'), getTeacherDashboard);

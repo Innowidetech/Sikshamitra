@@ -2,7 +2,7 @@ const express = require('express');
 
 const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, getAandLUpdatesHistory, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getResults, getSyllabus, getExams, issueBook, setBookAvailabilityTrue } = require('../controllers/teacher.controller');
+const { getResults, getSyllabus, getExams, issueBook, returnBook } = require('../controllers/teacher.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
@@ -55,7 +55,7 @@ router.get('/books',protect,authorize('admin'),getBooks);
 router.get('/library', protect, authorize('admin'), getLibraryData);
 router.delete('/book/:bookId', protect,authorize('admin'), deleteBook);
 router.post('/issueBook', protect, authorize('admin'), issueBook);
-router.put('/bookAvailability/:bookId', protect, authorize('admin'), setBookAvailabilityTrue);
+router.put('/bookAvailability/:bookId', protect, authorize('admin'), returnBook);
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
