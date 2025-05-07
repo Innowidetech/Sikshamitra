@@ -14,7 +14,8 @@ const Exams = require('../models/Exams');
 const Results = require('../models/Results');
 const School = require('../models/School');
 const Book = require('../models/Books');
-const Library = require('../models/Library');
+const BookRequests = require('../models/BookRequests');
+const Library = require('../models/Library')
 const ClassPlan = require('../models/ClassPlan');
 const SubmitAssignment = require('../models/SubmitAssignment');
 const Lectures = require('../models/Lectures');
@@ -559,54 +560,54 @@ exports.markAndUpdateAttendance = async (req, res) => {
 // };
 
 
-exports.autoMarkHoliday = async () => {
-    try {
-        const now = moment().tz("Asia/Kolkata");
-        if (now.hour() !== 18) return;
+// exports.autoMarkHoliday = async () => {
+//     try {
+//         const now = moment().tz("Asia/Kolkata");
+//         if (now.hour() !== 18) return;
 
-        const today = now.startOf('day').toDate();
-        const schools = await School.find();
+//         const today = now.startOf('day').toDate();
+//         const schools = await School.find();
 
-        for (const school of schools) {
-            const teachers = await Teacher.find({ schoolId: school._id });
+//         for (const school of schools) {
+//             const teachers = await Teacher.find({ schoolId: school._id });
 
-            for (const teacher of teachers) {
-                const students = await Student.find({
-                    schoolId: school._id,
-                    'studentProfile.class': teacher.profile.class,
-                    'studentProfile.section': teacher.profile.section,
-                });
+//             for (const teacher of teachers) {
+//                 const students = await Student.find({
+//                     schoolId: school._id,
+//                     'studentProfile.class': teacher.profile.class,
+//                     'studentProfile.section': teacher.profile.section,
+//                 });
 
-                if (!students.length) continue;
+//                 if (!students.length) continue;
 
-                const existingAttendance = await Attendance.findOne({
-                    schoolId: school._id,
-                    date: today,
-                    class: teacher.profile.class,
-                    section: teacher.profile.section,
-                });
+//                 const existingAttendance = await Attendance.findOne({
+//                     schoolId: school._id,
+//                     date: today,
+//                     class: teacher.profile.class,
+//                     section: teacher.profile.section,
+//                 });
 
-                if (!existingAttendance) {
-                    const newAttendance = new Attendance({
-                        schoolId: school._id,
-                        date: today,
-                        teacherId: teacher._id,
-                        class: teacher.profile.class,
-                        section: teacher.profile.section,
-                        attendance: students.map(student => ({
-                            studentId: student._id,
-                            status: 'Holiday',
-                        })),
-                    });
-                    await newAttendance.save();
-                }
-            }
-        }
-        res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
-    } catch (err) {
-        res.status(500).json({ message: 'Internal server error.', error: err.message })
-    }
-};
+//                 if (!existingAttendance) {
+//                     const newAttendance = new Attendance({
+//                         schoolId: school._id,
+//                         date: today,
+//                         teacherId: teacher._id,
+//                         class: teacher.profile.class,
+//                         section: teacher.profile.section,
+//                         attendance: students.map(student => ({
+//                             studentId: student._id,
+//                             status: 'Holiday',
+//                         })),
+//                     });
+//                     await newAttendance.save();
+//                 }
+//             }
+//         }
+//         res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
+//     } catch (err) {
+//         res.status(500).json({ message: 'Internal server error.', error: err.message })
+//     }
+// };
 
 
 //get monthly attendance of students
@@ -1224,7 +1225,6 @@ exports.getSyllabus = async (req, res) => {
             syllabus,
         });
     } catch (err) {
-        console.error(err);
         return res.status(500).json({
             message: 'Internal server error.',
             error: err.message,
@@ -1640,7 +1640,7 @@ exports.getClassPlan = async (req, res) => {
 
             classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: teacher.profile.class, section: teacher.profile.section })
             if (!classPlan) {
-                return res.status(200).json({ message: "No class plan found for the class." });
+                return res.status(404).json({ message: "No class plan found for the class." });
             }
         }
         else if (loggedInUser.role === 'student') {
@@ -1649,7 +1649,7 @@ exports.getClassPlan = async (req, res) => {
 
             classPlan = await ClassPlan.findOne({ schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section })
             if (!classPlan) {
-                return res.status(200).json({ message: "No class plan found for the class." });
+                return res.status(404).json({ message: "No class plan found for the class." });
             }
         }
         else if (loggedInUser.role === 'parent') {
@@ -1738,11 +1738,11 @@ exports.getStudentsAndExams = async (req, res) => { // to post results
 
 exports.createResults = async (req, res) => {
     try {
-        const { classs, sectionis, exam, student, result } = req.body;
-        if (!classs || !sectionis || !exam || !student || !result) {
+        const { classs, section, exam, student, result } = req.body;
+        if (!classs || !section || !exam || !student || !result) {
             return res.status(404).json({ message: 'Provide all the data to post result for student.' })
         };
-        let section = sectionis.toUpperCase()
+        let sectionis = section.toUpperCase()
 
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -1763,7 +1763,7 @@ exports.createResults = async (req, res) => {
             examType: exam,
             schoolId: teacher.schoolId,
             class: classs,
-            section: section
+            section: sectionis
         });
 
         if (!existingExam) {
@@ -2070,13 +2070,12 @@ exports.issueBook = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Only logged-in users have the access to issue book to students.' });
         };
 
-        let schoolId, issuedByName;
+        let schoolId;
 
         if (loggedInUser.role === 'admin') {
             const school = await School.findOne({ createdBy: loggedInId })
             if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
             schoolId = school._id
-            issuedByName = school.schoolName + ' school'
         }
         else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -2084,7 +2083,6 @@ exports.issueBook = async (req, res) => {
                 return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
             };
             schoolId = teacher.schoolId
-            issuedByName = teacher.profile.fullname
         }
         else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
 

@@ -4,7 +4,9 @@ const Attendance = require('../models/Attendance');
 const Exams = require('../models/Exams');
 const { uploadImage } = require('../utils/multer');
 const Assignment = require('../models/assignment');
-const SubmitAssignment = require('../models/SubmitAssignment')
+const SubmitAssignment = require('../models/SubmitAssignment');
+const Books = require('../models/Books');
+const BookRequest = require('../models/BookRequests');
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -96,8 +98,8 @@ exports.attendanceReport = async (req, res) => {
         let startDate, endDate;
 
         if (month && year) {
-            startDate = new Date(reportYear, reportMonth - 1, 1); 
-            endDate = new Date(reportYear, reportMonth, 0);       
+            startDate = new Date(reportYear, reportMonth - 1, 1);
+            endDate = new Date(reportYear, reportMonth, 0);
         } else {
             startDate = new Date(0);
             endDate = new Date();
@@ -143,7 +145,7 @@ exports.attendanceReport = async (req, res) => {
         const presentPercentage = totalDays > 0 ? ((presentCount / totalDays) * 100).toFixed(2) : '0.00';
 
         const today = new Date();
-        const todayFormatted = today.toLocaleDateString(); 
+        const todayFormatted = today.toLocaleDateString();
 
         const todayAttendance = await Attendance.findOne({
             schoolId: associatedSchool,
@@ -168,7 +170,7 @@ exports.attendanceReport = async (req, res) => {
                 holiday: holidayCount,
                 presentPercentage: `${presentPercentage}%`,
             },
-            todayDate:todayFormatted,
+            todayDate: todayFormatted,
             todayAttendance: todaysStatus,
         });
 
@@ -197,11 +199,11 @@ exports.getAdmitCard = async (req, res) => {
         const currentDate = new Date();
 
         if (loggedInUser.role === 'student') {
-            student = await Student.findOne({ userId: loggedInId }).populate('schoolId','schoolBanner').populate('userId', 'isActive');
+            student = await Student.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner').populate('userId', 'isActive');
             if (!student) {
                 return res.status(404).json({ message: 'No student found with the logged-in id.' })
             };
-            if (student.userId.isActive == 'false') {
+            if (student.userId.isActive == false) {
                 return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             }
 
@@ -233,7 +235,7 @@ exports.getAdmitCard = async (req, res) => {
 };
 
 
-exports.submitAssignment = async (req, res) => { 
+exports.submitAssignment = async (req, res) => {
     try {
         const { assignmentId } = req.params;
         if (!assignmentId) {
@@ -276,11 +278,11 @@ exports.submitAssignment = async (req, res) => {
             return res.status(404).json({ message: "No assignment found with the id." });
         }
 
-        const existingSubmission = await SubmitAssignment.findOne({ 
+        const existingSubmission = await SubmitAssignment.findOne({
             schoolId: student.schoolId,
             assignmentId: assignmentId,
             class: student.studentProfile.class,
-            section: student.studentProfile.section 
+            section: student.studentProfile.section
         });
 
         if (existingSubmission) {
@@ -311,5 +313,71 @@ exports.submitAssignment = async (req, res) => {
             message: 'Internal server error',
             error: err.message,
         });
+    }
+};
+
+
+exports.requestBook = async (req, res) => {
+    try {
+        const { bookId } = req.params;
+        if (!bookId) {
+            return res.status(400).json({ message: "Provide the book id to request book." });
+        }
+
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in users can have access.' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'student') {
+            return res.status(403).json({ message: 'Access denied, Only logged-in students have access.' });
+        };
+
+        const student = await Student.findOne({ userId: loggedInId });
+        if (!student) {
+            return res.status(404).json({ message: 'No student found with the logged-in id.' });
+        }
+
+        const book = await Books.findOne({ schoolId: student.schoolId, _id: bookId, });
+        if (!book) {
+            return res.status(404).json({ message: "No book found with the id." });
+        }
+
+        if (book.availability == false) {
+            return res.status(409).json({ message: "The book is borrowed by someone else and it is unavailable." })
+        }
+
+        const bookRequest = new BookRequest({ schoolId: student.schoolId, book: book._id, requestedBy: student._id })
+        await bookRequest.save();
+        res.status(201).json({ message: "Book requested successfully. Please wait until the librarian confirms." })
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message, });
+    }
+};
+
+
+exports.getBookRequests = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in users can have access.' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'student') {
+            return res.status(403).json({ message: 'Access denied, Only logged-in students have access.' });
+        };
+
+        const student = await Student.findOne({ userId: loggedInId });
+        if (!student) {
+            return res.status(404).json({ message: 'No student found with the logged-in id.' });
+        }
+        const bookRequests = await BookRequest.find({ requestedBy: student._id }).populate('book');
+        if (!bookRequests || !bookRequests.length) { return res.status(404).json({ message: "No book requests found for the student." }) }
+
+        res.status(200).json(bookRequests)
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message, });
     }
 };

@@ -71,7 +71,7 @@ exports.getAllSchools = async (req, res) => {
       return res.status(200).json({ message: 'No schools registered yet.' })
     };
     res.status(200).json({
-      message: 'Schools data',
+      message: 'Schools data:',
       schools
     })
   }
