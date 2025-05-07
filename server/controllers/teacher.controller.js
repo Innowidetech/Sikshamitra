@@ -1648,7 +1648,7 @@ exports.getClassPlan = async (req, res) => {
             const teacher = await Teacher.findOne({ userId: loggedInId })
             if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
             
-            const targetClass = req.params.class || teacher.profile.class;
+            const targetClass = req.params.className || teacher.profile.class;
             const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
 
             classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })

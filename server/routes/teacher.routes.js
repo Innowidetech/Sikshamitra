@@ -36,7 +36,7 @@ router.delete('/studyMaterial/:materialId', protect, authorize('teacher'), delet
 router.post('/exams', protect, authorize('teacher'), createExams);
 router.get('/exams', protect, authorize('teacher'), getExams);
 router.post('/classPlan', protect, authorize('teacher'), createOrUpdateClassPlan);
-router.get('/classPlan/:class?/:section?', protect, authorize('teacher'), getClassPlan);
+router.get('/classPlan/:className?/:section?', protect, authorize('teacher'), getClassPlan);
 router.post('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
 router.post('/results', protect, authorize('teacher'), createResults);
 router.get('/results', protect, authorize('teacher'), getResults);
