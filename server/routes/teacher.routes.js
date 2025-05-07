@@ -36,7 +36,7 @@ router.delete('/studyMaterial/:materialId', protect, authorize('teacher'), delet
 router.post('/exams', protect, authorize('teacher'), createExams);
 router.get('/exams', protect, authorize('teacher'), getExams);
 router.post('/classPlan', protect, authorize('teacher'), createOrUpdateClassPlan);
-router.get('/classPlan', protect, authorize('teacher'), getClassPlan);
+router.get('/classPlan/:class?/:section?', protect, authorize('teacher'), getClassPlan);
 router.post('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
 router.post('/results', protect, authorize('teacher'), createResults);
 router.get('/results', protect, authorize('teacher'), getResults);
@@ -44,9 +44,9 @@ router.get('/result/:resultId', protect, authorize('teacher'), getResultById);
 router.post('/createBook', protect, authorize('teacher'), createBook);// librarian
 router.get('/students', protect, authorize('teacher'), getAllStudentsOfSchool);// librarian
 router.get('/books', protect, authorize('teacher'), getBooks);// librarian
-router.post('/issueBook', protect, authorize('teacher'), issueBook);// librarian
+router.patch('/issueBook/:requestId', protect, authorize('teacher'), issueBook);// librarian
 router.get('/library', protect, authorize('teacher'), getLibraryData);// librarian
-router.put('/bookAvailability/:bookId', protect, authorize('teacher'), returnBook);// librarian
+router.patch('/returnBook/:requestId', protect, authorize('teacher'), returnBook);// librarian
 router.delete('/book/:bookId', protect, authorize('teacher'), deleteBook);// librarian
 router.get('/aimobjective', protect, authorize('teacher'), getAimObjective);
 router.get('/dashboard', protect, authorize('teacher'), getTeacherDashboard);

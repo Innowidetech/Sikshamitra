@@ -1647,10 +1647,13 @@ exports.getClassPlan = async (req, res) => {
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId })
             if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+            
+            const targetClass = req.params.class || teacher.profile.class;
+            const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
 
-            classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: teacher.profile.class, section: teacher.profile.section })
+            classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
             if (!classPlan) {
-                return res.status(404).json({ message: "No class plan found for the class." });
+                return res.status(404).json({ message: "No class plan found for the specified class and section." });
             }
         }
         else if (loggedInUser.role === 'student') {
@@ -2063,6 +2066,49 @@ exports.getResultById = async (req, res) => {
     }
 };
 
+exports.getBookRequests = async(req,res)=>{
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser) {
+            return res.status(403).json({ message: 'Access denied. Only logged-in users have the access to issue book to students.' });
+        };
+
+        let schoolId;
+
+        if (loggedInUser.role === 'admin') {
+            const school = await School.findOne({ createdBy: loggedInId })
+            if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
+            schoolId = school._id
+        }
+        else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
+            const teacher = await Teacher.findOne({ userId: loggedInId });
+            if (!teacher) {
+                return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
+            };
+            schoolId = teacher.schoolId
+        }
+        else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
+
+        const bookRequests = await BookRequests.find({ schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({createdAt:-1});
+        if (!bookRequests || !bookRequests.length) {
+            return res.status(404).json({ message: 'No book requests found.' })
+        };
+
+        res.status(200).json({ bookRequests });
+    }
+    catch (err) {
+        res.status(500).json({
+            message: 'Internal server error.',
+            error: err.message,
+        });
+    }
+};
+
 exports.issueBook = async (req, res) => {
     try {
         const { requestId } = req.params;
@@ -2143,8 +2189,6 @@ exports.returnBook = async (req, res) => {
             return res.status(400).json({ message: 'Please provide a requestId' })
         };
 
-        const {fine} = req.body;
-
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
             return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
@@ -2187,16 +2231,25 @@ exports.returnBook = async (req, res) => {
             return res.status(404).json({ message: 'Book is not issued to any student.' })
         };
 
+        bookRequest.returnedOn = new Date();
+        if (bookRequest.returnedOn > bookRequest.dueOn) {
+            const fineAmount = req.body.fine;
+        
+            if (fineAmount) {
+                bookRequest.fine = fineAmount;
+            } else {
+                return res.status(400).json({ message: 'Fine amount is required for late returns.' });
+            }
+        }
+        bookRequest.status = 'returned'
+        bookRequest.save();
+
         book.availability = true;
         book.save();
 
-        bookRequest.returnedOn = new Date();
-        bookRequest.status = 'returned'
-        if(bookRequest.returnedOn > bookRequest.dueOn){
-
-        }
-        bookRequest.save();
-
+        const student = await Student.findById(bookRequest.requestedBy);
+        student.studentProfile.additionalFees += fine
+        await student.save()
         res.status(200).json({
             message: 'Book is returned and the book availability is now set to true.',
             bookRequest

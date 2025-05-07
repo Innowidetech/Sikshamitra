@@ -54,8 +54,8 @@ router.post('/createBook', protect, authorize('admin'), upload.single('photo'), 
 router.get('/books',protect,authorize('admin'),getBooks);
 router.get('/library', protect, authorize('admin'), getLibraryData);
 router.delete('/book/:bookId', protect,authorize('admin'), deleteBook);
-router.post('/issueBook', protect, authorize('admin'), issueBook);
-router.put('/bookAvailability/:bookId', protect, authorize('admin'), returnBook);
+router.patch('/issueBook/:requestId', protect, authorize('admin'), issueBook);
+router.patch('/returnBook/:requestId', protect, authorize('admin'), returnBook);
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
