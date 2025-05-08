@@ -1710,7 +1710,7 @@ exports.getClassPlan = async (req, res) => {
 
 exports.getStudentsAndExams = async (req, res) => { // to post results
     try {
-        const { classs, section } = req.body;
+        const { classs, section } = req.query;
         if (!classs || !section) {
             return res.status(400).json({ message: "Provide the class and section." })
         }
@@ -2111,14 +2111,6 @@ exports.getBookRequests = async(req,res)=>{
 
 exports.issueBook = async (req, res) => {
     try {
-        const { requestId } = req.params;
-        if (!requestId) {
-            return res.status(400).json({ message: 'Please provide requestId.' })
-        };
-
-        const { status, borrowedOn, dueOn } = req.body;
-        if (!status) { return res.status(400).json({ message: "Please provide status to update book issue." }) }
-
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
             return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
@@ -2128,6 +2120,14 @@ exports.issueBook = async (req, res) => {
         if (!loggedInUser) {
             return res.status(403).json({ message: 'Access denied. Only logged-in users have the access to issue book to students.' });
         };
+
+        const { requestId } = req.params;
+        if (!requestId) {
+            return res.status(400).json({ message: 'Please provide requestId.' })
+        };
+
+        const { status, dueOn } = req.body;
+        if (!status) { return res.status(400).json({ message: "Please provide status to update book issue." }) }
 
         let schoolId;
 
@@ -2150,21 +2150,27 @@ exports.issueBook = async (req, res) => {
             return res.status(404).json({ message: 'No book request found.' })
         };
 
+        if(status == 'accepted' || status == 'rejected'){
+            bookRequest.status = status
+            await bookRequest.save()
+            return res.status(200).json({message:"Response sent to student successfully.", bookRequest})
+        }
+
         const book = await Book.findOne({ _id: bookRequest.book._id, schoolId });
         if (book.availability == false) {
             return res.status(400).json({ message: 'The book is already issued to another student.' });
         }
 
         if (status == 'received') {
-            if (!borrowedOn || !dueOn) {
-                return res.status(400).json({ message: "Please provide borrow date and due date to issue book." })
+            if (!dueOn) {
+                return res.status(400).json({ message: "Please provide due date to issue book." })
             }
             book.availability = false;
             await book.save();
         }
 
         bookRequest.status = status;
-        bookRequest.borrowedOn = borrowedOn;
+        bookRequest.borrowedOn = new Date();
         bookRequest.dueOn = dueOn;
         await bookRequest.save();
 
@@ -2199,7 +2205,7 @@ exports.returnBook = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Only logged-in users have the access.' });
         };
 
-        let schoolId;
+        let schoolId, fineAmount;
 
         if (loggedInUser.role === 'admin') {
             const school = await School.findOne({ createdBy: loggedInId });
@@ -2231,14 +2237,14 @@ exports.returnBook = async (req, res) => {
             return res.status(404).json({ message: 'Book is not issued to any student.' })
         };
 
-        bookRequest.returnedOn = new Date();
+        bookRequest.returnedOn = new Date().toISOString().split('T')[0];
         if (bookRequest.returnedOn > bookRequest.dueOn) {
-            const fineAmount = req.body.fine;
+            fineAmount = req.body.fine;
         
             if (fineAmount) {
                 bookRequest.fine = fineAmount;
             } else {
-                return res.status(400).json({ message: 'Fine amount is required for late returns.' });
+                return res.status(400).json({ message: "'Fine' amount is required for late returns." });
             }
         }
         bookRequest.status = 'returned'
@@ -2248,7 +2254,7 @@ exports.returnBook = async (req, res) => {
         book.save();
 
         const student = await Student.findById(bookRequest.requestedBy);
-        student.studentProfile.additionalFees += fine
+        student.studentProfile.additionalFees += fineAmount
         await student.save()
         res.status(200).json({
             message: 'Book is returned and the book availability is now set to true.',

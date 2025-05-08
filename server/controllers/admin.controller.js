@@ -2326,9 +2326,9 @@ exports.getBooks = async (req, res) => {
 
       schoolId = employee.schoolId;
     }
-    else if(loggedInUser.role === 'student') {
-      const student = await Student.findOne({userId:loggedInId});
-      if(!student){ return res.status(404).json({message:'No student found with the loggedin id.'})}
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) { return res.status(404).json({ message: 'No student found with the loggedin id.' }) }
       schoolId = student.schoolId;
     }
     else {
@@ -2671,6 +2671,59 @@ exports.getNotice = async (req, res) => {
 };
 
 
+exports.editNotice = async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    if (!noticeId) {
+      return res.status(400).json({ message: 'Provide the notice id to update.' })
+    };
+
+    const updatedData = req.body;
+    if (!updatedData.date && !updatedData.title && !updatedData.noticeMessage) {
+      return res.status(400).json({ message: 'Please provide valid data to update.' });
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' })
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: "Access denied, only logged-in users can access." })
+    };
+
+    let creator;
+
+    if (loggedInUser.role === 'admin') {
+      creator = loggedInId
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) {
+        return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
+      };
+      creator = teacher._id
+    }
+    else {
+      return res.status(404).json({ message: 'You are not allowed to access this.' })
+    }
+
+    const notice = await Notice.findOneAndUpdate({ _id: noticeId, createdBy: creator }, updatedData, { new: true });
+    if (!notice) {
+      return res.status(404).json({ message: 'No notice found with the id (or) Only the creator of the notice can update.' })
+    };
+    res.status(201).json({ message: 'Notice updated successfull.', notice })
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message,
+    });
+  }
+};
+
+
 exports.deleteNotice = async (req, res) => {
   try {
     const { noticeId } = req.params;
@@ -2889,7 +2942,7 @@ exports.getDynamicCalendar = async (req, res) => {
         if (description.startsWith('Observance')) {
           description = event.summary;
         }
-      
+
         return {
           _id: event.id,
           title: event.summary,
@@ -2898,9 +2951,9 @@ exports.getDynamicCalendar = async (req, res) => {
           source: 'google-calendar'
         };
       });
-      
+
     } catch (err) {
-      res.status(500).json({ message: 'Internal server error',  error: err.message  });
+      res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 
     const formattedCalendars = calendars.map(event => ({
@@ -2908,7 +2961,7 @@ exports.getDynamicCalendar = async (req, res) => {
       title: event.title,
       description: event.description,
       date: event.date,
-      displayTo:event.displayTo,
+      displayTo: event.displayTo,
       source: 'local-db'
     }));
 
@@ -2961,7 +3014,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
         displayTo: { $in: [loggedInUser.role] },
         date: calendarDate
       });
-    } 
+    }
     else if (loggedInUser.role === 'teacher') {
       const teacher = await Teacher.findOne({ userId: loggedInId });
       if (!teacher) return res.status(404).json({ message: "No teacher found with the logged-in id." });
@@ -2978,7 +3031,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
           { createdBy: teacher._id, date: calendarDate }
         ]
       });
-    } 
+    }
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId });
       if (!student) return res.status(404).json({ message: "No student found with the logged-in id." });
@@ -3006,7 +3059,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
           }
         ]
       });
-    } 
+    }
     else if (loggedInUser.role === 'parent') {
       const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
       if (!parent) return res.status(404).json({ message: "No parent found with the logged-in id." });
@@ -3069,7 +3122,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
           };
         });
     } catch (err) {
-      res.status(500).json({ message: 'Internal server error',  error: err.message  });
+      res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 
     const formattedLocalCalendars = calendars.map(event => ({
@@ -3093,7 +3146,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ message: 'Internal server error',  error: err.message  });
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
 
@@ -3150,8 +3203,8 @@ exports.editSchoolExpense = async (req, res) => {
       return res.status(400).json({ message: 'Please provide expenseId to update.' })
     };
     const data = req.body;
-    if(!data){
-      return res.status(400).json({message:'Please provide new data to update.'})
+    if (!data) {
+      return res.status(400).json({ message: 'Please provide new data to update.' })
     }
 
     const loggedInId = req.user && req.user.id;
@@ -3173,7 +3226,7 @@ exports.editSchoolExpense = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
-    const expense = await SchoolExpenses.findOneAndUpdate({schoolId, _id:expenseId}, data, {new:true});
+    const expense = await SchoolExpenses.findOneAndUpdate({ schoolId, _id: expenseId }, data, { new: true });
 
     res.status(201).json({
       message: 'Expense updated successfully.',
@@ -3214,7 +3267,7 @@ exports.deleteSchoolExpense = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
-    await SchoolExpenses.findOneAndDelete({schoolId, _id:expenseId})
+    await SchoolExpenses.findOneAndDelete({ schoolId, _id: expenseId })
     res.status(200).json({
       message: 'Expense deleted successfully.',
     });
@@ -3276,9 +3329,9 @@ exports.updateTeacherItemRequest = async (req, res) => {
     const { requestId } = req.params;
     if (!requestId || !status) { return res.status(400).json({ message: "Provide request id and new status update." }) }
 
-    if(status === 'success'){
-      if(!amount){
-        return res.status(400).json({message:"Please specify amount to update."})
+    if (status === 'success') {
+      if (!amount) {
+        return res.status(400).json({ message: "Please specify amount to update." })
       }
     }
     const loggedInId = req.user && req.user.id;
