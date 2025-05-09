@@ -6,7 +6,7 @@ const { uploadImage } = require('../utils/multer');
 
 
 //super admin to create account for admin/school
-exports.registerAdmin = async (req, res) => {
+exports.registerSchool = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {

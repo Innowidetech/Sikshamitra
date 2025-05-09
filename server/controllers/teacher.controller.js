@@ -1647,7 +1647,7 @@ exports.getClassPlan = async (req, res) => {
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId })
             if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
-            
+
             const targetClass = req.params.className || teacher.profile.class;
             const targetSection = req.params.section || teacher.profile.section;
 
@@ -1912,9 +1912,9 @@ exports.getResults = async (req, res) => {
             }
 
             result = await Results.find({
-                schoolId: teacher.schoolId,
-                class: teacher.profile.class,
-                section: teacher.profile.section,
+                result: {
+                    $elemMatch: { createdBy: teacher._id }
+                }
             }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 });
             if (result.length === 0) {
                 return res.status(404).json({ message: 'No results found for the class.' })
@@ -2066,7 +2066,7 @@ exports.getResultById = async (req, res) => {
     }
 };
 
-exports.getBookRequests = async(req,res)=>{
+exports.getBookRequests = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -2094,7 +2094,7 @@ exports.getBookRequests = async(req,res)=>{
         }
         else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
 
-        const bookRequests = await BookRequests.find({ schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({createdAt:-1});
+        const bookRequests = await BookRequests.find({ schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({ createdAt: -1 });
         if (!bookRequests || !bookRequests.length) {
             return res.status(404).json({ message: 'No book requests found.' })
         };
@@ -2150,10 +2150,10 @@ exports.issueBook = async (req, res) => {
             return res.status(404).json({ message: 'No book request found.' })
         };
 
-        if(status == 'accepted' || status == 'rejected'){
+        if (status == 'accepted' || status == 'rejected') {
             bookRequest.status = status
             await bookRequest.save()
-            return res.status(200).json({message:"Response sent to student successfully.", bookRequest})
+            return res.status(200).json({ message: "Response sent to student successfully.", bookRequest })
         }
 
         const book = await Book.findOne({ _id: bookRequest.book._id, schoolId });
@@ -2161,13 +2161,13 @@ exports.issueBook = async (req, res) => {
             return res.status(400).json({ message: 'The book is already issued to another student.' });
         }
 
-        if (status == 'received') {
+        if (status == 'issued') {
             if (!dueOn) {
                 return res.status(400).json({ message: "Please provide due date to issue book." })
             }
-            book.availability = false;
-            await book.save();
         }
+        book.availability = false;
+        await book.save();
 
         bookRequest.status = status;
         bookRequest.borrowedOn = new Date();
@@ -2240,7 +2240,7 @@ exports.returnBook = async (req, res) => {
         bookRequest.returnedOn = new Date().toISOString().split('T')[0];
         if (bookRequest.returnedOn > bookRequest.dueOn) {
             fineAmount = req.body.fine;
-        
+
             if (fineAmount) {
                 bookRequest.fine = fineAmount;
             } else {

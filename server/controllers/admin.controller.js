@@ -79,10 +79,7 @@ exports.getProfile = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -149,10 +146,7 @@ exports.createSchool = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -264,10 +258,7 @@ exports.numberOfSPTE = async (req, res) => { // students, parents, teachers, ear
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving parents.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -389,10 +380,7 @@ exports.getStudentsRatio = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving student data.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1074,10 +1062,7 @@ exports.getAllTeachersOfSchool = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving teachers.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1126,12 +1111,8 @@ exports.updateTeacherData = async (req, res) => {
       message: 'Teacher data updated successfully.',
       updatedTeacher: teacher,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: "An error occurred while changing the Teacher'\s data.",
-      error: err.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1274,11 +1255,8 @@ exports.createStudentAndParent = async (req, res) => {
       student,
       parent,
     });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to create student and parent accounts.',
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1402,11 +1380,8 @@ exports.addStudentToExistingParent = async (req, res) => {
       message: 'Student account created and added to existing parent successfully.',
       student,
     });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to add student.',
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1480,10 +1455,7 @@ exports.getAllStudentsOfSchool = async (req, res) => {
       studentsWithTeachers
     });
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving students.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1549,13 +1521,9 @@ exports.getAllStudentsOfSchool = async (req, res) => {
 //       message: 'Student data by Id is fetched successfully.',
 //       studentData,
 //     });
-//   }
-//   catch (err) {
-//     res.status(500).json({
-//       message: 'An error occurred while retrieving students.',
-//       error: err.message,
-//     });
-//   }
+//   }catch (err) {
+//   res.status(500).json({ message: 'Internal server error', error: err.message })
+// }
 // };
 
 
@@ -1628,12 +1596,8 @@ exports.updateStudentData = async (req, res) => {
       message: 'Student data updated successfully.',
       updatedStudent: student,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1666,12 +1630,8 @@ exports.getUpdatedStudentData = async (req, res) => {
     }
 
     res.status(200).json({ message: "Updated students data:", studentDataUpdates })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1740,10 +1700,7 @@ exports.getAllParentsOfSchool = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving parents.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1776,12 +1733,8 @@ exports.addStock = async (req, res) => {
     await newStock.save()
 
     res.status(201).json({ message: "New stock add successfully.", newStock })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1809,12 +1762,8 @@ exports.getInventory = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", inventory })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1869,12 +1818,8 @@ exports.saleStockTo = async (req, res) => {
     }
 
     res.status(201).json({ message: `Stock sold to ${soldToname} successfully and updated inventory.`, newSale })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1902,12 +1847,8 @@ exports.getSaleStock = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", sales })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1967,12 +1908,8 @@ exports.newAdmission = async (req, res) => {
       female,
       studentsWithParents,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -2002,12 +1939,8 @@ exports.addEmployee = async (req, res) => {
     const newEmployee = new Employee({ schoolId: school._id, name, role, department, mobileNumber, salary })
     await newEmployee.save()
     res.status(201).json({ message: `Employee added to school.`, newEmployee })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -2985,6 +2918,130 @@ exports.getDynamicCalendar = async (req, res) => {
 };
 
 
+exports.editDynamicCalendar = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(404).json({ message: "Access denied, only logged-in user's can access." });
+    };
+
+    const { calendarId } = req.params;
+    if (!calendarId) { return res.status(400).json({ message: 'Please provide calendar id to update.' }) }
+
+    const updatedData = req.body
+    const hasValidUpdateFields = updatedData.date || updatedData.title || updatedData.description || (Array.isArray(updatedData.displayTo) && updatedData.displayTo.length > 0);
+
+    if (!hasValidUpdateFields) {
+      return res.status(400).json({ message: 'Provide at least one valid field to update.' });
+    }
+
+    let creator;
+
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ createdBy: loggedInId });
+      if (!school) {
+        return res.status(404).json({ message: 'Admin is not associated with any school.' });
+      };
+
+      creator = loggedInId
+
+      if (!Array.isArray(updatedData.displayTo)) {
+        updatedData.displayTo = [];
+      }
+      if (!updatedData.displayTo.includes('admin')) {
+        updatedData.displayTo.push('admin');
+      }
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId })
+      if (!teacher) {
+        return res.status(404).json({ message: "No teacher found with the loggedin id." })
+      }
+
+      creator = teacher._id
+
+      if (!Array.isArray(updatedData.displayTo)) {
+        updatedData.displayTo = [];
+      }
+      if (!updatedData.displayTo.includes('teacher')) {
+        updatedData.displayTo.push('teacher');
+      }
+    }
+    else {
+      return res.status(403).json({ message: "You are not allowed to access this." })
+    }
+
+    const calendar = await Calendar.findOneAndUpdate({ _id: calendarId, createdBy: creator }, updatedData, { new: true })
+    if (!calendar) {
+      return res.status(404).json({ message: 'No calendar found with the id (or) Only the creator of the calendar can update.' })
+    }
+
+    res.status(201).json({ message: 'Calendar updated successfully', calendar });
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message,
+    })
+  }
+};
+
+
+exports.deleteDynamicCalendar = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(404).json({ message: "Access denied, only logged-in user's can access." });
+    };
+
+    const { calendarId } = req.params;
+    if (!calendarId) { return res.status(400).json({ message: 'Please provide calendar id to delete.' }) }
+
+    let creator;
+
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ createdBy: loggedInId });
+      if (!school) {
+        return res.status(404).json({ message: 'Admin is not associated with any school.' });
+      };
+
+      creator = loggedInId;
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId })
+      if (!teacher) {
+        return res.status(404).json({ message: "No teacher found with the loggedin id." })
+      }
+
+      creator = teacher._id;
+    }
+    else {
+      return res.status(403).json({ message: "You are not allowed to access this." })
+    }
+
+    const calendar = await Calendar.findOneAndDelete({ _id: calendarId, createdBy: creator })
+    if (!calendar) {
+      return res.status(404).json({ message: 'No calendar found with the id (or) Only the creator of the calendar can delete it.' })
+    }
+
+    res.status(200).json({ message: 'Calendar deleted successfully' });
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
 exports.getDynamicCalendarByDate = async (req, res) => {
   try {
     const { calendarDate } = req.params;
@@ -3188,10 +3245,7 @@ exports.postSchoolExpensesForm = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3234,10 +3288,7 @@ exports.editSchoolExpense = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3273,10 +3324,7 @@ exports.deleteSchoolExpense = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3315,10 +3363,7 @@ exports.getTeacherItemRequest = async (req, res) => {
     res.status(200).json({ teacherRequests })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3375,10 +3420,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
     res.status(201).json({ message: "Teacher item request updated successfully, if required - add the amount in school expenses.", teacherRequest })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3423,11 +3465,8 @@ exports.updateTeacherItemRequest = async (req, res) => {
 //     res.status(200).json({message:"Teacher item request deleted successfully."})
 //   }
 //   catch (err) {
-//     res.status(500).json({
-//       message: 'Internal server error',
-//       error: err.message,
-//     })
-//   }
+//   res.status(500).json({ message: 'Internal server error', error: err.message })
+// }
 // };
 
 
@@ -3557,10 +3596,7 @@ exports.getAccounts = async (req, res) => {
     res.status(200).json({ accounts: result });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3607,9 +3643,6 @@ exports.getAccountsData = async (req, res) => {
     res.status(200).json({ revenue, admissions, expenses })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };

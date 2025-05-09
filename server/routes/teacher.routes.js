@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod, getItemRequests, returnBook } = require('../controllers/teacher.controller');
-const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense, editNotice } = require('../controllers/admin.controller');
+const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -18,7 +18,9 @@ router.patch('/notice/:noticeId', protect, authorize('teacher'), editNotice);
 router.delete('/notice/:noticeId', protect, authorize('teacher'), deleteNotice);
 router.post('/calendar', protect, authorize('teacher'), createDynamicCalendar);
 router.get('/calendar', protect, authorize('teacher'), getDynamicCalendar);
+router.patch('/calendar/:calendarId', protect, authorize('teacher'), editDynamicCalendar);
 router.get('/calendar/:calendarDate', protect, authorize('teacher'), getDynamicCalendarByDate);
+router.delete('/calendar/:calendarId', protect, authorize('teacher'), deleteDynamicCalendar);
 router.get('/getStudents', protect, authorize('teacher'), getStudentsOfTeacher);
 // router.get('/student/:studentId', protect, authorize('teacher'), getStudentById);
 router.post('/assignment', protect, authorize('teacher'), upload.single('photo'), assignmentForStudents);

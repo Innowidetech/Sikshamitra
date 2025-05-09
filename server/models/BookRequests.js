@@ -18,7 +18,7 @@ const BookRequestsSchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        enum:['requested', 'accepted', 'rejected', 'received', 'returned'],
+        enum:['requested', 'accepted', 'rejected', 'issued', 'returned'],
         default:'requested'
     },
     borrowedOn:Date,
