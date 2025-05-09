@@ -13,12 +13,10 @@ import CreateExams from './CreateExams';
 import Exams from './Exams'; // ✅ import
 import About from './About';
 import MaterialPage from './MaterialPage';
-<<<<<<< HEAD
 import UploadAssignment from './UploadAssignment';
-=======
 import Tsyllabus from './Tsyllabus';
 import TclassPlans from './Tclassplans';
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
+
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -59,22 +57,15 @@ const MainDashboard = () => {
                 return <Curriculum setActiveTab={handleTabChange} />;
             case 'studymaterial':
                 return <StudyMaterial />;
-<<<<<<< HEAD
+
             case 'materialPage':
                 return <MaterialPage />;
-=======
+
             case 'tsyllabus':
                 return <Tsyllabus />;
             case 'tclassplans':
                 return <TclassPlans />;
-<<<<<<< HEAD
-            case 'materialPage':
-                return <MaterialPage />;
-=======
-             case 'materialPage':
-                    return <MaterialPage />;
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
+
             case 'createexam':
                 return <CreateExams />;
             case 'exams':

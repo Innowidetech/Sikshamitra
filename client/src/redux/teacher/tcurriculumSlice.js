@@ -9,7 +9,7 @@ const getAuthHeaders = () => {
   };
 };
 
-// ✅ 1. Fetch Syllabus
+// Fetch Teacher Syllabus
 export const fetchTeacherSyllabus = createAsyncThunk(
   'tcurriculum/fetchTeacherSyllabus',
   async (_, { rejectWithValue }) => {
@@ -29,7 +29,7 @@ export const fetchTeacherSyllabus = createAsyncThunk(
   }
 );
 
-// ✅ 2. Create or Update Syllabus
+// Create or Update Syllabus
 export const createOrUpdateSyllabus = createAsyncThunk(
   'tcurriculum/createOrUpdateSyllabus',
   async (formData, { rejectWithValue }) => {
@@ -50,7 +50,7 @@ export const createOrUpdateSyllabus = createAsyncThunk(
   }
 );
 
-// ✅ 3. Create Class Plan
+// Create Class Plan
 export const createClassPlan = createAsyncThunk(
   'tcurriculum/createClassPlan',
   async (planData, { rejectWithValue }) => {
@@ -65,14 +65,36 @@ export const createClassPlan = createAsyncThunk(
       });
       if (!res.ok) throw new Error('Failed to create class plan');
       const data = await res.json();
-      return data;
+      return data.classPlan;
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
 
-// ✅ 4. Fetch Aim Objectives
+// Update Class Plan
+export const updateClassPlan = createAsyncThunk(
+  'tcurriculum/updateClassPlan',
+  async (planData, { rejectWithValue }) => {
+    try {
+      const res = await fetch('https://sikshamitra.onrender.com/api/teacher/classPlan', {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(planData),
+      });
+      if (!res.ok) throw new Error('Failed to update class plan');
+      const data = await res.json();
+      return data.classPlan;
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+// Fetch Aim Objectives
 export const fetchAimObjectives = createAsyncThunk(
   'tcurriculum/fetchAimObjectives',
   async (_, { rejectWithValue }) => {
@@ -92,35 +114,47 @@ export const fetchAimObjectives = createAsyncThunk(
   }
 );
 
-// ✅ 5. Fetch Class Plans (updated for nested classPlan object)
+// Fetch Class Plans with Filters
 export const fetchTeacherClassPlans = createAsyncThunk(
   'tcurriculum/fetchTeacherClassPlans',
-  async (_, { rejectWithValue }) => {
+  async ({ className, section }, { rejectWithValue }) => {
     try {
-      const res = await fetch('https://sikshamitra.onrender.com/api/teacher/classPlan', {
+      let url = 'https://sikshamitra.onrender.com/api/teacher/classPlan';
+      // Check if className and section are provided, and append them to the URL
+      if (className && section) {
+        url += `/${className}/${section}`;
+      }
+      // console.log(url)
+
+      const res = await fetch(url, {
         method: 'GET',
         headers: {
           ...getAuthHeaders(),
         },
       });
-      if (!res.ok) throw new Error('Failed to fetch class plans');
+      if (!res.ok) throw new Error("No class plan found for the specified class and section.");
       const data = await res.json();
-      return data.classPlan; // ✅ return full classPlan object
+      return data.classPlan;
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
 
+// Slice Definition
 const tcurriculumSlice = createSlice({
   name: 'tcurriculum',
   initialState: {
     syllabus: { syllabus: [] },
     aimObjectives: [],
-    classPlan: null, // ✅ Updated to store full classPlan object
+    classPlan: null,
     loading: false,
     errorMessage: null,
     successMessage: null,
+    filters: {
+      className: '',
+      section: '',
+    },
   },
   reducers: {
     clearTCurriculumError: (state) => {
@@ -129,10 +163,12 @@ const tcurriculumSlice = createSlice({
     clearSuccessMessage: (state) => {
       state.successMessage = null;
     },
+    setFilters: (state, action) => {
+      state.filters = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
-      // ✅ Syllabus Fetch
       .addCase(fetchTeacherSyllabus.pending, (state) => {
         state.loading = true;
       })
@@ -144,8 +180,6 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
-
-      // ✅ Syllabus Create/Update
       .addCase(createOrUpdateSyllabus.pending, (state) => {
         state.loading = true;
       })
@@ -157,21 +191,30 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
-
-      // ✅ Class Plan Create
       .addCase(createClassPlan.pending, (state) => {
         state.loading = true;
       })
       .addCase(createClassPlan.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload.message || 'Class plan created successfully';
+        state.classPlan = action.payload;
+        state.successMessage = 'Class plan created successfully';
       })
       .addCase(createClassPlan.rejected, (state, action) => {
         state.loading = false;
         state.errorMessage = action.payload;
       })
-
-      // ✅ Aim Objectives Fetch
+      .addCase(updateClassPlan.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateClassPlan.fulfilled, (state, action) => {
+        state.loading = false;
+        state.classPlan = action.payload;
+        state.successMessage = 'Class plan updated successfully';
+      })
+      .addCase(updateClassPlan.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
+      })
       .addCase(fetchAimObjectives.pending, (state) => {
         state.loading = true;
       })
@@ -183,8 +226,6 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
-
-      // ✅ Class Plans Fetch (updated)
       .addCase(fetchTeacherClassPlans.pending, (state) => {
         state.loading = true;
       })
@@ -199,5 +240,5 @@ const tcurriculumSlice = createSlice({
   },
 });
 
-export const { clearTCurriculumError, clearSuccessMessage } = tcurriculumSlice.actions;
+export const { clearTCurriculumError, clearSuccessMessage, setFilters } = tcurriculumSlice.actions;
 export default tcurriculumSlice.reducer;

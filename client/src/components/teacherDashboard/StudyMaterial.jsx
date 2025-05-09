@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudyMaterials, deleteStudyMaterial } from '../../redux/teacher/studyMSlice';
-import { User, Calendar, Book, ChevronRight, Search, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';  // Import useNavigate
+import { User, Calendar, Book, Search, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../adminDashboard/layout/Header';
 
 const colorPool = [
@@ -13,7 +13,7 @@ const colorPool = [
 
 function StudyMaterial() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();  // Use the navigate hook
+  const navigate = useNavigate();
   const { teacherMaterial, classMaterial, loading, error } = useSelector((state) => state.studyMaterial);
   const [subjectColorMap, setSubjectColorMap] = useState({});
 
@@ -43,40 +43,37 @@ function StudyMaterial() {
   };
 
   const handleDownload = async (fileUrl) => {
-    if (!fileUrl) {
-      alert('No material available to download.');
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Authorization token is missing.");
       return;
     }
 
+  
+
     try {
-      // Check if the URL ends with .pdf to distinguish it from other file types (e.g., video)
-      const isPDF = fileUrl.endsWith('.pdf');
-      
-      // Fetch the file with headers (if needed, e.g., for authorization)
       const response = await fetch(fileUrl, {
-        method: 'GET',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // If token is required for authorization
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      // If the response isn't successful, show an error
       if (!response.ok) {
-        throw new Error('Failed to fetch the file.');
+        throw new Error('Failed to fetch PDF.');
       }
 
-      // Convert the response to a Blob (binary data)
       const blob = await response.blob();
-
-      // Open the file in a new tab
       const blobUrl = window.URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank'); // This opens the file in a new tab
-
-      // If it's a PDF, the browser will try to render it in the new tab
-      // No need to create a download link here for a new tab
-      window.URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `material-${new Date().getTime()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      alert(`Error downloading file: ${error.message}`);
+      alert(`Error: ${error.message}`);
       console.error("Error downloading file:", error);
     }
   };
@@ -88,7 +85,7 @@ function StudyMaterial() {
   );
 
   const navigateToAddMaterial = () => {
-    navigate('/teacher/materialPage');  // Navigate to the route for adding material
+    navigate('/teacher/materialPage');
   };
 
   return (
@@ -119,7 +116,7 @@ function StudyMaterial() {
           </div>
           <button
             className="bg-[#1e5b8e] text-white px-6 py-2 rounded-md hover:bg-[#146192] transition-colors"
-            onClick={navigateToAddMaterial}  // Navigate to the add material page
+            onClick={navigateToAddMaterial}
           >
             Add Study Material
           </button>
@@ -161,7 +158,7 @@ function StudyMaterial() {
                   onClick={() => handleDownload(item.material)}
                   disabled={loading}
                 >
-                  VIEW
+                  Download PDF
                 </button>
               </div>
             ))}
@@ -187,7 +184,7 @@ function StudyMaterial() {
                   <TableHeader label="Section" />
                   <TableHeader label="Subject Name" />
                   <TableHeader label="Date" />
-                  <TableHeader label="View" />
+                  <TableHeader label="Download" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -208,7 +205,7 @@ function StudyMaterial() {
                           onClick={() => handleDownload(item.material)}
                           disabled={loading}
                         >
-                          View
+                          Download PDF
                         </button>
                         <button
                           onClick={() => handleDelete(item._id)}

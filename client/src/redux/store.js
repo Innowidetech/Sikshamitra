@@ -37,17 +37,15 @@ import resultSliceReducer from './student/resultSlice';
 import aboutSliceReducer from './teacher/aboutSlice'
 import createExamSliceReducer from './teacher/createExamSlice'
 import studyMSliceReducer from './teacher/studyMSlice';
-<<<<<<< HEAD
+
 import myStudentsReducer from './teacher/myStudentsSlice';
 import assignmentsReducer from './teacher/assignmentsSlice';
-=======
-import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-<<<<<<< HEAD
-import lectureSliceReducer from './teacher/lectureSlice';
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
 
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
+import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+import lectureSliceReducer from './teacher/lectureSlice';
+
+
+
 
 
 const store = configureStore({
@@ -90,19 +88,12 @@ const store = configureStore({
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
-<<<<<<< HEAD
+
     myStudents: myStudentsReducer,
     assignments: assignmentsReducer,
-    
-=======
     tcurriculum: tcurriculumSliceReducer, 
-<<<<<<< HEAD
-   
     lecture: lectureSliceReducer,
 
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
     
 
   },
