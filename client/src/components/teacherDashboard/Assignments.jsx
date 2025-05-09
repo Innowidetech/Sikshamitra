@@ -4,9 +4,12 @@ import { HiBookOpen } from 'react-icons/hi';
 import { FaUser, FaBook, FaListOl, FaCalendarAlt, FaFileAlt } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTeacherAssignments } from '../../redux/teacher/assignmentsSlice';
+import { useNavigate } from 'react-router-dom';
 
 function Assignments({ handleTabChange }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const { assignments, loading, error } = useSelector((state) => state.assignments);
 
   useEffect(() => {
@@ -69,9 +72,8 @@ function Assignments({ handleTabChange }) {
           {assignments.map((assignment, index) => (
             <div
               key={assignment._id || index}
-              className={`p-6 rounded-bl-2xl rounded-br-2xl shadow-md ${
-                index % 2 === 0 ? 'bg-[#FF9F1C1A]' : 'bg-[#1982C424]'
-              }`}
+              className={`p-6 rounded-bl-2xl rounded-br-2xl shadow-md ${index % 2 === 0 ? 'bg-[#FF9F1C1A]' : 'bg-[#1982C424]'
+                }`}
             >
               <div className="mb-2 flex items-center">
                 <FaUser className="text-[#146192] mr-2" />
@@ -154,11 +156,11 @@ function Assignments({ handleTabChange }) {
                   {assignment.endDate ? new Date(assignment.endDate).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="py-2 px-4 border">
-                  <FaFileAlt
-                    title="Download"
-                    className="text-[#1982C4] text-xl cursor-pointer hover:text-[#146192]"
-                    onClick={() => handleDownload(assignment.assignment, assignment.assignmentName)}
-                  />
+                <FaFileAlt
+  className="text-[#1982C4] text-xl cursor-pointer hover:text-[#146192]"
+  onClick={() => handleTabChange('assignmentdetails', assignment)} // ✅ Pass the selected assignment
+/>
+
                 </td>
               </tr>
             ))}

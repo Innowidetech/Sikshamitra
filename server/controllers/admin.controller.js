@@ -15,8 +15,9 @@ const ClassWiseFees = require('../models/ClassWiseFees');
 const StudentDataUpdates = require('../models/StudentDataUpdates');
 const Inventory = require('../models/Inventory');
 const SaleStock = require('../models/SaleStock');
-const Library = require('../models/Library');
+const BookRequests = require('../models/BookRequests');
 const Employee = require('../models/Employee');
+const Syllabus = require('../models/Syllabus');
 const AimObjective = require('../models/Aim&Objective');
 const AandL = require('../models/AdminAandL');
 const AandLUpdates = require('../models/AandLUpdates');
@@ -24,6 +25,9 @@ const ParentExpenses = require('../models/ParentExpenses');
 const SchoolExpenses = require('../models/SchoolExpenses');
 const ClassExpenses = require('../models/ClassExpenses');
 const ApplyOnline = require('../models/applyOnline')
+require('dotenv').config();
+const axios = require('axios');
+
 
 //get profile
 exports.getProfile = async (req, res) => {
@@ -76,10 +80,7 @@ exports.getProfile = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -146,10 +147,7 @@ exports.createSchool = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -261,10 +259,7 @@ exports.numberOfSPTE = async (req, res) => { // students, parents, teachers, ear
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving parents.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -386,10 +381,7 @@ exports.getStudentsRatio = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving student data.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1071,10 +1063,7 @@ exports.getAllTeachersOfSchool = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving teachers.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1123,12 +1112,8 @@ exports.updateTeacherData = async (req, res) => {
       message: 'Teacher data updated successfully.',
       updatedTeacher: teacher,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: "An error occurred while changing the Teacher'\s data.",
-      error: err.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1271,11 +1256,8 @@ exports.createStudentAndParent = async (req, res) => {
       student,
       parent,
     });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to create student and parent accounts.',
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1399,11 +1381,8 @@ exports.addStudentToExistingParent = async (req, res) => {
       message: 'Student account created and added to existing parent successfully.',
       student,
     });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to add student.',
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1477,10 +1456,7 @@ exports.getAllStudentsOfSchool = async (req, res) => {
       studentsWithTeachers
     });
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving students.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1546,13 +1522,9 @@ exports.getAllStudentsOfSchool = async (req, res) => {
 //       message: 'Student data by Id is fetched successfully.',
 //       studentData,
 //     });
-//   }
-//   catch (err) {
-//     res.status(500).json({
-//       message: 'An error occurred while retrieving students.',
-//       error: err.message,
-//     });
-//   }
+//   }catch (err) {
+//   res.status(500).json({ message: 'Internal server error', error: err.message })
+// }
 // };
 
 
@@ -1625,12 +1597,8 @@ exports.updateStudentData = async (req, res) => {
       message: 'Student data updated successfully.',
       updatedStudent: student,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1663,12 +1631,8 @@ exports.getUpdatedStudentData = async (req, res) => {
     }
 
     res.status(200).json({ message: "Updated students data:", studentDataUpdates })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1737,10 +1701,7 @@ exports.getAllParentsOfSchool = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
-      message: 'An error occurred while retrieving parents.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1773,12 +1734,8 @@ exports.addStock = async (req, res) => {
     await newStock.save()
 
     res.status(201).json({ message: "New stock add successfully.", newStock })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1806,12 +1763,8 @@ exports.getInventory = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", inventory })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1865,13 +1818,9 @@ exports.saleStockTo = async (req, res) => {
       await stock.save()
     }
 
-    res.status(201).json({ message: `Stock sold to ${soldToname} successfully and updated inventory.`, newSale })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+    res.status(201).json({ message: `Please collect ₹${amount}. The stock has been successfully sold to ${soldToname}, and the inventory data has been updated.`, newSale })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1899,12 +1848,8 @@ exports.getSaleStock = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", sales })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1964,12 +1909,8 @@ exports.newAdmission = async (req, res) => {
       female,
       studentsWithParents,
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -1999,12 +1940,8 @@ exports.addEmployee = async (req, res) => {
     const newEmployee = new Employee({ schoolId: school._id, name, role, department, mobileNumber, salary })
     await newEmployee.save()
     res.status(201).json({ message: `Employee added to school.`, newEmployee })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+  }catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -2095,6 +2032,72 @@ exports.editEmployee = async (req, res) => {
   }
 };
 
+
+exports.createOrUpdateSyllabus = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'admin') {
+            return res.status(404).json({
+                message: 'Access denied, only admin have access.'
+            })
+        };
+
+        const {className} = req.body;
+        if(!className){return res.status(400).json({message:"Please provide class to upload syllabus."})}
+
+        const school = await School.findOne({createdBy:loggedInId});
+
+        let uploadedPhotoUrl = '';
+        if (req.file) {
+            try {
+                const [photoUrl] = await uploadImage(req.file);
+                uploadedPhotoUrl = photoUrl;
+            } catch (error) {
+                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+            }
+        }
+
+        let existingSyllabus = await Syllabus.findOne({ class: className, schoolId: school._id, createdBy:loggedInId });
+
+        if (existingSyllabus) {
+            existingSyllabus.syllabus = uploadedPhotoUrl;
+            await existingSyllabus.save();
+
+            return res.status(200).json({
+                message: 'Syllabus updated successfully.',
+                existingSyllabus,
+            });
+        } else {
+            const newSyllabus = new Syllabus({
+                schoolId: school._id,
+                class: className,
+                syllabus: uploadedPhotoUrl,
+                createdBy: loggedInId,
+            });
+            if (!newSyllabus.class) {
+                return res.status(404).json({ message: "Only admin can create syllabus." })
+            }
+
+            await newSyllabus.save();
+
+            return res.status(200).json({
+                message: 'Syllabus created successfully.',
+                newSyllabus,
+            });
+        }
+    }
+    catch (err) {
+        res.status(500).json({
+            message: 'Internal server error.',
+            error: err.message,
+        });
+    }
+};
 
 exports.createAimObjective = async (req, res) => {
   try {
@@ -2321,12 +2324,12 @@ exports.getBooks = async (req, res) => {
         return res.status(404).json({ message: 'No employee found with the logged-in id.' })
       };
 
-      const school = await School.findById(employee.schoolId);
-      if (!school) {
-        return res.status(404).json({ message: 'No school is associated with the logged-in employee.' })
-      };
-
       schoolId = employee.schoolId;
+    }
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) { return res.status(404).json({ message: 'No student found with the loggedin id.' }) }
+      schoolId = student.schoolId;
     }
     else {
       return res.status(404).json({ message: 'You are not allowed to perform this action.' })
@@ -2444,25 +2447,18 @@ exports.getLibraryData = async (req, res) => {
       if (!employee) {
         return res.status(404).json({ message: 'No employee found with the logged-in id.' })
       };
-
-      const school = await School.findById(employee.schoolId);
-      if (!school) {
-        return res.status(404).json({ message: 'No school is associated with the logged-in employee.' })
-      };
-
       schoolId = employee.schoolId;
     }
     else {
       return res.status(404).json({ message: 'You are not allowed to perform this action.' })
     };
 
-    const library = await Library.find({ schoolId: schoolId }).populate('issuedTo').sort({ createdAt: -1 });
+    const library = await BookRequests.find({ schoolId: schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({ createdAt: -1 });
     if (!library.length) {
-      return res.status(404).json({ message: 'No books found.' })
+      return res.status(404).json({ message: 'No library data found.' })
     };
 
     res.status(200).json({
-      message: "Books data fetched successfully.",
       library,
     });
   }
@@ -2675,6 +2671,59 @@ exports.getNotice = async (req, res) => {
 };
 
 
+exports.editNotice = async (req, res) => {
+  try {
+    const { noticeId } = req.params;
+    if (!noticeId) {
+      return res.status(400).json({ message: 'Provide the notice id to update.' })
+    };
+
+    const updatedData = req.body;
+    if (!updatedData.date && !updatedData.title && !updatedData.noticeMessage) {
+      return res.status(400).json({ message: 'Please provide valid data to update.' });
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' })
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: "Access denied, only logged-in users can access." })
+    };
+
+    let creator;
+
+    if (loggedInUser.role === 'admin') {
+      creator = loggedInId
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) {
+        return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
+      };
+      creator = teacher._id
+    }
+    else {
+      return res.status(404).json({ message: 'You are not allowed to access this.' })
+    }
+
+    const notice = await Notice.findOneAndUpdate({ _id: noticeId, createdBy: creator }, updatedData, { new: true });
+    if (!notice) {
+      return res.status(404).json({ message: 'No notice found with the id (or) Only the creator of the notice can update.' })
+    };
+    res.status(201).json({ message: 'Notice updated successfull.', notice })
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message,
+    });
+  }
+};
+
+
 exports.deleteNotice = async (req, res) => {
   try {
     const { noticeId } = req.params;
@@ -2800,64 +2849,61 @@ exports.getDynamicCalendar = async (req, res) => {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized' });
-    };
+    }
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser) {
       return res.status(404).json({ message: "Access denied, only loggedin user's can access." });
-    };
+    }
 
-    let calendars;
+    let calendars = [];
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ createdBy: loggedInId });
-      if (!school) {
-        return res.status(404).json({ message: 'Admin is not associated with any school.' });
-      };
+      if (!school) return res.status(404).json({ message: 'Admin is not associated with any school.' });
 
-      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role }).sort({ date: 1 })
-      if (!calendars.length) {
-        return res.status(404).json({ message: "No events found." })
-      }
+      calendars = await Calendar.find({
+        schoolId: school._id,
+        displayTo: { $in: [loggedInUser.role] }
+      }).sort({ date: 1 });
     }
+
     else if (loggedInUser.role === 'teacher') {
-      const teacher = await Teacher.findOne({ userId: loggedInId })
-      if (!teacher) {
-        return res.status(404).json({ message: "No teacher found with the loggedin id." })
-      }
-      const school = await School.findById(teacher.schoolId)
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) return res.status(404).json({ message: "No teacher found with the loggedin id." });
+
+      const school = await School.findById(teacher.schoolId);
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
-          { createdBy: teacher._id }]
-      }).sort({ date: 1 })
-      if (!calendars.length) {
-        return res.status(404).json({ message: "No events found." })
-      }
+          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
+          { createdBy: teacher._id }
+        ]
+      }).sort({ date: 1 });
     }
+
     else if (loggedInUser.role === 'student') {
-      const student = await Student.findOne({ userId: loggedInId })
-      if (!student) {
-        return res.status(404).json({ message: "No student found with the logged-in id." })
-      }
-      const school = await School.findById(student.schoolId)
-      const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section })
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) return res.status(404).json({ message: "No student found with the logged-in id." });
+
+      const school = await School.findById(student.schoolId);
+      const teacher = await Teacher.findOne({
+        schoolId: student.schoolId,
+        'profile.class': student.studentProfile.class,
+        'profile.section': student.studentProfile.section
+      });
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
-          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role }]
-      }).sort({ date: 1 })
-      if (!calendars.length) {
-        return res.status(404).json({ message: "No events found." })
-      }
+          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
+          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: { $in: [loggedInUser.role] } }
+        ]
+      }).sort({ date: 1 });
     }
+
     else if (loggedInUser.role === 'parent') {
-      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
-      if (!parent) {
-        return res.status(404).json({ message: "No parent found with the logged-in id." })
-      }
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
+      if (!parent) return res.status(404).json({ message: "No parent found with the logged-in id." });
 
       const children = parent.parentProfile.parentOf;
       const school = parent.schoolId;
@@ -2879,18 +2925,130 @@ exports.getDynamicCalendar = async (req, res) => {
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role },
-          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role }
+          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: { $in: [loggedInUser.role] } },
+          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: { $in: [loggedInUser.role] } }
         ]
       }).sort({ date: 1 });
-      if (!calendars.length) {
-        return res.status(404).json({ message: "No events found." });
-      }
     }
+
+    const googleCalendarURL = `https://www.googleapis.com/calendar/v3/calendars/en.indian%23holiday@group.v.calendar.google.com/events?key=${process.env.GOOGLE_CALENDAR_API_KEY}`;
+
+    let googleEvents = [];
+
+    try {
+      const { data } = await axios.get(googleCalendarURL);
+      googleEvents = data.items.map(event => {
+        let description = event.description || '';
+        if (description.startsWith('Observance')) {
+          description = event.summary;
+        }
+
+        return {
+          _id: event.id,
+          title: event.summary,
+          description,
+          date: event.start.date,
+          source: 'google-calendar'
+        };
+      });
+
+    } catch (err) {
+      res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+
+    const formattedCalendars = calendars.map(event => ({
+      _id: event._id,
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      displayTo: event.displayTo,
+      source: 'local-db'
+    }));
+
+    const allEvents = [...formattedCalendars, ...googleEvents].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (!allEvents.length) {
+      return res.status(404).json({ message: "No events found." });
+    }
+
     res.status(200).json({
       message: 'Dynamic calendar data fetched successfully',
-      calendars
+      calendars: allEvents
     });
+
+  } catch (err) {
+    res.status(500).json({
+      message: 'Internal server error',
+      error: err.message
+    });
+  }
+};
+
+
+exports.editDynamicCalendar = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(404).json({ message: "Access denied, only logged-in user's can access." });
+    };
+
+    const { calendarId } = req.params;
+    if (!calendarId) { return res.status(400).json({ message: 'Please provide calendar id to update.' }) }
+
+    const updatedData = req.body
+    const hasValidUpdateFields = updatedData.date || updatedData.title || updatedData.description || (Array.isArray(updatedData.displayTo) && updatedData.displayTo.length > 0);
+
+    if (!hasValidUpdateFields) {
+      return res.status(400).json({ message: 'Provide at least one valid field to update.' });
+    }
+
+    let creator;
+
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ createdBy: loggedInId });
+      if (!school) {
+        return res.status(404).json({ message: 'Admin is not associated with any school.' });
+      };
+
+      creator = loggedInId
+
+      if (!Array.isArray(updatedData.displayTo)) {
+        updatedData.displayTo = [];
+      }
+      if (!updatedData.displayTo.includes('admin')) {
+        updatedData.displayTo.push('admin');
+      }
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId })
+      if (!teacher) {
+        return res.status(404).json({ message: "No teacher found with the loggedin id." })
+      }
+
+      creator = teacher._id
+
+      if (!Array.isArray(updatedData.displayTo)) {
+        updatedData.displayTo = [];
+      }
+      if (!updatedData.displayTo.includes('teacher')) {
+        updatedData.displayTo.push('teacher');
+      }
+    }
+    else {
+      return res.status(403).json({ message: "You are not allowed to access this." })
+    }
+
+    const calendar = await Calendar.findOneAndUpdate({ _id: calendarId, createdBy: creator }, updatedData, { new: true })
+    if (!calendar) {
+      return res.status(404).json({ message: 'No calendar found with the id (or) Only the creator of the calendar can update.' })
+    }
+
+    res.status(201).json({ message: 'Calendar updated successfully', calendar });
   }
   catch (err) {
     res.status(500).json({
@@ -2901,13 +3059,8 @@ exports.getDynamicCalendar = async (req, res) => {
 };
 
 
-exports.getDynamicCalendarByDate = async (req, res) => {
+exports.deleteDynamicCalendar = async (req, res) => {
   try {
-    const { calendarDate } = req.params;
-    if (!calendarDate) {
-      return res.status(400).json({ message: "Provide the date to get data." })
-    }
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -2915,10 +3068,13 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser) {
-      return res.status(404).json({ message: "Access denied, only loggedin user's can access." });
+      return res.status(404).json({ message: "Access denied, only logged-in user's can access." });
     };
 
-    let calendars;
+    const { calendarId } = req.params;
+    if (!calendarId) { return res.status(400).json({ message: 'Please provide calendar id to delete.' }) }
+
+    let creator;
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ createdBy: loggedInId });
@@ -2926,49 +3082,111 @@ exports.getDynamicCalendarByDate = async (req, res) => {
         return res.status(404).json({ message: 'Admin is not associated with any school.' });
       };
 
-      calendars = await Calendar.find({ schoolId: school._id, displayTo: loggedInUser.role, date: calendarDate })
-      if (!calendars.length) {
-        return res.status(200).json({ message: `No events on ${calendarDate}.` })
-      }
+      creator = loggedInId;
     }
     else if (loggedInUser.role === 'teacher') {
       const teacher = await Teacher.findOne({ userId: loggedInId })
       if (!teacher) {
         return res.status(404).json({ message: "No teacher found with the loggedin id." })
       }
-      const school = await School.findById(teacher.schoolId)
+
+      creator = teacher._id;
+    }
+    else {
+      return res.status(403).json({ message: "You are not allowed to access this." })
+    }
+
+    const calendar = await Calendar.findOneAndDelete({ _id: calendarId, createdBy: creator })
+    if (!calendar) {
+      return res.status(404).json({ message: 'No calendar found with the id (or) Only the creator of the calendar can delete it.' })
+    }
+
+    res.status(200).json({ message: 'Calendar deleted successfully' });
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.getDynamicCalendarByDate = async (req, res) => {
+  try {
+    const { calendarDate } = req.params;
+    if (!calendarDate) {
+      return res.status(400).json({ message: "Provide the date to get data." });
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(404).json({ message: "Access denied, only logged-in users can access." });
+    }
+
+    let calendars = [];
+
+    // Fetch local calendar events
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ createdBy: loggedInId });
+      if (!school) return res.status(404).json({ message: 'Admin is not associated with any school.' });
 
       calendars = await Calendar.find({
+        schoolId: school._id,
+        displayTo: { $in: [loggedInUser.role] },
+        date: calendarDate
+      });
+    }
+    else if (loggedInUser.role === 'teacher') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) return res.status(404).json({ message: "No teacher found with the logged-in id." });
+
+      const school = await School.findById(teacher.schoolId);
+      calendars = await Calendar.find({
         $or: [
-          { schoolId: teacher.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
-          { createdBy: teacher._id, date: calendarDate }]
-      })
-      if (!calendars.length) {
-        return res.status(200).json({ message: `No events on ${calendarDate}.` })
-      }
+          {
+            schoolId: teacher.schoolId,
+            createdBy: school.createdBy,
+            displayTo: { $in: [loggedInUser.role] },
+            date: calendarDate
+          },
+          { createdBy: teacher._id, date: calendarDate }
+        ]
+      });
     }
     else if (loggedInUser.role === 'student') {
-      const student = await Student.findOne({ userId: loggedInId })
-      if (!student) {
-        return res.status(404).json({ message: "No student found with the logged-in id." })
-      }
-      const school = await School.findById(student.schoolId)
-      const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section })
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) return res.status(404).json({ message: "No student found with the logged-in id." });
+
+      const school = await School.findById(student.schoolId);
+      const teacher = await Teacher.findOne({
+        schoolId: student.schoolId,
+        'profile.class': student.studentProfile.class,
+        'profile.section': student.studentProfile.section
+      });
 
       calendars = await Calendar.find({
         $or: [
-          { schoolId: student.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
-          { schoolId: student.schoolId, createdBy: teacher._id, displayTo: loggedInUser.role, date: calendarDate }]
-      })
-      if (!calendars.length) {
-        return res.status(200).json({ message: `No events on ${calendarDate}.` })
-      }
+          {
+            schoolId: student.schoolId,
+            createdBy: school.createdBy,
+            displayTo: { $in: [loggedInUser.role] },
+            date: calendarDate
+          },
+          {
+            schoolId: student.schoolId,
+            createdBy: teacher._id,
+            displayTo: { $in: [loggedInUser.role] },
+            date: calendarDate
+          }
+        ]
+      });
     }
     else if (loggedInUser.role === 'parent') {
-      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
-      if (!parent) {
-        return res.status(404).json({ message: "No parent found with the logged-in id." })
-      }
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
+      if (!parent) return res.status(404).json({ message: "No parent found with the logged-in id." });
 
       const children = parent.parentProfile.parentOf;
       const school = parent.schoolId;
@@ -2986,34 +3204,73 @@ exports.getDynamicCalendarByDate = async (req, res) => {
         }))
       });
 
-      if (!teachers || teachers.length === 0) {
-        return res.status(404).json({ message: "No teachers found for the specified classes and sections." });
-      }
+      const teacherIds = teachers.map(t => t._id);
 
-      const teacherIds = teachers.map(teacher => teacher._id);
-
-      const calendarQuery = {
+      calendars = await Calendar.find({
         $or: [
-          { schoolId: parent.schoolId, createdBy: school.createdBy, displayTo: loggedInUser.role, date: calendarDate },
-          { schoolId: parent.schoolId, createdBy: { $in: teacherIds }, displayTo: loggedInUser.role, date: calendarDate }
+          {
+            schoolId: parent.schoolId,
+            createdBy: school.createdBy,
+            displayTo: { $in: [loggedInUser.role] },
+            date: calendarDate
+          },
+          {
+            schoolId: parent.schoolId,
+            createdBy: { $in: teacherIds },
+            displayTo: { $in: [loggedInUser.role] },
+            date: calendarDate
+          }
         ]
-      };
-      calendars = await Calendar.find(calendarQuery).sort({ date: 1 });
-
-      if (!calendars.length) {
-        return res.status(200).json({ message: `No events on ${calendarDate}.` })
-      }
+      });
     }
+
+    const googleCalendarURL = `https://www.googleapis.com/calendar/v3/calendars/en.indian%23holiday@group.v.calendar.google.com/events?key=${process.env.GOOGLE_CALENDAR_API_KEY}`;
+    let googleEvents = [];
+
+    try {
+      const { data } = await axios.get(googleCalendarURL);
+      googleEvents = data.items
+        .filter(event => event.start?.date === calendarDate)
+        .map(event => {
+          let description = event.description || '';
+          if (description.startsWith('Observance')) {
+            description = event.summary;
+          }
+
+          return {
+            _id: event.id,
+            title: event.summary,
+            description,
+            date: event.start.date,
+            source: 'google-calendar'
+          };
+        });
+    } catch (err) {
+      res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+
+    const formattedLocalCalendars = calendars.map(event => ({
+      _id: event._id,
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      displayTo: event.displayTo,
+      source: 'local-db'
+    }));
+
+    const allEvents = [...formattedLocalCalendars, ...googleEvents];
+
+    if (!allEvents.length) {
+      return res.status(200).json({ message: `No events on ${calendarDate}.` });
+    }
+
     res.status(200).json({
       message: 'Dynamic calendar data fetched successfully',
-      calendars
+      calendars: allEvents
     });
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
 
@@ -3055,10 +3312,7 @@ exports.postSchoolExpensesForm = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3070,8 +3324,8 @@ exports.editSchoolExpense = async (req, res) => {
       return res.status(400).json({ message: 'Please provide expenseId to update.' })
     };
     const data = req.body;
-    if(!data){
-      return res.status(400).json({message:'Please provide new data to update.'})
+    if (!data) {
+      return res.status(400).json({ message: 'Please provide new data to update.' })
     }
 
     const loggedInId = req.user && req.user.id;
@@ -3093,7 +3347,7 @@ exports.editSchoolExpense = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
-    const expense = await SchoolExpenses.findOneAndUpdate({schoolId, _id:expenseId}, data, {new:true});
+    const expense = await SchoolExpenses.findOneAndUpdate({ schoolId, _id: expenseId }, data, { new: true });
 
     res.status(201).json({
       message: 'Expense updated successfully.',
@@ -3101,10 +3355,7 @@ exports.editSchoolExpense = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3134,16 +3385,13 @@ exports.deleteSchoolExpense = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
-    await SchoolExpenses.findOneAndDelete({schoolId, _id:expenseId})
+    await SchoolExpenses.findOneAndDelete({ schoolId, _id: expenseId })
     res.status(200).json({
       message: 'Expense deleted successfully.',
     });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3182,10 +3430,7 @@ exports.getTeacherItemRequest = async (req, res) => {
     res.status(200).json({ teacherRequests })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3194,11 +3439,11 @@ exports.updateTeacherItemRequest = async (req, res) => {
   try {
     const { amount, status } = req.body;
     const { requestId } = req.params;
-    if (!requestId || !status) { return res.status(400).json({ message: "Provide request id and new status update." }) }
+    if (!requestId || !status) { return res.status(400).json({ message: "Please provide request id and new status to update." }) }
 
-    if(status === 'success'){
-      if(!amount){
-        return res.status(400).json({message:"Please specify amount to update."})
+    if (status === 'success') {
+      if (!amount) {
+        return res.status(400).json({ message: "Please specify amount to update." })
       }
     }
     const loggedInId = req.user && req.user.id;
@@ -3230,7 +3475,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
     const teacherRequest = await ClassExpenses.findOne({ schoolId, _id: requestId })
     if (!teacherRequest) { return res.status(404).json({ message: "No request found with the id." }) }
 
-    teacherRequest.amount = amount;
+    if(amount) teacherRequest.amount = amount;
     teacherRequest.status = status;
     await teacherRequest.save()
 
@@ -3242,10 +3487,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
     res.status(201).json({ message: "Teacher item request updated successfully, if required - add the amount in school expenses.", teacherRequest })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3290,11 +3532,8 @@ exports.updateTeacherItemRequest = async (req, res) => {
 //     res.status(200).json({message:"Teacher item request deleted successfully."})
 //   }
 //   catch (err) {
-//     res.status(500).json({
-//       message: 'Internal server error',
-//       error: err.message,
-//     })
-//   }
+//   res.status(500).json({ message: 'Internal server error', error: err.message })
+// }
 // };
 
 
@@ -3424,10 +3663,7 @@ exports.getAccounts = async (req, res) => {
     res.status(200).json({ accounts: result });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -3474,9 +3710,6 @@ exports.getAccountsData = async (req, res) => {
     res.status(200).json({ revenue, admissions, expenses })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
