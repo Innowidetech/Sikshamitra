@@ -329,6 +329,9 @@ exports.getAssignment = async (req, res) => {
 };
 
 
+
+
+
 exports.getSubmittedAssignments = async (req, res) => {
     try {
         const { id } = req.params;
@@ -342,7 +345,7 @@ exports.getSubmittedAssignments = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
         };
 
-        let teacherAssignments, classAssignments, studentAssignments;
+        let teacherAssignments, studentAssignments;
 
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -358,17 +361,9 @@ exports.getSubmittedAssignments = async (req, res) => {
                 match: { createdBy: teacher._id },
             }).populate('assignmentId submittedBy.studentId').sort({ createdAt: -1 });
 
-            classAssignments = await SubmitAssignment.findOne({
-                schoolId: teacher.schoolId,
-                assignmentId: id,
-                class: teacher.profile.class,
-                section: teacher.profile.section,
-            }).populate('assignmentId submittedBy.studentId').sort({ createdAt: -1 });
-
             res.status(200).json({
                 message: 'Submitted assignments fetched successfully.',
                 teacherAssignments,
-                classAssignments,
             });
         }
         else if (loggedInUser.role === 'student') {
@@ -664,7 +659,7 @@ exports.viewAttendance = async (req, res) => {
             date: { $gte: startDate, $lte: endDate },
         })
         if (!attendance.length) {
-            return res.status(200).json({ message: 'No attendance record.' })
+            return res.status(404).json({ message: 'No attendance record found.' })
         };
 
         const attendanceWithParentDetails = [];
@@ -1086,73 +1081,6 @@ exports.deleteTimetablePeriod = async (req, res) => {
 };
 
 
-exports.createOrUpdateSyllabus = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
-        };
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'teacher') {
-            return res.status(404).json({
-                message: 'Access denied, only teachers have access.'
-            })
-        };
-
-        const teacher = await Teacher.findOne({ userId: loggedInId });
-        if (!teacher) {
-            return res.status(404).json({ message: "No teacher found with the logged-in id." })
-        }
-
-        let uploadedPhotoUrl = '';
-        if (req.file) {
-            try {
-                const [photoUrl] = await uploadImage(req.file);
-                uploadedPhotoUrl = photoUrl;
-            } catch (error) {
-                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-            }
-        }
-
-        let existingSyllabus = await Syllabus.findOne({ class: teacher.profile.class, section: teacher.profile.section, schoolId: teacher.schoolId });
-
-        if (existingSyllabus) {
-            existingSyllabus.syllabus = uploadedPhotoUrl;
-            await existingSyllabus.save();
-
-            return res.status(200).json({
-                message: 'Syllabus updated successfully.',
-                existingSyllabus,
-            });
-        } else {
-            const newSyllabus = new Syllabus({
-                schoolId: teacher.schoolId,
-                class: teacher.profile.class,
-                section: teacher.profile.section,
-                syllabus: uploadedPhotoUrl,
-                createdBy: teacher._id,
-            });
-            if (!newSyllabus.class || !newSyllabus.section) {
-                return res.status(404).json({ message: "Only class teachers can create syllabus." })
-            }
-
-            await newSyllabus.save();
-
-            return res.status(200).json({
-                message: 'Syllabus created successfully.',
-                newSyllabus,
-            });
-        }
-    }
-    catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
-    }
-};
-
 exports.getSyllabus = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
@@ -1174,7 +1102,7 @@ exports.getSyllabus = async (req, res) => {
             }
             syllabus = await Syllabus.find({ schoolId: school._id });
         } else {
-            let schoolId, className, section;
+            let schoolId, className;
 
             if (loggedInUser.role === 'teacher') {
                 const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1183,9 +1111,8 @@ exports.getSyllabus = async (req, res) => {
                 }
                 schoolId = teacher.schoolId;
                 className = teacher.profile.class;
-                section = teacher.profile.section;
 
-                syllabus = await Syllabus.findOne({ schoolId, class: className, section });
+                syllabus = await Syllabus.findOne({ schoolId, class: className });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
@@ -1194,9 +1121,8 @@ exports.getSyllabus = async (req, res) => {
                 }
                 schoolId = student.schoolId;
                 className = student.studentProfile.class;
-                section = student.studentProfile.section;
 
-                syllabus = await Syllabus.findOne({ schoolId, class: className, section });
+                syllabus = await Syllabus.findOne({ schoolId, class: className });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
@@ -1212,7 +1138,6 @@ exports.getSyllabus = async (req, res) => {
                     const syllabuss = await Syllabus.findOne({
                         schoolId: student.schoolId,
                         class: student.studentProfile.class,
-                        section: student.studentProfile.section,
                     }).sort({ createdAt: -1 });
 
                     if (syllabuss) {
@@ -1379,10 +1304,60 @@ exports.getStudyMaterial = async (req, res) => {
 };
 
 
+exports.editStudyMaterial = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in users can access this.' });
+        }
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({
+                message: 'Access denied, only teachers have access.',
+            });
+        }
+
+        const { materialId } = req.params;
+        if(!materialId){return res.status(400).json({message:"Please provide material id to edit it."})}
+
+        const updatedData = req.body;
+        if(!updatedData.subject && !updatedData.chapter && !updatedData.class && !updatedData.section && !req.file){
+            return res.status(400).json({message:'Please provide valid data to update.'})
+        }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: 'No teacher found with the logged-in ID.' });
+        }
+
+        if (req.file) {
+            try {
+                const [photoUrl] = await uploadImage(req.file);
+                updatedData.material = photoUrl;
+            } catch (error) {
+                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+            }
+        };
+
+        const studyMaterial = await StudyMaterial.findOneAndUpdate({ createdBy: teacher._id, _id: materialId }, updatedData, {new:true});
+        if (!studyMaterial) {
+            return res.status(404).json({ message: "No material found with the id." })
+        }
+
+        res.status(200).json({ message: "Material updated successfully.", studyMaterial })
+
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message })
+      }
+};
+
+
 //delete study matrial
 exports.deleteStudyMaterial = async (req, res) => {
     try {
         const { materialId } = req.params;
+        if(!materialId){return res.status(400).json({message:"Please provide material id to delete it."})}
 
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -2352,11 +2327,8 @@ exports.requestExpense = async (req, res) => {
 
         res.status(201).json({ message: "Item request created successfully, please wait until the management confirms.", newExpense })
     } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
-    }
+        res.status(500).json({ message: 'Internal server error', error: err.message })
+      }
 };
 
 

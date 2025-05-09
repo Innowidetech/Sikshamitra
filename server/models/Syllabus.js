@@ -9,11 +9,6 @@ const syllabusSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    section: {
-        type: String,
-        required: true,
-        uppercase:true
-    },
     syllabus: {
         type: String,
         required: true,

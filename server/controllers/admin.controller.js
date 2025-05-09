@@ -17,6 +17,7 @@ const Inventory = require('../models/Inventory');
 const SaleStock = require('../models/SaleStock');
 const BookRequests = require('../models/BookRequests');
 const Employee = require('../models/Employee');
+const Syllabus = require('../models/Syllabus');
 const AimObjective = require('../models/Aim&Objective');
 const AandL = require('../models/AdminAandL');
 const AandLUpdates = require('../models/AandLUpdates');
@@ -1817,7 +1818,7 @@ exports.saleStockTo = async (req, res) => {
       await stock.save()
     }
 
-    res.status(201).json({ message: `Stock sold to ${soldToname} successfully and updated inventory.`, newSale })
+    res.status(201).json({ message: `Please collect ₹${amount}. The stock has been successfully sold to ${soldToname}, and the inventory data has been updated.`, newSale })
   }catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -2031,6 +2032,72 @@ exports.editEmployee = async (req, res) => {
   }
 };
 
+
+exports.createOrUpdateSyllabus = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'admin') {
+            return res.status(404).json({
+                message: 'Access denied, only admin have access.'
+            })
+        };
+
+        const {className} = req.body;
+        if(!className){return res.status(400).json({message:"Please provide class to upload syllabus."})}
+
+        const school = await School.findOne({createdBy:loggedInId});
+
+        let uploadedPhotoUrl = '';
+        if (req.file) {
+            try {
+                const [photoUrl] = await uploadImage(req.file);
+                uploadedPhotoUrl = photoUrl;
+            } catch (error) {
+                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+            }
+        }
+
+        let existingSyllabus = await Syllabus.findOne({ class: className, schoolId: school._id, createdBy:loggedInId });
+
+        if (existingSyllabus) {
+            existingSyllabus.syllabus = uploadedPhotoUrl;
+            await existingSyllabus.save();
+
+            return res.status(200).json({
+                message: 'Syllabus updated successfully.',
+                existingSyllabus,
+            });
+        } else {
+            const newSyllabus = new Syllabus({
+                schoolId: school._id,
+                class: className,
+                syllabus: uploadedPhotoUrl,
+                createdBy: loggedInId,
+            });
+            if (!newSyllabus.class) {
+                return res.status(404).json({ message: "Only admin can create syllabus." })
+            }
+
+            await newSyllabus.save();
+
+            return res.status(200).json({
+                message: 'Syllabus created successfully.',
+                newSyllabus,
+            });
+        }
+    }
+    catch (err) {
+        res.status(500).json({
+            message: 'Internal server error.',
+            error: err.message,
+        });
+    }
+};
 
 exports.createAimObjective = async (req, res) => {
   try {
@@ -3372,7 +3439,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
   try {
     const { amount, status } = req.body;
     const { requestId } = req.params;
-    if (!requestId || !status) { return res.status(400).json({ message: "Provide request id and new status update." }) }
+    if (!requestId || !status) { return res.status(400).json({ message: "Please provide request id and new status to update." }) }
 
     if (status === 'success') {
       if (!amount) {
@@ -3408,7 +3475,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
     const teacherRequest = await ClassExpenses.findOne({ schoolId, _id: requestId })
     if (!teacherRequest) { return res.status(404).json({ message: "No request found with the id." }) }
 
-    teacherRequest.amount = amount;
+    if(amount) teacherRequest.amount = amount;
     teacherRequest.status = status;
     await teacherRequest.save()
 

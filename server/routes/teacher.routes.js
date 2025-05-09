@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod, getItemRequests, returnBook } = require('../controllers/teacher.controller');
-const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar } = require('../controllers/admin.controller');
+const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, issueBook, getAssignment, createOrUpdateSyllabus, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getClassAccounts, deleteTimetablePeriod, getItemRequests, returnBook, editStudyMaterial } = require('../controllers/teacher.controller');
+const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -31,10 +31,10 @@ router.get('/attendance', protect, authorize('teacher'), viewAttendance);
 router.post('/timetable', protect, authorize('teacher'), createOrUpdateTimetable);
 router.get('/timetable', protect, authorize('teacher'), getTimetable);
 router.delete('/timetable/:periodId', protect, authorize('teacher'), deleteTimetablePeriod);
-router.post('/syllabus', protect, authorize('teacher'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('teacher'), getSyllabus);
-router.post('/studyMaterial', upload.single('photo'), protect, authorize('teacher'), uploadStudyMaterial);
+router.post('/studyMaterial', protect, authorize('teacher'), upload.single('photo'), uploadStudyMaterial);
 router.get('/studyMaterial', protect, authorize('teacher'), getStudyMaterial);
+router.patch('/studyMaterial/:materialId', protect, authorize('teacher'), upload.single('photo'), editStudyMaterial)
 router.delete('/studyMaterial/:materialId', protect, authorize('teacher'), deleteStudyMaterial);
 router.post('/exams', protect, authorize('teacher'), createExams);
 router.get('/exams', protect, authorize('teacher'), getExams);
