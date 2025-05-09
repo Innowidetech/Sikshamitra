@@ -21,8 +21,7 @@ const ClassSchema = new mongoose.Schema({
         uppercase:true,
     },
     teacher: {
-        type: String,
-        // required: true
+        type: String
     },
     createdBy:{
         type:mongoose.Schema.Types.ObjectId,

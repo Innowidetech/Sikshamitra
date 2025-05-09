@@ -8,7 +8,6 @@ const Tsyllabus = () => {
   const dispatch = useDispatch();
   const { syllabus, loading, errorMessage } = useSelector((state) => state.tcurriculum);
 
-  // State to manage visibility of the upload form
   const [isUploadFormVisible, setIsUploadFormVisible] = useState(false);
 
   useEffect(() => {
@@ -17,14 +16,47 @@ const Tsyllabus = () => {
 
   const syllabusList = syllabus?.syllabus || [];
 
-  // Toggle the upload form visibility
   const handleReplaceClick = () => {
-    setIsUploadFormVisible(true); // Show the upload form when Replace button is clicked
+    setIsUploadFormVisible(true);
   };
 
-  // Close the modal
   const handleCloseModal = () => {
     setIsUploadFormVisible(false);
+  };
+
+  // Secure PDF download with token
+  const handleDownloadPDF = async (url) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Authorization token is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF.');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `syllabus-${new Date().getTime()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+      console.error("Error downloading file:", error);
+    }
   };
 
   return (
@@ -76,7 +108,7 @@ const Tsyllabus = () => {
                   <h3 className="text-xl font-semibold text-black mb-4">Upload</h3>
                   <form>
                     <div className="flex flex-col gap-4">
-                      <label htmlFor="syllabusFile" className="text-black ">
+                      <label htmlFor="syllabusFile" className="text-black">
                         Syllabus File
                       </label>
                       <input
@@ -87,15 +119,12 @@ const Tsyllabus = () => {
                         className="border border-red-500 p-8 rounded"
                       />
                       <div className="flex gap-4 mt-4">
-                        <button
-                          type="submit"
-                          className="bg-blue-600 text-white px-4 py-2 rounded"
-                        >
+                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
                           Upload
                         </button>
                         <button
                           type="button"
-                          onClick={handleCloseModal} // Close the modal when Cancel is clicked
+                          onClick={handleCloseModal}
                           className="bg-gray-600 text-white px-4 py-2 rounded"
                         >
                           Cancel
@@ -123,14 +152,12 @@ const Tsyllabus = () => {
                       <td className="border border-black px-4 py-2">{item.class}</td>
                       <td className="border border-black px-4 py-2">{item.section}</td>
                       <td className="border border-black px-4 py-2">
-                        <a
-                          href={item.syllabus}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => handleDownloadPDF(item.syllabus)}
                           className="text-blue-600 hover:underline"
                         >
                           View / Download PDF
-                        </a>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -150,21 +177,16 @@ const Tsyllabus = () => {
                     ['Section', item.section],
                     [
                       'Syllabus File',
-                      <a
+                      <button
                         key={index}
-                        href={item.syllabus}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={() => handleDownloadPDF(item.syllabus)}
                         className="text-blue-600 underline"
                       >
                         View / Download PDF
-                      </a>,
+                      </button>,
                     ],
                   ].map(([label, value], idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-2 border-b border-black"
-                    >
+                    <div key={idx} className="grid grid-cols-2 border-b border-black">
                       <div className="bg-[#146192] text-white p-2 font-medium border-r border-black whitespace-nowrap">
                         {label}
                       </div>

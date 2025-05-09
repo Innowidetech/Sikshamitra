@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+// Layout and Pages
 import TeacherSidebar from './layout/TeacherSidebar';
 import TeacherDashboard from './TeacherDashboard';
 import MyStudents from './MyStudents';
@@ -14,9 +16,9 @@ import Exams from './Exams';
 import About from './About';
 import MaterialPage from './MaterialPage';
 import UploadAssignment from './UploadAssignment';
-import AssignmentDetails from './AssignmentDetails';
 import Tsyllabus from './Tsyllabus';
 import TclassPlans from './Tclassplans';
+import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
 
 const MainDashboard = () => {
