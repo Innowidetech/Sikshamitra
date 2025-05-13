@@ -18,6 +18,7 @@ function UploadAssignment() {
     endDate: '',
     file: null,
   });
+  const [responseMessage, setResponseMessage] = useState(''); // New state to hold the response message
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -52,7 +53,6 @@ function UploadAssignment() {
     );
 
     try {
-      // Replace with your API endpoint to create an assignment
       const token = localStorage.getItem('token');
       const response = await axios.post(
         'https://sikshamitra.onrender.com/api/teacher/assignment',
@@ -66,19 +66,21 @@ function UploadAssignment() {
       );
 
       if (response.data.success) {
-        alert('Assignment submitted successfully!');
-        navigate('/assignments'); // Navigate to assignments page after submission
+        setResponseMessage('Assignment submitted successfully!'); // Success message
+        setTimeout(() => {
+          navigate('/assignments'); // Navigate to assignments page after submission
+        }, 2000);
       } else {
-        alert('Error submitting assignment');
+        setResponseMessage('Error submitting assignment'); // Error message
       }
     } catch (error) {
       console.error('Error uploading assignment:', error);
-      alert('Failed to upload assignment. Please try again.');
+      setResponseMessage('Failed to upload assignment. Please try again.');
     }
   };
 
   return (
-    <div className=" min-h-screen pb-12 ml-64">
+    <div className="min-h-screen pb-12 ml-64">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 md:mx-8 pt-6">
         <div className="mb-4 md:mb-0 mt-16">
@@ -223,6 +225,13 @@ function UploadAssignment() {
               Submit Assignment
             </button>
           </form>
+
+          {/* Display Response Message */}
+          {responseMessage && (
+            <div className="mt-6 text-center text-lg font-medium text-[#146192]">
+              {responseMessage}
+            </div>
+          )}
         </div>
       </div>
     </div>

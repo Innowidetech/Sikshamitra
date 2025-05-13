@@ -1,71 +1,226 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../adminDashboard/layout/Header';
-import { FaSearch } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { submitTeacherResult, fetchSubjectsAndExams, fetchTeacherResults } from '../../redux/teacher/teacherResultSlice';
+import { toast, ToastContainer } from 'react-toastify'; // Import toast and ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for notifications
 
 function AddStudentResult() {
+  const dispatch = useDispatch();
+  const { submitSuccessMessage, loading, error, subjectsAndExams } = useSelector(state => state.teacherResults);
+
+  const [classs, setClassName] = useState('');
+  const [section, setSection] = useState('');
+  const [student, setStudentName] = useState('');
+  const [exam, setExamType] = useState('');
+  const [subject, setSubjectName] = useState('');
+  const [marksObtained, setMarksObtained] = useState('');
+  const [totalMarks, setTotalMarks] = useState('');
+  const [grade, setGrade] = useState('');
+  const [resultList, setResultList] = useState([]);
+
+  const handleSearch = () => {
+    if (!classs || !section) {
+      toast.error('Please enter class and section');
+      return;
+    }
+    dispatch(fetchSubjectsAndExams({ classs, section }));
+  };
+
+  const handleAddSubjectResult = () => {
+    if (!subject || !marksObtained || !totalMarks || !grade) {
+      toast.error('Please fill in all subject result fields');
+      return;
+    }
+    setResultList([
+      ...resultList,
+      {
+        subject: subject,
+        marksObtained: Number(marksObtained),
+        totalMarks: Number(totalMarks),
+        grade: grade.toUpperCase(),
+      },
+    ]);
+
+    // Reset subject-related fields after adding
+    setSubjectName('');
+    setMarksObtained('');
+    setTotalMarks('');
+    setGrade('');
+    toast.success('Subject result added successfully');
+  };
+
+  const handleSubmit = () => {
+    if (!classs || !section || !student || !exam || resultList.length === 0) {
+      toast.error('Please fill all required fields and add at least one subject result.');
+      return;
+    }
+
+    const resultData = {
+      classs,
+      section,
+      student,
+      exam,
+      result: resultList,
+    };
+
+    dispatch(submitTeacherResult(resultData));
+
+    // Clear the form, but only after successful submission
+    // This is handled inside the useEffect for submitSuccessMessage
+  };
+
+  // Fetch results after successful submission
+  useEffect(() => {
+    if (submitSuccessMessage) {
+      dispatch(fetchTeacherResults());
+      setResultList([]);
+      setClassName('');
+      setSection('');
+      setStudentName('');
+      setExamType('');
+      toast.success('Result submitted successfully');
+    }
+  }, [submitSuccessMessage, dispatch]);
+
   return (
     <>
-      {/* Top Header Section */}
       <div className="flex justify-between items-center mx-8 mt-20 md:ml-72">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Results</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {'>'}
-            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Results</span>
-          </h1>
         </div>
         <Header />
       </div>
 
-      {/* Add Student Result Section */}
-      <div className="mx-8 mt-8 md:ml-72">
-        {/* Outer Box */}
-        <div className="bg-white border border-gray-300 shadow-md rounded-lg p-6 w-full max-w-4xl">
-          <h2 className="text-xl font-semibold text-[#146192] mb-4">Add Student Result</h2>
+      <div className="mx-4 mt-8 md:ml-80 md:mr-12">
+        <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-4xl">
+          <h2 className="text-xl font-semibold text-white bg-[#245c88] p-3 rounded-md mb-6">ADD STUDENT RESULT</h2>
 
-          {/* Class and Section Row */}
-          <div className="flex flex-wrap gap-6 mb-4">
-            {/* Class */}
-            <div className="flex flex-col flex-1 min-w-[180px]">
-              <label className="text-gray-700 font-medium mb-1">Class</label>
-              <input
-                type="text"
-                className="border border-gray-300 rounded-lg px-4 py-2 bg-[#F5F5F5]"
-                placeholder="Enter class"
+          {/* Class & Section with Search */}
+          <div className="flex mb-6 gap-4">
+            <div className="w-[48%]">
+              <input 
+                value={classs} 
+                onChange={(e) => setClassName(e.target.value)} 
+                placeholder="Class*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
               />
             </div>
-
-            {/* Section */}
-            <div className="flex flex-col flex-1 min-w-[180px]">
-              <label className="text-gray-700 font-medium mb-1">Section</label>
-              <input
-                type="text"
-                className="border border-gray-300 rounded-lg px-4 py-2 bg-[#F5F5F5]"
-                placeholder="Enter section"
+            <div className="w-[48%]">
+              <input 
+                value={section} 
+                onChange={(e) => setSection(e.target.value)} 
+                placeholder="Section*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
               />
+            </div>
+            <div className="w-full md:w-auto flex justify-center items-center">
+              <button 
+                onClick={handleSearch} 
+                className="bg-[#245c88] text-white px-4 py-2 rounded-md w-full md:w-auto"
+              >
+                Search
+              </button>
             </div>
           </div>
 
-          {/* Search Icon Button */}
-          <div className="flex justify-start mb-4">
-            <button className="bg-[#146192] text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2 hover:bg-[#0e4a73] transition duration-300">
-              <FaSearch />
-              Search
+          {/* Student Name and Exam Type */}
+          {subjectsAndExams.students?.length > 0 && (
+            <div className="flex mb-6 gap-4">
+              <div className="w-[48%]">
+                <select 
+                  value={student} 
+                  onChange={(e) => setStudentName(e.target.value)} 
+                  className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+                >
+                  <option value="">Select Student</option>
+                  {subjectsAndExams.students.map((s, i) => (
+                    <option key={i} value={s.studentProfile.fullname}>
+                      {s.studentProfile.fullname}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-[48%]">
+                <select
+                  value={exam}
+                  onChange={(e) => setExamType(e.target.value)}
+                  className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+                >
+                  <option value="">Select Exam Type</option>
+                  {subjectsAndExams.exams.map((e, i) => (
+                    <option key={i} value={e.examType}>{e.examType}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Subject, Marks, and Grade */}
+          <div className="mb-6">
+            <div className="flex gap-4">
+              <input 
+                value={subject} 
+                onChange={(e) => setSubjectName(e.target.value)} 
+                placeholder="Subject Name*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+              />
+              <input 
+                value={marksObtained} 
+                onChange={(e) => setMarksObtained(e.target.value)} 
+                placeholder="Marks Obtained*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+              />
+              <input 
+                value={totalMarks} 
+                onChange={(e) => setTotalMarks(e.target.value)} 
+                placeholder="Total Marks*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+              />
+              <input 
+                value={grade} 
+                onChange={(e) => setGrade(e.target.value)} 
+                placeholder="Grade*" 
+                className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
+              />
+            </div>
+            <button
+              onClick={handleAddSubjectResult}
+              className="mt-2 bg-[#245c88] text-white px-4 py-2 rounded-md"
+            >
+              Add Subject Result
             </button>
           </div>
 
-          {/* Student Name Input */}
-          <div className="flex flex-col max-w-[300px]">
-            <label className="text-gray-700 font-medium mb-1">Student Name</label>
-            <input
-              type="text"
-              className="border border-gray-300 rounded-lg px-4 py-2 bg-[#F5F5F5]"
-              placeholder="Enter student name"
-            />
+          {/* Result List Display */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium">Added Results</h3>
+            <ul>
+              {resultList.map((item, index) => (
+                <li key={index} className="bg-[#f1f8fc] p-3 mb-2 rounded-md">
+                  <strong>{item.subject}</strong>: {item.marksObtained}/{item.totalMarks} ({item.grade})
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-4">
+            <button 
+              onClick={handleSubmit} 
+              className="bg-[#245c88] text-white px-4 py-2 rounded-md"
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Submit Result'}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Toast Notifications Container */}
+      <ToastContainer />
     </>
   );
 }
