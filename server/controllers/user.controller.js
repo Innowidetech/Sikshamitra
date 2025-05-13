@@ -263,7 +263,7 @@ exports.getBlogs = async(req,res)=>{
     try{
         const blogs = await Blogs.find().sort({createdAt:-1})
         if(!blogs.length){
-            return res.status(200).json({message:"No blogs posted yet."})
+            return res.status(404).json({message:"No blogs posted yet."})
         }
         res.status(200).json({blogs});
     }

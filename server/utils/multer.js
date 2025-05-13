@@ -43,3 +43,14 @@ exports.uploadImage = async (files) => {
     throw new Error(error.message);
   }
 };
+
+
+exports.deleteImage = async (imageUrl) => {
+    try {
+      const publicId = imageUrl.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete image: ${error.message}`);
+    }
+  };

@@ -1101,28 +1101,22 @@ exports.getSyllabus = async (req, res) => {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
             syllabus = await Syllabus.find({ schoolId: school._id });
-        } else {
-            let schoolId, className;
+            syllabus.sort((a, b) => (a.class) - (b.class));
 
+        } else {
             if (loggedInUser.role === 'teacher') {
                 const teacher = await Teacher.findOne({ userId: loggedInId });
                 if (!teacher) {
                     return res.status(404).json({ message: 'No teacher found with the logged-in ID.' });
                 }
-                schoolId = teacher.schoolId;
-                className = teacher.profile.class;
-
-                syllabus = await Syllabus.findOne({ schoolId, class: className });
+                syllabus = await Syllabus.findOne({ schoolId:teacher.schoolId, class: teacher.profile.class });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
                 if (!student) {
                     return res.status(404).json({ message: 'No student found with the logged-in ID.' });
                 }
-                schoolId = student.schoolId;
-                className = student.studentProfile.class;
-
-                syllabus = await Syllabus.findOne({ schoolId, class: className });
+                syllabus = await Syllabus.findOne({ schoolId:student.schoolId, class: student.studentProfile.class });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');

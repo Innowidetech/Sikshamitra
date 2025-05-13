@@ -43,7 +43,7 @@ router.get('/updatedStudentData/:studentId', protect, authorize('admin'), getUpd
 router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
 router.post('/inventory/add', protect, authorize('admin'), addStock);
 router.get('/inventory', protect, authorize('admin'), getInventory);
-router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
+router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
 router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('admin'), getSyllabus);

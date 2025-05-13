@@ -1770,12 +1770,7 @@ exports.getInventory = async (req, res) => {
 
 
 exports.saleStockTo = async (req, res) => {
-  try {
-    const { itemName, count, soldTo, soldToname, soldToId } = req.body; //user type, employeeId or registration number
-    if (!itemName || !count || !soldTo || !soldToname || !soldToId) {
-      return res.status(400).json({ message: "Provide all the data to sale stock." })
-    }
-
+  try {//remove item name and do it with id and check figma
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized.' });
@@ -1786,18 +1781,25 @@ exports.saleStockTo = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
+    const {id} = req.params;
+    if(!id){ return res.status(400).json({message:"Please provide id to sale stock."})}
+    const { count, soldTo, soldToname, soldToId } = req.body; //user type, employeeId or registration number
+    if (!count || !soldTo || !soldToname || !soldToId) {
+      return res.status(400).json({ message: "Provide all the details (count, role, name, EmpNo / RegNo) to sale stock." })
+    }
+
     const school = await School.findOne({ createdBy: loggedInId });
     if (!school) {
       return res.status(404).json({ message: 'Admin is not associated with any school.' });
     };
 
-    const stock = await Inventory.findOne({ itemName, schoolId: school._id })
+    const stock = await Inventory.findOne({ _id:id, schoolId: school._id })
     if (!stock) {
-      return res.status(404).json({ message: `No stock found for the item - ${itemName}. ` })
+      return res.status(404).json({ message: `No stock found for the id. `})
     }
 
     if (count > stock.count) {
-      return res.status(404).json({ message: `We have only ${stock.count} items in the inventory for ${itemName}` })
+      return res.status(404).json({ message: `We have only ${stock.count} items in the inventory for ${stock.itemName}` })
     }
 
     const amount = count * stock.unitPrice
@@ -1806,7 +1808,7 @@ exports.saleStockTo = async (req, res) => {
     if (!soldToUser) {
       return res.status(404).json({ message: `No ${soldTo} found with the provided name and id.` })
     }
-    const newSale = new SaleStock({ schoolId: school._id, itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
+    const newSale = new SaleStock({ schoolId: school._id, itemName:stock.itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
     await newSale.save()
 
     stock.count = stock.count - count

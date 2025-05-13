@@ -9,7 +9,8 @@ router.post('/register', protect,authorize('superadmin'), registerSchool);
 router.get('/schools',protect,authorize('superadmin'),getAllSchools);
 router.get('/school/:schoolId', protect, authorize('superadmin'), getSchoolById);
 router.put('/school/:id/:status', protect,authorize('superadmin'),changeSchoolStatus);
-router.post('/blog', upload.single('photo'), protect, authorize('superadmin'), postBlog);
-router.delete('/blog/:blogId', protect, authorize('superadmin'), deleteBlog);
+router.post('/blog', protect, upload.array('files'), authorize('superadmin'), postBlog);
+router.delete('/blog/:id', protect, authorize('superadmin'), deleteBlog);
+router.delete('/blogDetail/:blogId', protect, authorize('superadmin'), deleteBlog);
 
 module.exports = router;

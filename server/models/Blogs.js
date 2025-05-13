@@ -5,7 +5,7 @@ const BlogsSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    blogDetails:[{
+    blog:[{
         description: {
             type: String,
             required: true,
