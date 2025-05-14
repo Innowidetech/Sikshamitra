@@ -85,72 +85,6 @@ exports.getProfile = async (req, res) => {
 };
 
 
-//create School by admin
-exports.createSchool = async (req, res) => {
-  try {
-    const { schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
-    if (!schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
-      return res.status(400).json({ message: 'Please provide all the details to create school.' })
-    };
-
-    const loggedInId = req.user && req.user.id;
-    if (!loggedInId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    };
-
-    const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'admin') {
-      return res.status(404).json({ message: 'Access denied, only admins have access to create school.' });
-    };
-
-    let logo, banner;
-
-    if (req.files && req.files.logo) {
-      try {
-        const [logoUrl] = await uploadImage(req.files.logo);
-        logo = logoUrl;
-      } catch (error) {
-        return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
-      }
-    }
-
-    if (req.files && req.files.banner) {
-      try {
-        const [bannerUrl] = await uploadImage(req.files.banner);
-        banner = bannerUrl;
-      } catch (error) {
-        return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });
-      }
-    }
-
-    const existingSchool = await School.findOne({ createdBy: loggedInId });
-    if (existingSchool) {
-      return res.status(404).json({ message: 'Admin is already associated with a school.' });
-    };
-
-    const school = new School({
-      schoolName,
-      schoolCode,
-      schoolLogo: logo,
-      schoolBanner: banner,
-      address,
-      details,
-      contact,
-      createdBy: loggedInId,
-      paymentDetails,
-    });
-    await school.save()
-
-    res.status(201).json({
-      message: 'School created successfully',
-      school
-    });
-  }
-  catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message })
-  }
-};
-
 //edit School by admin who created the school
 exports.editSchool = async (req, res) => {
   try {
@@ -562,7 +496,7 @@ exports.createClassWiseFees = async (req, res) => {
 
     const classFees = await ClassWiseFees.findOne({ schoolId: school._id, class: className })
     if (classFees) {
-      return res.status(404).json({ message: `The class wise fees for class - ${className} has already created.` })
+      return res.status(404).json({ message: `The class wise fees for class - ${className} has already created, please edit it.` })
     }
 
     const total = Number(tutionFees) + Number(admissionFees) + Number(examFees);
@@ -1770,7 +1704,7 @@ exports.getInventory = async (req, res) => {
 
 
 exports.saleStockTo = async (req, res) => {
-  try {//remove item name and do it with id and check figma
+  try {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized.' });
@@ -1825,6 +1759,63 @@ exports.saleStockTo = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
+
+
+//sale by itemNAME
+// exports.saleStockTo = async (req, res) => {
+//   try {
+//     const { itemName, count, soldTo, soldToname, soldToId } = req.body; //user type, employeeId or registration number
+//     if (!itemName || !count || !soldTo || !soldToname || !soldToId) {
+//       return res.status(400).json({ message: "Provide all the data to sale stock." })
+//     }
+
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized.' });
+//     };
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'admin') {
+//       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+//     };
+
+//     const school = await School.findOne({ createdBy: loggedInId });
+//     if (!school) {
+//       return res.status(404).json({ message: 'Admin is not associated with any school.' });
+//     };
+
+//     const stock = await Inventory.findOne({ itemName, schoolId: school._id })
+//     if (!stock) {
+//       return res.status(404).json({ message: `No stock found for the item - ${itemName}. ` })
+//     }
+
+//     if (count > stock.count) {
+//       return res.status(404).json({ message: `We have only ${stock.count} items in the inventory for ${itemName}` })
+//     }
+
+//     const amount = count * stock.unitPrice
+
+//     const soldToUser = await Teacher.findOne({ schoolId: school._id, 'profile.fullname': soldToname, 'profile.employeeId': soldToId }) || await Student.findOne({ schoolId: school._id, 'studentProfile.fullname': soldToname, 'studentProfile.registrationNumber': soldToId })
+//     if (!soldToUser) {
+//       return res.status(404).json({ message: `No ${soldTo} found with the provided name and id.` })
+//     }
+//     const newSale = new SaleStock({ schoolId: school._id, itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
+//     await newSale.save()
+
+//     stock.count = stock.count - count
+//     if (stock.count == 0) {
+//       await stock.deleteOne({ _id: stock._id, schoolId: school._id })
+//     }
+//     else {
+//       stock.totalPrice = stock.unitPrice * stock.count
+//       await stock.save()
+//     }
+
+//     res.status(201).json({ message: `Please collect ₹${amount}. The stock has been successfully sold to ${soldToname}, and the inventory data has been updated.`, newSale })
+//   }catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message })
+//   }
+// };
 
 
 exports.getSaleStock = async (req, res) => {

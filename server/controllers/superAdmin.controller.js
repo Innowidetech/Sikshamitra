@@ -2,11 +2,11 @@ const School = require('../models/School');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const Blogs = require('../models/Blogs');
-const { uploadImage } = require('../utils/multer');
+const { uploadImage, deleteImage } = require('../utils/multer');
 const mongoose = require('mongoose');
 
 
-//super admin to create account for admin/school
+//create account for admin/school
 exports.registerSchool = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -53,6 +53,74 @@ exports.registerSchool = async (req, res) => {
     res.status(500).json({ message: 'Registration failed', error });
   }
 };
+
+
+//create School by admin
+exports.createSchool = async (req, res) => {
+  try {
+    const { email, password, schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
+    if (!email || !password || !schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
+      return res.status(400).json({ message: 'Please provide all the details to create school.' })
+    };
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(404).json({ message: 'Access denied, only admins have access to create school.' });
+    };
+
+    let logo, banner;
+
+    if (req.files && req.files.logo) {
+      try {
+        const [logoUrl] = await uploadImage(req.files.logo);
+        logo = logoUrl;
+      } catch (error) {
+        return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
+      }
+    }
+
+    if (req.files && req.files.banner) {
+      try {
+        const [bannerUrl] = await uploadImage(req.files.banner);
+        banner = bannerUrl;
+      } catch (error) {
+        return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });
+      }
+    }
+
+    const existingSchool = await School.findOne({ createdBy: loggedInId });
+    if (existingSchool) {
+      return res.status(404).json({ message: 'Admin is already associated with a school.' });
+    };
+
+    const school = new School({
+      schoolName,
+      schoolCode,
+      schoolLogo: logo,
+      schoolBanner: banner,
+      address,
+      details,
+      contact,
+      createdBy: loggedInId,
+      paymentDetails,
+    });
+    await school.save()
+
+    res.status(201).json({
+      message: 'School created successfully',
+      school
+    });
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
 
 //get all schools
 exports.getAllSchools = async (req, res) => {
@@ -161,6 +229,43 @@ exports.changeSchoolStatus = async (req, res) => {
   }
 };
 
+
+// exports.postBlog = async (req, res) => {
+//   try {
+//     const { title, description } = req.body;
+//     if (!title || !description) { return res.status(400).json({ message: 'Provide all details to post blog.' }) }
+
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+//     };
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+//       return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
+//     };
+
+//     let uploadedPhotoUrl;
+//     if (req.file) {
+//       try {
+//         const [photoUrl] = await uploadImage(req.file);
+//         uploadedPhotoUrl = photoUrl;
+//       } catch (error) {
+//         return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+//       }
+//     };
+
+//     const blog = new Blogs({ title, description, photo: uploadedPhotoUrl });
+//     await blog.save()
+
+//     res.status(201).json({ message: "Blog posted successfully.", blog })
+//   }
+//   catch (err) {
+//     res.status(500).json({ message: 'Internal server error.', error: err.message })
+//   }
+// };
+
+
 exports.postBlog = async (req, res) => {
   try {
     const { title, blog } = req.body;
@@ -211,43 +316,100 @@ exports.postBlog = async (req, res) => {
 };
 
 
-// exports.postBlog = async (req, res) => {
-//   try {
-//     const { title, description } = req.body;
-//     if (!title || !description) { return res.status(400).json({ message: 'Provide all details to post blog.' }) }
+exports.editBlog = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+    }
 
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Only superadmin can edit blog.' });
+    }
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-//       return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
-//     };
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Please provide a valid blog id to edit.' });
+    }
 
-//     let uploadedPhotoUrl;
-//     if (req.file) {
-//       try {
-//         const [photoUrl] = await uploadImage(req.file);
-//         uploadedPhotoUrl = photoUrl;
-//       } catch (error) {
-//         return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-//       }
-//     };
+    const existingBlog = await Blogs.findById(id);
+    if (!existingBlog) {
+      return res.status(404).json({ message: 'No blog found with the provided ID.' });
+    }
 
-//     const blog = new Blogs({ title, description, photo: uploadedPhotoUrl });
-//     await blog.save()
+    const updatedBlogArray = req.body.blog;
+    if (!Array.isArray(updatedBlogArray) || !updatedBlogArray.length) {
+      return res.status(400).json({ message: "Please provide valid blog data to update." });
+    }
 
-//     res.status(201).json({ message: "Blog posted successfully.", blog })
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error.', error: err.message })
-//   }
-// };
+    const oldBlogArray = existingBlog.blog;
+    let updatedBlog = [];
+    let imagesToDelete = [];
+
+    if (req.files && req.files.length === updatedBlogArray.length) {
+      for (let i = 0; i < updatedBlogArray.length; i++) {
+        const { description } = updatedBlogArray[i];
+        const file = req.files[i];
+
+        if (!description || !file) {
+          return res.status(400).json({ message: 'Each blog entry must include a description and a photo.' });
+        }
+
+        try {
+          const [photoUrl] = await uploadImage(file);
+
+          // If photo is replaced, mark old photo for deletion
+          if (oldBlogArray[i] && oldBlogArray[i].photo) {
+            imagesToDelete.push(oldBlogArray[i].photo);
+          }
+
+          updatedBlog.push({ description, photo: photoUrl });
+        } catch (error) {
+          return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+        }
+      }
+    } else if (!req.files || req.files.length === 0) {
+      for (let i = 0; i < updatedBlogArray.length; i++) {
+        const { description } = updatedBlogArray[i];
+        const oldEntry = oldBlogArray[i];
+
+        if (!description || !oldEntry || !oldEntry.photo) {
+          return res.status(400).json({ message: 'Each blog entry must include a description and existing photo.' });
+        }
+
+        updatedBlog.push({ description, photo: oldEntry.photo });
+      }
+    } else {
+      return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
+    }
+
+    // If some entries were removed, mark their images for deletion
+    if (oldBlogArray.length > updatedBlog.length) {
+      const removedImages = oldBlogArray.slice(updatedBlog.length).map(entry => entry.photo);
+      imagesToDelete.push(...removedImages);
+    }
+
+    // Perform the deletions after processing
+    if (imagesToDelete.length > 0) {
+      try {
+        await deleteImage(imagesToDelete);
+      } catch (error) {
+        console.warn("Failed to delete one or more old images:", error.message);
+      }
+    }
+
+    existingBlog.blog = updatedBlog;
+    const blog = await existingBlog.save();
+
+    res.status(200).json({ message: "Blog updated successfully.", blog });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error.', error: err.message });
+  }
+};
 
 
-// exports.editBlog = async (req, res) => {
+// exports.deleteBlog = async (req, res) => {
 //   try {
 //     const loggedInId = req.user && req.user.id;
 //     if (!loggedInId) {
@@ -259,25 +421,31 @@ exports.postBlog = async (req, res) => {
 //       return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
 //     };
 
-//     const { id } = req.params;
-//     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-//       return res.status(400).json({ message: 'Please provide a valid blog id to edit.' })
+//     const { id, blogId } = req.params;
+//     if ((!id || !mongoose.Types.ObjectId.isValid(id)) && (!blogId || !mongoose.Types.ObjectId.isValid(blogId))) {
+//       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
 //     }
 
-//     const existingBlog = await Blogs.findById(id);
-//     if (!existingBlog) {
-//       return res.status(404).json({ message: 'No blog found with the provided ID.' });
+//     if (id) {
+//       const blog = await Blogs.findByIdAndDelete(id);
+//       if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
+//       res.status(200).json({ message: "Blog deleted successfully." })
 //     }
+//     if (blogId) {
+//       const existingBlog = await Blogs.findOne({ blog: { $elemMatch: { _id: blogId } } })
+//       if (!existingBlog) {
+//         return res.status(404).json({ message: 'Blog detail not found with the id.' });
+//       }
+//       await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
 
-//     const updatedData = req.body;
-//     if (!updatedData.blog) { return res.status(400).json({ message: "Please provide proper data to edit." }) }
+//       const updatedBlog = await Blogs.findById(existingBlog._id);
 
-//     Object.keys(updatedData).forEach((key) => {
-//       existingBlog[key] = updatedData[key];
-//     });
-
-//     const blog = await existingBlog.save();
-//     res.status(200).json({ message: "Blog updated successfully.", blog })
+//       if (updatedBlog.blog.length === 0) {
+//         await Blogs.deleteOne({ _id: updatedBlog._id });
+//         return res.status(200).json({ message: 'Blog detail deleted and blog document removed as it became empty.' });
+//       }
+//       res.status(200).json({ message: 'Blog detail deleted successfully.' });
+//     }
 //   }
 //   catch (err) {
 //     res.status(500).json({ message: 'Internal server error.', error: err.message })
@@ -297,31 +465,22 @@ exports.deleteBlog = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
     };
 
-    const { id, blogId } = req.params;
-    if ((!id || !mongoose.Types.ObjectId.isValid(id)) && (!blogId || !mongoose.Types.ObjectId.isValid(blogId))) {
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
     }
+    const blog = await Blogs.findById(id);
+    if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
 
-    if (id) {
-      const blog = await Blogs.findByIdAndDelete(id);
-      if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
-      res.status(200).json({ message: "Blog deleted successfully." })
+    const imagesToDelete = blog.blog.map(entry => entry.photo);
+    try {
+      await deleteImage(imagesToDelete);
+    } catch (error) {
+      res.warn("Some images may not have been deleted:", error.message);
     }
-    if (blogId) {
-      const existingBlog = await Blogs.findOne({ blog: { $elemMatch: { _id: blogId } } })
-      if (!existingBlog) {
-        return res.status(404).json({ message: 'Blog detail not found with the id.' });
-      }
-      await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
 
-      const updatedBlog = await Blogs.findById(existingBlog._id);
-
-      if (updatedBlog.blog.length === 0) {
-        await Blogs.deleteOne({ _id: updatedBlog._id });
-        return res.status(200).json({ message: 'Blog detail deleted and blog document removed as it became empty.' });
-      }
-      res.status(200).json({ message: 'Blog detail deleted successfully.' });
-    }
+    await Blogs.findByIdAndDelete(id);
+    res.status(200).json({ message: "Blog deleted successfully." })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })

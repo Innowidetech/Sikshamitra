@@ -8,7 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.get('/getProfile', protect, authorize('admin'), getProfile);
-router.post('/create-school', protect, authorize('admin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createSchool);
+// router.post('/create-school', protect, authorize('admin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createSchool);
 router.put('/edit', protect, authorize('admin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), editSchool);
 router.post('/class', protect, authorize('admin'), createClass);
 router.patch('/class/:classId', protect, authorize('admin'), editClass);

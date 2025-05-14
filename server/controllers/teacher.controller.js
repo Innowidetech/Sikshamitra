@@ -1109,14 +1109,14 @@ exports.getSyllabus = async (req, res) => {
                 if (!teacher) {
                     return res.status(404).json({ message: 'No teacher found with the logged-in ID.' });
                 }
-                syllabus = await Syllabus.findOne({ schoolId:teacher.schoolId, class: teacher.profile.class });
+                syllabus = await Syllabus.findOne({ schoolId: teacher.schoolId, class: teacher.profile.class });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
                 if (!student) {
                     return res.status(404).json({ message: 'No student found with the logged-in ID.' });
                 }
-                syllabus = await Syllabus.findOne({ schoolId:student.schoolId, class: student.studentProfile.class });
+                syllabus = await Syllabus.findOne({ schoolId: student.schoolId, class: student.studentProfile.class });
                 syllabus = syllabus ? [syllabus] : [];
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
@@ -1313,11 +1313,11 @@ exports.editStudyMaterial = async (req, res) => {
         }
 
         const { materialId } = req.params;
-        if(!materialId){return res.status(400).json({message:"Please provide material id to edit it."})}
+        if (!materialId) { return res.status(400).json({ message: "Please provide material id to edit it." }) }
 
         const updatedData = req.body;
-        if(!updatedData.subject && !updatedData.chapter && !updatedData.class && !updatedData.section && !req.file){
-            return res.status(400).json({message:'Please provide valid data to update.'})
+        if (!updatedData.subject && !updatedData.chapter && !updatedData.class && !updatedData.section && !req.file) {
+            return res.status(400).json({ message: 'Please provide valid data to update.' })
         }
 
         const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1334,7 +1334,7 @@ exports.editStudyMaterial = async (req, res) => {
             }
         };
 
-        const studyMaterial = await StudyMaterial.findOneAndUpdate({ createdBy: teacher._id, _id: materialId }, updatedData, {new:true});
+        const studyMaterial = await StudyMaterial.findOneAndUpdate({ createdBy: teacher._id, _id: materialId }, updatedData, { new: true });
         if (!studyMaterial) {
             return res.status(404).json({ message: "No material found with the id." })
         }
@@ -1343,7 +1343,7 @@ exports.editStudyMaterial = async (req, res) => {
 
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message })
-      }
+    }
 };
 
 
@@ -1351,7 +1351,7 @@ exports.editStudyMaterial = async (req, res) => {
 exports.deleteStudyMaterial = async (req, res) => {
     try {
         const { materialId } = req.params;
-        if(!materialId){return res.status(400).json({message:"Please provide material id to delete it."})}
+        if (!materialId) { return res.status(400).json({ message: "Please provide material id to delete it." }) }
 
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -1867,7 +1867,8 @@ exports.getResults = async (req, res) => {
         if (loggedInUser.role === 'admin') {
             const school = await School.findOne({ createdBy: loggedInId })
             banner = school.schoolBanner
-            result = await Results.find({ schoolId: school._id }).populate('student exam').sort({ createdAt: -1 })
+            result = await Results.find({ schoolId: school._id, total: { $ne: '-'}, totalPercentage: { $ne: '-' } })
+                .populate('student exam').sort({ createdAt: -1 })
             if (!result.length) { res.status(404).json({ message: "No results found" }) }
         }
         else if (loggedInUser.role === 'teacher') {
@@ -2322,7 +2323,7 @@ exports.requestExpense = async (req, res) => {
         res.status(201).json({ message: "Item request created successfully, please wait until the management confirms.", newExpense })
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message })
-      }
+    }
 };
 
 

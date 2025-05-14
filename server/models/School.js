@@ -1,44 +1,19 @@
 const mongoose = require('mongoose');
 
 const schoolSchema = new mongoose.Schema({
-  schoolName: {
-    type: String,
-    required: true,
+  userId:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:'User',
+    required:true
   },
   schoolCode: {
     type: String,
     required: true,
     unique: true,
   },
-  schoolLogo:{
-    type:String,
-    required:true,
-  },
-  schoolBanner:{
-    type:String,
-    required:true,
-  },
-  address: {
-    country: {
-      type: String,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-    },
-    street: {
-      type: String,
-      required: true,
-    },
-    pincode: {
-      type: String,
-      required: true,
-    },
+  schoolName: {
+    type: String,
+    required: true,
   },
   contact: {
     phone: {
@@ -50,10 +25,15 @@ const schoolSchema = new mongoose.Schema({
       required: true,
     }
   },
+  address: {
+    type: String,
+    required: true
+  },
+  principalName: {
+    type: String,
+    required: true
+  },
   details: {
-    foundedYear: {
-      type: Number,
-    },
     boardType: { //ssc, cbse, icse
       type: String,
       required: true,
@@ -62,35 +42,27 @@ const schoolSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
+    foundedYear: Number,
+  },
+  schoolLogo: String,
+  schoolBanner: String,
+  paymentDetails: {
+    bankName: String,
+    accountNumber: String,
+    ifscCode: String,
+    accountHolderName: String,
   },
   status: {
     type: String,
     enum: ['active', 'inactive', 'suspended'],
-    default: 'active'
+    default: 'active',
+    required:true
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
-paymentDetails: {
-    bankName: {
-        type: String,
-        required: true,
-    },
-    accountNumber: {
-        type: String,
-        required: true,
-    },
-    ifscCode: {
-        type: String,
-        required: true,
-    },
-    accountHolderName: {
-        type: String,
-        required: true,
-    },
-},
 }, {
   timestamps: true
 });

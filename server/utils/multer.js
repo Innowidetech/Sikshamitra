@@ -45,12 +45,18 @@ exports.uploadImage = async (files) => {
 };
 
 
-exports.deleteImage = async (imageUrl) => {
-    try {
-      const publicId = imageUrl.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
-      return true;
-    } catch (error) {
-      throw new Error(`Failed to delete image: ${error.message}`);
-    }
-  };
+exports.deleteImage = async (imageUrls) => {
+  try {
+    const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+    const publicIds = urls.map(url => url.split('/').pop().split('.')[0]);
+
+    const deletePromises = publicIds.map(id =>
+      cloudinary.uploader.destroy(id, { resource_type: 'image' })
+    );
+
+    await Promise.all(deletePromises);
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to delete image(s): ${error.message}`);
+  }
+};
