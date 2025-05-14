@@ -1096,7 +1096,7 @@ exports.getSyllabus = async (req, res) => {
         let syllabus = [];
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId });
+            const school = await School.findOne({ userId: loggedInId });
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
@@ -1460,7 +1460,7 @@ exports.getExams = async (req, res) => {
         const currentDate = new Date();
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId });
+            const school = await School.findOne({ userId: loggedInId });
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
@@ -1865,7 +1865,7 @@ exports.getResults = async (req, res) => {
         let result, banner
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId })
+            const school = await School.findOne({ userId: loggedInId })
             banner = school.schoolBanner
             result = await Results.find({ schoolId: school._id, total: { $ne: '-'}, totalPercentage: { $ne: '-' } })
                 .populate('student exam').sort({ createdAt: -1 })
@@ -2051,7 +2051,7 @@ exports.getBookRequests = async (req, res) => {
         let schoolId;
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId })
+            const school = await School.findOne({ userId: loggedInId })
             if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
             schoolId = school._id
         }
@@ -2102,7 +2102,7 @@ exports.issueBook = async (req, res) => {
         let schoolId;
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId })
+            const school = await School.findOne({ userId: loggedInId })
             if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
             schoolId = school._id
         }
@@ -2178,7 +2178,7 @@ exports.returnBook = async (req, res) => {
         let schoolId, fineAmount;
 
         if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ createdBy: loggedInId });
+            const school = await School.findOne({ userId: loggedInId });
             if (!school) {
                 return res.status(404).json({ message: 'No school is associated with the logged-in admin.' })
             }

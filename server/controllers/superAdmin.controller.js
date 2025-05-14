@@ -56,70 +56,70 @@ exports.registerSchool = async (req, res) => {
 
 
 //create School by admin
-exports.createSchool = async (req, res) => {
-  try {
-    const { email, password, schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
-    if (!email || !password || !schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
-      return res.status(400).json({ message: 'Please provide all the details to create school.' })
-    };
+// exports.createSchool = async (req, res) => {
+//   try {
+//     const { email, password, schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
+//     if (!email || !password || !schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
+//       return res.status(400).json({ message: 'Please provide all the details to create school.' })
+//     };
 
-    const loggedInId = req.user && req.user.id;
-    if (!loggedInId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    };
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized' });
+//     };
 
-    const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'admin') {
-      return res.status(404).json({ message: 'Access denied, only admins have access to create school.' });
-    };
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+//       return res.status(404).json({ message: 'Access denied, only superadmin have access to create school.' });
+//     };
 
-    let logo, banner;
+//     let logo, banner;
 
-    if (req.files && req.files.logo) {
-      try {
-        const [logoUrl] = await uploadImage(req.files.logo);
-        logo = logoUrl;
-      } catch (error) {
-        return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
-      }
-    }
+//     if (req.files && req.files.logo) {
+//       try {
+//         const [logoUrl] = await uploadImage(req.files.logo);
+//         logo = logoUrl;
+//       } catch (error) {
+//         return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
+//       }
+//     }
 
-    if (req.files && req.files.banner) {
-      try {
-        const [bannerUrl] = await uploadImage(req.files.banner);
-        banner = bannerUrl;
-      } catch (error) {
-        return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });
-      }
-    }
+//     if (req.files && req.files.banner) {
+//       try {
+//         const [bannerUrl] = await uploadImage(req.files.banner);
+//         banner = bannerUrl;
+//       } catch (error) {
+//         return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });
+//       }
+//     }
 
-    const existingSchool = await School.findOne({ createdBy: loggedInId });
-    if (existingSchool) {
-      return res.status(404).json({ message: 'Admin is already associated with a school.' });
-    };
+//     const existingSchool = await School.findOne({ createdBy: loggedInId });
+//     if (existingSchool) {
+//       return res.status(404).json({ message: 'Admin is already associated with a school.' });
+//     };
 
-    const school = new School({
-      schoolName,
-      schoolCode,
-      schoolLogo: logo,
-      schoolBanner: banner,
-      address,
-      details,
-      contact,
-      createdBy: loggedInId,
-      paymentDetails,
-    });
-    await school.save()
+//     const school = new School({
+//       schoolName,
+//       schoolCode,
+//       schoolLogo: logo,
+//       schoolBanner: banner,
+//       address,
+//       details,
+//       contact,
+//       createdBy: loggedInId,
+//       paymentDetails,
+//     });
+//     await school.save()
 
-    res.status(201).json({
-      message: 'School created successfully',
-      school
-    });
-  }
-  catch (err) {
-    res.status(500).json({ message: 'Internal server error', error: err.message })
-  }
-};
+//     res.status(201).json({
+//       message: 'School created successfully',
+//       school
+//     });
+//   }
+//   catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message })
+//   }
+// };
 
 
 //get all schools
@@ -135,7 +135,7 @@ exports.getAllSchools = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
     };
 
-    const schools = await School.find().select('-paymentDetails').populate('createdBy').sort({ createdAt: -1 });
+    const schools = await School.find().select('-paymentDetails').populate('userId').sort({ createdAt: -1 });
     if (!schools.length) {
       return res.status(200).json({ message: 'No schools registered yet.' })
     };
@@ -168,7 +168,7 @@ exports.getSchoolById = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
     };
 
-    const school = await School.findById(schoolId).select('-paymentDetails').populate('createdBy')
+    const school = await School.findById(schoolId).select('-paymentDetails').populate('userId')
     if (!school) {
       return res.status(200).json({ message: 'No school found with the id.' })
     };

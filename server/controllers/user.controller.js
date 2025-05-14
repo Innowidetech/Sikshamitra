@@ -57,7 +57,7 @@ exports.applyOffline = async (req, res) => {
 
         await newApplication.save();
 
-        const user = await User.findById(schoolExists.createdBy);
+        const user = await User.findById(schoolExists.userId);
         const adminEmail = user.email;
 
         await sendEmail(adminEmail, email, `New offline applicaion - ${firstName} ${lastName}`, offlineTemplete(firstName, lastName, address, dob, email, phoneNumber, schoolName));
