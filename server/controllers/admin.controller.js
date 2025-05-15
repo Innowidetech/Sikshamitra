@@ -3495,6 +3495,7 @@ exports.updateTeacherItemRequest = async (req, res) => {
     if (!teacherRequest) { return res.status(404).json({ message: "No request found with the id." }) }
 
     if (status === 'pending' || status === 'failed') {
+      teacherRequest.status = status;
       teacherRequest.amount = 0
       await teacherRequest.save()
     }
