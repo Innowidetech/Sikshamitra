@@ -2036,49 +2036,6 @@ exports.getResultById = async (req, res) => {
     }
 };
 
-exports.getBookRequests = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
-        };
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser) {
-            return res.status(403).json({ message: 'Access denied. Only logged-in users have the access to issue book to students.' });
-        };
-
-        let schoolId;
-
-        if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ userId: loggedInId })
-            if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
-            schoolId = school._id
-        }
-        else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
-            const teacher = await Teacher.findOne({ userId: loggedInId });
-            if (!teacher) {
-                return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
-            };
-            schoolId = teacher.schoolId
-        }
-        else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
-
-        const bookRequests = await BookRequests.find({ schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({ createdAt: -1 });
-        if (!bookRequests || !bookRequests.length) {
-            return res.status(404).json({ message: 'No book requests found.' })
-        };
-
-        res.status(200).json({ bookRequests });
-    }
-    catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
-    }
-};
-
 exports.issueBook = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;

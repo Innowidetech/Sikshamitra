@@ -640,7 +640,7 @@ exports.createTeacher = async (req, res) => {
       password: hpass,
       role: 'teacher',
       employeeType,
-      createdBy:userId
+      createdBy: userId
     });
 
     await user.save();
@@ -652,7 +652,7 @@ exports.createTeacher = async (req, res) => {
         photo: uploadedPhotoUrl,
       },
       education,
-      createdBy:userId,
+      createdBy: userId,
       schoolId: associatedSchool._id,
     });
     await teacher.save();
@@ -1531,7 +1531,7 @@ exports.updateStudentData = async (req, res) => {
       message: 'Student data updated successfully.',
       updatedStudent: student,
     });
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1565,7 +1565,7 @@ exports.getUpdatedStudentData = async (req, res) => {
     }
 
     res.status(200).json({ message: "Updated students data:", studentDataUpdates })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1668,7 +1668,7 @@ exports.addStock = async (req, res) => {
     await newStock.save()
 
     res.status(201).json({ message: "New stock add successfully.", newStock })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1697,7 +1697,7 @@ exports.getInventory = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", inventory })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1715,8 +1715,8 @@ exports.saleStockTo = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
-    const {id} = req.params;
-    if(!id){ return res.status(400).json({message:"Please provide id to sale stock."})}
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: "Please provide id to sale stock." }) }
     const { count, soldTo, soldToname, soldToId } = req.body; //user type, employeeId or registration number
     if (!count || !soldTo || !soldToname || !soldToId) {
       return res.status(400).json({ message: "Provide all the details (count, role, name, EmpNo / RegNo) to sale stock." })
@@ -1727,9 +1727,9 @@ exports.saleStockTo = async (req, res) => {
       return res.status(404).json({ message: 'Admin is not associated with any school.' });
     };
 
-    const stock = await Inventory.findOne({ _id:id, schoolId: school._id })
+    const stock = await Inventory.findOne({ _id: id, schoolId: school._id })
     if (!stock) {
-      return res.status(404).json({ message: `No stock found for the id. `})
+      return res.status(404).json({ message: `No stock found for the id. ` })
     }
 
     if (count > stock.count) {
@@ -1742,7 +1742,7 @@ exports.saleStockTo = async (req, res) => {
     if (!soldToUser) {
       return res.status(404).json({ message: `No ${soldTo} found with the provided name and id.` })
     }
-    const newSale = new SaleStock({ schoolId: school._id, itemName:stock.itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
+    const newSale = new SaleStock({ schoolId: school._id, itemName: stock.itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
     await newSale.save()
 
     stock.count = stock.count - count
@@ -1755,7 +1755,7 @@ exports.saleStockTo = async (req, res) => {
     }
 
     res.status(201).json({ message: `Please collect ₹${amount}. The stock has been successfully sold to ${soldToname}, and the inventory data has been updated.`, newSale })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1841,7 +1841,7 @@ exports.getSaleStock = async (req, res) => {
     }
 
     res.status(200).json({ message: "Inventory stock:", sales })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1902,7 +1902,7 @@ exports.newAdmission = async (req, res) => {
       female,
       studentsWithParents,
     });
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -1933,7 +1933,7 @@ exports.addEmployee = async (req, res) => {
     const newEmployee = new Employee({ schoolId: school._id, name, role, department, mobileNumber, salary })
     await newEmployee.save()
     res.status(201).json({ message: `Employee added to school.`, newEmployee })
-  }catch (err) {
+  } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -2027,69 +2027,69 @@ exports.editEmployee = async (req, res) => {
 
 
 exports.createOrUpdateSyllabus = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
-        };
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
+    };
 
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'admin') {
-            return res.status(404).json({
-                message: 'Access denied, only admin have access.'
-            })
-        };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(404).json({
+        message: 'Access denied, only admin have access.'
+      })
+    };
 
-        const {className} = req.body;
-        if(!className){return res.status(400).json({message:"Please provide class to upload syllabus."})}
+    const { className } = req.body;
+    if (!className) { return res.status(400).json({ message: "Please provide class to upload syllabus." }) }
 
-        const school = await School.findOne({userId:loggedInId});
+    const school = await School.findOne({ userId: loggedInId });
 
-        let uploadedPhotoUrl = '';
-        if (req.file) {
-            try {
-                const [photoUrl] = await uploadImage(req.file);
-                uploadedPhotoUrl = photoUrl;
-            } catch (error) {
-                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-            }
-        }
-
-        let existingSyllabus = await Syllabus.findOne({ class: className, schoolId: school._id, createdBy:loggedInId });
-
-        if (existingSyllabus) {
-            existingSyllabus.syllabus = uploadedPhotoUrl;
-            await existingSyllabus.save();
-
-            return res.status(200).json({
-                message: 'Syllabus updated successfully.',
-                existingSyllabus,
-            });
-        } else {
-            const newSyllabus = new Syllabus({
-                schoolId: school._id,
-                class: className,
-                syllabus: uploadedPhotoUrl,
-                createdBy: loggedInId,
-            });
-            if (!newSyllabus.class) {
-                return res.status(404).json({ message: "Only admin can create syllabus." })
-            }
-
-            await newSyllabus.save();
-
-            return res.status(200).json({
-                message: 'Syllabus created successfully.',
-                newSyllabus,
-            });
-        }
+    let uploadedPhotoUrl = '';
+    if (req.file) {
+      try {
+        const [photoUrl] = await uploadImage(req.file);
+        uploadedPhotoUrl = photoUrl;
+      } catch (error) {
+        return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+      }
     }
-    catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
+
+    let existingSyllabus = await Syllabus.findOne({ class: className, schoolId: school._id, createdBy: loggedInId });
+
+    if (existingSyllabus) {
+      existingSyllabus.syllabus = uploadedPhotoUrl;
+      await existingSyllabus.save();
+
+      return res.status(200).json({
+        message: 'Syllabus updated successfully.',
+        existingSyllabus,
+      });
+    } else {
+      const newSyllabus = new Syllabus({
+        schoolId: school._id,
+        class: className,
+        syllabus: uploadedPhotoUrl,
+        createdBy: loggedInId,
+      });
+      if (!newSyllabus.class) {
+        return res.status(404).json({ message: "Only admin can create syllabus." })
+      }
+
+      await newSyllabus.save();
+
+      return res.status(200).json({
+        message: 'Syllabus created successfully.',
+        newSyllabus,
+      });
     }
+  }
+  catch (err) {
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: err.message,
+    });
+  }
 };
 
 exports.createAimObjective = async (req, res) => {
@@ -2307,7 +2307,6 @@ exports.getBooks = async (req, res) => {
       if (!school) {
         return res.status(404).json({ message: 'No school is associated with the logged-in admin.' })
       };
-
       schoolId = school._id;
     }
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
@@ -2316,7 +2315,6 @@ exports.getBooks = async (req, res) => {
       if (!employee) {
         return res.status(404).json({ message: 'No employee found with the logged-in id.' })
       };
-
       schoolId = employee.schoolId;
     }
     else if (loggedInUser.role === 'student') {
@@ -2328,7 +2326,7 @@ exports.getBooks = async (req, res) => {
       return res.status(404).json({ message: 'You are not allowed to perform this action.' })
     };
 
-    const books = await Books.find({ schoolId: schoolId }).sort({ createdAt: -1 });
+    const books = await Books.find({ schoolId }).sort({ createdAt: -1 });
     if (!books.length) {
       return res.status(404).json({ message: 'No books found.' })
     };
@@ -2446,13 +2444,40 @@ exports.getLibraryData = async (req, res) => {
       return res.status(404).json({ message: 'You are not allowed to perform this action.' })
     };
 
-    const library = await BookRequests.find({ schoolId: schoolId }).populate('book').populate('requestedBy', '-studentProfile.previousEducation').sort({ createdAt: -1 });
+    const library = await BookRequests.find({ schoolId }).populate('book', 'bookName')
+      .populate({ path: 'requestedBy', select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.registrationNumber userId', populate: { path: 'userId', select: 'email' } })
+      .sort({ createdAt: -1 });
+    const studentIds = library.map(req => req.requestedBy?._id).filter(Boolean);
+
+    const parents = await Parent.find({ 'parentProfile.parentOf': { $in: studentIds } }).populate('userId')
+      .select('parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentOf');
+
+    const parentMap = {};
+    parents.forEach(parent => {
+      parent.parentProfile.parentOf.forEach(studentId => {
+        parentMap[studentId.toString()] = {
+          parentEmail: parent.userId.email,
+          fatherPhoneNumber: parent.parentProfile.fatherPhoneNumber,
+          motherPhoneNumber: parent.parentProfile.motherPhoneNumber
+        };
+      });
+    });
+    // Attach parent contact info to bookRequests
+    const bookRequestsWithParents = library.map(req => {
+      const studentId = req.requestedBy?._id?.toString();
+      const parentInfo = parentMap[studentId] || {};
+      return {
+        ...req.toObject(),
+        parentInfo
+      };
+    });
+
     if (!library.length) {
       return res.status(404).json({ message: 'No library data found.' })
     };
 
     res.status(200).json({
-      library,
+      bookRequestsWithParents,
     });
   }
   catch (err) {
@@ -3341,7 +3366,7 @@ exports.editSchoolExpense = async (req, res) => {
     }
 
     const expense = await SchoolExpenses.findOneAndUpdate({ schoolId, _id: expenseId }, data, { new: true });
-    if(!expense){return res.status(404).json({message:"No expense found with the id"})}
+    if (!expense) { return res.status(404).json({ message: "No expense found with the id" }) }
 
     res.status(201).json({
       message: 'Expense updated successfully.',
@@ -3469,9 +3494,15 @@ exports.updateTeacherItemRequest = async (req, res) => {
     const teacherRequest = await ClassExpenses.findOne({ schoolId, _id: requestId })
     if (!teacherRequest) { return res.status(404).json({ message: "No request found with the id." }) }
 
-    if(amount) teacherRequest.amount = amount;
-    teacherRequest.status = status;
-    await teacherRequest.save()
+    if (status === 'pending' || status === 'failed') {
+      teacherRequest.amount = 0
+      await teacherRequest.save()
+    }
+    if (amount) {
+      teacherRequest.amount = amount;
+      teacherRequest.status = status;
+      await teacherRequest.save()
+    }
 
     // if (status == 'success') {
     //   const newExpense = new SchoolExpenses({ schoolId, amount, purpose: teacherRequest.purpose, class: teacherRequest.class, section: teacherRequest.section });
