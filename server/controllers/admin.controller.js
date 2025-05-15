@@ -3312,15 +3312,6 @@ exports.postSchoolExpensesForm = async (req, res) => {
 
 exports.editSchoolExpense = async (req, res) => {
   try {
-    const { expenseId } = req.params;
-    if (!expenseId) {
-      return res.status(400).json({ message: 'Please provide expenseId to update.' })
-    };
-    const data = req.body;
-    if (!data) {
-      return res.status(400).json({ message: 'Please provide new data to update.' })
-    }
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -3340,7 +3331,17 @@ exports.editSchoolExpense = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
+    const { expenseId } = req.params;
+    if (!expenseId) {
+      return res.status(400).json({ message: 'Please provide expenseId to update.' })
+    };
+    const data = req.body;
+    if (!data.amount && !data.purpose && !data.class && !data.section && !data.date) {
+      return res.status(400).json({ message: 'Please provide valid data to update.' })
+    }
+
     const expense = await SchoolExpenses.findOneAndUpdate({ schoolId, _id: expenseId }, data, { new: true });
+    if(!expense){return res.status(404).json({message:"No expense found with the id"})}
 
     res.status(201).json({
       message: 'Expense updated successfully.',

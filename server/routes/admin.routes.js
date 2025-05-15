@@ -65,9 +65,9 @@ router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
 router.patch('/expenses/:expenseId', protect, authorize('admin'), editSchoolExpense);
 router.delete('/expenses/:expenseId', protect, authorize('admin'), deleteSchoolExpense);
-router.get('/classRequest', protect, authorize('admin'), getTeacherItemRequest);
-router.patch('/classRequest/:requestId', protect, authorize('admin'), updateTeacherItemRequest);
-// router.delete('/classRequest/:requestId', protect, authorize('admin'), deleteTeacherItemRequest)
+router.get('/teacherRequest', protect, authorize('admin'), getTeacherItemRequest);
+router.patch('/teacherRequest/:requestId', protect, authorize('admin'), updateTeacherItemRequest);
+// router.delete('/teacherRequest/:requestId', protect, authorize('admin'), deleteTeacherItemRequest)
 router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 
