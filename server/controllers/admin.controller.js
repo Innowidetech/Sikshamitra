@@ -3270,9 +3270,9 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
 exports.postSchoolExpensesForm = async (req, res) => {
   try {
-    const { amount, purpose, classs, section } = req.body;
-    if (!amount || !purpose) {
-      return res.status(400).json({ message: 'Please provide amount and purpose to post expense.' })
+    const { amount, purpose, classs, section, date } = req.body;
+    if (!amount || !purpose || !date) {
+      return res.status(400).json({ message: 'Please provide amount, purpose and date to post expense.' })
     };
 
     const loggedInId = req.user && req.user.id;
@@ -3294,7 +3294,7 @@ exports.postSchoolExpensesForm = async (req, res) => {
     else { return res.status(404).json({ message: "Only admin and accountant have access." }) }
 
     const newExpense = new SchoolExpenses({
-      schoolId, amount, purpose, class: classs, section
+      schoolId, amount, purpose, class: classs, section, date
     });
 
     await newExpense.save()
@@ -3621,7 +3621,7 @@ exports.getAccounts = async (req, res) => {
 
     const expenses = await SchoolExpenses.find({ schoolId });
     for (let expense of expenses) {
-      const expenseDate = new Date(expense.createdAt);
+      const expenseDate = new Date(expense.date);
       if (isNaN(expenseDate)) continue;
 
       const monthName = months[expenseDate.getMonth()];
@@ -3694,10 +3694,10 @@ exports.getAccountsData = async (req, res) => {
     const revenue = await ParentExpenses.find({ schoolId }).sort({ createdAt: -1 })
     if (!revenue.length) { res.status(200).json({ message: "No payment done yet." }) }
 
-    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName }).sort({ createdAt: -1 })
+    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName }).select('studentDetails paymentDetails').sort({ createdAt: -1 })
     if (!admissions.length) { res.status(200).json({ message: "No admissions done yet." }) }
 
-    const expenses = await SchoolExpenses.find({ schoolId }).sort({ createdAt: -1 });
+    const expenses = await SchoolExpenses.find({ schoolId }).sort({ date: -1 });
     if (!expenses.length) { res.status(200).json({ message: "No expenses yet." }) }
     //teacher/class item request
     res.status(200).json({ revenue, admissions, expenses })

@@ -9,11 +9,6 @@ const mongoose = require('mongoose');
 //create account for admin/school
 exports.registerSchool = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: "Please enter all the details to register." })
-    };
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
@@ -21,41 +16,56 @@ exports.registerSchool = async (req, res) => {
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Access denied. Only superadmin can register admin.' });
+      return res.status(403).json({ message: 'Access denied. Only superadmin can register school.' });
+    };
+
+    const { email, password, schoolCode, schoolName, contact, address, principalName, details } = req.body;
+    if (!email || !password || !schoolCode || !schoolName || !contact || !address || !principalName || !details) {
+      return res.status(400).json({ message: "Please enter all the details to register." })
     };
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: 'Email already exists.' });
     }
 
     hpass = bcrypt.hashSync(password, 10);
 
-    const user = new User({
+    const admin = new User({
       email,
       password: hpass,
       role: 'admin',
       createdBy: loggedInId
     });
+    await admin.save();
 
-    await user.save();
+    const school = new School({
+      userId:admin._id,
+      schoolCode,
+      schoolName,
+      contact,
+      address,
+      principalName,
+      details,
+      createdBy: loggedInId,
+    });
+    await school.save()
 
     res.status(201).json({
-      message: 'Admin for school registered successfully',
+      message: 'School registered successfully',
       user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        createdBy: user.createdBy
-      }
+        id: admin._id,
+        email: admin.email,
+        role: admin.role,
+      },
+      school
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Registration failed', error });
+  } catch (err) {
+    res.status(500).json({ message: 'Registration failed.', error:err });
   }
 };
 
 
-//create School by admin
 // exports.createSchool = async (req, res) => {
 //   try {
 //     const { email, password, schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;

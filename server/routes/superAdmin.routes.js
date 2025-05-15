@@ -5,7 +5,7 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
-router.post('/register', protect,authorize('superadmin'), registerSchool);
+router.post('/register', protect, authorize('superadmin'), registerSchool);
 router.get('/schools',protect,authorize('superadmin'),getAllSchools);
 router.get('/school/:schoolId', protect, authorize('superadmin'), getSchoolById);
 router.put('/school/:id/:status', protect,authorize('superadmin'), changeSchoolStatus);

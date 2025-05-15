@@ -38,7 +38,7 @@ const schoolSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-    medium: { // english, telugu
+    medium: { // english, telugu, hindi
       type: String,
       required: true,
     },

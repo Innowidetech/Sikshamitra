@@ -18,6 +18,10 @@ const SchoolExpensesSchema = new mongoose.Schema({
     section:{
         type:String,
         uppercase:true
+    },
+    date:{
+        type:Date,
+        required:true
     }
 }, { timestamps: true,});
 
