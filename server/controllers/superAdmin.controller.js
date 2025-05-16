@@ -145,7 +145,7 @@ exports.getAllSchools = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
     };
 
-    const schools = await School.find().select('-paymentDetails').populate('userId').sort({ createdAt: -1 });
+    const schools = await School.find().select('-paymentDetails').populate('userId', 'email isActive').sort({ createdAt: -1 });
     if (!schools.length) {
       return res.status(200).json({ message: 'No schools registered yet.' })
     };

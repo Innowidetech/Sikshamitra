@@ -7,7 +7,7 @@ const Student = require('../models/Student');
 const { sendEmail } = require('../utils/sendEmail');
 const registrationTemplate = require('../utils/registrationTemplate');
 const Books = require('../models/Books');
-const { uploadImage } = require('../utils/multer');
+const { uploadImage, deleteImage } = require('../utils/multer');
 const Notice = require('../models/Notice');
 const Class = require('../models/classes');
 const Calendar = require('../models/Calendar');
@@ -88,15 +88,15 @@ exports.getProfile = async (req, res) => {
 //edit School by admin who created the school
 exports.editSchool = async (req, res) => {
   try {
-    const { newSchoolName, newSchoolCode } = req.body;
-    const edit = req.body;
+    const { schoolCode, schoolName, address, principalName } = req.body;
+    const edit = req.body; // contact, details, payment
 
     const userId = req.user && req.user.id;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     };
 
-    const school = await School.findOne({ userId: userId });
+    const school = await School.findOne({ userId });
     if (!school) {
       return res.status(404).json({ message: "No school is associated with the admin." })
     }
@@ -106,6 +106,9 @@ exports.editSchool = async (req, res) => {
     if (req.files) {
       if (req.files.logo) {
         try {
+          if (school.schoolLogo) {
+            await deleteImage(school.schoolLogo);
+          }
           const [logoUrl] = await uploadImage(req.files.logo);
           uploadedLogoUrl = logoUrl;
         } catch (error) {
@@ -114,6 +117,9 @@ exports.editSchool = async (req, res) => {
       }
       if (req.files.banner) {
         try {
+          if (school.schoolBanner) {
+            await deleteImage(school.schoolBanner);
+          }
           const [bannerUrl] = await uploadImage(req.files.banner);
           uploadedBannerUrl = bannerUrl;
         } catch (error) {
@@ -123,22 +129,27 @@ exports.editSchool = async (req, res) => {
     }
     school.schoolLogo = uploadedLogoUrl;
     school.schoolBanner = uploadedBannerUrl;
-    school.schoolName = newSchoolName || school.schoolName;
-    school.schoolCode = newSchoolCode || school.schoolCode;
+    school.schoolName = schoolName || school.schoolName;
+    school.schoolCode = schoolCode || school.schoolCode;
+    school.address = address || school.address
+    school.principalName = principalName || school.principalName
 
     for (const key in edit) {
-      if (school.address.hasOwnProperty(key) || school.contact.hasOwnProperty(key) || school.details.hasOwnProperty(key) || school.paymentDetails.hasOwnProperty(key)) {
-        school.address[key] = edit[key];
+      if (school.contact.hasOwnProperty(key)) {
         school.contact[key] = edit[key];
+      }
+      if (school.details.hasOwnProperty(key)) {
         school.details[key] = edit[key];
+      }
+      if (school.paymentDetails.hasOwnProperty(key)) {
         school.paymentDetails[key] = edit[key];
       }
-    };
+    }
 
     await school.save();
 
     return res.status(200).json({
-      message: 'School updated successfully',
+      message: 'School data updated successfully.',
       school,
     });
   }
@@ -3724,7 +3735,7 @@ exports.getAccountsData = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountants have access." }) }
 
-    const revenue = await ParentExpenses.find({ schoolId }).sort({ createdAt: -1 })
+    const revenue = await ParentExpenses.find({ schoolId }).populate('studentId','studentProfile.fullname').sort({ createdAt: -1 })
     if (!revenue.length) { res.status(200).json({ message: "No payment done yet." }) }
 
     const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName }).select('studentDetails paymentDetails').sort({ createdAt: -1 })
