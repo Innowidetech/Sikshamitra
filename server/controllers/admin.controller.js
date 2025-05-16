@@ -2809,7 +2809,7 @@ exports.deleteNotice = async (req, res) => {
 exports.createDynamicCalendar = async (req, res) => {
   try {
     const { date, title, description, displayTo } = req.body;
-    if (!date || !title || !description || !displayTo.length) {
+    if (!date || !title || !description || !displayTo) {
       return res.status(400).json({ message: 'Please provide all the details to create dynamic calendar.' })
     };
 
