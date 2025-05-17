@@ -152,216 +152,189 @@ function TeachersTable() {
 
       {/* Desktop View - Table */}
       <div className="hidden lg:block">
-        <div className="bg-white rounded-lg overflow-hidden border-2">
-          <table className="min-w-full divide-y" style={{ fontFamily: "Poppins" }}>
-            <thead>
-              <tr>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Teacher ID
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Teacher Name
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Role Type
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  E-mail Address
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Class
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Section
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Gender
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Subject Name
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Phone Number
-                </th>
-                <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                  Salary
-                </th>
-                <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
-                  Edit
-                </th>
-                <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
-                  Active Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y">
-              {filteredTeachersLocal.map((teacher, index) => (
-                <tr
-                  key={teacher._id}
-                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.employeeId}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.fullname}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.userId.employeeType.charAt(0).toUpperCase() +
-                      teacher.userId.employeeType.slice(1)}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.userId.email}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.class || "N/A"}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.section || "N/A"}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.gender}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.subjects?.join(", ") || "N/A"}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    {teacher.profile.phoneNumber}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                    ₹{teacher.profile.salary?.toLocaleString() || "N/A"}
-                  </td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center border-r">
-                    <button 
-                      className="text-[#146192] hover:text-[#0f4c7a]"
-                      onClick={() => handleEditClick(teacher)}
-                    >
-                      <LiaEditSolid size={20} />
-                    </button>
-                  </td>
-                  <td className="px-2 py-2 text-sm text-center">
-                    {teacher.userId.isActive ? (
-                      <span className="text-green-500">✅</span>
-                    ) : (
-                      <span className="text-red-500">❌</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Mobile and Tablet View - Cards */}
-      <div className="lg:hidden">
-        {filteredTeachersLocal.map((teacher) => (
-          <div key={teacher._id} className="bg-white p-4 ">
-            <div className="grid grid-cols-3 gap-2 text-xs items-center">
-              {/* Teacher ID */}
-              <div className="text-[#146192] font-medium text-left">
-                Teacher ID
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">{teacher.profile.employeeId}</div>
-
-              {/* Teacher Name */}
-              <div className="text-[#146192] font-medium text-left">
-                Teacher Name
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">{teacher.profile.fullname}</div>
-
-              {/* Role Type */}
-              <div className="text-[#146192] font-medium text-left">
-                Role Type
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">
+  <div className="bg-white rounded-lg overflow-hidden border-2">
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y" style={{ fontFamily: "Poppins" }}>
+        <thead>
+          <tr>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Teacher ID
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Teacher Name
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Role Type
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              E-mail Address
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Class
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Section
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Gender
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Subject Name
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Phone Number
+            </th>
+            <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
+              Salary
+            </th>
+            <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
+              Edit
+            </th>
+            <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
+              Active Status
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y">
+          {filteredTeachersLocal.map((teacher, index) => (
+            <tr
+              key={teacher._id}
+              className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+            >
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                {teacher.profile.employeeId}
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                {teacher.profile.fullname}
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                 {teacher.userId.employeeType.charAt(0).toUpperCase() +
                   teacher.userId.employeeType.slice(1)}
-              </div>
-
-              {/* Email Address */}
-              <div className="text-[#146192] font-medium text-left">
-                E-mail Address
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left break-words overflow-hidden text-ellipsis">
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                 {teacher.userId.email}
-              </div>
-
-              {/* Class */}
-              <div className="text-[#146192] font-medium text-left">Class</div>
-              <div className="text-center">-</div>
-              <div className="text-left">{teacher.profile.class || "N/A"}</div>
-
-              {/* Section */}
-              <div className="text-[#146192] font-medium text-left">
-                Section
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                {teacher.profile.class || "N/A"}
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                 {teacher.profile.section || "N/A"}
-              </div>
-
-              {/* Gender */}
-              <div className="text-[#146192] font-medium text-left">Gender</div>
-              <div className="text-center">-</div>
-              <div className="text-left">{teacher.profile.gender}</div>
-
-              {/* Subject Name */}
-              <div className="text-[#146192] font-medium text-left">
-                Subject Name
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left break-words">
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                {teacher.profile.gender}
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                 {teacher.profile.subjects?.join(", ") || "N/A"}
-              </div>
-
-              {/* Phone Number */}
-              <div className="text-[#146192] font-medium text-left">
-                Phone Number
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">{teacher.profile.phoneNumber}</div>
-
-              {/* Salary */}
-              <div className="text-[#146192] font-medium text-left">Salary</div>
-              <div className="text-center">-</div>
-              <div className="text-left">
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                {teacher.profile.phoneNumber}
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                 ₹{teacher.profile.salary?.toLocaleString() || "N/A"}
-              </div>
-
-              {/* Edit Button */}
-              <div className="text-[#146192] font-medium text-left">Edit</div>
-              <div className="text-center">-</div>
-              <div className="text-left">
-                <button 
+              </td>
+              <td className="px-2 py-2 whitespace-nowrap text-center border-r">
+                <button
                   className="text-[#146192] hover:text-[#0f4c7a]"
                   onClick={() => handleEditClick(teacher)}
                 >
                   <LiaEditSolid size={20} />
                 </button>
-              </div>
-
-              {/* Active Status */}
-              <div className="text-[#146192] font-medium text-left">
-                Active Status
-              </div>
-              <div className="text-center">-</div>
-              <div className="text-left">
+              </td>
+              <td className="px-2 py-2 text-sm text-center">
                 {teacher.userId.isActive ? (
                   <span className="text-green-500">✅</span>
                 ) : (
                   <span className="text-red-500">❌</span>
                 )}
-              </div>
-            </div>
-            <hr className="border mt-4 border-[#146192]" />
-          </div>
-        ))}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{/* Mobile and Tablet View - Cards */}
+<div className="lg:hidden">
+  {filteredTeachersLocal.map((teacher) => (
+    <div key={teacher._id} className="bg-white p-4">
+      <div className="grid grid-cols-3 gap-2 text-xs items-center">
+        <div className="text-[#146192] font-medium text-left">Teacher ID</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.employeeId}</div>
+
+        <div className="text-[#146192] font-medium text-left">Teacher Name</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.fullname}</div>
+
+        <div className="text-[#146192] font-medium text-left">Role Type</div>
+        <div className="text-center">-</div>
+        <div className="text-left">
+          {teacher.userId.employeeType.charAt(0).toUpperCase() +
+            teacher.userId.employeeType.slice(1)}
+        </div>
+
+        <div className="text-[#146192] font-medium text-left">E-mail Address</div>
+        <div className="text-center">-</div>
+        <div className="text-left break-words overflow-hidden text-ellipsis">
+          {teacher.userId.email}
+        </div>
+
+        <div className="text-[#146192] font-medium text-left">Class</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.class || "N/A"}</div>
+
+        <div className="text-[#146192] font-medium text-left">Section</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.section || "N/A"}</div>
+
+        <div className="text-[#146192] font-medium text-left">Gender</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.gender}</div>
+
+        <div className="text-[#146192] font-medium text-left">Subject Name</div>
+        <div className="text-center">-</div>
+        <div className="text-left break-words">
+          {teacher.profile.subjects?.join(", ") || "N/A"}
+        </div>
+
+        <div className="text-[#146192] font-medium text-left">Phone Number</div>
+        <div className="text-center">-</div>
+        <div className="text-left">{teacher.profile.phoneNumber}</div>
+
+        <div className="text-[#146192] font-medium text-left">Salary</div>
+        <div className="text-center">-</div>
+        <div className="text-left">
+          ₹{teacher.profile.salary?.toLocaleString() || "N/A"}
+        </div>
+
+        <div className="text-[#146192] font-medium text-left">Edit</div>
+        <div className="text-center">-</div>
+        <div className="text-left">
+          <button
+            className="text-[#146192] hover:text-[#0f4c7a]"
+            onClick={() => handleEditClick(teacher)}
+          >
+            <LiaEditSolid size={20} />
+          </button>
+        </div>
+
+        <div className="text-[#146192] font-medium text-left">Active Status</div>
+        <div className="text-center">-</div>
+        <div className="text-left">
+          {teacher.userId.isActive ? (
+            <span className="text-green-500">✅</span>
+          ) : (
+            <span className="text-red-500">❌</span>
+          )}
+        </div>
       </div>
+      <hr className="border mt-4 border-[#146192]" />
+    </div>
+  ))}
+</div>
+
 
       {/* Edit Modal */}
       {isEditModalOpen && (

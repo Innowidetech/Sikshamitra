@@ -1,6 +1,8 @@
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Fetch all teachers
 export const fetchTeachers = createAsyncThunk(
   'teachers/fetchTeachers',
   async (_, { rejectWithValue }) => {
@@ -15,10 +17,11 @@ export const fetchTeachers = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (!Array.isArray(response.data.teachers)) {
         return rejectWithValue('Invalid data format');
       }
+
       return response.data.teachers;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -26,6 +29,7 @@ export const fetchTeachers = createAsyncThunk(
   }
 );
 
+// Add a new teacher
 export const addTeacherAsync = createAsyncThunk(
   'teachers/addTeacher',
   async (formData, { rejectWithValue }) => {
@@ -36,14 +40,10 @@ export const addTeacherAsync = createAsyncThunk(
       }
 
       const formDataToSend = new FormData();
-
-      // Add user credentials
       formDataToSend.append('username', formData.username);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('password', formData.password);
       formDataToSend.append('employeeType', formData.employeeType);
-
-      // Add profile information
       formDataToSend.append('profile[firstName]', formData.firstName);
       formDataToSend.append('profile[lastName]', formData.lastName);
       formDataToSend.append('profile[phoneNumber]', formData.phoneNumber);
@@ -55,9 +55,13 @@ export const addTeacherAsync = createAsyncThunk(
       formDataToSend.append('profile[class]', formData.class);
       formDataToSend.append('profile[section]', formData.section);
       formDataToSend.append('profile[salary]', formData.salary);
-      formDataToSend.append('profile[subjects]', formData.subjects);
 
-      // Add education information
+      if (Array.isArray(formData.subjects)) {
+        formData.subjects.forEach((subject, index) => {
+          formDataToSend.append(`profile[subjects][${index}]`, subject);
+        });
+      }
+
       formDataToSend.append('education[university]', formData.university);
       formDataToSend.append('education[degree]', formData.degree);
       formDataToSend.append('education[startDate]', formData.startDate);
@@ -82,15 +86,19 @@ export const addTeacherAsync = createAsyncThunk(
       return {
         _id: response.data._id,
         userId: {
-          email: formData.email
+          email: formData.email,
+          isActive: true,
+          employeeType: formData.employeeType,
         },
         profile: {
-          firstName: formData.firstName,
+          // firstName: formData.firstName,
+          fullname: formData.fullName,
           photo: response.data.profile?.photo || '',
           subjects: formData.subjects,
           class: formData.class,
           gender: formData.gender,
-          salary: formData.salary
+          salary: formData.salary,
+          employeeId: formData.employeeId,
         }
       };
     } catch (error) {
@@ -99,6 +107,7 @@ export const addTeacherAsync = createAsyncThunk(
   }
 );
 
+// ✅ Updated updateTeacherAsync
 export const updateTeacherAsync = createAsyncThunk(
   'teachers/updateTeacher',
   async ({ teacherId, updateData }, { rejectWithValue }) => {
@@ -108,7 +117,6 @@ export const updateTeacherAsync = createAsyncThunk(
         return rejectWithValue('Authorization token is missing');
       }
 
-      // Match the backend's expected structure
       const payload = {
         isActive: updateData.isActive,
         fullname: updateData.profile.fullname,
@@ -136,14 +144,21 @@ export const updateTeacherAsync = createAsyncThunk(
         throw new Error('No updated teacher data received');
       }
 
-      return response.data.updatedTeacher;
+      // ✅ Ensure `userId.isActive` is retained for frontend UI
+      return {
+        ...response.data.updatedTeacher,
+        userId: {
+          ...response.data.updatedTeacher.userId,
+          isActive: updateData.isActive,
+        },
+      };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message;
-      return rejectWithValue(errorMessage);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
 
+// Slice
 const teachersSlice = createSlice({
   name: 'teachers',
   initialState: {
@@ -211,5 +226,4 @@ const teachersSlice = createSlice({
 });
 
 export const { setSearchQuery } = teachersSlice.actions;
-
 export default teachersSlice.reducer;

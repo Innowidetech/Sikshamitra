@@ -13,7 +13,7 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@reduxjs/toolkit": "^2.5.0",
     "axios": "^1.7.9",
-    "chart.js": "^4.4.8",
+    "chart.js": "^4.4.9",
     "framer-motion": "^11.18.1",
     "google-charts": "^2.0.0",
     "html2canvas": "^1.4.1",
@@ -30,8 +30,10 @@
     "react-minimal-pie-chart": "^9.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.0.2",
+    "react-slick": "^0.30.3",
     "react-toastify": "^11.0.5",
-    "recharts": "^2.15.1"
+    "recharts": "^2.15.1",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

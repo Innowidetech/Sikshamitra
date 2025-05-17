@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { createTeacherAssignment } from '../../redux/teacher/assignmentsSlice';
 import { FaUpload } from 'react-icons/fa';
 import { AiOutlineFilePdf } from 'react-icons/ai';
 import Header from '../adminDashboard/layout/Header';
-import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function UploadAssignment() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.assignments);
+
   const [formData, setFormData] = useState({
-    classDetail: '',
     assignmentName: '',
     class: '',
     section: '',
@@ -30,55 +35,56 @@ function UploadAssignment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form inputs
+    const {
+      assignmentName,
+      class: classVal,
+      section,
+      subject,
+      chapter,
+      startDate,
+      endDate,
+      file,
+    } = formData;
+
     if (
-      !formData.classDetail ||
-      !formData.assignmentName ||
-      !formData.class ||
-      !formData.section ||
-      !formData.subject ||
-      !formData.chapter ||
-      !formData.startDate ||
-      !formData.endDate ||
-      !formData.file
+      !assignmentName ||
+      !classVal ||
+      !section ||
+      !subject ||
+      !chapter ||
+      !startDate ||
+      !endDate ||
+      !file
     ) {
-      alert('Please fill in all fields and upload a file.');
+      toast.error('Please fill in all fields and upload a file.');
       return;
     }
 
-    const uploadData = new FormData();
-    Object.entries(formData).forEach(([key, value]) =>
-      key === 'file' ? uploadData.append('photo', value) : uploadData.append(key, value)
-    );
+    const assignmentPayload = {
+      assignmentName,
+      class: classVal,
+      section,
+      subject,
+      chapter,
+      startDate,
+      endDate,
+      photo: file,
+    };
 
-    try {
-      // Replace with your API endpoint to create an assignment
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'https://sikshamitra.onrender.com/api/teacher/assignment',
-        uploadData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+    const result = await dispatch(createTeacherAssignment(assignmentPayload));
 
-      if (response.data.success) {
-        alert('Assignment submitted successfully!');
-        navigate('/assignments'); // Navigate to assignments page after submission
-      } else {
-        alert('Error submitting assignment');
-      }
-    } catch (error) {
-      console.error('Error uploading assignment:', error);
-      alert('Failed to upload assignment. Please try again.');
+    if (createTeacherAssignment.fulfilled.match(result)) {
+      toast.success('Assignment uploaded successfully!');
+      setTimeout(() => navigate('/assignments'), 1500);
+    } else {
+      toast.error('Failed to upload assignment. Please try again.');
     }
   };
 
   return (
-    <div className=" min-h-screen pb-12 ml-64">
+    <div className="min-h-screen pb-12 ml-64">
+      <ToastContainer position="top-right" autoClose={3000} />
+      
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 md:mx-8 pt-6">
         <div className="mb-4 md:mb-0 mt-16">
@@ -97,19 +103,6 @@ function UploadAssignment() {
           <h2 className="text-2xl font-semibold text-[#146192] mb-6 text-center">Upload Assignment</h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Class Detail */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Class Detail</label>
-              <input
-                type="text"
-                name="classDetail"
-                value={formData.classDetail}
-                onChange={handleChange}
-                placeholder="Enter the class details"
-                className="w-full border border-gray-300 rounded-md p-2"
-              />
-            </div>
-
             {/* Assignment Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Assignment Name</label>
@@ -118,7 +111,6 @@ function UploadAssignment() {
                 name="assignmentName"
                 value={formData.assignmentName}
                 onChange={handleChange}
-                placeholder="Enter assignment name"
                 className="w-full border border-gray-300 rounded-md p-2"
               />
             </div>
@@ -133,7 +125,6 @@ function UploadAssignment() {
                   value={formData.class}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Class"
                 />
               </div>
               <div>
@@ -144,7 +135,6 @@ function UploadAssignment() {
                   value={formData.section}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Section"
                 />
               </div>
             </div>
@@ -159,7 +149,6 @@ function UploadAssignment() {
                   value={formData.subject}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Subject"
                 />
               </div>
               <div>
@@ -170,7 +159,6 @@ function UploadAssignment() {
                   value={formData.chapter}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Chapter Name"
                 />
               </div>
             </div>
@@ -217,10 +205,11 @@ function UploadAssignment() {
             {/* Submit Button */}
             <button
               type="submit"
+              disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-[#0e4a73] transition duration-300"
             >
               <FaUpload />
-              Submit Assignment
+              {loading ? 'Submitting...' : 'Submit Assignment'}
             </button>
           </form>
         </div>

@@ -23,7 +23,8 @@ import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Da
 import feesReducer from './parent/feesSlice';
 import expensesReducer from './parent/expensesSlice'
 import queryReducer from './parent/querySlice'
-import curriculumReducer from './parent/curriculumSlice'
+import curriculumReducer from './parent/curriculumSlice';
+import accountReducer from './accountSlice';
 
 import timeTableSliceReducer from './student/timeTableSlice';
 import studyMaterialReducer from './student/studyMaterialSlice';
@@ -37,26 +38,21 @@ import resultSliceReducer from './student/resultSlice';
 import aboutSliceReducer from './teacher/aboutSlice'
 import createExamSliceReducer from './teacher/createExamSlice'
 import studyMSliceReducer from './teacher/studyMSlice';
-<<<<<<< HEAD
+
 
 import myStudentsReducer from './teacher/myStudentsSlice';
-import assignmentsReducer from './teacher/assignmentsSlice';
-=======
-import myStudentsReducer from './teacher/myStudentsSlice';
-import assignmentsReducer from './teacher/assignmentsSlice';
-import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-<<<<<<< HEAD
+import assignmentsReducer from './teacher/assignmentsSlice'
+// import myStudentsReducer from './teacher/myStudentsSlice';
+// import assignmentsReducer from './teacher/assignmentsSlice';
+// import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 
-=======
-<<<<<<< HEAD
-import lectureSliceReducer from './teacher/lectureSlice';
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
->>>>>>> a240f7af96d09c64d317daf573d717b7b507fed9
 
-import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+
 import lectureSliceReducer from './teacher/lectureSlice';
+import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+
+
+
 
 
 
@@ -86,6 +82,7 @@ const store = configureStore({
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer,
+    accounts: accountReducer,
 
     expenses:expensesReducer,
     query: queryReducer,
@@ -102,33 +99,16 @@ const store = configureStore({
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
-
-<<<<<<< HEAD
     myStudents: myStudentsReducer,
     assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
     lecture: lectureSliceReducer,
-
-=======
     students: myStudentsReducer,
     assignments: assignmentsReducer,
-    
-
-    tcurriculum: tcurriculumSliceReducer, 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-   
     lecture: lectureSliceReducer,
-
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
->>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
->>>>>>> a240f7af96d09c64d317daf573d717b7b507fed9
-    
-
-  },
+   
+     // tcurriculum: tcurriculumSliceReducer, 
+   },
 });
 
 export default store;
