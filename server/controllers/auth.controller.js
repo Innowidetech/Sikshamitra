@@ -30,7 +30,7 @@ exports.userLogin = async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password!' });
     };
 
-    const loggedInUser = await School.findOne({createdBy:user._id}) || await Student.findOne({userId:user._id}).populate('schoolId') || await Teacher.findOne({userId:user._id}).populate('schoolId') || await Parent.findOne({userId:user._id}).populate('schoolId')
+    const loggedInUser = await School.findOne({userId:user._id}) || await Student.findOne({userId:user._id}).populate('schoolId') || await Teacher.findOne({userId:user._id}).populate('schoolId') || await Parent.findOne({userId:user._id}).populate('schoolId')
     if(user.role !== 'admin'){
       if(loggedInUser.schoolId.status !== 'active'){
         return res.status(404).json({message:"Please contact your school admin."})

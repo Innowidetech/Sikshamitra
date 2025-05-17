@@ -131,7 +131,7 @@ exports.parentDashboard = async (req, res) => {
         return { studentId, error: 'Student is not associated with any school.' };
       }
 
-      const schoolNotices = await Notice.find({ createdBy: school.createdBy });
+      const schoolNotices = await Notice.find({ createdBy: school.userId });
 
       const teacher = await Teacher.findOne({
         schoolId: school._id,
@@ -143,7 +143,7 @@ exports.parentDashboard = async (req, res) => {
       const allNotices = [...schoolNotices, ...teacherNotices];
 
       const notices = allNotices.map(notice => ({
-        createdByText: notice.createdBy.equals(school.createdBy)
+        createdByText: notice.createdBy.equals(school.userId)
           ? 'Notice was created by the school.'
           : 'Notice was created by the class teacher.',
         ...notice._doc,
@@ -408,7 +408,7 @@ exports.postQuery = async (req, res) => {
     }
 
     const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId');
-    const admin = await User.findOne({ _id: student.schoolId.createdBy });
+    const admin = await User.findOne({ _id: student.schoolId.userId });
     const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId');
     
     if (!teacher) {

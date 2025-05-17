@@ -95,7 +95,7 @@ const teacherSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Admin'
+        ref: 'User'
     },
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,

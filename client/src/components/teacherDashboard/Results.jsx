@@ -1,7 +1,78 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../adminDashboard/layout/Header';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchTeacherResults } from '../../redux/teacher/teacherResultSlice';
 
 function Results({ handleTabChange }) {
+  const dispatch = useDispatch();
+  const { results, loading, error } = useSelector((state) => state.teacherResults);
+
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [examTypeFilter, setExamTypeFilter] = useState('All');
+  
+  // Data for the new result form
+  const [newResultData, setNewResultData] = useState({
+    studentId: '',
+    examType: '',
+    marks: '',
+    subjectResults: []
+  });
+
+  useEffect(() => {
+    dispatch(fetchTeacherResults());
+  }, [dispatch]);
+
+  // Extract unique exam types for the dropdown
+  const examTypes = ['All', ...new Set(results.map((res) => res.exam.examType))];
+
+  // Filter results based on selected exam type
+  const filteredResults =
+    examTypeFilter === 'All'
+      ? results
+      : results.filter((res) => res.exam.examType === examTypeFilter);
+
+  const toggleRow = (index) => {
+    setExpandedRow(expandedRow === index ? null : index);
+  };
+
+  // Handle the form submission of new student result
+  const handleAddResult = async (event) => {
+    event.preventDefault(); // Prevent default form submission
+
+    // Ensure all required fields are present
+    if (!newResultData.studentId || !newResultData.examType || !newResultData.subjectResults.length) {
+      alert('Please provide all the required fields!');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/teacher/results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add Authorization header if needed
+          // 'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(newResultData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit result');
+      }
+
+      // Dispatch to update results after submission
+      dispatch(fetchTeacherResults());
+      alert('Result added successfully');
+      setNewResultData({ studentId: '', examType: '', marks: '', subjectResults: [] }); // Reset form
+    } catch (error) {
+      console.error('Error submitting result:', error);
+      alert('Error submitting result. Please try again later.');
+    }
+  };
+
   return (
     <>
       <div className="flex justify-between items-center mx-8 mt-20 md:ml-72">
@@ -16,36 +87,33 @@ function Results({ handleTabChange }) {
         <Header />
       </div>
 
-      {/* Right Section */}
       <div className="flex flex-col items-end mx-8 mt-6 md:ml-72">
         <button
           className="bg-[#146192] text-white px-6 py-2 rounded-lg shadow-md hover:bg-[#0e4a73] transition duration-300 mb-4"
-          onClick={() => handleTabChange('addstudentresult')} // 👈 open the new tab
+          onClick={() => handleTabChange('addstudentresult')}
         >
           ADD STUDENT RESULT
         </button>
 
-        {/* Filter Row */}
-       <div className="flex items-center gap-4 mb-6">
-  {/* Rectangular Box with Centered Content */}
-  <div className="bg-[#DDDEEE80] border border-gray-300 rounded-lg shadow-md px-6 py-4 flex justify-center items-center gap-3 min-w-[250px]">
-    <label className="text-gray-700 font-medium whitespace-nowrap">Exam Type:</label>
-    <select className="border border-gray-300 rounded-lg px-4 py-2">
-      <option value="">Select Exam</option>
-      <option value="midterm">Mid Term</option>
-      <option value="final">Final</option>
-      <option value="unit">Unit Test</option>
-    </select>
-  </div>
+        {/* Exam Type Dropdown Filter */}
+        <div className="mb-4">
+          <label htmlFor="examType" className="mr-2 font-medium text-gray-700">
+            Exam Type:
+          </label>
+          <select
+            id="examType"
+            value={examTypeFilter}
+            onChange={(e) => setExamTypeFilter(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1"
+          >
+            {examTypes.map((type, idx) => (
+              <option key={idx} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
 
-  {/* Search Button */}
-  <button className="bg-[#146192] text-white px-5 py-2 rounded-lg hover:bg-[#0e4a73] transition duration-300">
-    Search
-  </button>
-</div>
-
-
-        {/* Table */}
         <div className="w-full overflow-x-auto">
           <table className="min-w-full border border-gray-300 bg-white rounded-lg shadow-md">
             <thead className="bg-[#1982C424] text-[#146192]">
@@ -58,15 +126,104 @@ function Results({ handleTabChange }) {
               </tr>
             </thead>
             <tbody>
-              {[...Array(6)].map((_, i) => (
-                <tr key={i} className="text-center hover:bg-gray-50 transition-colors">
-                  <td className="py-2 px-4 border">Student {i + 1}</td>
-                  <td className="py-2 px-4 border">10</td>
-                  <td className="py-2 px-4 border">Math</td>
-                  <td className="py-2 px-4 border">85</td>
-                  <td className="py-2 px-4 border">A</td>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4">
+                    Loading...
+                  </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan="5" className="text-center text-red-500 py-4">
+                    {error}
+                  </td>
+                </tr>
+              ) : filteredResults.length > 0 ? (
+                filteredResults.map((result, i) => (
+                  <React.Fragment key={i}>
+                    <tr className="text-center hover:bg-gray-50 transition-colors">
+                      <td className="py-2 px-4 border">
+                        {result.student.studentProfile.registrationNumber}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {result.student.studentProfile.fullname}
+                      </td>
+                      <td className="py-2 px-4 border">{result.exam.examType}</td>
+                      <td className="py-2 px-4 border">{result.total}</td>
+                      <td className="py-2 px-4 border">
+                        <div className="flex items-center justify-center gap-2">
+                          {result.totalPercentage}
+                          <button onClick={() => toggleRow(i)}>
+                            {expandedRow === i ? <FaChevronUp /> : <FaChevronDown />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {expandedRow === i && (
+                      <tr>
+                        <td colSpan="5" className="p-4 bg-gray-100">
+                          <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto text-sm">
+                            <h2 className="text-lg font-semibold mb-4 text-center">RESULT SLIP</h2>
+                            <div className="flex justify-between mb-2">
+                              <div>
+                                <p>
+                                  <strong>Name:</strong> {result.student.studentProfile.fullname}
+                                </p>
+                                <p>
+                                  <strong>Class:</strong> {result.class}
+                                </p>
+                              </div>
+                              <div>
+                                <p>
+                                  <strong>Roll:</strong>{' '}
+                                  {result.student.studentProfile.rollNumber || 'N/A'}
+                                </p>
+                                <p>
+                                  <strong>Section:</strong> {result.section}
+                                </p>
+                              </div>
+                            </div>
+                            <table className="w-full border border-gray-300 mt-2 text-center">
+                              <thead className="bg-gray-200">
+                                <tr>
+                                  <th className="border px-2 py-1">Subject</th>
+                                  <th className="border px-2 py-1">Obtained Marks</th>
+                                  <th className="border px-2 py-1">Total Marks</th>
+                                  <th className="border px-2 py-1">Grade</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {result.result.map((subject, idx) => (
+                                  <tr key={idx}>
+                                    <td className="border px-2 py-1">{subject.subject}</td>
+                                    <td className="border px-2 py-1">{subject.marksObtained}</td>
+                                    <td className="border px-2 py-1">{subject.totalMarks}</td>
+                                    <td className="border px-2 py-1">{subject.grade}</td>
+                                  </tr>
+                                ))}
+                                <tr className="font-semibold bg-gray-100">
+                                  <td className="border px-2 py-1" colSpan="2">
+                                    Total Marks
+                                  </td>
+                                  <td className="border px-2 py-1">{result.total}</td>
+                                  <td className="border px-2 py-1">-</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center py-4">
+                    No data found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

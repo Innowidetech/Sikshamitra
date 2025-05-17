@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getTeacherItemRequest, updateTeacherItemRequest, getAccounts, getAccountsData, getAandLUpdatesHistory, deleteTeacherItemRequest, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus } = require('../controllers/admin.controller');
+const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, newAdmission, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, getAandLUpdatesHistory, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams, issueBook, returnBook } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -8,7 +8,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.get('/getProfile', protect, authorize('admin'), getProfile);
-router.post('/create-school', protect, authorize('admin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createSchool);
 router.put('/edit', protect, authorize('admin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), editSchool);
 router.post('/class', protect, authorize('admin'), createClass);
 router.patch('/class/:classId', protect, authorize('admin'), editClass);
@@ -43,7 +42,7 @@ router.get('/updatedStudentData/:studentId', protect, authorize('admin'), getUpd
 router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
 router.post('/inventory/add', protect, authorize('admin'), addStock);
 router.get('/inventory', protect, authorize('admin'), getInventory);
-router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
+router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
 router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('admin'), getSyllabus);
@@ -65,11 +64,10 @@ router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
 router.patch('/expenses/:expenseId', protect, authorize('admin'), editSchoolExpense);
 router.delete('/expenses/:expenseId', protect, authorize('admin'), deleteSchoolExpense);
-router.get('/classRequest', protect, authorize('admin'), getTeacherItemRequest);
-router.patch('/classRequest/:requestId', protect, authorize('admin'), updateTeacherItemRequest);
-// router.delete('/classRequest/:requestId', protect, authorize('admin'), deleteTeacherItemRequest)
+router.get('/expenseRequest', protect, authorize('admin'), getExpenseRequest);
+router.patch('/expenseRequest/:requestId', protect, authorize('admin'), updateExpenseRequest);
+// router.delete('/expenseRequest/:requestId', protect, authorize('admin'), deleteExpenseRequest)
 router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
-
     
 module.exports = router;

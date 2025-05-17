@@ -9,7 +9,7 @@ const authRoute = require('./routes/auth.routes');
 const userRoute = require('./routes/user.routes');
 const superAdminRoute=require('./routes/superAdmin.routes');
 const adminRoute = require('./routes/admin.routes');
-const teacherRoute = require("./routes/teacher.routes");
+const teacherRoute = require('./routes/teacher.routes');
 const studentRoute = require('./routes/student.routes');
 const parentRoute = require('./routes/parent.routes');
 

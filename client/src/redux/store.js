@@ -57,6 +57,13 @@ import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 
 
 
+import assignmentsReducer from './teacher/assignmentsSlice';
+import myStudentsReducer from './teacher/myStudentsSlice';
+import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+import lectureSliceReducer from './teacher/lectureSlice';
+import teacherResultsReducer from './teacher/teacherResultSlice';
+import teaAttendanceReducer from './teacher/teaAttendanceSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -99,6 +106,7 @@ const store = configureStore({
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
+
     myStudents: myStudentsReducer,
     assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
@@ -109,6 +117,16 @@ const store = configureStore({
    
      // tcurriculum: tcurriculumSliceReducer, 
    },
+
+    students: myStudentsReducer,
+    
+
+    tcurriculum: tcurriculumSliceReducer, 
+
+   
+    lecture: lectureSliceReducer,
+    teacherResults: teacherResultsReducer,
+    teacherAttendance: teaAttendanceReducer,
 });
 
-export default store;
+export default store;  
