@@ -37,30 +37,28 @@ import resultSliceReducer from './student/resultSlice';
 import aboutSliceReducer from './teacher/aboutSlice'
 import createExamSliceReducer from './teacher/createExamSlice'
 import studyMSliceReducer from './teacher/studyMSlice';
-<<<<<<< HEAD
+
 
 import myStudentsReducer from './teacher/myStudentsSlice';
+// import assignmentsReducer from './teacher/assignmentsSlice';
+
+// import myStudentsReducer from './teacher/myStudentsSlice';
 import assignmentsReducer from './teacher/assignmentsSlice';
-=======
-import myStudentsReducer from './teacher/myStudentsSlice';
-import assignmentsReducer from './teacher/assignmentsSlice';
-import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-import lectureSliceReducer from './teacher/lectureSlice';
-<<<<<<< HEAD
+// import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
+// import lectureSliceReducer from './teacher/lectureSlice';
+
 import teacherResultsReducer from './teacher/teacherResultSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
-=======
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
->>>>>>> a240f7af96d09c64d317daf573d717b7b507fed9
+
 
 import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 import lectureSliceReducer from './teacher/lectureSlice';
+import teacherDashboardReducer from './teacher/teacherDashboardSlice';
 
 
 
->>>>>>> 1de4beed18f1fb1f1ac6684736bfe840150be634
+
+
 
 
 const store = configureStore({
@@ -104,13 +102,13 @@ const store = configureStore({
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
 
-<<<<<<< HEAD
+
     myStudents: myStudentsReducer,
     assignments: assignmentsReducer,
-    tcurriculum: tcurriculumSliceReducer, 
-    lecture: lectureSliceReducer,
+    // tcurriculum: tcurriculumSliceReducer, 
+    // lecture: lectureSliceReducer,
 
-=======
+
     students: myStudentsReducer,
     assignments: assignmentsReducer,
     
@@ -120,17 +118,9 @@ const store = configureStore({
    
     lecture: lectureSliceReducer,
     teacherResults: teacherResultsReducer,
-    teacherAttendance: teaAttendanceReducer,
+    Attendance: teaAttendanceReducer,
+     teacherDashboard: teacherDashboardReducer,
 
-
-<<<<<<< HEAD
-=======
-=======
->>>>>>> f8a2267d0a703a300841997028d2fe806658056e
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
->>>>>>> ac66aadf8697680500167b4cb6f6b3cc2af9bb4d
->>>>>>> a240f7af96d09c64d317daf573d717b7b507fed9
->>>>>>> 1de4beed18f1fb1f1ac6684736bfe840150be634
     
 
   },

@@ -9,7 +9,6 @@ const AssignmentDetails = ({ assignment }) => {
   const dispatch = useDispatch();
   const { teacherAssignments, loading, error } = useSelector((state) => state.assignments);
 
-  // Our new array lives under teacherAssignments.submittedBy
   const submissions = teacherAssignments?.submittedBy || [];
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +20,6 @@ const AssignmentDetails = ({ assignment }) => {
     }
   }, [assignment, dispatch]);
 
-  // Download helper (unchanged)
   const handleDownload = async (url, fallbackName = 'download') => {
     try {
       const token = localStorage.getItem('token');
@@ -30,12 +28,7 @@ const AssignmentDetails = ({ assignment }) => {
       const blob = await res.blob();
 
       let ext = '.pdf';
-      if      (blob.type.includes('pdf'))  ext = '.pdf';
-      // else if (blob.type.includes('jpeg')) ext = '.jpg';
-      // else if (blob.type.includes('png'))  ext = '.png';
-      // else if (blob.type.includes('mp4'))  ext = '.mp4';
-      // else if (blob.type.includes('msword')) ext = '.doc';
-      // else if (blob.type.includes('officedocument.wordprocessingml.document')) ext = '.docx';
+      if (blob.type.includes('pdf')) ext = '.pdf';
 
       const filename = `${fallbackName}${ext}`;
       const urlBlob = URL.createObjectURL(blob);
@@ -56,11 +49,10 @@ const AssignmentDetails = ({ assignment }) => {
     return <div className="p-6">No assignment selected.</div>;
   }
 
-  // Pagination
   const indexOfLast = currentPage * assignmentsPerPage;
   const indexOfFirst = indexOfLast - assignmentsPerPage;
   const current = submissions.slice(indexOfFirst, indexOfLast);
-  const pages = Math.ceil(submissions.length / assignmentsPerPage);
+  const totalPages = Math.ceil(submissions.length / assignmentsPerPage);
 
   return (
     <div className="flex flex-col mx-4 md:ml-72 mt-20">
@@ -88,14 +80,8 @@ const AssignmentDetails = ({ assignment }) => {
           <DetailRow label="Subject" value={assignment.subject} />
           <DetailRow label="Section" value={assignment.section} />
           <DetailRow label="Chapter" value={assignment.chapter} />
-          <DetailRow
-            label="Start Date"
-            value={new Date(assignment.startDate).toLocaleDateString()}
-          />
-          <DetailRow
-            label="End Date"
-            value={new Date(assignment.endDate).toLocaleDateString()}
-          />
+          <DetailRow label="Start Date" value={new Date(assignment.startDate).toLocaleDateString()} />
+          <DetailRow label="End Date" value={new Date(assignment.endDate).toLocaleDateString()} />
           <div className="flex items-center gap-4">
             <p className="text-white font-medium">File:</p>
             {assignment.assignment ? (
@@ -116,9 +102,7 @@ const AssignmentDetails = ({ assignment }) => {
       <div className="mt-12 max-w-5xl mx-auto">
         <div className="flex items-center mb-4">
           <FaBook className="text-[#146192] text-2xl mr-2" />
-          <h2 className="text-xl font-semibold text-[#146192]">
-            Submitted Assignments
-          </h2>
+          <h2 className="text-xl font-semibold text-[#146192]">Submitted Assignments</h2>
         </div>
 
         {loading && <p className="text-gray-700 mb-4">Loading...</p>}
@@ -137,34 +121,33 @@ const AssignmentDetails = ({ assignment }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {current.length > 0 ? (
                 current.map((sub) => {
-                  const stu = sub.studentId.studentProfile;
-                  const date = new Date(sub.createdAt).toLocaleDateString();
+                  const profile = sub.studentId?.studentProfile;
+                  const submittedDate = new Date(sub?.createdAt || '').toLocaleDateString();
                   return (
                     <tr key={sub._id}>
-                      <td className="px-4 py-2 text-sm">{stu.registrationNumber}</td>
-                      <td className="px-4 py-2 text-sm">{stu.fullname}</td>
-                      <td className="px-4 py-2 text-sm">{date}</td>
-                      <td className="px-4 py-2 text-sm">
-                        {sub.assignmentWork ? (
-                          <button
-                            onClick={() =>
-                              handleDownload(sub.assignmentWork, stu.fullname)
-                            }
-                            className="bg-[#146192] text-white px-3 py-1 rounded-md"
-                          >
-                            Download
-                          </button>
-                        ) : (
-                          '—'
+                      <td className="px-4 py-2 text-sm">{profile?.registrationNumber}</td>
+                      <td className="px-4 py-2 text-sm flex items-center">
+                        {profile?.photo && (
+                          <img src={profile.photo} alt={profile?.fullname} className="w-8 h-8 rounded-full mr-2" />
                         )}
+                        {profile?.fullname}
+                      </td>
+                      <td className="px-4 py-2 text-sm">{submittedDate}</td>
+                      <td className="px-4 py-2 text-sm">
+                        <button
+                          onClick={() => handleDownload(sub.assignmentWork, profile?.fullname)}
+                          className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e]"
+                        >
+                          Download
+                        </button>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-500">
-                    No submissions found
+                  <td colSpan="4" className="px-4 py-4 text-center text-sm text-gray-500">
+                    No submissions found.
                   </td>
                 </tr>
               )}
@@ -173,17 +156,17 @@ const AssignmentDetails = ({ assignment }) => {
         </div>
 
         {/* Pagination */}
-        {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-4">
-            {Array.from({ length: pages }, (_, i) => (
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            {Array.from({ length: totalPages }, (_, idx) => (
               <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1 ? 'bg-[#146192] text-white' : 'bg-gray-200'
+                key={idx}
+                onClick={() => setCurrentPage(idx + 1)}
+                className={`px-3 py-1 rounded-md ${
+                  currentPage === idx + 1 ? 'bg-[#146192] text-white' : 'bg-gray-200'
                 }`}
               >
-                {i + 1}
+                {idx + 1}
               </button>
             ))}
           </div>
@@ -196,7 +179,7 @@ const AssignmentDetails = ({ assignment }) => {
 const DetailRow = ({ label, value }) => (
   <div className="flex items-center gap-2">
     <p className="text-white font-medium">{label}:</p>
-    <p className="text-white">{value}</p>
+    <p className="text-white">{value || 'N/A'}</p>
   </div>
 );
 

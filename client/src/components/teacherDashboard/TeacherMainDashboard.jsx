@@ -20,6 +20,7 @@ import Tsyllabus from './Tsyllabus';
 import TclassPlans from './Tclassplans';
 import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
+import CreateDynamicCalendar from './CreateDynamicCalendar';
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -47,7 +48,7 @@ const MainDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
       case 'mystudents':
         return <MyStudents />;
       case 'assignments':
@@ -80,8 +81,10 @@ const MainDashboard = () => {
         return <Exams />;
       case 'about':
         return <About />;
+      case 'createdynamiccalendar':
+        return <CreateDynamicCalendar />;
       default:
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
     }
   };
 
