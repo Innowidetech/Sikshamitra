@@ -12,6 +12,6 @@ router.put('/school/:id/:status', protect,authorize('superadmin'), changeSchoolS
 router.post('/blog', protect, authorize('superadmin'), upload.array('photos'),  postBlog);
 router.put('/blog/:id', protect, authorize('superadmin'), upload.array('photos'), editBlog);
 router.delete('/blog/:id', protect, authorize('superadmin'), deleteBlog);
-// router.delete('/blogDetail/:blogId', protect, authorize('superadmin'), deleteBlog);
+router.delete('/blogDetail/:blogId', protect, authorize('superadmin'), deleteBlog);
 
 module.exports = router;

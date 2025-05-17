@@ -419,50 +419,6 @@ exports.editBlog = async (req, res) => {
 };
 
 
-// exports.deleteBlog = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-//       return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
-//     };
-
-//     const { id, blogId } = req.params;
-//     if ((!id || !mongoose.Types.ObjectId.isValid(id)) && (!blogId || !mongoose.Types.ObjectId.isValid(blogId))) {
-//       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
-//     }
-
-//     if (id) {
-//       const blog = await Blogs.findByIdAndDelete(id);
-//       if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
-//       res.status(200).json({ message: "Blog deleted successfully." })
-//     }
-//     if (blogId) {
-//       const existingBlog = await Blogs.findOne({ blog: { $elemMatch: { _id: blogId } } })
-//       if (!existingBlog) {
-//         return res.status(404).json({ message: 'Blog detail not found with the id.' });
-//       }
-//       await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
-
-//       const updatedBlog = await Blogs.findById(existingBlog._id);
-
-//       if (updatedBlog.blog.length === 0) {
-//         await Blogs.deleteOne({ _id: updatedBlog._id });
-//         return res.status(200).json({ message: 'Blog detail deleted and blog document removed as it became empty.' });
-//       }
-//       res.status(200).json({ message: 'Blog detail deleted successfully.' });
-//     }
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error.', error: err.message })
-//   }
-// };
-
-
 exports.deleteBlog = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -475,24 +431,68 @@ exports.deleteBlog = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
     };
 
-    const { id } = req.params;
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    const { id, blogId } = req.params;
+    if ((!id || !mongoose.Types.ObjectId.isValid(id)) && (!blogId || !mongoose.Types.ObjectId.isValid(blogId))) {
       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
     }
-    const blog = await Blogs.findById(id);
-    if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
 
-    const imagesToDelete = blog.blog.map(entry => entry.photo);
-    try {
-      await deleteImage(imagesToDelete);
-    } catch (error) {
-      res.warn("Some images may not have been deleted:", error.message);
+    if (id) {
+      const blog = await Blogs.findByIdAndDelete(id);
+      if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
+      res.status(200).json({ message: "Blog deleted successfully." })
     }
+    if (blogId) {
+      const existingBlog = await Blogs.findOne({ blog: { $elemMatch: { _id: blogId } } })
+      if (!existingBlog) {
+        return res.status(404).json({ message: 'Blog detail not found with the id.' });
+      }
+      await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
 
-    await Blogs.findByIdAndDelete(id);
-    res.status(200).json({ message: "Blog deleted successfully." })
+      const updatedBlog = await Blogs.findById(existingBlog._id);
+
+      if (updatedBlog.blog.length === 0) {
+        await Blogs.deleteOne({ _id: updatedBlog._id });
+        return res.status(200).json({ message: 'Blog detail deleted and blog document removed as it became empty.' });
+      }
+      res.status(200).json({ message: 'Blog detail deleted successfully.' });
+    }
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })
   }
 };
+
+
+// exports.deleteBlog = async (req, res) => {
+//   try {
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+//     };
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+//       return res.status(403).json({ message: 'Access denied. Only superadmin can delete blog.' });
+//     };
+
+//     const { id } = req.params;
+//     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
+//     }
+//     const blog = await Blogs.findById(id);
+//     if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
+
+//     const imagesToDelete = blog.blog.map(entry => entry.photo);
+//     try {
+//       await deleteImage(imagesToDelete);
+//     } catch (error) {
+//       res.warn("Some images may not have been deleted:", error.message);
+//     }
+
+//     await Blogs.findByIdAndDelete(id);
+//     res.status(200).json({ message: "Blog deleted successfully." })
+//   }
+//   catch (err) {
+//     res.status(500).json({ message: 'Internal server error.', error: err.message })
+//   }
+// };
