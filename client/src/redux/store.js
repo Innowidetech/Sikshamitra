@@ -38,29 +38,10 @@ import resultSliceReducer from './student/resultSlice';
 import aboutSliceReducer from './teacher/aboutSlice'
 import createExamSliceReducer from './teacher/createExamSlice'
 import studyMSliceReducer from './teacher/studyMSlice';
-
-
-import myStudentsReducer from './teacher/myStudentsSlice';
-import assignmentsReducer from './teacher/assignmentsSlice'
-// import myStudentsReducer from './teacher/myStudentsSlice';
-// import assignmentsReducer from './teacher/assignmentsSlice';
-// import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-
-
-
-import lectureSliceReducer from './teacher/lectureSlice';
-import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-
-
-
-
-
-
-
 import assignmentsReducer from './teacher/assignmentsSlice';
 import myStudentsReducer from './teacher/myStudentsSlice';
 import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
-import lectureSliceReducer from './teacher/lectureSlice';
+import lectureSlice from './teacher/lectureSlice';
 import teacherResultsReducer from './teacher/teacherResultSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
 
@@ -108,23 +89,23 @@ const store = configureStore({
     studyMaterial : studyMSliceReducer,
 
     myStudents: myStudentsReducer,
-    assignments: assignmentsReducer,
+    // assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
-    lecture: lectureSliceReducer,
-    students: myStudentsReducer,
+    lecture: lectureSlice,
+    // students: myStudentsReducer,
     assignments: assignmentsReducer,
-    lecture: lectureSliceReducer,
+    // lecture: lectureSliceReducer,
    
      // tcurriculum: tcurriculumSliceReducer, 
    },
 
-    students: myStudentsReducer,
+    // students: myStudentsReducer,
     
 
-    tcurriculum: tcurriculumSliceReducer, 
+    // tcurriculum: tcurriculumSliceReducer, 
 
    
-    lecture: lectureSliceReducer,
+    // lecture: lectureSliceReducer,
     teacherResults: teacherResultsReducer,
     teacherAttendance: teaAttendanceReducer,
 });

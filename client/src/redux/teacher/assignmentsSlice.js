@@ -7,7 +7,6 @@ export const fetchTeacherAssignments = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-<<<<<<< HEAD
       const response = await axios.get(
         'https://sikshamitra.onrender.com/api/teacher/assignment',
         {
@@ -19,19 +18,11 @@ export const fetchTeacherAssignments = createAsyncThunk(
 
       console.log('Teacher Assignments:', response);
 
-=======
       if (!token) {
         throw new Error('No token found');
       }
 
-      const response = await axios.get('https://sikshamitra.onrender.com/api/teacher/assignment', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
       console.log('Teacher Assignments:', response.data);
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
       if (response.data && response.data.classAssignments) {
         return response.data; // includes { message, classAssignments }
       } else {
@@ -44,11 +35,6 @@ export const fetchTeacherAssignments = createAsyncThunk(
   }
 );
 
-<<<<<<< HEAD
-// ✅ Create a new teacher assignment
-=======
-// ✅ Create new teacher assignment
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
 export const createTeacherAssignment = createAsyncThunk(
   'assignments/createTeacherAssignment',
   async (assignmentData, { rejectWithValue }) => {
@@ -65,24 +51,18 @@ export const createTeacherAssignment = createAsyncThunk(
 
       // Append assignment data to formData
       formData.append('assignmentName', assignmentData.assignmentName);
-<<<<<<< HEAD
       formData.append('classs', assignmentData.class); // ✅ Fix: match API requirement
-=======
       formData.append('class', assignmentData.classs); // Make sure the key is 'class' as expected by the API
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
       formData.append('section', assignmentData.section);
       formData.append('subject', assignmentData.subject);
       formData.append('chapter', assignmentData.chapter);
       formData.append('startDate', assignmentData.startDate);
       formData.append('endDate', assignmentData.endDate);
-<<<<<<< HEAD
       formData.append('photo', assignmentData.photo); // ✅ File input
-=======
       formData.append('photo', assignmentData.photo); // Ensure 'photo' is used correctly for file uploads
 
       // Log the FormData to verify content
       console.log('FormData:', formData);
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
 
       const response = await axios.post(
         'https://sikshamitra.onrender.com/api/teacher/assignment',
@@ -114,11 +94,8 @@ export const createTeacherAssignment = createAsyncThunk(
   }
 );
 
-<<<<<<< HEAD
 // ✅ Fetch submitted student assignments by assignment ID
-=======
 // ✅ Fetch submitted assignments for a specific assignment
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
 export const fetchSubmittedAssignments = createAsyncThunk(
   'assignments/fetchSubmittedAssignments',
   async (assignmentId, { rejectWithValue }) => {
@@ -137,12 +114,9 @@ export const fetchSubmittedAssignments = createAsyncThunk(
         }
       );
 
-<<<<<<< HEAD
       console.log('Submitted Assignments:', response);
 
-=======
       console.log('Submitted Assignments:', response.data);
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
       if (response.data && response.data.submittedAssignments) {
         return response.data; // includes { message, submittedAssignments }
       } else {
@@ -155,8 +129,8 @@ export const fetchSubmittedAssignments = createAsyncThunk(
   }
 );
 
-<<<<<<< HEAD
-=======
+
+
 // ✅ Fetch student submitted assignments for a specific assignment
 export const fetchStudentSubmittedAssignments = createAsyncThunk(
   'assignments/fetchStudentSubmittedAssignments',
@@ -189,7 +163,6 @@ export const fetchStudentSubmittedAssignments = createAsyncThunk(
   }
 );
 
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
 // ✅ Slice Definition
 const assignmentsSlice = createSlice({
   name: 'assignments',

@@ -72,7 +72,6 @@ function UploadAssignment() {
       photo: file,
     };
 
-<<<<<<< HEAD
     const result = await dispatch(createTeacherAssignment(assignmentPayload));
 
     if (createTeacherAssignment.fulfilled.match(result)) {
@@ -80,7 +79,6 @@ function UploadAssignment() {
       setTimeout(() => navigate('/assignments'), 1500);
     } else {
       toast.error('Failed to upload assignment. Please try again.');
-=======
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
@@ -105,17 +103,14 @@ function UploadAssignment() {
     } catch (error) {
       console.error('Error uploading assignment:', error);
       setResponseMessage('Failed to upload assignment. Please try again.');
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
     }
   };
+}
 
   return (
     <div className="min-h-screen pb-12 ml-64">
-<<<<<<< HEAD
       <ToastContainer position="top-right" autoClose={3000} />
       
-=======
->>>>>>> 87ba4038dfcfad1136ac0be88dec23d272a54d00
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 md:mx-8 pt-6">
         <div className="mb-4 md:mb-0 mt-16">
@@ -253,6 +248,7 @@ function UploadAssignment() {
         </div>
       </div>
     </div>
+
   );
 }
 
