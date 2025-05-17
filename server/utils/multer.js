@@ -48,11 +48,19 @@ exports.uploadImage = async (files) => {
 exports.deleteImage = async (imageUrls) => {
   try {
     const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
-    const publicIds = urls.map(url => url.split('/').pop().split('.')[0]);
 
-    const deletePromises = publicIds.map(id =>
-      cloudinary.uploader.destroy(id, { resource_type: 'image' })
-    );
+    const deletePromises = urls.map(url => {
+      const segments = url.split('/');
+      const resourceTypeIndex = segments.findIndex(seg => seg === 'upload') - 1;
+      const resourceType = segments[resourceTypeIndex];
+
+      const publicIdWithExtension = segments[segments.length - 1];
+      const publicId = publicIdWithExtension.split('.')[0];
+
+      return cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType || 'image',
+      });
+    });
 
     await Promise.all(deletePromises);
     return true;
@@ -60,3 +68,4 @@ exports.deleteImage = async (imageUrls) => {
     throw new Error(`Failed to delete image(s): ${error.message}`);
   }
 };
+

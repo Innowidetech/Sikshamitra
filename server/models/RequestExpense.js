@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ClassExpensesSchema = new mongoose.Schema({
+const RequestExpensesSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -12,7 +12,7 @@ const ClassExpensesSchema = new mongoose.Schema({
     },
     item:{
         type: String,
-        required: true
+        // required: true
     },
     purpose: {
         type: String,
@@ -40,4 +40,4 @@ const ClassExpensesSchema = new mongoose.Schema({
     }
 }, { timestamps: true});
 
-module.exports = mongoose.model('ClassExpenses', ClassExpensesSchema);
+module.exports = mongoose.model('RequestExpense', RequestExpensesSchema);

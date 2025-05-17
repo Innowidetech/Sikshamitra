@@ -19,9 +19,10 @@ const ClassPlan = require('../models/ClassPlan');
 const SubmitAssignment = require('../models/SubmitAssignment');
 const Lectures = require('../models/Lectures');
 const ClassTimetable = require('../models/Timetable');
-const ClassExpenses = require('../models/ClassExpenses');
+const RequestExpense = require('../models/RequestExpense');
 const ParentExpenses = require('../models/ParentExpenses');
 const { sendEmail } = require('../utils/sendEmail');
+const mongoose = require('mongoose');
 
 
 
@@ -1536,6 +1537,70 @@ exports.getExams = async (req, res) => {
 };
 
 
+exports.editExam = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized!' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Only logged-in teachers have access.' });
+        };
+
+        const { id } = req.params;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide a valid id to edit exam." }) }
+
+        const newData = req.body;
+        if (!newData.examType && !newData.examDuration && !newData.fromDate && !newData.toDate && !newData.numberOfSubjects && (!newData.exam || !newData.exam.length)) {
+            return res.status(400).json({ message: "Please provide a valid data to update exam." })
+        }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+        if (!teacher.profile.class) { return res.status(403).json({ message: "Only class teachers can edit exam." }) }
+
+        const exam = await Exams.findOneAndUpdate({ _id: id, schoolId: teacher.schoolId, createdBy: teacher._id }, newData, { new: true });
+        if (!exam) { return res.status(404).json({ message: "No exam found with the id." }) }
+
+        res.status(201).json({ message: "Exam data updated successfully.", exam });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+};
+
+
+exports.deleteExam = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized!' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Only logged-in teachers have access.' });
+        };
+
+        const { id } = req.params;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide a valid id to delete exam." }) }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+        if (!teacher.profile.class) { return res.status(403).json({ message: "Only class teachers can delete exam." }) }
+
+        const exam = await Exams.findOneAndDelete({ _id: id, schoolId: teacher.schoolId, createdBy: teacher._id });
+        if (!exam) { return res.status(404).json({ message: "No exam found with the id." }) }
+
+        res.status(200).json({ message: "Exam data delete successfully." });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+};
+
 exports.createOrUpdateClassPlan = async (req, res) => {
     try {
         const { plan } = req.body;
@@ -1618,13 +1683,66 @@ exports.getClassPlan = async (req, res) => {
             if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
 
             const targetClass = req.params.className || teacher.profile.class;
-            const targetSection = req.params.section || teacher.profile.section;
+            const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
 
             classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
             if (!classPlan) {
                 return res.status(404).json({ message: "No class plan found for the specified class and section." });
             }
         }
+        // if (loggedInUser.role === 'teacher') {
+        //     const teacher = await Teacher.findOne({ userId: loggedInId });
+        //     if (!teacher) {
+        //         return res.status(404).json({ message: "No teacher found with the logged-in id." });
+        //     }
+
+        //     const className = req.params.className;
+        //     const section = req.params.section?.toUpperCase();
+
+        //     if (!className || !section) {
+        //         const targetClass = teacher.profile.class;
+        //         const targetSection = teacher.profile.section;
+
+        //         classPlan = await ClassPlan.findOne({
+        //             schoolId: teacher.schoolId,
+        //             class: targetClass,
+        //             section: targetSection
+        //         });
+
+        //         if (!classPlan) {
+        //             return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
+        //         }
+
+        //     } else {
+        //         const timetable = await ClassTimetable.findOne({
+        //             schoolId: teacher.schoolId,
+        //             class: className,
+        //             section: section
+        //         });
+
+        //         if (!timetable) {
+        //             return res.status(404).json({ message: "Timetable not found for the specified class and section." });
+        //         }
+
+        //         const isTeacherAssigned = Object.values(timetable.timetable).some(day =>
+        //             day.some(slot => slot.teacher?.toString() === teacher._id.toString())
+        //         );
+
+        //         if (!isTeacherAssigned) {
+        //             return res.status(403).json({ message: "The teacher is not assigned to the specified class and section." });
+        //         }
+
+        //         classPlan = await ClassPlan.findOne({
+        //             schoolId: teacher.schoolId,
+        //             class: className,
+        //             section: section
+        //         });
+
+        //         if (!classPlan) {
+        //             return res.status(404).json({ message: "No class plan found for the specified class and section." });
+        //         }
+        //     }
+        // }
         else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId })
             if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
@@ -1867,7 +1985,7 @@ exports.getResults = async (req, res) => {
         if (loggedInUser.role === 'admin') {
             const school = await School.findOne({ userId: loggedInId })
             banner = school.schoolBanner
-            result = await Results.find({ schoolId: school._id, total: { $ne: '-'}, totalPercentage: { $ne: '-' } })
+            result = await Results.find({ schoolId: school._id, total: { $ne: '-' }, totalPercentage: { $ne: '-' } })
                 .populate('student exam').sort({ createdAt: -1 })
             if (!result.length) { res.status(404).json({ message: "No results found" }) }
         }
@@ -2255,8 +2373,8 @@ exports.getTeacherDashboard = async (req, res) => {
 exports.requestExpense = async (req, res) => {
     try {
         const { item, purpose } = req.body;
-        if (!item || !purpose) {
-            return res.status(400).json({ message: 'Please provide item name and purpose to request.' })
+        if (!purpose) {
+            return res.status(400).json({ message: 'Please provide purpose to request.' })
         };
 
         const loggedInId = req.user && req.user.id;
@@ -2272,7 +2390,7 @@ exports.requestExpense = async (req, res) => {
 
         if (!teacher.profile.class || !teacher.profile.section) { return res.status(404).json({ message: "Only class teachers have access." }) }
 
-        const newExpense = new ClassExpenses({
+        const newExpense = new RequestExpense({
             schoolId: teacher.schoolId, item, purpose, class: teacher.profile.class, section: teacher.profile.section, createdBy: teacher._id
         });
         await newExpense.save()
@@ -2284,7 +2402,7 @@ exports.requestExpense = async (req, res) => {
 };
 
 
-exports.getItemRequests = async (req, res) => {
+exports.getTeacherExpenseRequests = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -2299,7 +2417,7 @@ exports.getItemRequests = async (req, res) => {
         const teacher = await Teacher.findOne({ userId: loggedInId })
         if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
 
-        const teacherRequests = await ClassExpenses.find({ schoolId: teacher.schoolId, createdBy: teacher._id }).sort({ createdAt: -1 })
+        const teacherRequests = await RequestExpense.find({ schoolId: teacher.schoolId, createdBy: teacher._id }).sort({ createdAt: -1 })
         if (!teacherRequests.length) { return res.status(200).json({ message: "No requests yet." }) }
 
         res.status(200).json({ teacherRequests })
@@ -2339,7 +2457,7 @@ exports.getClassAccounts = async (req, res) => {
 
         let monthlyData = {};
 
-        let expenses = await ClassExpenses.find({
+        let expenses = await RequestExpense.find({
             schoolId: teacher.schoolId,
             class: teacher.profile.class,
             section: teacher.profile.section,
