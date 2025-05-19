@@ -30,7 +30,7 @@ const ParentExpensesSchema = new mongoose.Schema({
     },
     purpose: {   // fees, inventory
         type: String,
-        enum:['Fees','Inventory'],
+        enum:['Fees','Inventory','Transportation'],
         required: true
     },
     itemName: {

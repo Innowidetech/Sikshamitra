@@ -3766,14 +3766,9 @@ exports.getAccountsData = async (req, res) => {
     }
     else { return res.status(404).json({ message: "Only admin and accountants have access." }) }
 
-    const revenue = await ParentExpenses.find({ schoolId, 'paymentDetails.status':'success' }).populate('studentId', 'studentProfile.fullname studentProfile.registrationNumber').sort({ createdAt: -1 })
-    if (!revenue.length) { res.status(200).json({ message: "No payment done yet." }) }
-
-    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status':'success' }).select('studentDetails paymentDetails').sort({ createdAt: -1 })
-    if (!admissions.length) { res.status(200).json({ message: "No admissions done yet." }) }
-
+    const revenue = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success' }).populate('studentId', 'studentProfile.fullname studentProfile.registrationNumber').sort({ createdAt: -1 })
+    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status': 'success' }).select('studentDetails paymentDetails').sort({ createdAt: -1 })
     const expenses = await SchoolExpenses.find({ schoolId }).sort({ date: -1 });
-    if (!expenses.length) { res.status(200).json({ message: "No expenses yet." }) }
     //teacher/class item request
     res.status(200).json({ revenue, admissions, expenses })
   }
@@ -3781,3 +3776,4 @@ exports.getAccountsData = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
+

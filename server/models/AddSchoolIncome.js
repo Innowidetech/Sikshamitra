@@ -1,26 +1,33 @@
 const mongoose = require('mongoose');
 
-const addRevenueSchema = new mongoose.Schema({
+const addSchoolIncomeSchema = new mongoose.Schema({
     amount: {
         type: Number,
-        // required:true
+        required:true
     },
     date: {
         type: Date,
-        // required:true
+        required:true
     },
     purpose: {
         type: String,
-        // required:true
+        enum:['Fees','Inventory','Transportation','Other'],
+        required:true
+    },
+    purposeReason: {
+        type: String,
+        required: function () {
+            return this.purpose === 'Other';
+        }
     },
     source: {
         type: String,
-        // required:true
+        required:true,
         enum: ['student', 'other']
     },
     name: {
         type: String,
-        // required:true
+        required:true
     },
     organisation: {
         type: String,
@@ -28,6 +35,7 @@ const addRevenueSchema = new mongoose.Schema({
             return this.source === 'other';
         }
     },
+    transactionId:String,
     registrationNumber: {
         type: String,
         required: function () {
@@ -49,4 +57,4 @@ const addRevenueSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('AddRevenue', addRevenueSchema)
+module.exports = mongoose.model('AddSchoolIncome', addSchoolIncomeSchema)
