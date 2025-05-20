@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 
-
 const SchoolExpensesSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,

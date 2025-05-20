@@ -1,18 +1,23 @@
 const mongoose = require('mongoose');
 
-const addSchoolIncomeSchema = new mongoose.Schema({
+const schoolIncomeSchema = new mongoose.Schema({
+    schoolId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'School'
+    },
     amount: {
         type: Number,
-        required:true
+        required: true
     },
     date: {
         type: Date,
-        required:true
+        required: true
     },
     purpose: {
         type: String,
-        enum:['Fees','Inventory','Transportation','Other'],
-        required:true
+        enum: ['Fees', 'Transportation', 'Other'],
+        required: true
     },
     purposeReason: {
         type: String,
@@ -22,20 +27,20 @@ const addSchoolIncomeSchema = new mongoose.Schema({
     },
     source: {
         type: String,
-        required:true,
+        required: true,
         enum: ['student', 'other']
     },
-    name: {
+    fullname: {
         type: String,
-        required:true
+        required: true
     },
-    organisation: {
+    organization: {
         type: String,
         required: function () {
             return this.source === 'other';
         }
     },
-    transactionId:String,
+    transactionId: String,
     registrationNumber: {
         type: String,
         required: function () {
@@ -50,11 +55,11 @@ const addSchoolIncomeSchema = new mongoose.Schema({
     },
     section: {
         type: String,
-        uppercase:true,
-        required: function () {
-            return this.source === 'student';
-        }
+        uppercase: true,
+        // required: function () {
+        //     return this.source === 'student';
+        // }
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('AddSchoolIncome', addSchoolIncomeSchema)
+module.exports = mongoose.model('SchoolIncome', schoolIncomeSchema)

@@ -204,9 +204,10 @@ exports.getChildrenNames = async (req, res) => {
 
 exports.payFees = async (req, res) => {
   try {
-    const { studentName, amount, purpose, itemName } = req.body;
+    const { studentName, amount, purpose, reason } = req.body;
     if (!studentName || !amount || !purpose) { return res.status(400).json({ message: "Proivde student name, amount and purpose of fee." }) }
 
+    if(purpose === 'Other'){ if (!reason) return res.status(400).json({message:"Please specify the reason."})}
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -248,7 +249,7 @@ exports.payFees = async (req, res) => {
         ? existingExpense.pendingAmount  // If existing expense
         : parseFloat(student.studentProfile.fees) + parseFloat(student.studentProfile.additionalFees), // If new
       purpose: purpose,
-      itemName,
+      reason,
       paidBy: parent._id,
       paymentDetails: {
         razorpayOrderId: razorpayOrder.id,

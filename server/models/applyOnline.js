@@ -132,10 +132,13 @@ const onlineSchema = new mongoose.Schema({
             enum: ['pending', 'success', 'failed'],
             default: 'pending',
         },
-        paymentDate: {
-            type: Date,
-        },
+        // paymentDate: Date,
     },
+    approval:{
+        type:Boolean,
+        required:true,
+        default: false
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Online', onlineSchema);
