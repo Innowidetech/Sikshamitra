@@ -3782,6 +3782,8 @@ exports.addSchoolIncome = async (req, res) => {
 
     if (source === 'student') {
       if (!registrationNumber || !className) { return res.status(400).json({ message: "Please provide student registration number and class." }) }
+      const student = await Student.findOne({schoolId, 'studentProfile.registrationNumber':registrationNumber});
+      if(!student){return res.status(404).json({message:"No student found with the registration number in this school."})}
     }
 
     if (source === 'other') {
