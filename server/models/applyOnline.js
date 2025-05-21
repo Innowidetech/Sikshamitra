@@ -132,7 +132,6 @@ const onlineSchema = new mongoose.Schema({
             enum: ['pending', 'success', 'failed'],
             default: 'pending',
         },
-        // paymentDate: Date,
     },
     approval:{
         type:Boolean,

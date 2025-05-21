@@ -3617,7 +3617,7 @@ exports.getAccounts = async (req, res) => {
       monthlyData[monthYear].totalFees += fee.amount;
     }
 
-    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status':'success'});
+    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status': 'success' });
     for (let admission of admissions) {
       const admissionDate = new Date(admission.createdAt);
       if (isNaN(admissionDate)) continue;
@@ -3630,20 +3630,20 @@ exports.getAccounts = async (req, res) => {
       monthlyData[monthYear].totalAdmissionFees += Number(admission.studentDetails.admissionFees);
     }
 
-    const transportations1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Transportation' });
-    const transportations2 = await SchoolIncome.find({ schoolId, purpose: 'Transportation' });
-    const transportations = transportations1.concat(transportations2)
-    for (let transportation of transportations) {
-      const transportationDate = transportation.date ? new Date(transportation.date) : new Date(transportation.createdAt);
-      if (isNaN(transportationDate)) continue;
-      const monthName = months[transportationDate.getMonth()];
-      const year = transportationDate.getFullYear();
-      const monthYear = `${monthName} ${year}`;
-      if (!monthlyData[monthYear]) {
-        monthlyData[monthYear] = { totalFees: 0, totalAdmissionFees: 0, totalTransportationFees: 0, otherIncome: 0, totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
-      }
-      monthlyData[monthYear].totalTransportationFees += transportation.amount;
-    }
+    // const transportations1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Transportation' });
+    // const transportations2 = await SchoolIncome.find({ schoolId, purpose: 'Transportation' });
+    // const transportations = transportations1.concat(transportations2)
+    // for (let transportation of transportations) {
+    //   const transportationDate = transportation.date ? new Date(transportation.date) : new Date(transportation.createdAt);
+    //   if (isNaN(transportationDate)) continue;
+    //   const monthName = months[transportationDate.getMonth()];
+    //   const year = transportationDate.getFullYear();
+    //   const monthYear = `${monthName} ${year}`;
+    //   if (!monthlyData[monthYear]) {
+    //     monthlyData[monthYear] = { totalFees: 0, totalAdmissionFees: 0, totalTransportationFees: 0, otherIncome: 0, totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+    //   }
+    //   monthlyData[monthYear].totalTransportationFees += transportation.amount;
+    // }
 
     const otherIncomes1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Other' });
     const otherIncomes2 = await SchoolIncome.find({ schoolId, purpose: 'Other' });
@@ -3683,7 +3683,7 @@ exports.getAccounts = async (req, res) => {
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
-      totalTransportationFees: monthlyData[key].totalTransportationFees,
+      // totalTransportationFees: monthlyData[key].totalTransportationFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
       totalExpenses: monthlyData[key].totalExpenses,
@@ -3731,8 +3731,8 @@ exports.getAccountsData = async (req, res) => {
     else { return res.status(404).json({ message: "Only admin and accountants have access." }) }
 
     const income = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success' }).populate('studentId', 'studentProfile.fullname studentProfile.registrationNumber').sort({ createdAt: -1 }).lean();
-    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status':'success' }).select('studentDetails paymentDetails createdAt updatedAt').sort({ createdAt: -1 }).lean();
-    const otherIncome = await SchoolIncome.find({ schoolId }).sort({ createdAt: -1 }).lean();
+    const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status': 'success' }).select('studentDetails paymentDetails createdAt updatedAt').sort({ createdAt: -1 }).lean();
+    const otherIncome = await SchoolIncome.find({ schoolId }).sort({ date: -1 }).lean();
     const expenses = await SchoolExpenses.find({ schoolId }).sort({ date: -1 }).lean();
     //teacher/class item request
     const formattedIncome = formatTimeToIST(income);
@@ -3773,24 +3773,51 @@ exports.addSchoolIncome = async (req, res) => {
       return res.status(403).json({ message: "Only admins and accountants can access." })
     }
 
-    const { amount, date, purpose, purposeReason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
+    const { amount, date, purpose, reason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
     if (!amount || !date || !purpose || !source || !fullname) { return res.status(400).json({ message: "Please provide all the details to add income." }) }
 
     if (purpose === 'Other') {
-      if (!purposeReason) { return res.status(400).json({ message: "Please provide the reason to add income." }) }
+      if (!reason) { return res.status(400).json({ message: "Please provide the reason to add income." }) }
     }
+
+    let studentId, paidBy, pendingAmount;
 
     if (source === 'student') {
       if (!registrationNumber || !className) { return res.status(400).json({ message: "Please provide student registration number and class." }) }
-      const student = await Student.findOne({schoolId, 'studentProfile.registrationNumber':registrationNumber});
-      if(!student){return res.status(404).json({message:"No student found with the registration number in this school."})}
+      const student = await Student.findOne({ schoolId, 'studentProfile.registrationNumber': registrationNumber });
+      if (!student) { return res.status(404).json({ message: "No student found with the registration number in this school." }) }
+      studentId = student._id
+
+      const parent = await Parent.findOne({ schoolId, userId: student.studentProfile.childOf });
+      paidBy = parent._id;
+
+
+      if (purpose === 'Fees') {
+        const existingIncome = await SchoolIncome.findOne({ studentId, class: className, purpose: 'Fees' }).sort({ date: -1 });
+        const parentExpense = await ParentExpenses.findOne({ studentId: student._id, class: className, 'paymentDetails.status': 'success', purpose: 'Fees' }).sort({ createdAt: -1 });
+
+        let fee1 = existingIncome ? existingIncome.pendingAmount : 0
+        let fee2 = parentExpense ? parentExpense.pendingAmount : 0
+
+        let pending;
+        if (fee1 !== 0 && fee2 !== 0) {
+          pending = fee1 > fee2 ? fee2 : fee1;
+        } else if (fee1 !== 0) {
+          pending = fee1;
+        } else if (fee2 !== 0) {
+          pending = fee2;
+        } else {
+          pending = Number(student.studentProfile.fees) + student.studentProfile.additionalFees;
+        }
+        pendingAmount = pending - amount
+      }
     }
 
     if (source === 'other') {
       if (!organization) { return res.status(400).json({ message: "Please provide the organization name." }) }
     }
 
-    const income = new SchoolIncome({ schoolId, amount, date, purpose, purposeReason, source, fullname, organization, transactionId, registrationNumber, class: className, section })
+    const income = new SchoolIncome({ schoolId, amount, date, purpose, pendingAmount, reason, source, fullname, organization, transactionId, registrationNumber, class: className, section, studentId, paidBy })
     await income.save();
 
     res.status(201).json({ message: "Income added successfully.", income })
@@ -3825,7 +3852,7 @@ exports.editSchoolIncome = async (req, res) => {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide valid id to edit income." }) }
 
     const newData = req.body;
-    if (!newData.amount && !newData.date && !newData.purpose && !newData.purposeReason && !newData.source && !newData.fullname && !newData.organization && !newData.transactionId && !newData.registrationNumber && !newData.class && !newData.section) {
+    if (!newData.amount && !newData.date && !newData.purpose && !newData.reason && !newData.source && !newData.fullname && !newData.organization && !newData.transactionId && !newData.registrationNumber && !newData.class && !newData.section) {
     };
 
     const income = await SchoolIncome.findOneAndUpdate({ _id: id, schoolId }, newData, { new: true });

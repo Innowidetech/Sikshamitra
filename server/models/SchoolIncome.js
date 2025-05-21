@@ -19,7 +19,8 @@ const schoolIncomeSchema = new mongoose.Schema({
         enum: ['Fees', 'Transportation', 'Other'],
         required: true
     },
-    purposeReason: {
+    pendingAmount:Number,
+    reason: {
         type: String,
         required: function () {
             return this.purpose === 'Other';
@@ -59,7 +60,15 @@ const schoolIncomeSchema = new mongoose.Schema({
         // required: function () {
         //     return this.source === 'student';
         // }
-    }
+    },
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student'
+    },
+    paidBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Parent'
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('SchoolIncome', schoolIncomeSchema)

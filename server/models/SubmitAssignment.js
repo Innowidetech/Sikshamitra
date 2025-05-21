@@ -30,6 +30,11 @@ const submitAssignmentSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
+        submittedDate:{
+            type:Date,
+            required:true,
+            default:Date.now
+        }
     }]
 }, { timestamps: true })
 module.exports = mongoose.model('submitAssignment', submitAssignmentSchema);

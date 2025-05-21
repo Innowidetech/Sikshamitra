@@ -24,11 +24,8 @@ const ParentExpensesSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    pendingAmount: { 
-        type: Number,
-        required: true,
-    },
-    purpose: {   // fees, inventory
+    pendingAmount: Number,
+    purpose: {
         type: String,
         enum:['Fees','Other','Transportation'],
         required: true

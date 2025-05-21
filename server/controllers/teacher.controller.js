@@ -555,54 +555,54 @@ exports.markAndUpdateAttendance = async (req, res) => {
 // };
 
 
-// exports.autoMarkHoliday = async () => {
-//     try {
-//         const now = moment().tz("Asia/Kolkata");
-//         if (now.hour() !== 18) return;
+exports.autoMarkHoliday = async () => {
+    try {
+        const now = moment().tz("Asia/Kolkata");
+        if (now.hour() !== 18) return;
 
-//         const today = now.startOf('day').toDate();
-//         const schools = await School.find();
+        const today = now.startOf('day').toDate();
+        const schools = await School.find();
 
-//         for (const school of schools) {
-//             const teachers = await Teacher.find({ schoolId: school._id });
+        for (const school of schools) {
+            const teachers = await Teacher.find({ schoolId: school._id });
 
-//             for (const teacher of teachers) {
-//                 const students = await Student.find({
-//                     schoolId: school._id,
-//                     'studentProfile.class': teacher.profile.class,
-//                     'studentProfile.section': teacher.profile.section,
-//                 });
+            for (const teacher of teachers) {
+                const students = await Student.find({
+                    schoolId: school._id,
+                    'studentProfile.class': teacher.profile.class,
+                    'studentProfile.section': teacher.profile.section,
+                });
 
-//                 if (!students.length) continue;
+                if (!students.length) continue;
 
-//                 const existingAttendance = await Attendance.findOne({
-//                     schoolId: school._id,
-//                     date: today,
-//                     class: teacher.profile.class,
-//                     section: teacher.profile.section,
-//                 });
+                const existingAttendance = await Attendance.findOne({
+                    schoolId: school._id,
+                    date: today,
+                    class: teacher.profile.class,
+                    section: teacher.profile.section,
+                });
 
-//                 if (!existingAttendance) {
-//                     const newAttendance = new Attendance({
-//                         schoolId: school._id,
-//                         date: today,
-//                         teacherId: teacher._id,
-//                         class: teacher.profile.class,
-//                         section: teacher.profile.section,
-//                         attendance: students.map(student => ({
-//                             studentId: student._id,
-//                             status: 'Holiday',
-//                         })),
-//                     });
-//                     await newAttendance.save();
-//                 }
-//             }
-//         }
-//         res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
-//     } catch (err) {
-//         res.status(500).json({ message: 'Internal server error.', error: err.message })
-//     }
-// };
+                if (!existingAttendance) {
+                    const newAttendance = new Attendance({
+                        schoolId: school._id,
+                        date: today,
+                        teacherId: teacher._id,
+                        class: teacher.profile.class,
+                        section: teacher.profile.section,
+                        attendance: students.map(student => ({
+                            studentId: student._id,
+                            status: 'Holiday',
+                        })),
+                    });
+                    await newAttendance.save();
+                }
+            }
+        }
+        res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error.', error: err.message })
+    }
+};
 
 
 //get monthly attendance of students

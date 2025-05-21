@@ -6,8 +6,9 @@ function formatTimeToIST(data) {
 
         return {
             ...doc,
-            createdAt: doc.createdAt ? moment(doc.createdAt).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') : null,
-            updatedAt: doc.updatedAt ? moment(doc.updatedAt).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') : null,
+            ...(doc.createdAt && { createdAt: moment(doc.createdAt).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') }),
+            ...(doc.updatedAt && { updatedAt: moment(doc.updatedAt).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') }),
+            ...(doc.date && { date: moment(doc.date).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') }),
         };
     };
 

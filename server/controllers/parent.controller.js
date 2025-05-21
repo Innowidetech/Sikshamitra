@@ -10,6 +10,7 @@ const ParentExpenses = require('../models/ParentExpenses');
 const Razorpay = require('razorpay');
 const { sendEmail } = require('../utils/sendEmail');
 const queryTemplate = require('../utils/queryTemplate');
+const SchoolIncome = require('../models/SchoolIncome');
 
 
 const razorpay = new Razorpay({
@@ -204,10 +205,10 @@ exports.getChildrenNames = async (req, res) => {
 
 exports.payFees = async (req, res) => {
   try {
-    const { studentName, amount, purpose, reason } = req.body;
-    if (!studentName || !amount || !purpose) { return res.status(400).json({ message: "Proivde student name, amount and purpose of fee." }) }
+    const { studentName, amount, purpose, className, section, reason } = req.body;
+    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Proivde student name, amount, purpose, class and section to pay." }) }
 
-    if(purpose === 'Other'){ if (!reason) return res.status(400).json({message:"Please specify the reason."})}
+    if (purpose === 'Other') { if (!reason) return res.status(400).json({ message: "Please specify the reason." }) }
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -221,7 +222,7 @@ exports.payFees = async (req, res) => {
     const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
     if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
-    const student = await Student.findOne({ 'studentProfile.fullname': studentName, schoolId: parent.schoolId, 'studentProfile.childOf':loggedInId });
+    const student = await Student.findOne({ 'studentProfile.fullname': studentName, schoolId: parent.schoolId, 'studentProfile.childOf': loggedInId });
     if (!student) {
       return res.status(404).json({ message: "No child found with the provided name." });
     }
@@ -234,20 +235,22 @@ exports.payFees = async (req, res) => {
 
     const existingExpense = await ParentExpenses.findOne({
       studentId: student._id,
-      class: student.studentProfile.class,
-      section: student.studentProfile.section,
+      class: className,
+      section: section,
       paidBy: parent._id,
     });
 
     const newExpense = new ParentExpenses({
       schoolId: parent.schoolId,
       studentId: student._id,
-      class: student.studentProfile.class,
-      section: student.studentProfile.section,
+      class: className,
+      section: section,
       amount: amount,
-      pendingAmount: existingExpense
-        ? existingExpense.pendingAmount  // If existing expense
-        : parseFloat(student.studentProfile.fees) + parseFloat(student.studentProfile.additionalFees), // If new
+      pendingAmount: purpose === 'Fees'
+        ? existingExpense
+          ? existingExpense.pendingAmount  // If existing expense
+          : parseFloat(student.studentProfile.fees) + student.studentProfile.additionalFees // If new
+        : '',
       purpose: purpose,
       reason,
       paidBy: parent._id,
@@ -297,7 +300,9 @@ exports.verifyFeesPayment = async (req, res) => {
 
       const amountPaid = paymentRecord.amount;
 
-      paymentRecord.pendingAmount -= amountPaid;
+      if (paymentRecord.paymentDetails.purpose === 'Fees') {
+        paymentRecord.pendingAmount ? paymentRecord.pendingAmount -= amountPaid : paymentRecord.pendingAmount = '';
+      }
 
       await paymentRecord.save();
 
@@ -349,8 +354,11 @@ exports.getExpenses = async (req, res) => {
     const parent = await Parent.findOne({ userId: loggedInId })
     if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
-    const expenses = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id }).populate('studentId', 'studentProfile.fullname').sort({ createdAt: -1 })
-    if (!expenses.length) { return res.status(200).json({ message: "No expenses found." }) }
+    const parentFees = await ParentExpenses.find({ schoolId: parent.schoolId, paidBy: parent._id }).populate('studentId', 'studentProfile.fullname').populate('paidBy', 'parentProfile.fatherName parentProfile.motherName').sort({ createdAt: -1 });
+    const parentExpenseFromSchoolIncomeForm = await SchoolIncome.find({ paidBy: parent._id }).populate({ path: 'paidBy', select: 'parentProfile.fatherName parentProfile.motherName' }).sort({ date: -1 });
+
+    const expenses = parentFees.concat(parentExpenseFromSchoolIncomeForm)
+    if (!expenses.length) { return res.status(404).json({ message: "No expenses found." }) }
     res.status(200).json({ expenses })
   } catch (err) {
     res.status(500).json({
@@ -388,7 +396,7 @@ exports.getFeesReceipts = async (req, res) => {
 exports.postQuery = async (req, res) => {
   try {
     const { parentName, parentPhone, studentName, query, sendTo } = req.body;
-    
+
     if (!parentName || !parentPhone || !studentName || !query || !Array.isArray(sendTo)) {
       return res.status(400).json({ message: 'Please provide all the details.' });
     }
@@ -411,7 +419,7 @@ exports.postQuery = async (req, res) => {
     const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId');
     const admin = await User.findOne({ _id: student.schoolId.userId });
     const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId');
-    
+
     if (!teacher) {
       return res.status(404).json({ message: "No class teacher for your child, please contact the admin." });
     }
@@ -438,7 +446,7 @@ exports.postQuery = async (req, res) => {
     }
 
     for (const recipientEmail of recipients) {
-      await sendEmail(recipientEmail, parentEmail,` New Query Submission from ${parentName}`, emailContent);
+      await sendEmail(recipientEmail, parentEmail, ` New Query Submission from ${parentName}`, emailContent);
     }
 
     res.status(201).json({
@@ -446,6 +454,6 @@ exports.postQuery = async (req, res) => {
     });
   }
   catch (err) {
-    res.status(500).json({ message: "Internal server error.", error: err.message });
-  }
+    res.status(500).json({ message: "Internal server error.", error: err.message });
+  }
 };

@@ -62,7 +62,6 @@ router.post('/expenseRequest', protect, authorize('teacher'), requestExpense); /
 router.get('/requests', protect, authorize('teacher'), getTeacherExpenseRequests); // get request data of teacher
 router.get('/expenseRequest', protect, authorize('teacher'), getExpenseRequest); // accountant
 router.patch('/expenseRequest/:requestId', protect, authorize('teacher'), updateExpenseRequest); // accountant
-// router.delete('/expenseRequest/:requestId', protect, authorize('teacher'), deleteExpenseRequest) // accountant
 router.get('/classAccounts', protect, authorize('teacher'), getClassAccounts);
 router.get('/accounts',protect, authorize('teacher'), getAccounts); //accountant
 router.get('/accountsData',protect, authorize('teacher'), getAccountsData); //accountant
