@@ -1663,6 +1663,57 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
+exports.getClassAndSectionForClassplan = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
+        }
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: "No teacher found with the logged-in id." });
+        }
+
+        const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
+
+        const assigned = new Set();
+
+        for (const timetable of timetables) {
+            const days = Object.keys(timetable.timetable);
+
+            for (const day of days) {
+                const slots = timetable.timetable[day];
+
+                if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
+                    assigned.add(`${timetable.class}__${timetable.section}`);
+                    // break; // No need to check other days if already assigned
+                }
+            }
+        }
+
+        if (assigned.size === 0) {
+            return res.status(404).json({ message: "No class or section class plans found for the teacher." });
+        }
+
+        const results = Array.from(assigned).map(entry => {
+            const [className, section] = entry.split('__');
+            return { class: className, section };
+        });
+
+        return res.status(200).json({ assignedClasses: results });
+
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+};
 
 exports.getClassPlan = async (req, res) => {
     try {
@@ -1678,71 +1729,71 @@ exports.getClassPlan = async (req, res) => {
 
         let classPlan;
 
-        if (loggedInUser.role === 'teacher') {
-            const teacher = await Teacher.findOne({ userId: loggedInId })
-            if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
-
-            const targetClass = req.params.className || teacher.profile.class;
-            const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
-
-            classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
-            if (!classPlan) {
-                return res.status(404).json({ message: "No class plan found for the specified class and section." });
-            }
-        }
         // if (loggedInUser.role === 'teacher') {
-        //     const teacher = await Teacher.findOne({ userId: loggedInId });
-        //     if (!teacher) {
-        //         return res.status(404).json({ message: "No teacher found with the logged-in id." });
-        //     }
+        //     const teacher = await Teacher.findOne({ userId: loggedInId })
+        //     if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
 
-        //     const className = req.params.className;
-        //     const section = req.params.section?.toUpperCase();
+        //     const targetClass = req.params.className || teacher.profile.class;
+        //     const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
 
-        //     if (!className || !section) {
-        //         const targetClass = teacher.profile.class;
-        //         const targetSection = teacher.profile.section;
-
-        //         classPlan = await ClassPlan.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: targetClass,
-        //             section: targetSection
-        //         });
-
-        //         if (!classPlan) {
-        //             return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
-        //         }
-
-        //     } else {
-        //         const timetable = await ClassTimetable.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: className,
-        //             section: section
-        //         });
-
-        //         if (!timetable) {
-        //             return res.status(404).json({ message: "Timetable not found for the specified class and section." });
-        //         }
-
-        //         const isTeacherAssigned = Object.values(timetable.timetable).some(day =>
-        //             day.some(slot => slot.teacher?.toString() === teacher._id.toString())
-        //         );
-
-        //         if (!isTeacherAssigned) {
-        //             return res.status(403).json({ message: "The teacher is not assigned to the specified class and section." });
-        //         }
-
-        //         classPlan = await ClassPlan.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: className,
-        //             section: section
-        //         });
-
-        //         if (!classPlan) {
-        //             return res.status(404).json({ message: "No class plan found for the specified class and section." });
-        //         }
+        //     classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
+        //     if (!classPlan) {
+        //         return res.status(404).json({ message: "No class plan found for the specified class and section." });
         //     }
         // }
+        if (loggedInUser.role === 'teacher') {
+            const teacher = await Teacher.findOne({ userId: loggedInId });
+            if (!teacher) {
+                return res.status(404).json({ message: "No teacher found with the logged-in id." });
+            }
+
+            const className = req.params.className;
+            const section = req.params.section?.toUpperCase();
+
+            if (!className || !section) {
+                const targetClass = teacher.profile.class;
+                const targetSection = teacher.profile.section;
+
+                classPlan = await ClassPlan.findOne({
+                    schoolId: teacher.schoolId,
+                    class: targetClass,
+                    section: targetSection
+                });
+
+                if (!classPlan) {
+                    return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
+                }
+
+            } else {
+                const timetable = await ClassTimetable.findOne({
+                    schoolId: teacher.schoolId,
+                    class: className,
+                    section: section
+                });
+
+                if (!timetable) {
+                    return res.status(404).json({ message: "You can't access, as you are not assigned to the specified class and section." });
+                }
+
+                const isTeacherAssigned = Object.values(timetable.timetable).some(day =>
+                    day.some(slot => slot.teacher?.toString() === teacher._id.toString())
+                );
+
+                if (!isTeacherAssigned) {
+                    return res.status(403).json({ message: "You can't access, as you are not assigned to the specified class and section." });
+                }
+
+                classPlan = await ClassPlan.findOne({
+                    schoolId: teacher.schoolId,
+                    class: className,
+                    section: section
+                });
+
+                if (!classPlan) {
+                    return res.status(404).json({ message: "No class plan found for the specified class and section." });
+                }
+            }
+        }
         else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId })
             if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
