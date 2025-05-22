@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// Initial state definition
+// Initial state
 const initialState = {
   accounts: [],
   revenueAndExpenses: {},
@@ -12,7 +12,7 @@ const initialState = {
   errorTeacherRequests: null,
 };
 
-// Get token from localStorage
+// Get token
 const getToken = () => localStorage.getItem('token');
 
 // Fetch accounts
@@ -27,7 +27,6 @@ export const fetchAccounts = createAsyncThunk(
         'Content-Type': 'application/json',
       },
     });
-
     if (!response.ok) throw new Error('Failed to fetch accounts');
     const data = await response.json();
     return data.accounts;
@@ -46,7 +45,6 @@ export const fetchRevenueAndExpenses = createAsyncThunk(
         'Content-Type': 'application/json',
       },
     });
-
     if (!response.ok) throw new Error('Failed to fetch revenue and expenses data');
     const data = await response.json();
     return data;
@@ -65,7 +63,6 @@ export const fetchTeacherRequests = createAsyncThunk(
         'Content-Type': 'application/json',
       },
     });
-
     if (!response.ok) throw new Error('Failed to fetch teacher requests');
     const data = await response.json();
     return data.teacherRequests || [];
@@ -77,11 +74,9 @@ export const updateTeacherRequest = createAsyncThunk(
   'accounts/updateTeacherRequest',
   async ({ requestId, status, amount }) => {
     const token = getToken();
-
     if (status === 'success' && !amount) {
       throw new Error('Amount is required when status is success');
     }
-
     const response = await fetch(`https://sikshamitra.onrender.com/api/admin/expenseRequest/${requestId}`, {
       method: 'PATCH',
       headers: {
@@ -93,7 +88,6 @@ export const updateTeacherRequest = createAsyncThunk(
         amount: status === 'success' ? amount : null,
       }),
     });
-
     if (!response.ok) throw new Error('Failed to update teacher request');
     const data = await response.json();
     return data;
@@ -105,11 +99,9 @@ export const editExpense = createAsyncThunk(
   'accounts/editExpense',
   async ({ expenseId, data }) => {
     const token = getToken();
-
     if (!data || Object.keys(data).length === 0) {
       throw new Error('At least one field must be provided to update the expense');
     }
-
     const response = await fetch(`https://sikshamitra.onrender.com/api/admin/expenses/${expenseId}`, {
       method: 'PATCH',
       headers: {
@@ -118,7 +110,6 @@ export const editExpense = createAsyncThunk(
       },
       body: JSON.stringify(data),
     });
-
     if (!response.ok) throw new Error('Failed to edit expense');
     const result = await response.json();
     return result;
@@ -130,7 +121,6 @@ export const deleteExpense = createAsyncThunk(
   'accounts/deleteExpense',
   async (expenseId) => {
     const token = getToken();
-
     const response = await fetch(`https://sikshamitra.onrender.com/api/admin/expenses/${expenseId}`, {
       method: 'DELETE',
       headers: {
@@ -138,18 +128,16 @@ export const deleteExpense = createAsyncThunk(
         'Content-Type': 'application/json',
       },
     });
-
     if (!response.ok) throw new Error('Failed to delete expense');
     return expenseId;
   }
 );
 
-// ✅ Post a new school expense
+// ✅ Post a new expense
 export const postExpense = createAsyncThunk(
   'accounts/postExpense',
   async (expenseData, { rejectWithValue }) => {
     const token = getToken();
-
     try {
       const response = await fetch('https://sikshamitra.onrender.com/api/admin/expenses', {
         method: 'POST',
@@ -159,10 +147,36 @@ export const postExpense = createAsyncThunk(
         },
         body: JSON.stringify(expenseData),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData.message || 'Failed to post expense');
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// ✅ Post a new income
+export const postIncome = createAsyncThunk(
+  'accounts/postIncome',
+  async (incomeData, { rejectWithValue }) => {
+    const token = getToken();
+    try {
+      const response = await fetch('https://sikshamitra.onrender.com/api/admin/income', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(incomeData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || 'Failed to post income');
       }
 
       const data = await response.json();
@@ -173,14 +187,13 @@ export const postExpense = createAsyncThunk(
   }
 );
 
-// Account Slice
+// Slice
 const accountSlice = createSlice({
   name: 'accounts',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Accounts
       .addCase(fetchAccounts.pending, (state) => {
         state.status = 'loading';
         state.errorAccounts = null;
@@ -194,7 +207,6 @@ const accountSlice = createSlice({
         state.errorAccounts = action.error.message;
       })
 
-      // Fetch Revenue and Expenses
       .addCase(fetchRevenueAndExpenses.pending, (state) => {
         state.status = 'loading';
         state.errorRevenue = null;
@@ -208,7 +220,6 @@ const accountSlice = createSlice({
         state.errorRevenue = action.error.message;
       })
 
-      // Fetch Teacher Requests
       .addCase(fetchTeacherRequests.pending, (state) => {
         state.status = 'loading';
         state.errorTeacherRequests = null;
@@ -222,14 +233,13 @@ const accountSlice = createSlice({
         state.errorTeacherRequests = action.error.message;
       })
 
-      // Update Teacher Request
       .addCase(updateTeacherRequest.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(updateTeacherRequest.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.teacherRequests = state.teacherRequests.map((request) =>
-          request.id === action.payload.id ? action.payload : request
+        state.teacherRequests = state.teacherRequests.map((req) =>
+          req.id === action.payload.id ? action.payload : req
         );
       })
       .addCase(updateTeacherRequest.rejected, (state, action) => {
@@ -237,16 +247,15 @@ const accountSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // Edit Expense
       .addCase(editExpense.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(editExpense.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        const updatedExpense = action.payload;
+        const updated = action.payload;
         if (Array.isArray(state.revenueAndExpenses.expenses)) {
-          state.revenueAndExpenses.expenses = state.revenueAndExpenses.expenses.map((expense) =>
-            expense.id === updatedExpense.id ? updatedExpense : expense
+          state.revenueAndExpenses.expenses = state.revenueAndExpenses.expenses.map((exp) =>
+            exp.id === updated.id ? updated : exp
           );
         }
       })
@@ -255,16 +264,15 @@ const accountSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // Delete Expense
       .addCase(deleteExpense.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(deleteExpense.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        const deletedId = action.payload;
+        const id = action.payload;
         if (Array.isArray(state.revenueAndExpenses.expenses)) {
           state.revenueAndExpenses.expenses = state.revenueAndExpenses.expenses.filter(
-            (expense) => expense.id !== deletedId
+            (exp) => exp.id !== id
           );
         }
       })
@@ -273,7 +281,6 @@ const accountSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // ✅ Post Expense
       .addCase(postExpense.pending, (state) => {
         state.status = 'loading';
         state.error = null;
@@ -289,10 +296,26 @@ const accountSlice = createSlice({
       .addCase(postExpense.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error.message;
+      })
+
+      // ✅ Handle postIncome
+      .addCase(postIncome.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(postIncome.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        if (Array.isArray(state.revenueAndExpenses.revenue)) {
+          state.revenueAndExpenses.revenue.unshift(action.payload);
+        } else {
+          state.revenueAndExpenses.revenue = [action.payload];
+        }
+      })
+      .addCase(postIncome.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || action.error.message;
       });
   },
 });
 
 export default accountSlice.reducer;
-
-

@@ -342,7 +342,7 @@ function AddStudent({ isOpen, onClose, onAdd }) {
                       Class
                     </label>
                     <input
-                      type="text"
+                      type="number"
                       required
                       className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"
                       value={formData.class}

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Thunk: Fetch all students
 export const fetchStudents = createAsyncThunk(
   'students/fetchStudents',
   async (_, { rejectWithValue }) => {
@@ -22,6 +23,30 @@ export const fetchStudents = createAsyncThunk(
   }
 );
 
+// ✅ New Thunk: Fetch Updated Student Data
+export const fetchUpdatedStudents = createAsyncThunk(
+  'students/fetchUpdatedStudents',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.get('https://sikshamitra.onrender.com/api/admin/updatedStudentData', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data.updatedStudentData; // Adjust based on actual response structure
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Thunk: Update student
 export const updateStudentAsync = createAsyncThunk(
   'students/updateStudent',
   async ({ studentId, updateData }, { rejectWithValue, dispatch }) => {
@@ -41,7 +66,7 @@ export const updateStudentAsync = createAsyncThunk(
         }
       );
 
-      // Fetch updated students list after successful update
+      // Refresh student list after update
       await dispatch(fetchStudents());
       return response.data;
     } catch (error) {
@@ -50,6 +75,7 @@ export const updateStudentAsync = createAsyncThunk(
   }
 );
 
+// Thunk: Fetch single student details
 export const fetchStudentDetails = createAsyncThunk(
   'students/fetchStudentDetails',
   async (studentId, { getState, rejectWithValue }) => {
@@ -91,6 +117,7 @@ export const fetchStudentDetails = createAsyncThunk(
   }
 );
 
+// Slice
 const studentsSlice = createSlice({
   name: 'students',
   initialState: {
@@ -128,6 +155,7 @@ const studentsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchStudents
       .addCase(fetchStudents.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -141,6 +169,8 @@ const studentsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // fetchStudentDetails
       .addCase(fetchStudentDetails.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -154,6 +184,8 @@ const studentsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // updateStudentAsync
       .addCase(updateStudentAsync.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -163,6 +195,21 @@ const studentsSlice = createSlice({
         state.error = null;
       })
       .addCase(updateStudentAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ fetchUpdatedStudents
+      .addCase(fetchUpdatedStudents.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUpdatedStudents.fulfilled, (state, action) => {
+        state.loading = false;
+        state.students = action.payload;
+        state.filteredStudents = action.payload;
+      })
+      .addCase(fetchUpdatedStudents.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
