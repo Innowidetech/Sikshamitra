@@ -555,54 +555,54 @@ exports.markAndUpdateAttendance = async (req, res) => {
 // };
 
 
-// exports.autoMarkHoliday = async () => {
-//     try {
-//         const now = moment().tz("Asia/Kolkata");
-//         if (now.hour() !== 18) return;
+exports.autoMarkHoliday = async () => {
+    try {
+        const now = moment().tz("Asia/Kolkata");
+        if (now.hour() !== 18) return;
 
-//         const today = now.startOf('day').toDate();
-//         const schools = await School.find();
+        const today = now.startOf('day').toDate();
+        const schools = await School.find();
 
-//         for (const school of schools) {
-//             const teachers = await Teacher.find({ schoolId: school._id });
+        for (const school of schools) {
+            const teachers = await Teacher.find({ schoolId: school._id });
 
-//             for (const teacher of teachers) {
-//                 const students = await Student.find({
-//                     schoolId: school._id,
-//                     'studentProfile.class': teacher.profile.class,
-//                     'studentProfile.section': teacher.profile.section,
-//                 });
+            for (const teacher of teachers) {
+                const students = await Student.find({
+                    schoolId: school._id,
+                    'studentProfile.class': teacher.profile.class,
+                    'studentProfile.section': teacher.profile.section,
+                });
 
-//                 if (!students.length) continue;
+                if (!students.length) continue;
 
-//                 const existingAttendance = await Attendance.findOne({
-//                     schoolId: school._id,
-//                     date: today,
-//                     class: teacher.profile.class,
-//                     section: teacher.profile.section,
-//                 });
+                const existingAttendance = await Attendance.findOne({
+                    schoolId: school._id,
+                    date: today,
+                    class: teacher.profile.class,
+                    section: teacher.profile.section,
+                });
 
-//                 if (!existingAttendance) {
-//                     const newAttendance = new Attendance({
-//                         schoolId: school._id,
-//                         date: today,
-//                         teacherId: teacher._id,
-//                         class: teacher.profile.class,
-//                         section: teacher.profile.section,
-//                         attendance: students.map(student => ({
-//                             studentId: student._id,
-//                             status: 'Holiday',
-//                         })),
-//                     });
-//                     await newAttendance.save();
-//                 }
-//             }
-//         }
-//         res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
-//     } catch (err) {
-//         res.status(500).json({ message: 'Internal server error.', error: err.message })
-//     }
-// };
+                if (!existingAttendance) {
+                    const newAttendance = new Attendance({
+                        schoolId: school._id,
+                        date: today,
+                        teacherId: teacher._id,
+                        class: teacher.profile.class,
+                        section: teacher.profile.section,
+                        attendance: students.map(student => ({
+                            studentId: student._id,
+                            status: 'Holiday',
+                        })),
+                    });
+                    await newAttendance.save();
+                }
+            }
+        }
+        res.status(200).json({ message: 'Attendance auto-marked as "Holiday" for all students.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error.', error: err.message })
+    }
+};
 
 
 //get monthly attendance of students
@@ -1258,9 +1258,9 @@ exports.getStudyMaterial = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'Student not found.' });
             }
-            if (student.userId.isActive == 'false') {
-                return res.status(404).json({ message: "Please contact your class teacher or admin to get data." })
-            }
+            // if (student.userId.isActive == 'false') {
+            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get data." })
+            // }
             schoolId = student.schoolId;
             className = student.studentProfile.class;
             section = student.studentProfile.section;
@@ -1488,9 +1488,9 @@ exports.getExams = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'No student found with logged-in id.' });
             }
-            if (student.userId.isActive == 'false') {
-                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            }
+            // if (student.userId.isActive == 'false') {
+            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
+            // }
             schoolId = student.schoolId;
             className = student.studentProfile.class;
             section = student.studentProfile.section;
@@ -1663,6 +1663,57 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
+exports.getClassAndSectionForClassplan = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
+        }
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: "No teacher found with the logged-in id." });
+        }
+
+        const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
+
+        const assigned = new Set();
+
+        for (const timetable of timetables) {
+            const days = Object.keys(timetable.timetable);
+
+            for (const day of days) {
+                const slots = timetable.timetable[day];
+
+                if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
+                    assigned.add(`${timetable.class}__${timetable.section}`);
+                    // break; // No need to check other days if already assigned
+                }
+            }
+        }
+
+        if (assigned.size === 0) {
+            return res.status(404).json({ message: "No class or section class plans found for the teacher." });
+        }
+
+        const results = Array.from(assigned).map(entry => {
+            const [className, section] = entry.split('__');
+            return { class: className, section };
+        });
+
+        return res.status(200).json({ assignedClasses: results });
+
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+};
 
 exports.getClassPlan = async (req, res) => {
     try {
@@ -1678,71 +1729,71 @@ exports.getClassPlan = async (req, res) => {
 
         let classPlan;
 
-        if (loggedInUser.role === 'teacher') {
-            const teacher = await Teacher.findOne({ userId: loggedInId })
-            if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
-
-            const targetClass = req.params.className || teacher.profile.class;
-            const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
-
-            classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
-            if (!classPlan) {
-                return res.status(404).json({ message: "No class plan found for the specified class and section." });
-            }
-        }
         // if (loggedInUser.role === 'teacher') {
-        //     const teacher = await Teacher.findOne({ userId: loggedInId });
-        //     if (!teacher) {
-        //         return res.status(404).json({ message: "No teacher found with the logged-in id." });
-        //     }
+        //     const teacher = await Teacher.findOne({ userId: loggedInId })
+        //     if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
 
-        //     const className = req.params.className;
-        //     const section = req.params.section?.toUpperCase();
+        //     const targetClass = req.params.className || teacher.profile.class;
+        //     const targetSection = req.params.section.toUpperCase() || teacher.profile.section;
 
-        //     if (!className || !section) {
-        //         const targetClass = teacher.profile.class;
-        //         const targetSection = teacher.profile.section;
-
-        //         classPlan = await ClassPlan.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: targetClass,
-        //             section: targetSection
-        //         });
-
-        //         if (!classPlan) {
-        //             return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
-        //         }
-
-        //     } else {
-        //         const timetable = await ClassTimetable.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: className,
-        //             section: section
-        //         });
-
-        //         if (!timetable) {
-        //             return res.status(404).json({ message: "Timetable not found for the specified class and section." });
-        //         }
-
-        //         const isTeacherAssigned = Object.values(timetable.timetable).some(day =>
-        //             day.some(slot => slot.teacher?.toString() === teacher._id.toString())
-        //         );
-
-        //         if (!isTeacherAssigned) {
-        //             return res.status(403).json({ message: "The teacher is not assigned to the specified class and section." });
-        //         }
-
-        //         classPlan = await ClassPlan.findOne({
-        //             schoolId: teacher.schoolId,
-        //             class: className,
-        //             section: section
-        //         });
-
-        //         if (!classPlan) {
-        //             return res.status(404).json({ message: "No class plan found for the specified class and section." });
-        //         }
+        //     classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection })
+        //     if (!classPlan) {
+        //         return res.status(404).json({ message: "No class plan found for the specified class and section." });
         //     }
         // }
+        if (loggedInUser.role === 'teacher') {
+            const teacher = await Teacher.findOne({ userId: loggedInId });
+            if (!teacher) {
+                return res.status(404).json({ message: "No teacher found with the logged-in id." });
+            }
+
+            const className = req.params.className;
+            const section = req.params.section?.toUpperCase();
+
+            if (!className || !section) {
+                const targetClass = teacher.profile.class;
+                const targetSection = teacher.profile.section;
+
+                classPlan = await ClassPlan.findOne({
+                    schoolId: teacher.schoolId,
+                    class: targetClass,
+                    section: targetSection
+                });
+
+                if (!classPlan) {
+                    return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
+                }
+
+            } else {
+                const timetable = await ClassTimetable.findOne({
+                    schoolId: teacher.schoolId,
+                    class: className,
+                    section: section
+                });
+
+                if (!timetable) {
+                    return res.status(404).json({ message: "You can't access, as you are not assigned to the specified class and section." });
+                }
+
+                const isTeacherAssigned = Object.values(timetable.timetable).some(day =>
+                    day.some(slot => slot.teacher?.toString() === teacher._id.toString())
+                );
+
+                if (!isTeacherAssigned) {
+                    return res.status(403).json({ message: "You can't access, as you are not assigned to the specified class and section." });
+                }
+
+                classPlan = await ClassPlan.findOne({
+                    schoolId: teacher.schoolId,
+                    class: className,
+                    section: section
+                });
+
+                if (!classPlan) {
+                    return res.status(404).json({ message: "No class plan found for the specified class and section." });
+                }
+            }
+        }
         else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId })
             if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
@@ -2013,9 +2064,9 @@ exports.getResults = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
-            if (student.userId.isActive == 'false') {
-                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            }
+            // if (student.userId.isActive == 'false') {
+            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
+            // }
             banner = student.schoolId.schoolBanner
             result = await Results.find({ student: student._id }).populate('student').populate('exam', 'examType fromDate toDate').sort({ createdAt: -1 })
             if (!result.length) { return res.status(404).json({ message: "No results yet." }) }
@@ -2108,9 +2159,9 @@ exports.getResultById = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: "No student found with the logged-in id." })
             }
-            if (student.userId.isActive == 'false') {
-                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            }
+            // if (student.userId.isActive == 'false') {
+            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
+            // }
             banner = student.schoolId.schoolBanner;
 
             result = await Results.findOne({ _id: resultId, student: student._id }).populate('student').populate('exam', 'examType')

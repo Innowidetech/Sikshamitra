@@ -203,9 +203,9 @@ exports.getAdmitCard = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'No student found with the logged-in id.' })
             };
-            if (student.userId.isActive == false) {
-                return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            }
+            // if (student.userId.isActive == false) {
+            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
+            // }
 
             admitCard = await Exams.findOne({
                 schoolId: student.schoolId,

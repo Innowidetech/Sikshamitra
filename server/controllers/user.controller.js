@@ -203,7 +203,7 @@ exports.verifyRazorpayPayment = async (req, res) => {
                         $set: {
                             'paymentDetails.razorpayPaymentId': paymentId,
                             'paymentDetails.status': 'success',
-                            'paymentDetails.paymentDate': new Date(),
+                            // 'paymentDetails.paymentDate': new Date(),
                         },
                     },
                     { new: true }

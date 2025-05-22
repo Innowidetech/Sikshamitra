@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-// const {autoMarkHoliday} = require('./controllers/teacher.controller');
+const {autoMarkHoliday} = require('./controllers/teacher.controller');
 dotenv.config();
 
 const authRoute = require('./routes/auth.routes');
@@ -27,7 +27,7 @@ app.use('/api/teacher',teacherRoute);
 app.use('/api/student',studentRoute);
 app.use('/api/parent',parentRoute);
 
-// setInterval(autoMarkHoliday, 3600000)
+setInterval(autoMarkHoliday, 3600000)
 
 mongoose.connect(process.env.MONGODB_URL)
 .then(() => console.log('Connected to DataBase'))

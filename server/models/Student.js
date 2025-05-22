@@ -64,9 +64,9 @@ const studentSchema = new mongoose.Schema({
             required:true
         },
         additionalFees:{
-            type:String,
+            type:Number,
             required:true,
-            default:'0'
+            default:0
         },
         previousEducation:[
             {

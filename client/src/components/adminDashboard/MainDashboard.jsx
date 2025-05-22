@@ -16,11 +16,9 @@ import Results from './Results';
 import Curriculam from './Curriculam';
 import Header from './layout/Header';
 import AdminProfile from './AdminProfile';
-import StudentHistory from './StudentHistory'; // ✅ Add import
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [studentsSubTab, setStudentsSubTab] = useState('default'); // ✅ New state
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -32,7 +30,6 @@ const MainDashboard = () => {
 
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
-        setStudentsSubTab('default'); // ✅ Reset sub-tab on tab change
         if (location.pathname === '/admin/profile') {
             navigate('/admin');
         }
@@ -42,7 +39,7 @@ const MainDashboard = () => {
         if (location.pathname === '/admin/profile') {
             return <AdminProfile />;
         }
-
+        
         switch (activeTab) {
             case 'dashboard':
                 return <AdminDashboard />;
@@ -51,9 +48,7 @@ const MainDashboard = () => {
             case 'teachers':
                 return <Teachers />;
             case 'students':
-                return studentsSubTab === 'history'
-                    ? <StudentHistory goBack={() => setStudentsSubTab('default')} />
-                    : <Students openHistory={() => setStudentsSubTab('history')} />;
+                return <Students />;
             case 'parents':
                 return <Parents />;
             case 'accounts':
@@ -84,7 +79,7 @@ const MainDashboard = () => {
                 activeTab={activeTab}
             />
             <main className="flex-1 md:ml-64 overflow-y-auto">
-                <Header />
+                <Header  />
                 <div className="mt-20 md:mt-16">
                     {renderContent()}
                 </div>
