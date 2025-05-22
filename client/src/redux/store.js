@@ -118,7 +118,7 @@ const store = configureStore({
    
     lecture: lectureSliceReducer,
     teacherResults: teacherResultsReducer,
-    Attendance: teaAttendanceReducer,
+    teaAttendance: teaAttendanceReducer,
      teacherDashboard: teacherDashboardReducer,
 
     

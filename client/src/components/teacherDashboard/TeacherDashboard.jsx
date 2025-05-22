@@ -14,6 +14,8 @@ import {
   editTeacherCalendarEvent,
   deleteTeacherCalendarEvent ,
   fetchTeacherClassAccounts,
+  fetchTeacherRequests,
+  createTeacherRequest,
 } from '../../redux/teacher/teacherDashboardSlice';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,6 +25,8 @@ import { useNavigate } from 'react-router-dom';
 // Importing Chart.js and react-chartjs-2
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
 
 // Registering required components in ChartJS
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -36,6 +40,16 @@ function TeacherDashboard() {
   const [showPopup, setShowPopup] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
+
+  // ✅ Helper to format date as YYYY-MM-DD
+const formatDate = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
   
   
   
@@ -61,33 +75,39 @@ function TeacherDashboard() {
     deleteNoticeSuccess,
   } = useSelector((state) => state.teacherDashboard);
 
-    const { classAccounts } = useSelector((state) => state.teacherDashboard); 
-    
+    const { classAccounts, teacherRequests } = useSelector((state) => state.teacherDashboard);
+
     
   const token = localStorage.getItem('token');
   
 
-  useEffect(() => {
-    if (token) {
-      dispatch(fetchTeacherDashboard(token));
-      dispatch(fetchTeacherNotices(token));
-      dispatch(fetchTeacherCalendar(token));
-      dispatch(fetchTeacherCalendarByDate({ token, date: selectedDate.toISOString().split('T')[0] }));
-      dispatch(fetchTeacherClassAccounts(token));
-      setSelectedEvent({
-        ...selectedEvent,
-        ...editCalendarData,
-      });
+ useEffect(() => {
+  if (token) {
+    dispatch(fetchTeacherDashboard(token));
+    dispatch(fetchTeacherNotices(token));
+    dispatch(fetchTeacherCalendar(token));
+    dispatch(fetchTeacherClassAccounts(token));
+    dispatch(fetchTeacherRequests(token));
+  }
+}, [dispatch, token]);
 
+useEffect(() => {
+  if (selectedDate && token) {
+    const formattedDate = formatDate(selectedDate);
+    if (formattedDate) {
+      dispatch(fetchTeacherCalendarByDate({ token, calendarDate: formattedDate }));
 
-
+    } else {
+      console.error('Invalid selectedDate:', selectedDate);
     }
-  }, [dispatch, token]);
+  }
+}, [selectedDate, token, dispatch]);
 
   useEffect(() => {
     if (selectedDate && token) {
       const formattedDate = selectedDate.toISOString().split('T')[0];
-      dispatch(fetchTeacherCalendarByDate({ token, date: formattedDate }));
+      dispatch(fetchTeacherCalendarByDate({ token, calendarDate: formattedDate }));
+
     }
   }, [dispatch, token, selectedDate]);
 
@@ -300,11 +320,50 @@ function TeacherDashboard() {
     },
   },
 };
+ 
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [itemName, setItemName] = useState('');
+const [purpose, setPurpose] = useState('');
+
+const closeModal = () => {
+  setIsModalOpen(false);
+  setItemName('');
+  setPurpose('');
+};
+
+const handleRequestSubmit = async () => {
+  console.log("Item name:", itemName);
+  console.log("Purpose:", purpose);
+
+  if (!itemName || !purpose) {
+    toast.error("Item name and purpose are required.");
+    return;
+  }
+
+  try {
+    const response = await dispatch(
+      createTeacherRequest({
+        token,
+        requestData: { item: itemName, purpose },
+      })
+    ).unwrap();
+
+    console.log("Request successful:", response);
+    toast.success("Request submitted successfully!");
+
+    dispatch(fetchTeacherRequests(token));
+    dispatch(fetchTeacherClassAccounts(token));
+
+    closeModal();
+  } catch (error) {
+    console.error("Error submitting request:", error);
+    toast.error("Failed to submit request.");
+  }
+};
 
 
-  
-  
 
+ 
 
   return (
     <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56 mt-10">
@@ -404,33 +463,31 @@ function TeacherDashboard() {
   </div>
 </div>
 
+
 {/* Expenses Section - Right Side */}
-<div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2">
+<div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 mt-6">
   <div className="flex justify-between items-center mb-4">
-    <h3 className="text-lg font-semibold text-[#146192]">Expenses</h3>
-    {/* Request Item Button */}
-    <button 
-      className="bg-blue-500 text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-600 transition"
-      onClick={() => alert("Request Item Clicked")}
-    >
-      Request Item
-    </button>
+    <h3 className="text-lg font-semibold text-[#146192] ">Expenses</h3>
+   <button
+  onClick={() => setIsModalOpen(true)}
+  className="bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-blue-600"
+>
+  Request Item
+</button>
+
   </div>
 
   {/* Month & Values Display */}
   <div className="flex justify-between mb-6">
-    <div className="text-center">
-      <p className="text-sm text-gray-600">April 2025</p>
-      <h4 className="font-semibold text-lg text-[#146192]">₹ 25,000</h4>
-    </div>
-    <div className="text-center">
-      <p className="text-sm text-gray-600">May 2025</p>
-      <h4 className="font-semibold text-lg text-[#146192]">₹ 22,000</h4>
-    </div>
-    <div className="text-center">
-      <p className="text-sm text-gray-600">June 2025</p>
-      <h4 className="font-semibold text-lg text-[#146192]">₹ 18,500</h4>
-    </div>
+    {Array.isArray(classAccounts?.accounts) &&
+      classAccounts.accounts
+        .slice(-3)
+        .map((item, idx) => (
+          <div key={idx} className="text-center">
+            <p className="text-sm text-gray-600">{item.monthYear}</p>
+            <h4 className="font-semibold text-lg text-[#146192]">₹ {item.classExpenses}</h4>
+          </div>
+        ))}
   </div>
 
   {/* Bar Chart */}
@@ -438,29 +495,25 @@ function TeacherDashboard() {
     <div className="w-full max-w-full">
       <Bar
         data={{
-          labels: ['April 2025', 'May 2025', 'June 2025'],
+          labels: classAccounts?.accounts?.map((item) => item.monthYear),
           datasets: [
             {
               label: 'Monthly Expenses',
-              data: [25000, 22000, 18500],
-              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+              data: classAccounts?.accounts?.map((item) => item.classExpenses),
+              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#8E44AD'],
               borderRadius: 6,
-              barThickness: 30, // Adjusted bar thickness for better layout
+              barThickness: 30,
             },
           ],
         }}
         options={{
           responsive: true,
           plugins: {
-            legend: {
-              display: false,
-            },
+            legend: { display: false },
             title: {
               display: true,
               text: 'Expenses Overview',
-              font: {
-                size: 18,
-              },
+              font: { size: 18 },
             },
           },
           scales: {
@@ -472,7 +525,7 @@ function TeacherDashboard() {
               },
               ticks: {
                 stepSize: 5000,
-                maxTicksLimit: 5, // Limit the number of ticks
+                maxTicksLimit: 5,
               },
             },
             x: {
@@ -481,24 +534,168 @@ function TeacherDashboard() {
                 text: 'Month',
               },
               ticks: {
-                display: true, // Ensure labels show
-                padding: 5, // Adjust padding around labels
-                autoSkip: false, // Prevents skipping labels
+                autoSkip: false,
+                padding: 5,
               },
               grid: {
-                display: false, // Remove grid lines on the x-axis
+                display: false,
               },
-              offset: false, // Ensures no offset, removing space on the X-axis
-              maxBarThickness: 40, // Limits maximum thickness of bars
+              maxBarThickness: 40,
             },
           },
         }}
       />
     </div>
   </div>
+
+  {/* Request Item Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+      <h2 className="text-lg font-semibold text-[#146192] mb-4">Request Item</h2>
+
+      <label className="block text-sm mb-1">Item Name</label>
+      <input
+        type="text"
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+        placeholder="Enter item name"
+      />
+
+      <label className="block text-sm mb-1">Purpose</label>
+      <input
+        type="text"
+        value={purpose}
+        onChange={(e) => setPurpose(e.target.value)}
+        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+        placeholder="Enter purpose"
+      />
+
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={handleRequestSubmit}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          Request
+        </button>
+        <button
+          onClick={closeModal}
+          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+</div>
 </div>
 
- 
+<div className="w-full max-w-full overflow-hidden">
+  <div className="flex flex-wrap -mx-2">
+    {/* Gender Ratio Box */}
+    <div className="w-full md:w-1/2 px-2">
+      <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+        <h3 className="text-lg font-semibold text-[#000000] mb-4 text-center">Student Gender Ratio</h3>
+        <div className="flex flex-col items-center">
+          {/* Check if dashboardData is not null and has male/female properties */}
+          {dashboardData ? (
+            <>
+              <div className="w-40 h-40 mb-4">
+                <Pie
+                  data={{
+                    labels: ['Male', 'Female'],
+                    datasets: [
+                      {
+                        data: [dashboardData.male, dashboardData.female],
+                        backgroundColor: ['#2139DE', '#F22829'],
+                        hoverOffset: 6,
+                        borderWidth: 0,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: false },
+                    },
+                    cutout: '60%',
+                  }}
+                />
+              </div>
+              <div className="flex justify-between w-full px-6 text-sm">
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-1 bg-[#2139DE] mb-1" />
+                  <p className="text-gray-700">Male</p>
+                  <p className="font-semibold text-[#2139DE]">{dashboardData.male}</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-1 bg-[#F22829] mb-1" />
+                  <p className="text-gray-700">Female</p>
+                  <p className="font-semibold text-[#F22829]">{dashboardData.female}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p>Loading...</p>  
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Active/Inactive Ratio Box */}
+    <div className="w-full md:w-1/2 px-2">
+      <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+        <h3 className="text-lg font-semibold text-[#000000] mb-4 text-center">Active / Inactive Students</h3>
+        <div className="flex flex-col items-center">
+          {/* Check if dashboardData is not null and has active/inactive properties */}
+          {dashboardData ? (
+            <>
+              <div className="w-40 h-40 mb-4">
+                <Pie
+                  data={{
+                    labels: ['Active', 'Inactive'],
+                    datasets: [
+                      {
+                        data: [dashboardData.active, dashboardData.inactive],
+                        backgroundColor: ['#2139DE', '#F22829'],
+                        hoverOffset: 6,
+                        borderWidth: 0,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { display: false },
+                    },
+                    cutout: '60%',
+                  }}
+                />
+              </div>
+              <div className="flex justify-between w-full px-6 text-sm">
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-1 bg-[#2139DE] mb-1" />
+                  <p className="text-gray-700">Active</p>
+                  <p className="font-semibold text-[#2139DE]">{dashboardData.active}</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-4 h-1 bg-[#F22829] mb-1" />
+                  <p className="text-gray-700">Inactive</p>
+                  <p className="font-semibold text-[#F22829]">{dashboardData.inactive}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p>Loading...</p>  
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 </div>

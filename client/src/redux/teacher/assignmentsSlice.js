@@ -1,3 +1,5 @@
+// src/redux/teacher/assignmentsSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -10,21 +12,15 @@ export const fetchTeacherAssignments = createAsyncThunk(
       const response = await axios.get(
         'https://sikshamitra.onrender.com/api/teacher/assignment',
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      console.log('Teacher Assignments:', response);
-
       if (response.data && response.data.classAssignments) {
-        return response.data; // { message, classAssignments }
+        return response.data.classAssignments;
       } else {
         throw new Error('No class assignments found in response');
       }
     } catch (error) {
-      console.error('Error fetching teacher assignments:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -37,15 +33,14 @@ export const createTeacherAssignment = createAsyncThunk(
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
-
       formData.append('assignmentName', assignmentData.assignmentName);
-      formData.append('classs', assignmentData.class); // ✅ Fix: match API requirement
+      formData.append('classs', assignmentData.class);
       formData.append('section', assignmentData.section);
       formData.append('subject', assignmentData.subject);
       formData.append('chapter', assignmentData.chapter);
       formData.append('startDate', assignmentData.startDate);
       formData.append('endDate', assignmentData.endDate);
-      formData.append('photo', assignmentData.photo); // ✅ File input
+      formData.append('photo', assignmentData.photo);
 
       const response = await axios.post(
         'https://sikshamitra.onrender.com/api/teacher/assignment',
@@ -57,11 +52,8 @@ export const createTeacherAssignment = createAsyncThunk(
           },
         }
       );
-
-      console.log('Created Assignment:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error creating assignment:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -76,53 +68,40 @@ export const fetchSubmittedAssignments = createAsyncThunk(
       const response = await axios.get(
         `https://sikshamitra.onrender.com/api/teacher/submittedAssignments/${assignmentId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      console.log('Submitted Assignments:', response);
-
-      if (response.data && response.data.submittedAssignments) {
-        return response.data; // { message, submittedAssignments }
-      } else {
-        throw new Error('No submitted assignments found in response');
-      }
+      return response.data.teacherAssignments;
     } catch (error) {
-      console.error('Error fetching submitted assignments:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
-// ✅ Slice Definition
 const assignmentsSlice = createSlice({
   name: 'assignments',
   initialState: {
     assignments: [],
-    submittedAssignments: [],
+    submittedAssignments: null,
     loading: false,
     error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // 🔄 Fetch teacher assignments
       .addCase(fetchTeacherAssignments.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchTeacherAssignments.fulfilled, (state, action) => {
         state.loading = false;
-        state.assignments = action.payload.classAssignments || [];
+        state.assignments = action.payload || [];
       })
       .addCase(fetchTeacherAssignments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // ✏️ Create new teacher assignment
       .addCase(createTeacherAssignment.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -136,17 +115,18 @@ const assignmentsSlice = createSlice({
         state.error = action.payload;
       })
 
-      // 📥 Fetch submitted assignments by assignment ID
       .addCase(fetchSubmittedAssignments.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.submittedAssignments = null;
       })
       .addCase(fetchSubmittedAssignments.fulfilled, (state, action) => {
         state.loading = false;
-        state.submittedAssignments = action.payload.submittedAssignments || [];
+        state.submittedAssignments = action.payload;
       })
       .addCase(fetchSubmittedAssignments.rejected, (state, action) => {
         state.loading = false;
+        state.submittedAssignments = null;
         state.error = action.payload;
       });
   },

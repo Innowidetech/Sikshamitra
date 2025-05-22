@@ -237,17 +237,42 @@ export const fetchTeacherClassAccounts = createAsyncThunk(
   }
 );
 
-// === TEACHER REQUESTS ===
 export const fetchTeacherRequests = createAsyncThunk(
   'teacherDashboard/fetchTeacherRequests',
   async (token, thunkAPI) => {
     try {
-      const response = await axios.get('https://sikshamitra.onrender.com/api/teacher/requests', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        'https://sikshamitra.onrender.com/api/teacher/requests',
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to fetch teacher requests');
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch teacher requests'
+      );
+    }
+  }
+);
+
+export const createTeacherRequest = createAsyncThunk(
+  'teacherDashboard/createTeacherRequest',
+  async ({ token, requestData }, thunkAPI) => {
+    try {
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/teacher/classRequest',
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to submit request');
     }
   }
 );
@@ -302,9 +327,13 @@ deleteCalendarError: null,
     classAccountsLoading: false,
     classAccountsError: null,
 
-      teacherRequests: [],  // Array to store the teacher requests
+     teacherRequests: [],
     teacherRequestsLoading: false,
     teacherRequestsError: null,
+
+    createRequestLoading: false,
+createRequestError: null,
+createRequestSuccess: false,
 
 
     
@@ -352,6 +381,13 @@ deleteCalendarError: null,
       state.classAccountsLoading = false;
       state.classAccountsError = null;
     },
+
+    clearCreateRequestStatus: (state) => {
+  state.createRequestLoading = false;
+  state.createRequestError = null;
+  state.createRequestSuccess = false;
+},
+
 
 
   },
@@ -557,19 +593,35 @@ deleteCalendarError: null,
         state.classAccountsError = action.payload;
       })
 
-       // === Teacher Requests ===
-      .addCase(fetchTeacherRequests.pending, (state) => {
+       .addCase(fetchTeacherRequests.pending, (state) => {
         state.teacherRequestsLoading = true;
         state.teacherRequestsError = null;
       })
       .addCase(fetchTeacherRequests.fulfilled, (state, action) => {
         state.teacherRequestsLoading = false;
-        state.teacherRequests = action.payload; // Store the fetched requests
+        state.teacherRequests = action.payload;
       })
       .addCase(fetchTeacherRequests.rejected, (state, action) => {
         state.teacherRequestsLoading = false;
         state.teacherRequestsError = action.payload;
-      });
+      })
+
+      .addCase(createTeacherRequest.pending, (state) => {
+  state.createRequestLoading = true;
+  state.createRequestError = null;
+  state.createRequestSuccess = false;
+})
+.addCase(createTeacherRequest.fulfilled, (state, action) => {
+  state.createRequestLoading = false;
+  state.createRequestSuccess = true;
+  state.teacherRequests.unshift(action.payload); // Fix: Add directly
+})
+
+.addCase(createTeacherRequest.rejected, (state, action) => {
+  state.createRequestLoading = false;
+  state.createRequestError = action.payload;
+});
+
 
   },
 });
@@ -584,7 +636,9 @@ export const {
   setEditCalendarMessage, // ✅ Add this
   clearDeleteCalendarStatus,
   clearClassAccountsStatus,
-  clearReqouestsStatus,
+  clearRequestsStatus,
+  clearCreateRequestStatus,
+
 
 } = teacherDashboardSlice.actions;
 
