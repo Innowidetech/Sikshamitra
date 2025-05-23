@@ -168,7 +168,7 @@ exports.getStudentsOfTeacher = async (req, res) => {
         const filteredParents = parents.filter(parent => parent.parentProfile.parentOf.length > 0);
 
         if (filteredParents.length === 0) {
-            return res.status(404).json({ message: "No students found for this school, class, and section." });
+            return res.status(404).json({ message: "No students found for your class." });
         }
 
         res.status(200).json({
@@ -1663,58 +1663,60 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
-exports.getClassAndSectionForClassplan = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
+// exports.getClassAndSectionForClassplan = async (req, res) => {
+//     try {
+//         const loggedInId = req.user && req.user.id;
+//         if (!loggedInId) {
+//             return res.status(401).json({ message: 'Unauthorized' });
+//         }
 
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'teacher') {
-            return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
-        }
-        const teacher = await Teacher.findOne({ userId: loggedInId });
-        if (!teacher) {
-            return res.status(404).json({ message: "No teacher found with the logged-in id." });
-        }
+//         const loggedInUser = await User.findById(loggedInId);
+//         if (!loggedInUser || loggedInUser.role !== 'teacher') {
+//             return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
+//         }
+//         const teacher = await Teacher.findOne({ userId: loggedInId });
+//         if (!teacher) {
+//             return res.status(404).json({ message: "No teacher found with the logged-in id." });
+//         }
 
-        const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
+//         const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
 
-        const assigned = new Set();
+//         const assigned = new Set();
 
-        for (const timetable of timetables) {
-            const days = Object.keys(timetable.timetable);
+//         for (const timetable of timetables) {
+//             const days = Object.keys(timetable.timetable);
 
-            for (const day of days) {
-                const slots = timetable.timetable[day];
+//             for (const day of days) {
+//                 const slots = timetable.timetable[day];
 
-                if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
-                    assigned.add(`${timetable.class}__${timetable.section}`);
-                    // break; // No need to check other days if already assigned
-                }
-            }
-        }
+//                 if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
+//                     assigned.add(`${timetable.class}__${timetable.section}`);
+//                     // break; // No need to check other days if already assigned
+//                 }
+//             }
+//         }
 
-        if (assigned.size === 0) {
-            return res.status(404).json({ message: "No class or section class plans found for the teacher." });
-        }
+//         if (assigned.size === 0) {
+//             return res.status(404).json({ message: "No class or section class plans found for the teacher." });
+//         }
 
-        const results = Array.from(assigned).map(entry => {
-            const [className, section] = entry.split('__');
-            return { class: className, section };
-        });
+//         const results = Array.from(assigned).map(entry => {
+//             const [className, section] = entry.split('__');
+//             return { class: className, section };
+//         });
 
-        return res.status(200).json({ assignedClasses: results });
+//         return res.status(200).json({ assignedClasses: results });
 
-    } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
-    }
-};
+//     } catch (err) {
+//         res.status(500).json({
+//             message: 'Internal server error',
+//             error: err.message,
+//         });
+//     }
+// };
 
+
+//get class and sections for filter from - teacher lectures
 exports.getClassPlan = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
