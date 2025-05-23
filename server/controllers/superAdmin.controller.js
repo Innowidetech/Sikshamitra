@@ -40,7 +40,7 @@ exports.registerSchool = async (req, res) => {
     await admin.save();
 
     const school = new School({
-      userId:admin._id,
+      userId: admin._id,
       schoolCode,
       schoolName,
       contact,
@@ -61,78 +61,11 @@ exports.registerSchool = async (req, res) => {
       school
     });
   } catch (err) {
-    res.status(500).json({ message: 'Registration failed.', error:err });
+    res.status(500).json({ message: 'Registration failed.', error: err });
   }
 };
 
 
-// exports.createSchool = async (req, res) => {
-//   try {
-//     const { email, password, schoolName, schoolCode, address, contact, details, paymentDetails } = req.body;
-//     if (!email || !password || !schoolName || !schoolCode || !address || !contact || !details || !paymentDetails) {
-//       return res.status(400).json({ message: 'Please provide all the details to create school.' })
-//     };
-
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-//       return res.status(404).json({ message: 'Access denied, only superadmin have access to create school.' });
-//     };
-
-//     let logo, banner;
-
-//     if (req.files && req.files.logo) {
-//       try {
-//         const [logoUrl] = await uploadImage(req.files.logo);
-//         logo = logoUrl;
-//       } catch (error) {
-//         return res.status(500).json({ message: 'Failed to upload logo.', error: error.message });
-//       }
-//     }
-
-//     if (req.files && req.files.banner) {
-//       try {
-//         const [bannerUrl] = await uploadImage(req.files.banner);
-//         banner = bannerUrl;
-//       } catch (error) {
-//         return res.status(500).json({ message: 'Failed to upload banner.', error: error.message });
-//       }
-//     }
-
-//     const existingSchool = await School.findOne({ createdBy: loggedInId });
-//     if (existingSchool) {
-//       return res.status(404).json({ message: 'Admin is already associated with a school.' });
-//     };
-
-//     const school = new School({
-//       schoolName,
-//       schoolCode,
-//       schoolLogo: logo,
-//       schoolBanner: banner,
-//       address,
-//       details,
-//       contact,
-//       createdBy: loggedInId,
-//       paymentDetails,
-//     });
-//     await school.save()
-
-//     res.status(201).json({
-//       message: 'School created successfully',
-//       school
-//     });
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
-
-
-//get all schools
 exports.getAllSchools = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -163,40 +96,39 @@ exports.getAllSchools = async (req, res) => {
 };
 
 
-exports.getSchoolById = async (req, res) => {
-  try {
-    const { schoolId } = req.params;
-    if (!schoolId) { return res.status(400).json({ message: "Please select school to get complete data." }) }
+// exports.getSchoolById = async (req, res) => {
+//   try {
+//     const { schoolId } = req.params;
+//     if (!schoolId) { return res.status(400).json({ message: "Please select school to get complete data." }) }
 
-    const loggedInId = req.user && req.user.id;
-    if (!loggedInId) {
-      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-    };
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+//     };
 
-    const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
-    };
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+//       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
+//     };
 
-    const school = await School.findById(schoolId).select('-paymentDetails').populate('userId')
-    if (!school) {
-      return res.status(200).json({ message: 'No school found with the id.' })
-    };
-    res.status(200).json({
-      message: 'School data',
-      school
-    })
-  }
-  catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    });
-  }
-};
+//     const school = await School.findById(schoolId).select('-paymentDetails').populate('userId')
+//     if (!school) {
+//       return res.status(200).json({ message: 'No school found with the id.' })
+//     };
+//     res.status(200).json({
+//       message: 'School data',
+//       school
+//     })
+//   }
+//   catch (err) {
+//     res.status(500).json({
+//       message: 'Internal server error',
+//       error: err.message
+//     });
+//   }
+// };
 
 
-//change school status
 exports.changeSchoolStatus = async (req, res) => {
   try {
     const { id, status } = req.params;
@@ -369,7 +301,6 @@ exports.editBlog = async (req, res) => {
         try {
           const [photoUrl] = await uploadImage(file);
 
-          // If photo is replaced, mark old photo for deletion
           if (oldBlogArray[i] && oldBlogArray[i].photo) {
             imagesToDelete.push(oldBlogArray[i].photo);
           }
@@ -437,8 +368,16 @@ exports.deleteBlog = async (req, res) => {
     }
 
     if (id) {
-      const blog = await Blogs.findByIdAndDelete(id);
+      const blog = await Blogs.findById(id);
       if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
+
+      const imagesToDelete = blog.blog.map(entry => entry.photo);
+      try {
+        await deleteImage(imagesToDelete);
+      } catch (error) {
+        res.warn("Some images may not have been deleted:", error.message);
+      }
+      await Blogs.findByIdAndDelete(id);
       res.status(200).json({ message: "Blog deleted successfully." })
     }
     if (blogId) {
@@ -446,6 +385,12 @@ exports.deleteBlog = async (req, res) => {
       if (!existingBlog) {
         return res.status(404).json({ message: 'Blog detail not found with the id.' });
       }
+
+      const blogEntryToDelete = existingBlog.blog.find(entry => entry._id.toString() === blogId);
+      if (!blogEntryToDelete) {
+        return res.status(404).json({ message: 'Blog entry not found with the given blogId.' });
+      }
+
       await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
 
       const updatedBlog = await Blogs.findById(existingBlog._id);
