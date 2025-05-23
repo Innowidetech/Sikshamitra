@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchAccounts,
@@ -7,6 +7,8 @@ import {
   updateTeacherRequest,
   editExpense,
   deleteExpense,
+  postExpense,
+  postIncome,
 } from '../../redux/accountSlice';
 import Header from './layout/Header';
 import { Pie, Line } from 'react-chartjs-2';
@@ -21,7 +23,15 @@ import {
   Legend,
 } from 'chart.js';
 
-Chart.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+Chart.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend
+);
 
 const Accounts = () => {
   const dispatch = useDispatch();
@@ -34,12 +44,50 @@ const Accounts = () => {
   const [statusInput, setStatusInput] = useState('');
   const [amountInput, setAmountInput] = useState('');
   const [selectedChartSection, setSelectedChartSection] = useState(null);
-
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editFormData, setEditFormData] = useState({ purpose: '', amount: '' });
 
-  const pieChartRef = useRef();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [expenseFormData, setExpenseFormData] = useState({
+    title: '',
+    amount: '',
+    date: '',
+    category: '',
+  });
+
+  const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+  const resetIncomeForm = () => {
+    setIncomeFormData({
+      amount: '',
+      date: '',
+      purpose: '',
+      source: '',
+      reason: '',
+      fullname: '',
+      className: '',
+      section: '',
+      registrationNumber: '',
+      organization: '',
+      transactionId: '',
+    });
+  };
+
+  const [incomeFormData, setIncomeFormData] = useState({
+
+    amount: '',
+    date: '',
+    purpose: '',
+    source: '',
+    reason: '',
+    fullname: '',
+    className: '',
+    section: '',
+    registrationNumber: '',
+    organization: '',
+    transactionId: '',
+
+  });
 
   useEffect(() => {
     dispatch(fetchAccounts());
@@ -47,103 +95,46 @@ const Accounts = () => {
     dispatch(fetchTeacherRequests());
   }, [dispatch]);
 
-
-  const pieChartOptions = {
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            const label = context.label || '';
-            const value = context.parsed || 0;
-            return `${label}: ₹ ${value.toLocaleString()}`;
-          },
-        },
-      },
-    },
+  const handleExpenseChange = (e) => {
+    const { name, value } = e.target;
+    setExpenseFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-
-  const accountsArray = Array.isArray(accounts) ? accounts : [];
-
-  if (status === 'loading') return <div>Loading...</div>;
-  if (status === 'failed') return <div>Error: {error}</div>;
-
-  const pieChartData = {
-    labels: ['Fees', 'Admission', 'Inventory'],
-    datasets: [
-      {
-        data: [
-          accountsArray.reduce((total, acc) => total + acc.totalFeesCollected, 0),
-          accountsArray.reduce((total, acc) => total + acc.totalAdmissionFees, 0),
-          accountsArray.reduce((total, acc) => total + acc.totalInventoryAmount, 0),
-        ],
-        backgroundColor: ['#4CAF50', '#FFC107', '#2196F3'],
-        borderWidth: 1,
-      },
-    ],
+  const handleIncomeChange = (e) => {
+    const { name, value } = e.target;
+    setIncomeFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  // Step 1: Define all 12 months in correct `monthYear` format
-  const allMonths = [
-    'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025',
-    'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025',
-    'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025',
-  ];
-
-  // Step 2: Create a map from your actual data
-  const expensesMap = {};
-  accountsArray.forEach(item => {
-    expensesMap[item.monthYear] = item.totalExpenses;
-  });
-
-  // Step 3: Generate labels and data using all months
-  const lineChartData = {
-    labels: allMonths,
-    datasets: [
-      {
-        label: 'Total Expenses',
-        data: allMonths.map(month => expensesMap[month] || 0),
-        borderColor: '#FF9F40',
-        backgroundColor: '#FF9F40',
-        fill: false,
-        tension: 0.4,
-        pointRadius: 5,
-      },
-    ],
+  const handleAddExpense = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(postExpense(expenseFormData)).unwrap();
+      alert('Expense added successfully');
+      setExpenseFormData({ title: '', amount: '', date: '', category: '' });
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error('Failed to add expense:', err);
+      alert('Failed to add expense');
+    }
   };
 
-  const lineChartOptions = {
-    responsive: true,
-    interaction: {
-      mode: 'index',
-      intersect: false, // Show tooltip even if not directly over the point
-    },
-    plugins: {
-      tooltip: {
-        enabled: true,
-        usePointStyle: true,
-        callbacks: {
-          label: function (context) {
-            const value = context.parsed.y || 0;
-            return `₹ ${value.toLocaleString()}`;
-          },
-        },
-      },
-      legend: {
-        display: true,
-        position: 'top',
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function (value) {
-            return `₹ ${value}`;
-          },
-        },
-      },
-    },
+  const handleAddIncome = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(postIncome(incomeFormData)).unwrap();
+      alert('Income added successfully');
+      setIncomeFormData({ title: '', amount: '', date: '', category: '' });
+      setIsIncomeModalOpen(false);
+    } catch (err) {
+      console.error('Failed to add income:', err);
+      alert('Failed to add income');
+    }
   };
 
   const openEditModal = (request) => {
@@ -190,12 +181,96 @@ const Accounts = () => {
     }
   };
 
-  const handleDeleteRequest = async (requestId) => {
-    if (window.confirm('Are you sure you want to delete this request?')) {
-      // Dispatch the delete action for teacher requests
-      await dispatch(deleteTeacherRequest(requestId)); // Assume `deleteTeacherRequest` is correctly implemented in Redux
-    }
+  const accountsArray = Array.isArray(accounts) ? accounts : [];
+
+  if (status === 'loading') return <div>Loading...</div>;
+  if (status === 'failed') return <div>Error: {error}</div>;
+
+  const pieChartData = {
+    labels: ['Fees', 'Admission', 'Other', 'Expenses'],
+    datasets: [
+      {
+        data: [
+          accountsArray.reduce((total, acc) => total + acc.totalFeesCollected, 0),
+          accountsArray.reduce((total, acc) => total + acc.totalAdmissionFees, 0),
+          // accountsArray.reduce((total, acc) => total + acc.totalTransportationFees, 0),
+          accountsArray.reduce((total, acc) => total + acc.otherIncome, 0),
+          accountsArray.reduce((total, acc) => total + acc.totalExpenses, 0),
+        ],
+        backgroundColor: ['#4CAF50', '#FFC107',  '#8979FF', '#2196F3'],
+        borderWidth: 1,
+      },
+    ],
   };
+
+  const pieChartOptions = {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            return `${label}: ₹ ${value.toLocaleString()}`;
+          },
+        },
+      },
+    },
+  };
+
+  const allMonths = [
+    'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025',
+    'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025',
+    'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025',
+  ];
+
+  const expensesMap = {};
+  accountsArray.forEach(item => {
+    expensesMap[item.monthYear] = item.totalExpenses;
+  });
+
+  const lineChartData = {
+    labels: allMonths,
+    datasets: [
+      {
+        label: 'Total Expenses',
+        data: allMonths.map(month => expensesMap[month] || 0),
+        borderColor: '#FF9F40',
+        backgroundColor: '#FF9F40',
+        fill: false,
+        tension: 0.4,
+        pointRadius: 5,
+      },
+    ],
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      tooltip: {
+        enabled: true,
+        usePointStyle: true,
+        callbacks: {
+          label: function (context) {
+            const value = context.parsed.y || 0;
+            return `₹ ${value.toLocaleString()}`;
+          },
+        },
+      },
+      legend: { display: true, position: 'top' },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function (value) {
+            return `₹ ${value}`;
+          },
+        },
+      },
+    },
+  };
+
 
   return (
     <div className="p-6 space-y-6">
@@ -212,10 +287,321 @@ const Accounts = () => {
       </div>
 
       <div className="flex justify-between gap-4">
-        <button className="bg-[#146192] text-white px-4 py-2 rounded">+ Add Revenue</button>
-        <button className="bg-[#146192] text-white px-4 py-2 rounded">+ Add Expense</button>
-      </div>
+        <button onClick={() => setIsIncomeModalOpen(true)} className="bg-[#146192] text-white px-4 py-2 rounded">+Add Income</button>
 
+
+        {/* Modal */}
+        {/* Modal */}
+        {isIncomeModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl p-6 relative">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6 border-b pb-2">
+                <h2 className="text-lg font-semibold">Add Income</h2>
+                <button
+                  onClick={() => setIsIncomeModalOpen(false)}
+                  className="text-red-500 text-xl font-bold"
+                >
+                  &times;
+                </button>
+              </div>
+
+              <form onSubmit={handleAddIncome} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm mb-1">Amount</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      value={incomeFormData.amount}
+                      onChange={handleIncomeChange}
+                      placeholder="eg. ₹300"
+                      className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Date</label>
+                    <input
+                      type="datetime-local"
+                      name="date"
+                      value={incomeFormData.date}
+                      onChange={handleIncomeChange}
+                      className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Purpose</label>
+                    <select
+                      name="purpose"
+                      value={incomeFormData.purpose}
+                      onChange={handleIncomeChange}
+                      className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                      required
+                    >
+                      <option value="">Select Purpose</option>
+                      <option value="Fees">Fees</option>
+                      {/* <option value="Transportation">Transportation</option> */}
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Source of Income</label>
+                    <select
+                      name="source"
+                      value={incomeFormData.source}
+                      onChange={handleIncomeChange}
+                      className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                      required
+                    >
+                      <option value="">Select Source</option>
+                      <option value="student">Student</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Reason field (if purpose is "Other") */}
+                {incomeFormData.purpose === "Other" && (
+                  <div>
+                    <label className="block text-sm mb-1">Reason</label>
+                    <textarea
+                      name="reason"
+                      value={incomeFormData.reason}
+                      onChange={handleIncomeChange}
+                      rows="2"
+                      placeholder="Optional"
+                      className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                    />
+                  </div>
+                )}
+
+                {/* Student fields (if source is "student") */}
+                {incomeFormData.source === "student" && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm mb-1">Name of Student</label>
+                        <input
+                          type="text"
+                          name="fullname"
+                          value={incomeFormData.fullname}
+                          onChange={handleIncomeChange}
+                          placeholder="Enter Name"
+                          className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Class</label>
+                        <input
+                          type="text"
+                          name="className"
+                          value={incomeFormData.className}
+                          onChange={handleIncomeChange}
+                          className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Section</label>
+                        <input
+                          type="text"
+                          name="section"
+                          value={incomeFormData.section}
+                          onChange={handleIncomeChange}
+                          className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm mb-1">Registration No.</label>
+                        <input
+                          type="text"
+                          name="registrationNumber"
+                          value={incomeFormData.registrationNumber}
+                          onChange={handleIncomeChange}
+                          className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Transaction ID</label>
+                        <input
+                          type="text"
+                          name="transactionId"
+                          value={incomeFormData.transactionId}
+                          onChange={handleIncomeChange}
+                          className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Other source fields (if source is "other") */}
+                {incomeFormData.source === "other" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm mb-1">Name</label>
+                      <input
+                        type="text"
+                        name="fullname"
+                        value={incomeFormData.fullname}
+                        onChange={handleIncomeChange}
+                        placeholder="Enter Name"
+                        className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Organization Name</label>
+                      <input
+                        type="text"
+                        name="organization"
+                        value={incomeFormData.organization}
+                        onChange={handleIncomeChange}
+                        placeholder="Enter Organization"
+                        className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Transaction ID</label>
+                      <input
+                        type="text"
+                        name="transactionId"
+                        value={incomeFormData.transactionId}
+                        onChange={handleIncomeChange}
+                        className="w-full border rounded px-3 py-2 bg-[#1461921A]"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex justify-between items-center mt-6">
+                  <button
+                    type="button"
+                    onClick={resetIncomeForm}
+                    className="text-blue-600 px-4 py-2 border border-blue-600 rounded"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-800 text-white px-6 py-2 rounded hover:bg-blue-900"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+
+        <button className="bg-[#146192] text-white px-4 py-2 rounded" onClick={() => setIsAddModalOpen(true)}>
+          + Add Expense
+        </button>
+      </div>
+      {/* Add Expense Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6 relative">
+            <div className="flex justify-between items-start border-b pb-2 mb-4">
+              <h2 className="text-lg font-semibold border-b-2 border-primary">Add Expenses</h2>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-red-500 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleAddExpense} className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    name="date"
+                    value={expenseFormData.date}
+                    onChange={handleExpenseChange}
+                    className="w-full px-3 py-2 border rounded bg-blue-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amount <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="amount"
+                    value={expenseFormData.amount}
+                    onChange={handleExpenseChange}
+                    className="w-full px-3 py-2 border rounded bg-blue-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Class</label>
+                  <input
+                    type="number"
+                    name="classs"
+                    value={expenseFormData.classs}
+                    onChange={handleExpenseChange}
+                    className="w-full px-3 py-2 border rounded bg-blue-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Section</label>
+                  <input
+                    type="text"
+                    name="section"
+                    value={expenseFormData.section}
+                    onChange={handleExpenseChange}
+                    className="w-full px-3 py-2 border rounded bg-blue-50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Purpose <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="purpose"
+                  value={expenseFormData.purpose}
+                  onChange={handleExpenseChange}
+                  rows="3"
+                  className="w-full px-3 py-2 border rounded bg-blue-50"
+                  required
+                ></textarea>
+              </div>
+
+              <div className="flex justify-between mt-6">
+                <button
+                  type="button"
+                  onClick={() => setExpenseFormData({ date: '', amount: '', classs: '', section: '', purpose: '' })}
+                  className="px-4 py-2 border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+                >
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Revenue Breakdown Pie Chart */}
         <div
@@ -237,10 +623,19 @@ const Accounts = () => {
               <span className="inline-block w-3 h-3 bg-[#FFC107] rounded-full mr-2"></span>
               Admission - ₹{accountsArray.reduce((total, acc) => total + acc.totalAdmissionFees, 0)}
             </li>
+            {/* <li>
+              <span className="inline-block w-3 h-3 bg-[#FF928A] rounded-full mr-2"></span>
+              Transportation - ₹{accountsArray.reduce((total, acc) => total + acc.totalTransportationFees, 0)}
+            </li> */}
+            <li>
+              <span className="inline-block w-3 h-3 bg-[#8979FF] rounded-full mr-2"></span>
+              Other - ₹{accountsArray.reduce((total, acc) => total + acc.otherIncome, 0)}
+            </li>
             <li>
               <span className="inline-block w-3 h-3 bg-[#2196F3] rounded-full mr-2"></span>
-              Inventory - ₹{accountsArray.reduce((total, acc) => total + acc.totalInventoryAmount, 0)}
+              Total Expenses - ₹{accountsArray.reduce((total, acc) => total + acc.totalExpenses, 0)}
             </li>
+
           </ul>
         </div>
 
@@ -256,7 +651,7 @@ const Accounts = () => {
 
           </div>
         </div>
-      </div>    
+      </div>
 
       <div className="mt-6">
         <h2 className="font-semibold text-lg border-b-2 border-[#146192] inline-block mb-4">
@@ -431,41 +826,126 @@ const Accounts = () => {
                 </tr>
               </thead>
               <tbody>
-                {revenueAndExpenses.revenue?.length > 0 ? (
-                  revenueAndExpenses.revenue.map((rev) => (
+                {revenueAndExpenses.income?.length > 0 ? (
+                  revenueAndExpenses.income.map((rev) => (
                     <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
                       <td className="p-2 border">
                         {new Date(rev.createdAt).toISOString().split("T")[0]}
                       </td>
                       <td className="p-2 border">
-                        {rev.purpose} {rev.itemName ? `(${rev.itemName})` : ''}
+                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
                       </td>
                       <td className="p-2 border">₹{rev.amount}</td>
                       <td className="p-2 border">
-                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || '-'}
+                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash'}
                       </td>
                       <td className="p-2 border">
-                        {rev.studentId?.studentProfile?.fullname || '-'}
+                        {rev.studentId?.studentProfile?.fullname}
+                        {rev.studentId?.studentProfile?.registrationNumber && (
+                          <> ({rev.studentId.studentProfile.registrationNumber})</>
+                        )}
+
+
                       </td>
                       <td className="p-2 border">{rev.class || '-'}</td>
                       <td className="p-2 border">{rev.section || '-'}</td>
                       <td className="p-2 border">
                         <button
                           className="text-blue-600 hover:text-blue-800 text-lg"
-                          onClick={() => handleEditExpense(rev)}
+
                         >
                           ✏️
                         </button>
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan="8" className="p-4 text-center text-gray-500">
-                      No revenue records available.
-                    </td>
-                  </tr>
-                )}
+                )
+                  : (
+                    <tr>
+                      <td colSpan="8" className="p-4 text-center text-gray-500">
+                        {/* No revenue records available. */}
+                      </td>
+                    </tr>
+                  )}
+
+                {revenueAndExpenses.otherIncome?.length > 0 ? (
+                  revenueAndExpenses.otherIncome.map((rev) => (
+                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
+                      <td className="p-2 border">
+                        {new Date(rev.date).toISOString().split("T")[0]}
+                      </td>
+                      <td className="p-2 border">
+                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
+                      </td>
+                      <td className="p-2 border">₹{rev.amount}</td>
+                      <td className="p-2 border">
+                        {rev.transactionId ? rev.transactionId : 'Cash'}
+                      </td>
+                      <td className="p-2 border">
+                        <div>
+                          <p>{rev.fullname}</p>
+                          {rev.source === "student" ? `(${rev.registrationNumber})` : `(${rev.organization})`}
+                        </div>
+
+
+                      </td>
+                      <td className="p-2 border">{rev.class || '-'}</td>
+                      <td className="p-2 border">{rev.section || '-'}</td>
+                      <td className="p-2 border">
+                        <button
+                          className="text-blue-600 hover:text-blue-800 text-lg"
+
+                        >
+                          ✏️
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )
+                  : (
+                    <tr>
+                      <td colSpan="8" className="p-4 text-center text-gray-500">
+                        {/* No revenue records available. */}
+                      </td>
+                    </tr>
+                  )}
+
+                {revenueAndExpenses.admissions?.length > 0 ? (
+                  revenueAndExpenses.admissions.map((rev) => (
+                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
+                      <td className="p-2 border">
+                        {new Date(rev.createdAt).toISOString().split("T")[0]}
+                      </td>
+                      <td className="p-2 border">
+                        {'New Admission'}
+                      </td>
+                      <td className="p-2 border">₹{rev.studentDetails.admissionFees}</td>
+                      <td className="p-2 border">
+                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || '-'}
+                      </td>
+                      <td className="p-2 border">
+                        {rev.studentDetails.firstName} {rev.studentDetails.lastName}
+                      </td>
+                      <td className="p-2 border">{rev.studentDetails.classToJoin || '-'}</td>
+                      <td className="p-2 border">{'-'}</td>
+                      <td className="p-2 border">
+                        <button
+                          className="text-blue-600 hover:text-blue-800 text-lg"
+
+                        >
+                          ✏️
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )
+                  : (
+                    <tr>
+                      <td colSpan="8" className="p-4 text-center text-gray-500">
+                        {/* No revenue records available. */}
+                      </td>
+                    </tr>
+                  )}
               </tbody>
             </table>
           </div>
