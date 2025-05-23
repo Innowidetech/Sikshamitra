@@ -71,6 +71,6 @@ router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 router.post('/income', protect, authorize('admin'), addSchoolIncome);
 router.post('/income/:id', protect, authorize('admin'), editSchoolIncome);
-router.get('/income', protect, authorize('admin'), getUpdatedSchoolIncomeHistory);
+router.get('/updatedIncomeHistory', protect, authorize('admin'), getUpdatedSchoolIncomeHistory);
     
 module.exports = router;
