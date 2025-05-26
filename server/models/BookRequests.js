@@ -24,7 +24,11 @@ const BookRequestsSchema = new mongoose.Schema({
     borrowedOn:Date,
     dueOn:Date,
     returnedOn:Date,
-    fine:Number // late return of book
+    fine:{ // late return of book
+        type:Number,
+        required:true,
+        default:0
+    } 
 }, { timestamps: true });
 
 module.exports = mongoose.model('BookRequests', BookRequestsSchema);

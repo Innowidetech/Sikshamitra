@@ -36,31 +36,33 @@ exports.getAllSchoolsName = async (req, res) => {
 
 exports.applyOffline = async (req, res) => {
     try {
-        const { firstName, lastName, email, phoneNumber, dob, address, schoolName } = req.body;
-        if (!firstName || !lastName || !phoneNumber || !dob || !address || !schoolName) {
+        const { fullname, className, email, phoneNumber, dob, address, schoolName } = req.body;
+        if (!fullname || !className || !phoneNumber || !dob || !address || !schoolName) {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
+        
+        const existingUser = await User.findOne({ email: studentDetails.email });
+        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
 
         const schoolExists = await School.findOne({ schoolName: schoolName }).populate('userId');
         if (!schoolExists) {
             return res.status(400).json({ message: 'Invalid school name. Please select a valid school.' });
         };
 
-        const newApplication = new Offline({ firstName, lastName, email, phoneNumber, dob, address, schoolName });
         let schoolEmail = schoolExists.userId.email;
         let schoolCode = schoolExists.schoolCode;
         let schoolContact = schoolExists.contact.phone;
         let schoolWebsite = schoolExists.contact.website;
         let schoolAddress = schoolExists.address;
+        // await sendEmail(schoolEmail, email, `New offline applicaion - ${fullname}`, offlineTemplete(fullname, className, address, dob, email, phoneNumber, schoolName));
+        await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
 
-        // await sendEmail(schoolEmail, email, `New offline applicaion - ${firstName} ${lastName}`, offlineTemplete(firstName, lastName, address, dob, email, phoneNumber, schoolName));
-        await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(firstName, lastName, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
-
+        const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName });
         await newApplication.save();
 
         res.status(200).json({
             message: `Application submitted successfully and notified to ${schoolName}, please wait until they review your application and contact you.`,
-            'schoolName': schoolExists.schoolName, 'schoolCode': schoolExists.schoolCode, 'schoolContact':schoolExists.contact.phone, 'website':schoolExists.contact.website, 'schoolEmail':schoolExists.userId.email, 'schoolAddress':schoolExists.address,
+            'schoolName': schoolExists.schoolName, 'schoolCode': schoolExists.schoolCode, 'schoolContact': schoolExists.contact.phone, 'website': schoolExists.contact.website, 'schoolEmail': schoolExists.userId.email, 'schoolAddress': schoolExists.address,
             Application: newApplication,
         });
     }
@@ -105,9 +107,7 @@ exports.applyOnline = async (req, res) => {
         const parentDetails = JSON.parse(req.body.parentDetails);
 
         const existingUser = await User.findOne({ email: studentDetails.email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' });
-        }
+        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
         const files = req.files;
         if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
             return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, parentDocuments)' });

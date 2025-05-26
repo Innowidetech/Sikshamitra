@@ -31,7 +31,8 @@ const mongoose = require('mongoose');
 const classUpdateTemplate = require('../utils/classUpdateTemplate');
 const formatTimeToIST = require('../utils/formatTimeToIST');
 const SchoolIncome = require('../models/SchoolIncome');
-const SchoolIncomeUpdates = require('../models/SchoolIncomeUpdates')
+const SchoolIncomeUpdates = require('../models/SchoolIncomeUpdates');
+const ApplyOffline = require('../models/applyOffline');
 
 
 //get profile
@@ -1099,14 +1100,7 @@ exports.updateTeacherData = async (req, res) => {
 //create student and parent account by the teacher or school/admin
 exports.createStudentAndParent = async (req, res) => {
   try {
-    const {
-      email,
-      parentEmail,
-      password,
-      parentPassword,
-      studentProfile,
-      parentProfile,
-    } = req.body;
+    const { email, parentEmail, password, parentPassword, studentProfile, parentProfile } = req.body;
 
     if (!email || !parentEmail || !parentPassword || !password || !studentProfile || !parentProfile) {
       return res.status(400).json({ message: 'Please provide all the required details.' });
@@ -1953,6 +1947,53 @@ exports.getNewAdmissions = async (req, res) => {
 };
 
 
+exports.getAdmissionRequests = async(req,res)=>{
+  try{
+    const loggedInId = req.user && req.user.id;
+    if(!loggedInId){ return res.status(401).json({message:"Unauthorized."})}
+
+    const loggedInUser = await User.findById(loggedInId)
+    if(!loggedInUser || loggedInUser.role!=='admin'){ return res.status(403).json({message:"Access Denied. Only logged-in users can access."})}
+
+    const school = await School.findOne({userId:loggedInId});
+    if(!school){ return res.status(404).json({message:"The logged-in admin is not associated with any school."})}
+
+    const onlineRequests = await ApplyOnline.find({'studentDetails.schoolName':school.schoolName}).sort({createdAt:-1});
+    const offlineRequests = await ApplyOffline.find({schoolName:school.schoolName}).sort({createdAt:-1});
+    res.status(200).json({onlineRequests, offlineRequests});
+  }
+  catch(err){
+    return res.status(500).json({message:"Internal server error.", error:err.message})
+  }
+};
+
+
+// exports.createInstantAccount = async(req,res)=>{
+//   try{
+//     const loggedInId = req.user && req.user.id;
+//     if(!loggedInId){ return res.status(401).json({message:"Unauthorized."})}
+
+//     const loggedInUser = await User.findById(loggedInId)
+//     if(!loggedInUser || loggedInUser.role!=='admin'){ return res.status(403).json({message:"Access Denied. Only logged-in users can access."})}
+
+//     const school = await School.findOne({userId:loggedInId});
+//     if(!school){ return res.status(404).json({message:"The logged-in admin is not associated with any school."})}
+
+//     const {id} = req.params;
+//     if(!id || !mongoose.Types.ObjectId.isValid(id)){ return res.status(400).json({message:'The admission request id is not valid.'})}
+
+//     const onlineAdmissionRequest = await ApplyOnline.findOne({_id:id, 'studentDetails.schoolName':school.schoolName});
+//     if(!onlineAdmissionRequest){ return res.status(404).json({message:"No online application request found with the id in this school."})}
+
+
+//     res.status(200).json({onlineRequests, offlineRequests});
+//   }
+//   catch(err){
+//     return res.status(500).json({message:"Internal server error.", error:err.message})
+//   }
+// };
+
+
 exports.addEmployee = async (req, res) => {
   try {
     const { name, role, department, mobileNumber, salary } = req.body;
@@ -2200,14 +2241,17 @@ exports.getAimObjective = async (req, res) => {
     }
     else if (loggedInUser.role === 'teacher') {
       const teacher = await Teacher.findOne({ userId: loggedInId })
-      schoolId = teacher.schoolId
+      schoolId = teacher.schoolId;
+      if(!teacher.schoolId){ return res.status(404).json({message:"Teacher is not associated with any school."})}
     }
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId })
-      schoolId = student.schoolId
+      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
+      schoolId = student.schoolId;
     }
     else if (loggedInUser.role === 'parent') {
       const parent = await Parent.findOne({ userId: loggedInId })
+      if(!parent.schoolId){ return res.status(404).json({message:"Parent is not associated with any school."})}
       schoolId = parent.schoolId
     }
 
@@ -2368,6 +2412,7 @@ exports.getBooks = async (req, res) => {
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId });
       if (!student) { return res.status(404).json({ message: 'No student found with the loggedin id.' }) }
+      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
       schoolId = student.schoolId;
     }
     else {
@@ -2871,7 +2916,6 @@ exports.getNotice = async (req, res) => {
       if (!student) {
         return res.status(404).json({ message: 'No student found with the logged-in id.' })
       };
-
       const school = await School.findById(student.schoolId);
       if (!school) {
         return res.status(404).json({ message: "Student is not associated with any school." })
@@ -3167,6 +3211,7 @@ exports.getDynamicCalendar = async (req, res) => {
       if (!student) return res.status(404).json({ message: "No student found with the logged-in id." });
 
       const school = await School.findById(student.schoolId);
+      if(!school){ return res.status(404).json({message:"Student is not associated with any school."})}
       const teacher = await Teacher.findOne({
         schoolId: student.schoolId,
         'profile.class': student.studentProfile.class,
@@ -3441,6 +3486,7 @@ exports.getDynamicCalendarByDate = async (req, res) => {
       if (!student) return res.status(404).json({ message: "No student found with the logged-in id." });
 
       const school = await School.findById(student.schoolId);
+      if(!school){ return res.status(404).json({message:"Student is not associated with any school."})}
       const teacher = await Teacher.findOne({
         schoolId: student.schoolId,
         'profile.class': student.studentProfile.class,
@@ -4004,6 +4050,7 @@ exports.addSchoolIncome = async (req, res) => {
       if (!registrationNumber || !className) { return res.status(400).json({ message: "Please provide student registration number and class." }) }
       const student = await Student.findOne({ schoolId, 'studentProfile.registrationNumber': registrationNumber });
       if (!student) { return res.status(404).json({ message: "No student found with the registration number in this school." }) }
+      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
       studentId = student._id
 
       const parent = await Parent.findOne({ schoolId, userId: student.studentProfile.childOf });

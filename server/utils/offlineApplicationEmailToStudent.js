@@ -1,6 +1,6 @@
 const offlineApplicationStudentTemplate = (
-  firstName,
-  lastName,
+  fullname,
+  className,
   address,
   dob,
   email,
@@ -85,14 +85,14 @@ const offlineApplicationStudentTemplate = (
     <div class="container">
         <h1>Thank You for Applying to ${schoolName}</h1>
         <div class="content">
-            <p>Dear <strong>${firstName} ${lastName}</strong>,</p>
+            <p>Dear <strong>${fullname}</strong>,</p>
             <p>Thank you for your interest in <strong>${schoolName}</strong>. We have successfully received your offline application. Below is a copy of your application for your reference:</p>
 
             <div class="divider"></div>
 
             <p class="section-title">Application Details:</p>
-            <p><strong>First Name:</strong> ${firstName}</p>
-            <p><strong>Last Name:</strong> ${lastName}</p>
+            <p><strong>Name:</strong> ${fullname}</p>
+            <p><strong>Class To Join:</strong> ${className}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Phone Number:</strong> ${phoneNumber}</p>
             <p><strong>Address:</strong> ${address}</p>
