@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const offlineSchema = new mongoose.Schema({
-        firstName: {
+        fullname: {
             type: String,
             required: true
         },
-        lastName: {
-            type: String,
+        class: {
+            type: Number,
             required: true
         },
         email:{

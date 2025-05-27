@@ -8,6 +8,7 @@ const studentDataUpdatesSchema = new mongoose.Schema({
   },
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref:'Student',
     required: true,
   },
   previousData: {

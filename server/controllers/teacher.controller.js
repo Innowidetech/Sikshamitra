@@ -13,8 +13,6 @@ const { uploadImage } = require('../utils/multer');
 const Exams = require('../models/Exams');
 const Results = require('../models/Results');
 const School = require('../models/School');
-const Book = require('../models/Books');
-const BookRequests = require('../models/BookRequests');
 const ClassPlan = require('../models/ClassPlan');
 const SubmitAssignment = require('../models/SubmitAssignment');
 const Lectures = require('../models/Lectures');
@@ -168,7 +166,7 @@ exports.getStudentsOfTeacher = async (req, res) => {
         const filteredParents = parents.filter(parent => parent.parentProfile.parentOf.length > 0);
 
         if (filteredParents.length === 0) {
-            return res.status(404).json({ message: "No students found for this school, class, and section." });
+            return res.status(404).json({ message: "No students found for your class." });
         }
 
         res.status(200).json({
@@ -1663,58 +1661,60 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
-exports.getClassAndSectionForClassplan = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
+// exports.getClassAndSectionForClassplan = async (req, res) => {
+//     try {
+//         const loggedInId = req.user && req.user.id;
+//         if (!loggedInId) {
+//             return res.status(401).json({ message: 'Unauthorized' });
+//         }
 
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'teacher') {
-            return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
-        }
-        const teacher = await Teacher.findOne({ userId: loggedInId });
-        if (!teacher) {
-            return res.status(404).json({ message: "No teacher found with the logged-in id." });
-        }
+//         const loggedInUser = await User.findById(loggedInId);
+//         if (!loggedInUser || loggedInUser.role !== 'teacher') {
+//             return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
+//         }
+//         const teacher = await Teacher.findOne({ userId: loggedInId });
+//         if (!teacher) {
+//             return res.status(404).json({ message: "No teacher found with the logged-in id." });
+//         }
 
-        const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
+//         const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
 
-        const assigned = new Set();
+//         const assigned = new Set();
 
-        for (const timetable of timetables) {
-            const days = Object.keys(timetable.timetable);
+//         for (const timetable of timetables) {
+//             const days = Object.keys(timetable.timetable);
 
-            for (const day of days) {
-                const slots = timetable.timetable[day];
+//             for (const day of days) {
+//                 const slots = timetable.timetable[day];
 
-                if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
-                    assigned.add(`${timetable.class}__${timetable.section}`);
-                    // break; // No need to check other days if already assigned
-                }
-            }
-        }
+//                 if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
+//                     assigned.add(`${timetable.class}__${timetable.section}`);
+//                     // break; // No need to check other days if already assigned
+//                 }
+//             }
+//         }
 
-        if (assigned.size === 0) {
-            return res.status(404).json({ message: "No class or section class plans found for the teacher." });
-        }
+//         if (assigned.size === 0) {
+//             return res.status(404).json({ message: "No class or section class plans found for the teacher." });
+//         }
 
-        const results = Array.from(assigned).map(entry => {
-            const [className, section] = entry.split('__');
-            return { class: className, section };
-        });
+//         const results = Array.from(assigned).map(entry => {
+//             const [className, section] = entry.split('__');
+//             return { class: className, section };
+//         });
 
-        return res.status(200).json({ assignedClasses: results });
+//         return res.status(200).json({ assignedClasses: results });
 
-    } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
-    }
-};
+//     } catch (err) {
+//         res.status(500).json({
+//             message: 'Internal server error',
+//             error: err.message,
+//         });
+//     }
+// };
 
+
+//get class and sections for filter from - teacher lectures
 exports.getClassPlan = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
@@ -2202,166 +2202,6 @@ exports.getResultById = async (req, res) => {
             message: 'Internal server error.',
             error: err.message,
         })
-    }
-};
-
-exports.issueBook = async (req, res) => {
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
-        };
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser) {
-            return res.status(403).json({ message: 'Access denied. Only logged-in users have the access to issue book to students.' });
-        };
-
-        const { requestId } = req.params;
-        if (!requestId) {
-            return res.status(400).json({ message: 'Please provide requestId.' })
-        };
-
-        const { status, dueOn } = req.body;
-        if (!status) { return res.status(400).json({ message: "Please provide status to update book issue." }) }
-
-        let schoolId;
-
-        if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ userId: loggedInId })
-            if (!school) { return res.status(404).json({ message: "No school is associated with the logged-in admin." }) }
-            schoolId = school._id
-        }
-        else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
-            const teacher = await Teacher.findOne({ userId: loggedInId });
-            if (!teacher) {
-                return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
-            };
-            schoolId = teacher.schoolId
-        }
-        else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
-
-        const bookRequest = await BookRequests.findOne({ _id: requestId, schoolId }).populate('book');
-        if (!bookRequest) {
-            return res.status(404).json({ message: 'No book request found.' })
-        };
-
-        if (status == 'accepted' || status == 'rejected') {
-            bookRequest.status = status
-            await bookRequest.save()
-            return res.status(200).json({ message: "Response sent to student successfully.", bookRequest })
-        }
-
-        const book = await Book.findOne({ _id: bookRequest.book._id, schoolId });
-        if (book.availability == false) {
-            return res.status(400).json({ message: 'The book is already issued to another student.' });
-        }
-
-        if (status == 'issued') {
-            if (!dueOn) {
-                return res.status(400).json({ message: "Please provide due date to issue book." })
-            }
-        }
-        book.availability = false;
-        await book.save();
-
-        bookRequest.status = status;
-        bookRequest.borrowedOn = new Date();
-        bookRequest.dueOn = dueOn;
-        await bookRequest.save();
-
-        res.status(200).json({
-            message: 'Book issued to the student successfully.',
-            bookRequest
-        });
-    }
-    catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
-    }
-};
-
-
-exports.returnBook = async (req, res) => {
-    try {
-        const { requestId } = req.params;
-        if (!requestId) {
-            return res.status(400).json({ message: 'Please provide a requestId' })
-        };
-
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized. Only logged-in users can perform this action.' });
-        };
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser) {
-            return res.status(403).json({ message: 'Access denied. Only logged-in users have the access.' });
-        };
-
-        let schoolId, fineAmount;
-
-        if (loggedInUser.role === 'admin') {
-            const school = await School.findOne({ userId: loggedInId });
-            if (!school) {
-                return res.status(404).json({ message: 'No school is associated with the logged-in admin.' })
-            }
-            schoolId = school._id
-        }
-        else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'librarian') {
-            const employee = await Teacher.findOne({ userId: loggedInId });
-            if (!employee) {
-                return res.status(404).json({ message: 'No employee found with the logged-in id.' })
-            };
-            schoolId = employee.schoolId
-        }
-        else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to edit book availability." }) }
-
-        const bookRequest = await BookRequests.findOne({ _id: requestId, schoolId }).populate('book');
-        if (!bookRequest) {
-            return res.status(404).json({ message: 'No book request found.' })
-        };
-
-        const book = await Book.findOne({ _id: bookRequest.book._id, schoolId });
-        if (!book) {
-            return res.status(404).json({ message: 'No book found.' })
-        };
-
-        if (book.availability) {
-            return res.status(404).json({ message: 'Book is not issued to any student.' })
-        };
-
-        bookRequest.returnedOn = new Date().toISOString().split('T')[0];
-        if (bookRequest.returnedOn > bookRequest.dueOn) {
-            fineAmount = req.body.fine;
-
-            if (fineAmount) {
-                bookRequest.fine = fineAmount;
-            } else {
-                return res.status(400).json({ message: "'Fine' amount is required for late returns." });
-            }
-        }
-        bookRequest.status = 'returned'
-        bookRequest.save();
-
-        book.availability = true;
-        book.save();
-
-        const student = await Student.findById(bookRequest.requestedBy);
-        student.studentProfile.additionalFees += fineAmount
-        await student.save()
-        res.status(200).json({
-            message: 'Book is returned and the book availability is now set to true.',
-            bookRequest
-        });
-    }
-    catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
     }
 };
 

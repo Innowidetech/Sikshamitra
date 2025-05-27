@@ -10,7 +10,8 @@ const Online = require('../models/applyOnline');
 const { uploadImage } = require('../utils/multer');
 const ClassWiseFees = require('../models/ClassWiseFees');
 require('dotenv').config();
-const Blogs= require('../models/Blogs');
+const Blogs = require('../models/Blogs');
+const offlineApplicationStudentTemplate = require('../utils/offlineApplicationEmailToStudent');
 
 
 exports.getAllSchoolsName = async (req, res) => {
@@ -35,36 +36,34 @@ exports.getAllSchoolsName = async (req, res) => {
 
 exports.applyOffline = async (req, res) => {
     try {
-        const { firstName, lastName, email, phoneNumber, dob, address, schoolName } = req.body;
-        if (!firstName || !lastName || !phoneNumber || !dob || !address || !schoolName) {
+        const { fullname, className, email, phoneNumber, dob, address, schoolName } = req.body;
+        if (!fullname || !className || !phoneNumber || !dob || !address || !schoolName) {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
+        
+        const existingUser = await User.findOne({ email: studentDetails.email });
+        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
 
-        const schoolExists = await School.findOne({ schoolName: schoolName });
+        const schoolExists = await School.findOne({ schoolName: schoolName }).populate('userId');
         if (!schoolExists) {
             return res.status(400).json({ message: 'Invalid school name. Please select a valid school.' });
         };
 
-        const newApplication = new Offline({
-            firstName,
-            lastName,
-            email,
-            phoneNumber,
-            dob,
-            address,
-            schoolName,
-        });
+        let schoolEmail = schoolExists.userId.email;
+        let schoolCode = schoolExists.schoolCode;
+        let schoolContact = schoolExists.contact.phone;
+        let schoolWebsite = schoolExists.contact.website;
+        let schoolAddress = schoolExists.address;
+        // await sendEmail(schoolEmail, email, `New offline applicaion - ${fullname}`, offlineTemplete(fullname, className, address, dob, email, phoneNumber, schoolName));
+        await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
 
+        const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName });
         await newApplication.save();
 
-        const user = await User.findById(schoolExists.userId);
-        const adminEmail = user.email;
-
-        await sendEmail(adminEmail, email, `New offline applicaion - ${firstName} ${lastName}`, offlineTemplete(firstName, lastName, address, dob, email, phoneNumber, schoolName));
-
         res.status(200).json({
-            message: `Application submitted successfully and notified to ${schoolName}.`,
-            newApplication,
+            message: `Application submitted successfully and notified to ${schoolName}, please wait until they review your application and contact you.`,
+            'schoolName': schoolExists.schoolName, 'schoolCode': schoolExists.schoolCode, 'schoolContact': schoolExists.contact.phone, 'website': schoolExists.contact.website, 'schoolEmail': schoolExists.userId.email, 'schoolAddress': schoolExists.address,
+            Application: newApplication,
         });
     }
     catch (err) {
@@ -107,12 +106,14 @@ exports.applyOnline = async (req, res) => {
         const educationDetails = JSON.parse(req.body.educationDetails);
         const parentDetails = JSON.parse(req.body.parentDetails);
 
+        const existingUser = await User.findOne({ email: studentDetails.email });
+        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
         const files = req.files;
-        if (!files || !files.studentPhoto || !files.educationDocuments || !files.aadharCard || !files.voterId || !files.panCard) {
-            return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, educationDocuments, parentDocuments)' });
+        if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
+            return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, parentDocuments)' });
         };
 
-        if (!studentDetails || !educationDetails || !parentDetails) {
+        if (!studentDetails || !parentDetails) {
             return res.status(400).json({ message: 'Missing data fields.' });
         };
 
@@ -121,8 +122,9 @@ exports.applyOnline = async (req, res) => {
             return res.status(404).json({ message: 'School not found' });
         };
 
-        const classWiseFees = await ClassWiseFees.findOne({ schoolId: school._id, class: studentDetails.classToJoin })
-        let applicationFee = Number(classWiseFees.admissionFees);
+        const classWiseFees = await ClassWiseFees.findOne({ schoolId: school._id, class: studentDetails.classToJoin });
+        if (!classWiseFees) { return res.status(404).json({ message: "No admission fees found for the class to join, please contact the school." }) }
+        let applicationFee = classWiseFees.admissionFees;
 
         let uploadedImages = await uploadImage(files.studentPhoto.concat(files.educationDocuments, files.aadharCard, files.voterId, files.panCard));
 
@@ -259,13 +261,13 @@ exports.verifyRazorpayPayment = async (req, res) => {
 };
 
 
-exports.getBlogs = async(req,res)=>{
-    try{
-        const blogs = await Blogs.find().sort({createdAt:-1})
-        if(!blogs.length){
-            return res.status(404).json({message:"No blogs posted yet."})
+exports.getBlogs = async (req, res) => {
+    try {
+        const blogs = await Blogs.find().sort({ createdAt: -1 })
+        if (!blogs.length) {
+            return res.status(404).json({ message: "No blogs posted yet." })
         }
-        res.status(200).json({blogs});
+        res.status(200).json({ blogs });
     }
     catch (error) {
         res.status(500).json({
