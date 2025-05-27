@@ -5,11 +5,13 @@ const initialState = {
   accounts: [],
   revenueAndExpenses: {},
   teacherRequests: [],
+  updatedIncomeHistory: [],
   status: 'idle',
   error: null,
   errorAccounts: null,
   errorRevenue: null,
   errorTeacherRequests: null,
+  errorIncomeHistory: null,
 };
 
 // Get token
@@ -66,6 +68,24 @@ export const fetchTeacherRequests = createAsyncThunk(
     if (!response.ok) throw new Error('Failed to fetch teacher requests');
     const data = await response.json();
     return data.teacherRequests || [];
+  }
+);
+
+// Fetch updated income history
+export const fetchUpdatedIncomeHistory = createAsyncThunk(
+  'accounts/fetchUpdatedIncomeHistory',
+  async () => {
+    const token = getToken();
+    const response = await fetch('https://sikshamitra.onrender.com/api/admin/updatedIncomeHistory', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to fetch updated income history');
+    const data = await response.json();
+    return data.updatedIncomeHistory || [];
   }
 );
 
@@ -133,7 +153,7 @@ export const deleteExpense = createAsyncThunk(
   }
 );
 
-// ✅ Post a new expense
+// Post a new expense
 export const postExpense = createAsyncThunk(
   'accounts/postExpense',
   async (expenseData, { rejectWithValue }) => {
@@ -159,7 +179,7 @@ export const postExpense = createAsyncThunk(
   }
 );
 
-// ✅ Post a new income
+// Post a new income
 export const postIncome = createAsyncThunk(
   'accounts/postIncome',
   async (incomeData, { rejectWithValue }) => {
@@ -177,6 +197,34 @@ export const postIncome = createAsyncThunk(
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData.message || 'Failed to post income');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Edit income
+export const editIncome = createAsyncThunk(
+  'accounts/editIncome',
+  async ({ incomeId, incomeData }, { rejectWithValue }) => {
+    const token = getToken();
+    try {
+      const response = await fetch(`https://sikshamitra.onrender.com/api/admin/income/${incomeId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(incomeData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || 'Failed to edit income');
       }
 
       const data = await response.json();
@@ -233,23 +281,26 @@ const accountSlice = createSlice({
         state.errorTeacherRequests = action.error.message;
       })
 
-      .addCase(updateTeacherRequest.pending, (state) => {
+      .addCase(fetchUpdatedIncomeHistory.pending, (state) => {
         state.status = 'loading';
+        state.errorIncomeHistory = null;
       })
+      .addCase(fetchUpdatedIncomeHistory.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.updatedIncomeHistory = action.payload;
+      })
+      .addCase(fetchUpdatedIncomeHistory.rejected, (state, action) => {
+        state.status = 'failed';
+        state.errorIncomeHistory = action.error.message;
+      })
+
       .addCase(updateTeacherRequest.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.teacherRequests = state.teacherRequests.map((req) =>
           req.id === action.payload.id ? action.payload : req
         );
       })
-      .addCase(updateTeacherRequest.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      })
 
-      .addCase(editExpense.pending, (state) => {
-        state.status = 'loading';
-      })
       .addCase(editExpense.fulfilled, (state, action) => {
         state.status = 'succeeded';
         const updated = action.payload;
@@ -259,14 +310,7 @@ const accountSlice = createSlice({
           );
         }
       })
-      .addCase(editExpense.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      })
 
-      .addCase(deleteExpense.pending, (state) => {
-        state.status = 'loading';
-      })
       .addCase(deleteExpense.fulfilled, (state, action) => {
         state.status = 'succeeded';
         const id = action.payload;
@@ -276,15 +320,7 @@ const accountSlice = createSlice({
           );
         }
       })
-      .addCase(deleteExpense.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
-      })
 
-      .addCase(postExpense.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
       .addCase(postExpense.fulfilled, (state, action) => {
         state.status = 'succeeded';
         if (Array.isArray(state.revenueAndExpenses.expenses)) {
@@ -293,16 +329,7 @@ const accountSlice = createSlice({
           state.revenueAndExpenses.expenses = [action.payload];
         }
       })
-      .addCase(postExpense.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload || action.error.message;
-      })
 
-      // ✅ Handle postIncome
-      .addCase(postIncome.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
       .addCase(postIncome.fulfilled, (state, action) => {
         state.status = 'succeeded';
         if (Array.isArray(state.revenueAndExpenses.revenue)) {
@@ -311,7 +338,21 @@ const accountSlice = createSlice({
           state.revenueAndExpenses.revenue = [action.payload];
         }
       })
-      .addCase(postIncome.rejected, (state, action) => {
+
+      .addCase(editIncome.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(editIncome.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        const updated = action.payload;
+        if (Array.isArray(state.revenueAndExpenses.revenue)) {
+          state.revenueAndExpenses.revenue = state.revenueAndExpenses.revenue.map((rev) =>
+            rev.id === updated.id ? updated : rev
+          );
+        }
+      })
+      .addCase(editIncome.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error.message;
       });

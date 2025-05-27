@@ -71,7 +71,6 @@ const store = configureStore({
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer,
     accounts: accountReducer,
-
     expenses:expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
@@ -83,31 +82,16 @@ const store = configureStore({
     syllabusView : syllabusViewSliceReducer,
     classPlan : classPlanSliceReducer,
     results : resultSliceReducer,
-   
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
-
     myStudents: myStudentsReducer,
-    // assignments: assignmentsReducer,
+    assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
     lecture: lectureSlice,
-    // students: myStudentsReducer,
-    assignments: assignmentsReducer,
-    // lecture: lectureSliceReducer,
-   
-     // tcurriculum: tcurriculumSliceReducer, 
-   },
-
-    // students: myStudentsReducer,
-    
-
-    // tcurriculum: tcurriculumSliceReducer, 
-
-   
-    // lecture: lectureSliceReducer,
     teacherResults: teacherResultsReducer,
     teacherAttendance: teaAttendanceReducer,
+   },
 });
 
 export default store;  

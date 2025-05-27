@@ -16,9 +16,13 @@ import Results from './Results';
 import Curriculam from './Curriculam';
 import Header from './layout/Header';
 import AdminProfile from './AdminProfile';
+import StudentHistory from './StudentHistory';
+import AccountHistory from './AccountHistory'; // ✅ Import
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [studentsSubTab, setStudentsSubTab] = useState('default');
+    const [accountSubTab, setAccountSubTab] = useState('default'); // ✅ New state
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -30,6 +34,8 @@ const MainDashboard = () => {
 
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
+        setStudentsSubTab('default');
+        setAccountSubTab('default'); // ✅ Reset account sub-tab
         if (location.pathname === '/admin/profile') {
             navigate('/admin');
         }
@@ -39,7 +45,7 @@ const MainDashboard = () => {
         if (location.pathname === '/admin/profile') {
             return <AdminProfile />;
         }
-        
+
         switch (activeTab) {
             case 'dashboard':
                 return <AdminDashboard />;
@@ -48,11 +54,15 @@ const MainDashboard = () => {
             case 'teachers':
                 return <Teachers />;
             case 'students':
-                return <Students />;
+                return studentsSubTab === 'history'
+                    ? <StudentHistory goBack={() => setStudentsSubTab('default')} />
+                    : <Students openHistory={() => setStudentsSubTab('history')} />;
             case 'parents':
                 return <Parents />;
             case 'accounts':
-                return <Accounts />;
+                return accountSubTab === 'history'
+                    ? <AccountHistory goBack={() => setAccountSubTab('default')} />
+                    : <Accounts openHistory={() => setAccountSubTab('history')} />;
             case 'inventory':
                 return <Inventory />;
             case 'library':
@@ -79,7 +89,7 @@ const MainDashboard = () => {
                 activeTab={activeTab}
             />
             <main className="flex-1 md:ml-64 overflow-y-auto">
-                <Header  />
+                <Header />
                 <div className="mt-20 md:mt-16">
                     {renderContent()}
                 </div>

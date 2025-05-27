@@ -9,6 +9,8 @@ import {
   deleteExpense,
   postExpense,
   postIncome,
+  editIncome,
+
 } from '../../redux/accountSlice';
 import Header from './layout/Header';
 import { Pie, Line } from 'react-chartjs-2';
@@ -33,7 +35,7 @@ Chart.register(
   Legend
 );
 
-const Accounts = () => {
+const Accounts = ({ openHistory }) => {
   const dispatch = useDispatch();
   const { accounts, revenueAndExpenses, teacherRequests, status, error } = useSelector(
     (state) => state.accounts
@@ -47,7 +49,8 @@ const Accounts = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editFormData, setEditFormData] = useState({ purpose: '', amount: '' });
-
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [expenseFormData, setExpenseFormData] = useState({
     title: '',
@@ -197,7 +200,7 @@ const Accounts = () => {
           accountsArray.reduce((total, acc) => total + acc.otherIncome, 0),
           accountsArray.reduce((total, acc) => total + acc.totalExpenses, 0),
         ],
-        backgroundColor: ['#4CAF50', '#FFC107',  '#8979FF', '#2196F3'],
+        backgroundColor: ['#4CAF50', '#FFC107', '#8979FF', '#2196F3'],
         borderWidth: 1,
       },
     ],
@@ -792,7 +795,7 @@ const Accounts = () => {
       </div>
       {selectedChartSection === 'revenue' && (
         <div className="overflow-x-auto mt-8 ">
-          <h2 className="text-xl font-medium text-[#146192] mb-2">Revenue Table</h2>
+          <h2 className="text-xl font-medium text-[#146192] mb-2">School Income</h2>
 
           {/* Filters (Optional — Add if needed, like you did for Teacher Requests) */}
           <div className="flex flex-wrap gap-4 justify-end mb-2">
@@ -800,15 +803,26 @@ const Accounts = () => {
               <option>Purpose</option>
               {/* Add dynamic purpose options */}
             </select>
+
             <select className="border border-gray-300 rounded px-2 py-1 text-sm">
               <option>Class</option>
               {/* Add dynamic class options */}
             </select>
+
             <select className="border border-gray-300 rounded px-2 py-1 text-sm">
               <option>Section</option>
               {/* Add dynamic section options */}
             </select>
+
+
+            <button
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition"
+              onClick={openHistory}
+            >
+              Updated History
+            </button>
           </div>
+
 
           {/* Revenue Table */}
           <div className="overflow-auto rounded-xl shadow-md">
@@ -826,132 +840,281 @@ const Accounts = () => {
                 </tr>
               </thead>
               <tbody>
-                {revenueAndExpenses.income?.length > 0 ? (
-                  revenueAndExpenses.income.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.createdAt).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
-                      </td>
-                      <td className="p-2 border">₹{rev.amount}</td>
-                      <td className="p-2 border">
-                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash'}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.studentId?.studentProfile?.fullname}
-                        {rev.studentId?.studentProfile?.registrationNumber && (
-                          <> ({rev.studentId.studentProfile.registrationNumber})</>
-                        )}
+                {[
+                  // Map income
+                  ...(revenueAndExpenses.income || []).map((rev) => ({
+                    id: rev._id,
+                    date: new Date(rev.createdAt).toISOString().split("T")[0],
+                    purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+                    amount: rev.amount,
+                    transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash',
+                    name: rev.studentId?.studentProfile?.fullname + (rev.studentId?.studentProfile?.registrationNumber ? ` (${rev.studentId.studentProfile.registrationNumber})` : ''),
+                    className: rev.class || '-',
+                    section: rev.section || '-',
+                    originalData: rev,
+                  })),
 
+                  // Map otherIncome
+                  ...(revenueAndExpenses.otherIncome || []).map((rev) => ({
+                    id: rev._id,
+                    date: new Date(rev.date).toISOString().split("T")[0],
+                    purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+                    amount: rev.amount,
+                    transactionId: rev.transactionId || 'Cash',
+                    name: rev.fullname + (rev.source === 'student' ? ` (${rev.registrationNumber})` : ` (${rev.organization})`),
+                    className: rev.class || '-',
+                    section: rev.section || '-',
+                    originalData: rev,
+                  })),
 
-                      </td>
-                      <td className="p-2 border">{rev.class || '-'}</td>
-                      <td className="p-2 border">{rev.section || '-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
+                  // Map admissions
+                  ...(revenueAndExpenses.admissions || []).map((rev) => ({
+                    id: rev._id,
+                    date: new Date(rev.createdAt).toISOString().split("T")[0],
+                    purpose: 'New Admission',
+                    amount: rev.studentDetails.admissionFees,
+                    transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || '-',
+                    name: `${rev.studentDetails.firstName} ${rev.studentDetails.lastName}`,
+                    className: rev.studentDetails.classToJoin || '-',
+                    section: '-',
+                    originalData: rev,
+                  })),
+                ].length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="p-4 text-center text-gray-500">
+                      No revenue records available.
+                    </td>
+                  </tr>
+                ) : (
+                  [
+                    // Combine all three arrays above again to render rows
+                    ...[
+                      ...(revenueAndExpenses.income || []).map((rev) => ({
+                        id: rev._id,
+                        date: new Date(rev.createdAt).toISOString().split("T")[0],
+                        purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+                        amount: rev.amount,
+                        transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash',
+                        name: rev.studentId?.studentProfile?.fullname + (rev.studentId?.studentProfile?.registrationNumber ? ` (${rev.studentId.studentProfile.registrationNumber})` : ''),
+                        className: rev.class || '-',
+                        section: rev.section || '-',
+                        originalData: rev,
+                      })),
 
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
+                      ...(revenueAndExpenses.otherIncome || []).map((rev) => ({
+                        id: rev._id,
+                        date: new Date(rev.date).toISOString().split("T")[0],
+                        purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+                        amount: rev.amount,
+                        transactionId: rev.transactionId || 'Cash',
+                        name: rev.fullname + (rev.source === 'student' ? ` (${rev.registrationNumber})` : ` (${rev.organization})`),
+                        className: rev.class || '-',
+                        section: rev.section || '-',
+                        originalData: rev,
+                      })),
 
-                {revenueAndExpenses.otherIncome?.length > 0 ? (
-                  revenueAndExpenses.otherIncome.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.date).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
-                      </td>
-                      <td className="p-2 border">₹{rev.amount}</td>
-                      <td className="p-2 border">
-                        {rev.transactionId ? rev.transactionId : 'Cash'}
-                      </td>
-                      <td className="p-2 border">
-                        <div>
-                          <p>{rev.fullname}</p>
-                          {rev.source === "student" ? `(${rev.registrationNumber})` : `(${rev.organization})`}
-                        </div>
+                      ...(revenueAndExpenses.admissions || []).map((rev) => ({
+                        id: rev._id,
+                        date: new Date(rev.createdAt).toISOString().split("T")[0],
+                        purpose: 'New Admission',
+                        amount: rev.studentDetails.admissionFees,
+                        transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || '-',
+                        name: `${rev.studentDetails.firstName} ${rev.studentDetails.lastName}`,
+                        className: rev.studentDetails.classToJoin || '-',
+                        section: '-',
+                        originalData: rev,
+                      })),
+                    ].map((rev) => (
+                      <tr key={rev.id} className="text-center border-b hover:bg-gray-50">
+                        <td className="p-2 border">{rev.date}</td>
+                        <td className="p-2 border">{rev.purpose}</td>
+                        <td className="p-2 border">₹{rev.amount}</td>
+                        <td className="p-2 border">{rev.transactionId}</td>
+                        <td className="p-2 border">{rev.name}</td>
+                        <td className="p-2 border">{rev.className}</td>
+                        <td className="p-2 border">{rev.section}</td>
+                        <td className="p-2 border">
+                          <button
+                            className="text-blue-600 hover:text-blue-800 text-lg"
+                            onClick={() => {
+                              setEditData(rev.originalData);
+                              setIsEditOpen(true);
+                            }}
 
-
-                      </td>
-                      <td className="p-2 border">{rev.class || '-'}</td>
-                      <td className="p-2 border">{rev.section || '-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
-
-                {revenueAndExpenses.admissions?.length > 0 ? (
-                  revenueAndExpenses.admissions.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.createdAt).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {'New Admission'}
-                      </td>
-                      <td className="p-2 border">₹{rev.studentDetails.admissionFees}</td>
-                      <td className="p-2 border">
-                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || '-'}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.studentDetails.firstName} {rev.studentDetails.lastName}
-                      </td>
-                      <td className="p-2 border">{rev.studentDetails.classToJoin || '-'}</td>
-                      <td className="p-2 border">{'-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
+                          >
+                            ✏️
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ]
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
+
       )}
+      {isEditOpen && editData && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center px-2">
+          <div className="bg-white p-6 rounded shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold mb-4 text-center text-[#146192]">Edit Income</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await dispatch(editIncome({ incomeId: editData._id, incomeData: editData }));
+                setIsEditOpen(false);
+              }}
+            >
+              <div className="flex flex-wrap -mx-2">
+                {/* Left Column */}
+                <div className="w-full md:w-1/2 px-2">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Date</label>
+                    <input
+                      type="date"
+                      name="date"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.date?.substring(0, 10)}
+                      onChange={(e) =>
+                        setEditData({ ...editData, date: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Purpose</label>
+                    <input
+                      type="text"
+                      name="purpose"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.purpose}
+                      onChange={(e) =>
+                        setEditData({ ...editData, purpose: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Amount</label>
+                    <input
+                      type="number"
+                      name="amount"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.amount}
+                      onChange={(e) =>
+                        setEditData({ ...editData, amount: parseFloat(e.target.value) })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Transaction ID</label>
+                    <input
+                      type="text"
+                      name="transactionId"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.transactionId || editData.paymentDetails.razorpayOrderId}
+                      onChange={(e) =>
+                        setEditData({ ...editData, transactionId: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="w-full md:w-1/2 px-2">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.fullname || editData.studentId.studentProfile.fullname}
+                      onChange={(e) =>
+                        setEditData({ ...editData, fullname: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Class</label>
+                    <input
+                      type="text"
+                      name="class"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.class}
+                      onChange={(e) =>
+                        setEditData({ ...editData, class: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Section</label>
+                    <input
+                      type="text"
+                      name="section"
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.section}
+                      onChange={(e) =>
+                        setEditData({ ...editData, section: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">
+                      Reason For Edit <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="reasonForEdit"
+                      required
+                      className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                      value={editData.reasonForEdit}
+                      onChange={(e) =>
+                        setEditData({ ...editData, reasonForEdit: e.target.value })
+                      }
+                    />
+                  </div>
+                  {async (e) => {
+                    e.preventDefault();
+
+                    if (!editData.reasonForEdit?.trim()) {
+                      alert("Reason For Edit is required.");
+                      return;
+                    }
+
+                    await dispatch(editIncome({ incomeId: editData._id, incomeData: editData }));
+                    setIsEditOpen(false);
+                  }}
+
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#146192] text-white rounded"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Teacher Requests Table */}
       <div className="overflow-x-auto mt-8  ">
