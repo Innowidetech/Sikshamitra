@@ -326,7 +326,7 @@ function AddTeacherModal({ isOpen, onClose }) {
                       </label>
                       <input
                         type="text"
-                        name="subjects"
+                        name="profile.subjects"
                         required
                         placeholder="Math, Science, English"
                         className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"

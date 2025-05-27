@@ -29,7 +29,6 @@ function Curriculam() {
     dispatch(fetchAims());
   }, [dispatch]);
 
-  // Extract unique classes and sections from syllabus data
   const availableClasses = [
     ...new Set((syllabus?.syllabus || []).map((item) => item.class)),
   ].sort();
@@ -41,7 +40,6 @@ function Curriculam() {
     ),
   ].sort();
 
-  // Set initial values when data is loaded
   useEffect(() => {
     if (availableClasses.length > 0 && !selectedClass) {
       setSelectedClass(availableClasses[0]);
@@ -98,7 +96,7 @@ function Curriculam() {
   const handleClassChange = (e) => {
     const newClass = e.target.value;
     setSelectedClass(newClass);
-    setSelectedSection(""); // Reset section when class changes
+    setSelectedSection("");
   };
 
   const filteredSyllabus =
@@ -114,6 +112,24 @@ function Curriculam() {
         item.class === selectedClass &&
         (selectedSection ? item.section === selectedSection : true)
     ) || [];
+
+  const handleDownloadSyllabus = async (url) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch PDF");
+      }
+      const blob = await response.blob();
+      const objectURL = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectURL;
+      link.download = "syllabus.pdf";
+      link.click();
+      URL.revokeObjectURL(objectURL);
+    } catch (error) {
+      toast.error("Error downloading syllabus: " + error.message);
+    }
+  };
 
   const SyllabusModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -176,14 +192,12 @@ function Curriculam() {
                   <td className="border p-2 text-center">{item.class}</td>
                   <td className="border p-2 text-center">{item.section}</td>
                   <td className="border p-2 text-center">
-                    <a
-                      href={item.syllabus}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => handleDownloadSyllabus(item.syllabus)}
                       className="text-blue-600 hover:text-blue-800"
                     >
-                      View Syllabus
-                    </a>
+                      Download Syllabus
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -196,7 +210,7 @@ function Curriculam() {
 
   const ExamsModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-4 w-full max-w-4xl relative">
+      <div className="bg-white rounded-lg p-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
         <button
           onClick={() => setIsExamsModalOpen(false)}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -215,8 +229,8 @@ function Curriculam() {
               className="border rounded px-2 py-1"
             >
               {availableClasses
-                .slice() // Create a shallow copy to avoid mutating the original array
-                .sort((a, b) => a - b) // Sort numerically in ascending order
+                .slice()
+                .sort((a, b) => a - b)
                 .map((classNum) => (
                   <option key={classNum} value={classNum}>
                     {classNum}
@@ -226,18 +240,27 @@ function Curriculam() {
           </div>
           <div>
             <label className="mr-2">Section:</label>
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="border rounded px-2 py-1"
-            >
-              <option value="">All Sections</option>
-              {availableSections.map((section) => (
-                <option key={section} value={section}>
-                  {section}
-                </option>
-              ))}
-            </select>
+<select
+  value={selectedSection}
+  onChange={(e) => setSelectedSection(e.target.value)}
+  className="border rounded px-2 py-1"
+>
+  <option value="">All Sections</option>
+  {[
+    ...new Set(
+      (syllabus?.syllabus || [])
+        .filter((item) => String(item.class).trim() === String(selectedClass).trim())
+        .map((item) => item.section)
+    ),
+  ]
+    .sort()
+    .map((section) => (
+      <option key={section} value={section}>
+        {section}
+      </option>
+    ))}
+</select>
+
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -263,12 +286,8 @@ function Curriculam() {
                         {new Date(exam.date).toLocaleDateString()}
                       </td>
                       <td className="border p-2 text-center">{exam.subject}</td>
-                      <td className="border p-2 text-center">
-                        {exam.subjectCode}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {exam.syllabus}
-                      </td>
+                      <td className="border p-2 text-center">{exam.subjectCode}</td>
+                      <td className="border p-2 text-center">{exam.syllabus}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -279,11 +298,10 @@ function Curriculam() {
       </div>
     </div>
   );
-
+  
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-
       <div className="flex justify-between items-center mx-8 py-10">
         <div>
           <h1 className="text-xl font-light text-black xl:text-[30px]">
@@ -357,10 +375,8 @@ function Curriculam() {
         </div>
       )}
 
-      {/* Syllabus Modal */}
+      {/* Modals */}
       {isSyllabusModalOpen && <SyllabusModal />}
-
-      {/* Exams Modal */}
       {isExamsModalOpen && <ExamsModal />}
 
       {loading ? (
@@ -369,7 +385,6 @@ function Curriculam() {
         <div className="text-red-500 text-center py-10">{error}</div>
       ) : (
         <>
-          {/* Desktop View */}
           <div className="bg-[#94A7B829] mx-8 rounded-lg lg:p-6">
             <div className="text-center">
               <h1 className="text-lg font-medium p-4 inline-block">
@@ -390,7 +405,7 @@ function Curriculam() {
                   >
                     <Trash2 size={20} />
                   </button>
-                  <h3 className="text-xl font-semibold text-[white] text-center mb-4 border-b-2 pb-2">
+                  <h3 className="text-xl font-semibold text-white text-center mb-4 border-b-2 pb-2">
                     {aim.title}
                   </h3>
                   <p className="text-white text-center">{aim.description}</p>
@@ -398,8 +413,8 @@ function Curriculam() {
               ))}
             </div>
           </div>
+
           <div className="mx-8 rounded-lg lg:p-6 grid lg:grid-cols-2 gap-6">
-            {/* Syllabus Image */}
             <div className="relative flex justify-center items-center">
               <img
                 src={curri1}
@@ -414,7 +429,6 @@ function Curriculam() {
               </button>
             </div>
 
-            {/* Exams Image */}
             <div className="relative flex justify-center items-center">
               <img
                 src={curri2}

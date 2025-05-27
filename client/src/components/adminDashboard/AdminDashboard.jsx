@@ -613,9 +613,26 @@ const AdminDashboard = () => {
               <h2 className="text-xl font-semibold mb-4 text-[#146192]">
                 Upcoming Events
               </h2>
-              {Array.isArray(calendar) && calendar.filter(cal => new Date(cal.date) > new Date()).length > 0 ? (
+              {Array.isArray(calendar) &&
+                calendar.filter(cal => {
+                  const eventDate = new Date(cal.date);
+                  const now = new Date();
+                  return (
+                    eventDate > now &&
+                    eventDate.getMonth() === now.getMonth() &&
+                    eventDate.getFullYear() === now.getFullYear()
+                  );
+                }).length > 0 ? (
                 calendar
-                  .filter(cal => new Date(cal.date) > new Date())
+                  .filter(cal => {
+                    const eventDate = new Date(cal.date);
+                    const now = new Date();
+                    return (
+                      eventDate > now &&
+                      eventDate.getMonth() === now.getMonth() &&
+                      eventDate.getFullYear() === now.getFullYear()
+                    );
+                  })
                   .sort((a, b) => new Date(a.date) - new Date(b.date))
                   .map((cal, index) => {
                     const backgroundColor = eventColors[index % eventColors.length];
@@ -633,15 +650,12 @@ const AdminDashboard = () => {
                   })
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
-                  <p className="text-gray-600 font-medium">
-                    No upcoming events
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    Add events using the calendar
-                  </p>
+                  <p className="text-gray-600 font-medium">No upcoming events</p>
+                  <p className="text-gray-400 text-sm">Add events using the calendar</p>
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </div>

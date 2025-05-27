@@ -23,6 +23,7 @@ function UploadAssignment() {
     endDate: '',
     file: null,
   });
+  const [responseMessage, setResponseMessage] = useState(''); // New state to hold the response message
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -78,8 +79,33 @@ function UploadAssignment() {
       setTimeout(() => navigate('/assignments'), 1500);
     } else {
       toast.error('Failed to upload assignment. Please try again.');
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/teacher/assignment',
+        uploadData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setResponseMessage('Assignment submitted successfully!'); // Success message
+        setTimeout(() => {
+          navigate('/assignments'); // Navigate to assignments page after submission
+        }, 2000);
+      } else {
+        setResponseMessage('Error submitting assignment'); // Error message
+      }
+    } catch (error) {
+      console.error('Error uploading assignment:', error);
+      setResponseMessage('Failed to upload assignment. Please try again.');
     }
   };
+}
 
   return (
     <div className="min-h-screen pb-12 ml-64">
@@ -212,9 +238,17 @@ function UploadAssignment() {
               {loading ? 'Submitting...' : 'Submit Assignment'}
             </button>
           </form>
+
+          {/* Display Response Message */}
+          {responseMessage && (
+            <div className="mt-6 text-center text-lg font-medium text-[#146192]">
+              {responseMessage}
+            </div>
+          )}
         </div>
       </div>
     </div>
+
   );
 }
 

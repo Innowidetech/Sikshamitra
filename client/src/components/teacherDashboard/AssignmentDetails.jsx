@@ -12,6 +12,7 @@ const AssignmentDetails = ({ assignment }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const assignmentsPerPage = 5;
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (assignment?._id) {
@@ -21,21 +22,25 @@ const AssignmentDetails = ({ assignment }) => {
 
   const handleDownload = async (url, fallbackName = 'download') => {
     try {
-      const res = await fetch(url);
+      const token = localStorage.getItem('token');
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
 
-      const ext = blob.type.includes('pdf') ? '.pdf' : '';
-      const filename = `${fallbackName}${ext}`;
+      let ext = '.pdf';
+      if (blob.type.includes('pdf')) ext = '.pdf';
 
-      const urlBlob = URL.createObjectURL(blob);
+      const filename = `${fallbackName}${ext}`;
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = urlBlob;
+      link.href = blobUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(urlBlob);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('Download error:', err);
       alert('Failed to download file.');
@@ -132,7 +137,7 @@ const AssignmentDetails = ({ assignment }) => {
                       <td className="px-4 py-2 text-sm">{submittedDate}</td>
                       <td className="px-4 py-2 text-sm">
                         <button
-                          onClick={() => handleDownload(sub.assignmentWork, profile?.fullname)}
+                          onClick={() => handleDownload(sub.assignmentWork, profile.fullname)}
                           className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e]"
                         >
                           Download

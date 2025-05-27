@@ -21,6 +21,8 @@ import TclassPlans from './Tclassplans';
 import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
 import CreateDynamicCalendar from './CreateDynamicCalendar';
+import MarkAttendance from './MarkAttendance';
+
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -61,8 +63,10 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
-      case 'attendence':
-        return <Attendence />;
+     case 'attendence':
+      return <Attendence handleTabChange={handleTabChange} />;
+    case 'markattendance':
+      return <MarkAttendance />;
       case 'lectures':
         return <Lectures />;
       case 'curriculam':

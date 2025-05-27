@@ -89,7 +89,7 @@ function AdminFees() {
       // Refresh the fees list
       dispatch(fetchFees());
     } catch (err) {
-      toast.error(err?.message || "Operation failed. Please try again.");
+      toast.error(err?.message || "The class wise fees for class has already created.");
       console.error("Operation failed:", err);
     }
   };
@@ -341,14 +341,14 @@ function AdminFees() {
             <form onSubmit={handleSubmit}>
               {!isEditMode && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-[#146191]">
                     Class Name
                   </label>
                   <select
                     name="className"
                     value={formData.className}
                     onChange={handleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                    className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-[#1461921F]"
                     required
                   >
                     <option value="">Select Class</option>
@@ -361,7 +361,7 @@ function AdminFees() {
                 </div>
               )}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-[#146191]">
                   Tution Fees
                 </label>
                 <input
@@ -369,12 +369,12 @@ function AdminFees() {
                   name="tutionFees"
                   value={formData.tutionFees}
                   onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-[#1461921F]"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-[#146191]">
                   Admission Fees
                 </label>
                 <input
@@ -382,12 +382,12 @@ function AdminFees() {
                   name="admissionFees"
                   value={formData.admissionFees}
                   onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-[#1461921F]"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium  text-[#146191]">
                   Exam Fees
                 </label>
                 <input
@@ -395,7 +395,7 @@ function AdminFees() {
                   name="examFees"
                   value={formData.examFees}
                   onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-[#1461921F]" 
                   required
                 />
               </div>
@@ -406,7 +406,7 @@ function AdminFees() {
                     setIsModalOpen(false);
                     resetForm();
                   }}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors"
+                  className="bg-gray-200  px-4 py-2 rounded-full hover:bg-gray-300 transition-colors"
                 >
                   Cancel
                 </button>

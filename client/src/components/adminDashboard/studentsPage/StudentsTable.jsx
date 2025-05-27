@@ -260,7 +260,8 @@ function StudentsTable() {
                   <thead className="sticky top-0 bg-white">
                     <tr>
                       <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                        Student ID
+                        Sr.No
+
                       </th>
                       <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
                         Student Name
@@ -293,12 +294,12 @@ function StudentsTable() {
                         Action
                       </th>
                       <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
-                        Teacher
+                        Status
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y">
-                    {displayStudents.map((student) => {
+                    {displayStudents.map((student, index) => {
                       const parent = student.parent?.parentProfile;
                       const children = parent?.parentOf || [];
 
@@ -308,13 +309,10 @@ function StudentsTable() {
 
                         return (
                           <tr
-                            key={studentData?._id + "-" + childIndex}
-                            className={`${
-                              childIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            } hover:bg-gray-100`}
+
                           >
                             <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
-                              {studentData?.studentProfile.registrationNumber}
+                              {index + 1}
                             </td>
                             <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
                               {studentData?.studentProfile.fullname}
@@ -356,8 +354,11 @@ function StudentsTable() {
                                 <LiaEditSolid size={20} />
                               </button>
                             </td>
-                            <td className="px-2 py-2 text-sm text-center">
+                            {/* <td className="px-2 py-2 text-sm text-center">
                               {teacherData?.fullname || "N/A"}
+                            </td> */}
+                            <td className="px-2 py-2 whitespace-nowrap border-r text-sm">
+                              {studentData?.userId.isActive ? 'yes' : 'no'}
                             </td>
                           </tr>
                         );
@@ -385,7 +386,7 @@ function StudentsTable() {
                   >
                     <div className="grid grid-cols-3 gap-2 text-xs items-center">
                       <div className="text-[#146192] font-medium text-left">
-                        Student ID
+                        Sr.No
                       </div>
                       <div className="text-center">-</div>
                       <div className="text-left">
@@ -483,11 +484,11 @@ function StudentsTable() {
                       </div>
 
                       <div className="text-[#146192] font-medium text-left">
-                        Teacher
+                        Status
                       </div>
                       <div className="text-center">-</div>
                       <div className="text-left">
-                        {teacherData?.fullname || "N/A"}
+                        {studentData?.userId.isActive ? 'yes' : 'no'}
                       </div>
                     </div>
                     <hr className="border mt-4 border-[#146192]" />

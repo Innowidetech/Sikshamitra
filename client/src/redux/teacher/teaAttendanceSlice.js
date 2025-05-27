@@ -1,5 +1,3 @@
-// redux/teacher/teaAttendanceSlice.js
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -16,16 +14,51 @@ export const fetchTeaAttendance = createAsyncThunk(
       const token = localStorage.getItem('token');
       if (!token) throw new Error('No authentication token found');
 
-      const response = await axios.get('https://sikshamitra.onrender.com/api/teacher/attendance', {
-        params,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        'https://sikshamitra.onrender.com/api/teacher/attendance',
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const postTeaAttendance = createAsyncThunk(
+  'teaAttendance/postTeaAttendance',
+  async ({ date, attendance }, thunkAPI) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No authentication token found');
+
+      // DEBUG LOG - check payload being sent
+      console.log('Posting attendance:', { date, attendance });
+
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/teacher/attendance',
+       { date, attendanceRecords: attendance },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('POST attendance error:', error.response?.data || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -42,8 +75,17 @@ const teaAttendanceSlice = createSlice({
     },
     loading: false,
     error: null,
+    postLoading: false,
+    postError: null,
+    postSuccess: false,
   },
-  reducers: {},
+  reducers: {
+    resetPostStatus(state) {
+      state.postLoading = false;
+      state.postError = null;
+      state.postSuccess = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTeaAttendance.pending, (state) => {
@@ -63,8 +105,22 @@ const teaAttendanceSlice = createSlice({
       .addCase(fetchTeaAttendance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Something went wrong';
+      })
+      .addCase(postTeaAttendance.pending, (state) => {
+        state.postLoading = true;
+        state.postError = null;
+        state.postSuccess = false;
+      })
+      .addCase(postTeaAttendance.fulfilled, (state) => {
+        state.postLoading = false;
+        state.postSuccess = true;
+      })
+      .addCase(postTeaAttendance.rejected, (state, action) => {
+        state.postLoading = false;
+        state.postError = action.payload || 'Failed to post attendance';
       });
   },
 });
 
+export const { resetPostStatus } = teaAttendanceSlice.actions;
 export default teaAttendanceSlice.reducer;

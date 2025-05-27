@@ -1,11 +1,9 @@
-// components/teacher/Attendence.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Header from '../adminDashboard/layout/Header';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaLink } from 'react-icons/fa';
 import { fetchTeaAttendance } from '../../redux/teacher/teaAttendanceSlice';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -83,20 +81,25 @@ const DateSelector = ({ label, onChange, value, disabled }) => (
   </div>
 );
 
-function Attendence() {
+function Attendence({ handleTabChange }) {
   const dispatch = useDispatch();
-  const { loading, error, summary, attendance } = useSelector((state) => state.teaAttendance);
+  const { loading, error, attendance } = useSelector((state) => state.teaAttendance);
+
+  // Get today's date in yyyy-mm-dd format
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   const [month, setMonth] = useState('');
   const [year, setYear] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(todayStr); // default today’s date
   const [searchQuery, setSearchQuery] = useState('');
+  const [triggerSearch, setTriggerSearch] = useState(false); // to trigger search on button click
 
   const monthMap = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
     July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
   };
 
+  // Fetch attendance whenever filters change
   useEffect(() => {
     const query = {};
     if (date) query.date = date;
@@ -104,11 +107,13 @@ function Attendence() {
     if (year) query.year = year;
     if (searchQuery) query.studentName = searchQuery;
 
+    // Only fetch if at least one filter is active
     if (date || (month && year) || searchQuery) {
       dispatch(fetchTeaAttendance(query));
     }
   }, [dispatch, date, month, year, searchQuery]);
 
+  // Extract student attendance records for table display
   const extractStudentRecords = (attendanceData) => {
     if (!Array.isArray(attendanceData)) return [];
 
@@ -125,23 +130,30 @@ function Attendence() {
 
   const allStudentRecords = extractStudentRecords(attendance);
 
-  const filteredStudentList = allStudentRecords.filter((student) =>
-    student?.student?.studentProfile?.fullname
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase())
-  );
+  // Filter based on searchQuery (only if searchQuery present)
+  const filteredByName = searchQuery
+    ? allStudentRecords.filter((student) =>
+        student?.student?.studentProfile?.fullname
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      )
+    : allStudentRecords;
 
+  // Filter by Date
   const filterDataByDate = (date) => {
+    if (!date) return filteredByName;
     const formatted = new Date(date).toLocaleDateString();
-    return allStudentRecords.filter(
+    return filteredByName.filter(
       (student) =>
         new Date(student.date).toLocaleDateString() === formatted
     );
   };
 
+  // Filter by Month + Year
   const filterDataByMonthYear = (month, year) => {
+    if (!month || !year) return filteredByName;
     const monthNum = monthMap[month] - 1;
-    return allStudentRecords.filter((student) => {
+    return filteredByName.filter((student) => {
       const studentDate = new Date(student.date);
       return (
         studentDate.getMonth() === monthNum &&
@@ -150,12 +162,28 @@ function Attendence() {
     });
   };
 
-  const displayData =
-    date
-      ? filterDataByDate(date)
-      : month && year
-      ? filterDataByMonthYear(month, year)
-      : filteredStudentList;
+  // Decide data to display in table and donut based on filters
+  let displayData = [];
+
+  if (date) {
+    displayData = filterDataByDate(date);
+  } else if (month && year) {
+    displayData = filterDataByMonthYear(month, year);
+  } else {
+    displayData = filteredByName; // default if no date or month/year selected
+  }
+
+  // Compute summary stats for donut chart from displayData
+  const summary = displayData.reduce(
+    (acc, record) => {
+      acc.total += 1;
+      if (record.status === 'Present') acc.present += 1;
+      else if (record.status === 'Absent') acc.absent += 1;
+      else if (record.status === 'Holiday') acc.holiday += 1;
+      return acc;
+    },
+    { total: 0, present: 0, absent: 0, holiday: 0 }
+  );
 
   const noData = !displayData || displayData.length === 0;
 
@@ -174,11 +202,12 @@ function Attendence() {
       </div>
 
       <div className="mx-8 mt-10 md:ml-72">
+        {/* Donut Chart and Stats */}
         <div className="flex flex-col md:flex-row gap-6 bg-white p-6 shadow-lg border rounded-xl">
           <div className="flex justify-center items-center min-h-[250px]">
             {loading ? (
               <div className="loader border-4 border-blue-200 border-t-blue-500 rounded-full w-10 h-10 animate-spin" />
-            ) : summary.total === 0 ? (
+            ) : noData ? (
               <p className="text-gray-500">{error || 'No attendance data available'}</p>
             ) : (
               <DonutChart attendanceData={summary} />
@@ -192,7 +221,23 @@ function Attendence() {
           </div>
         </div>
 
-        {/* Filter Section */}
+        {/* Mark Attendance Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center mt-8 bg-white p-4 ">
+          <div className="flex items-center gap-3 mb-4 md:mb-0">
+            <FaLink className="text-[#146192] text-xl" />
+            <h2 className="text-lg font-semibold text-gray-800">Class Attendance Student List</h2>
+          </div>
+          <div>
+            <button
+              className="bg-[#146192] text-white px-6 py-3 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300"
+              onClick={() => handleTabChange('markattendance')}
+            >
+              Mark Attendance
+            </button>
+          </div>
+        </div>
+
+        {/* Filters */}
         <div className="mt-6 bg-white p-4 rounded-lg shadow border flex flex-col sm:flex-row gap-4 w-full max-w-[900px]">
           <DateSelector
             label="Date"
@@ -201,6 +246,7 @@ function Attendence() {
               setDate(e.target.value);
               setMonth('');
               setYear('');
+              setSearchQuery('');
             }}
             disabled={!!month || !!year}
           />
@@ -211,6 +257,7 @@ function Attendence() {
             onChange={(value) => {
               setMonth(value);
               setDate('');
+              setSearchQuery('');
             }}
             disabled={!!date}
           />
@@ -221,6 +268,7 @@ function Attendence() {
             onChange={(value) => {
               setYear(value);
               setDate('');
+              setSearchQuery('');
             }}
             disabled={!!date}
           />
@@ -231,9 +279,15 @@ function Attendence() {
               className="px-4 py-2 border rounded-lg w-60 mt-6"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setTriggerSearch(!triggerSearch);
+              }}
+              disabled={!!date || !!month || !!year}
             />
             <button
               className="bg-[#146192] text-white px-4 py-2 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300 mt-6"
+              onClick={() => setTriggerSearch(!triggerSearch)}
+              disabled={!!date || !!month || !!year}
             >
               <FaSearch />
             </button>
@@ -246,7 +300,7 @@ function Attendence() {
             <thead className="bg-[#f5f5f5]">
               <tr>
                 {[
-                  'Student ID', 'Student Name', 'Registration Number', 'Parent Name',
+                  'S.No', 'Student Name', 'Registration Number', 'Parent Name',
                   'Parent Mobile No.', 'Student Gender', 'Date', 'Status',
                 ].map((heading) => (
                   <th key={heading} className="px-4 py-2 border font-medium text-gray-600">{heading}</th>
@@ -254,16 +308,20 @@ function Attendence() {
               </tr>
             </thead>
             <tbody>
-              {noData ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="px-4 py-2 text-center text-gray-500">Loading...</td>
+                </tr>
+              ) : noData ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-2 text-center text-gray-500">
-                    {loading ? 'Loading...' : 'No data available for the selected filters.'}
+                    No data available for the selected filters.
                   </td>
                 </tr>
               ) : (
                 displayData.map((student, index) => (
                   <tr key={index} className="bg-white border-b">
-                    <td className="px-4 py-2 border">{student.student.studentProfile.registrationNumber}</td>
+                    <td className="px-4 py-2 border">{index + 1}</td>
                     <td className="px-4 py-2 border">{student.student.studentProfile.fullname}</td>
                     <td className="px-4 py-2 border">{student.student.studentProfile.registrationNumber}</td>
                     <td className="px-4 py-2 border">{student.parentProfile.fatherName}</td>
@@ -274,11 +332,13 @@ function Attendence() {
                     </td>
                     <td className="px-4 py-2 border">
                       <span
-                        className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${student.status === 'Present'
-                          ? 'bg-green-500'
-                          : student.status === 'Absent'
-                          ? 'bg-red-500'
-                          : 'bg-yellow-500'}`}
+                        className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
+                          student.status === 'Present'
+                            ? 'bg-green-500'
+                            : student.status === 'Absent'
+                            ? 'bg-red-500'
+                            : 'bg-yellow-500'
+                        }`}
                       >
                         {student.status}
                       </span>
