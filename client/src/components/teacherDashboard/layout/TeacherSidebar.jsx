@@ -42,7 +42,7 @@ const TeacherSidebar = ({ setActiveSection, activeTab }) => {
       <div className="md:hidden fixed top-0 left-0 p-4 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-white hover:text-[#1982C4] focus:outline-none transition-colors duration-200"
+          className="text-[#FF9F1C] hover:text-[#1982C4] focus:outline-none transition-colors duration-200"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>

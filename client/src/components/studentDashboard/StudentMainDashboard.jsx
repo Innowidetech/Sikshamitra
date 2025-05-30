@@ -13,6 +13,7 @@ import StudentHeader from './layout/Header';
 import StudentProfile from './StudentProfile';
 import SyllabusView from './SyllabusView'; // ✅ import
 import ClassPlanView from './ClassPlanView'; // ✅ import
+import BookRequest from './BookRequest';
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -66,6 +67,8 @@ const MainDashboard = () => {
                 return <Exams />;
             case 'admitcard':
                 return <AdmitCard />;
+                 case 'bookrequest':
+                return <BookRequest />;
             default:
                 return <StudentDashboard />;
         }

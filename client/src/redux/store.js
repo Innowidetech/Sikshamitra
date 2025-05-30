@@ -44,6 +44,9 @@ import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 import lectureSlice from './teacher/lectureSlice';
 import teacherResultsReducer from './teacher/teacherResultSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
+import teacherDashboardReducer from './teacher/teacherDashboardSlice';
+import bookReducer from './student/bookSlice';
+
 
 
 const store = configureStore({
@@ -71,7 +74,6 @@ const store = configureStore({
     parent: parentdashboardReducer, // Add parentdashboardReducer here
     fees : feesReducer,
     accounts: accountReducer,
-
     expenses:expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
@@ -83,31 +85,19 @@ const store = configureStore({
     syllabusView : syllabusViewSliceReducer,
     classPlan : classPlanSliceReducer,
     results : resultSliceReducer,
-   
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
-
-    myStudents: myStudentsReducer,
-    // assignments: assignmentsReducer,
+    // myStudents: myStudentsReducer,
+    assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
     lecture: lectureSlice,
-    // students: myStudentsReducer,
-    assignments: assignmentsReducer,
-    // lecture: lectureSliceReducer,
-   
-     // tcurriculum: tcurriculumSliceReducer, 
-   },
-
-    // students: myStudentsReducer,
-    
-
-    // tcurriculum: tcurriculumSliceReducer, 
-
-   
-    // lecture: lectureSliceReducer,
     teacherResults: teacherResultsReducer,
-    teacherAttendance: teaAttendanceReducer,
+    teaAttendance: teaAttendanceReducer,
+     teacherDashboard: teacherDashboardReducer,
+      students: myStudentsReducer,
+       book: bookReducer,
+   },
 });
 
 export default store;  

@@ -7,7 +7,7 @@ import TeacherDashboard from './TeacherDashboard';
 import MyStudents from './MyStudents';
 import Assignments from './Assignments';
 import Results from './Results';
-import Attendance from './Attendance';
+import Attendence from './Attendence';
 import Lectures from './Lectures';
 import Curriculum from './Curriculum';
 import StudyMaterial from './StudyMaterial';
@@ -20,6 +20,9 @@ import Tsyllabus from './Tsyllabus';
 import TclassPlans from './Tclassplans';
 import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
+import CreateDynamicCalendar from './CreateDynamicCalendar';
+import MarkAttendance from './MarkAttendance';
+
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -47,7 +50,7 @@ const MainDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
       case 'mystudents':
         return <MyStudents />;
       case 'assignments':
@@ -60,8 +63,10 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
-      case 'attendance':
-        return <Attendance />;
+     case 'attendence':
+      return <Attendence handleTabChange={handleTabChange} />;
+    case 'markattendance':
+      return <MarkAttendance />;
       case 'lectures':
         return <Lectures />;
       case 'curriculam':
@@ -80,8 +85,10 @@ const MainDashboard = () => {
         return <Exams />;
       case 'about':
         return <About />;
+      case 'createdynamiccalendar':
+        return <CreateDynamicCalendar />;
       default:
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
     }
   };
 

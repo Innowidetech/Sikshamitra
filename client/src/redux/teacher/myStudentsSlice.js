@@ -1,39 +1,36 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-// Fetch students using the teacher's API
+// Async thunk to fetch students
 export const fetchMyStudents = createAsyncThunk(
   'students/fetchMyStudents',
   async (_, { rejectWithValue, getState }) => {
     try {
-      const token = getState().auth.token; // Get token from state
-      console.log("Using token:", token);  // Debugging token usage
+      const token = getState().auth.token; // Assuming token is stored in auth slice
 
       const response = await axios.get(
         'https://sikshamitra.onrender.com/api/teacher/getStudents',
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Pass the token in the Authorization header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      console.log("Students data fetched:", response.data);  // Log response to verify structure
-      return response.data;  // Return the fetched data
-    } catch (err) {
-      console.error("Error fetching students:", err);  // Log errors
-      return rejectWithValue(
-        err.response?.data?.message || 'Failed to fetch students'  // Return error message if any
-      );
+      return response.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message || 'Failed to fetch students';
+      return rejectWithValue(message);
     }
   }
 );
 
-// Redux slice to manage student data
+// Slice definition
 const myStudentsSlice = createSlice({
   name: 'students',
   initialState: {
-    data: { parents: [] }, // Set initial data structure to match API response
+    data: {}, // Expected format: { parents: [...] }
     loading: false,
     error: null,
   },
@@ -46,11 +43,11 @@ const myStudentsSlice = createSlice({
       })
       .addCase(fetchMyStudents.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload;  // Update state with fetched data
+        state.data = action.payload;
       })
       .addCase(fetchMyStudents.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;  // Handle errors
+        state.error = action.payload;
       });
   },
 });
