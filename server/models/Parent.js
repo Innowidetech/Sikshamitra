@@ -27,7 +27,7 @@ const parentSchema = new mongoose.Schema({
             type: String,
         },
         fatherOccupation: {
-            required: true,
+            // required: true,
             type: String,
         },
         motherOccupation: {

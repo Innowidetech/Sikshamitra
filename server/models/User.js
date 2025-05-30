@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique:true,
+    unique: true,
   },
   password: {
     type: String,
@@ -12,24 +12,24 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['superadmin','admin','teacher','student','parent'],
+    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent', 'manager'],
     required: true
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'librarian', 'accountant','-'],
+    enum: ['teaching', 'librarian', 'accountant', '-', 'groupD'],
     required: function () {
       return this.role === 'teacher';
     },
   },
-  isActive:{
-    type:Boolean,
-    default:true,
+  isActive: {
+    type: Boolean,
+    default: true,
   },
-  createdBy:{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:'User',
-    required:true,
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   }
 }, {
   timestamps: true

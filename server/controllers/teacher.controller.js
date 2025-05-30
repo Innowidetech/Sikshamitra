@@ -1907,7 +1907,7 @@ exports.createResults = async (req, res) => {
 
         const teacher = await Teacher.findOne({ userId: loggedInId });
         if (!teacher) {
-            return res.status(404).json({ message: 'No teacher found with the loggedin id.' })
+            return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
         };
 
         const existingExam = await Exams.findOne({
@@ -2204,6 +2204,54 @@ exports.getResultById = async (req, res) => {
         })
     }
 };
+
+
+// exports.editResult = async (req, res) => {
+//     try {
+//         const loggedInId = req.user && req.user.id;
+//         if (!loggedInId) {
+//             return res.status(401).json({ message: 'Unauthorized' })
+//         };
+
+//         const loggedInUser = await User.findById(loggedInId);
+//         if (!loggedInUser || loggedInUser.role !== 'teacher') {
+//             return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' })
+//         };
+
+//         let resultIs, banner
+//         const {id} = req.params;
+//         if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide a valid id to edit result." }) }
+
+//         const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner');
+//         if (!teacher) {
+//             return res.status(404).json({ message: 'No teacher found with the logged-in id.' })
+//         };
+//         banner = teacher.schoolId.schoolBanner;
+
+//         resultIs = await Results.findOne({
+//             _id:id,
+//             result: {
+//                 $elemMatch: { createdBy: teacher._id }
+//             }
+//         }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 });
+//         if (!resultIs) {
+//             return res.status(404).json({ message: 'No results found for the class.' })
+//         };
+
+//         res.status(200).json({
+//             message: 'Results fetched successfully.',
+//             banner,
+//             resultIs
+
+//         });
+//     }
+//     catch (err) {
+//         res.status(500).json({
+//             message: 'Internal server error.',
+//             error: err.message,
+//         })
+//     }
+// };
 
 
 exports.getTeacherDashboard = async (req, res) => {

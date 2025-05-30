@@ -203,6 +203,8 @@ exports.getAdmitCard = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'No student found with the logged-in id.' })
             };
+            if (!student.schoolId || !student.schoolId._id) { return res.status(404).json({ message: "Student is not associated with any school." }) }
+
             // if (student.userId.isActive == false) {
             //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             // }
@@ -256,6 +258,7 @@ exports.submitAssignment = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
+      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
 
         let uploadedPhotoUrl = '';
         if (req.file) {
@@ -338,6 +341,7 @@ exports.requestBook = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
+      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
 
         const book = await Books.findOne({ schoolId: student.schoolId, _id: bookId, });
         if (!book) {
