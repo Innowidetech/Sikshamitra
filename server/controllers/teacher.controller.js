@@ -21,6 +21,7 @@ const RequestExpense = require('../models/RequestExpense');
 const ParentExpenses = require('../models/ParentExpenses');
 const { sendEmail } = require('../utils/sendEmail');
 const mongoose = require('mongoose');
+const SchoolIncome = require('../models/SchoolIncome');
 
 
 
@@ -2219,7 +2220,7 @@ exports.getResultById = async (req, res) => {
 //         };
 
 //         let resultIs, banner
-//         const {id} = req.params;
+//         const { id } = req.params;
 //         if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide a valid id to edit result." }) }
 
 //         const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner');
@@ -2229,7 +2230,7 @@ exports.getResultById = async (req, res) => {
 //         banner = teacher.schoolId.schoolBanner;
 
 //         resultIs = await Results.findOne({
-//             _id:id,
+//             _id: id,
 //             result: {
 //                 $elemMatch: { createdBy: teacher._id }
 //             }
@@ -2370,7 +2371,41 @@ exports.getTeacherExpenseRequests = async (req, res) => {
 };
 
 
-exports.getClassAccounts = async (req, res) => {
+exports.editTeacherExpenseRequests = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied. Only teachers can edit their profiles.' });
+        };
+
+        const { id } = req.params;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) { return res.status(400).json({ message: "Please provide a valid id to edit expense request." }) }
+
+        const { item, purpose } = req.body;
+        if (!item && !purpose) { return res.status(400).json({ message: "Please provide item name or purpose to edit expense request." }) }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId })
+        if (!teacher) { return res.status(404).json({ message: "No employee found with the logged-in id." }) }
+
+        const expenseRequest = await RequestExpense.findOne({ _id: id, schoolId: teacher.schoolId, createdBy: teacher._id });
+        if (!expenseRequest) { return res.status(200).json({ message: "No expense found with the id." }) }
+
+        if (item) { expenseRequest.item = item }
+        if (purpose) { expenseRequest.purpose = purpose }
+        await expenseRequest.save();
+
+        res.status(200).json({ message: "Expense request updated successfully.", expenseRequest })
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message })
+    }
+};
+
+exports.getTeacherAccounts = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -2396,12 +2431,7 @@ exports.getClassAccounts = async (req, res) => {
 
         let monthlyData = {};
 
-        let expenses = await RequestExpense.find({
-            schoolId: teacher.schoolId,
-            class: teacher.profile.class,
-            section: teacher.profile.section,
-            status: 'success'
-        });
+        let expenses = await RequestExpense.find({ schoolId: teacher.schoolId, createdBy: teacher._id, status: 'success' });
 
         for (let expense of expenses) {
             const expenseDate = new Date(expense.createdAt);
@@ -2412,17 +2442,12 @@ exports.getClassAccounts = async (req, res) => {
             if (!monthlyData[monthYear]) {
                 monthlyData[monthYear] = { classIncome: 0, classExpense: 0 };
             }
-
             monthlyData[monthYear].classExpense += expense.amount;
         }
 
-        let incomes = await ParentExpenses.find({
-            schoolId: teacher.schoolId,
-            class: teacher.profile.class,
-            section: teacher.profile.section,
-            purpose: "Fees",
-            'paymentDetails.status': "success"
-        });
+        let income1 = await ParentExpenses.find({ schoolId: teacher.schoolId, class: teacher.profile.class, section: teacher.profile.section, purpose: "Fees", 'paymentDetails.status': "success" });
+        let income2 = await SchoolIncome.find({schoolId:teacher.schoolId, purpose:'Fees'});
+        let incomes = income1.concat(income2)
 
         for (let income of incomes) {
             const incomeDate = new Date(income.createdAt);
@@ -2433,14 +2458,13 @@ exports.getClassAccounts = async (req, res) => {
             if (!monthlyData[monthYear]) {
                 monthlyData[monthYear] = { classIncome: 0, classExpense: 0 };
             }
-
             monthlyData[monthYear].classIncome += income.amount;
         }
 
         const result = Object.keys(monthlyData).map(key => ({
             monthYear: key,
             classIncome: monthlyData[key].classIncome,
-            classExpense: monthlyData[key].classExpense,
+            teacherExpense: monthlyData[key].classExpense,
         })).sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
 
         res.status(200).json({ accounts: result });
