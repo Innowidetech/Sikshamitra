@@ -22,6 +22,7 @@ const ParentExpenses = require('../models/ParentExpenses');
 const { sendEmail } = require('../utils/sendEmail');
 const mongoose = require('mongoose');
 const SchoolIncome = require('../models/SchoolIncome');
+const OnlineLectures = require('../models/OnlineLectures');
 
 
 
@@ -879,7 +880,51 @@ exports.createOrUpdateTimetable = async (req, res) => {
     }
 };
 
-exports.getTimetable = async (req, res) => {
+
+exports.createOnlineLectures = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized.' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied. Only logged-in teachers can access.' });
+        };
+
+        const { subject, topic, teacherName, className, section, startDate, startTime, endDate, endTime } = req.body;
+        if (!subject || !topic || !teacherName || !className || !section || !startDate || !startTime || !endDate || !endTime) {
+            return res.status(400).json({ message: "Please provide all the details to create online lecture." })
+        }
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+        if (!teacher.profile.subjects || teacher.profile.subjects.length === 0) {
+            return res.status(409).json({ message: "You are not permitted to create online lectures, as you have not been assigned any subjects." });
+        }
+        const school = await School.findById(teacher.schoolId);
+        if (!school) { return res.status(404).json({ message: 'The teacher is not associated with any school.' }); };
+
+        function generateMeetingLink() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let randomPart = '';
+            for (let i = 0; i < 20; i++) {
+                randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `meetinglink:${randomPart}`;
+        }
+        const lectureLink = generateMeetingLink();
+
+        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
+        await onlineLecture.save();
+        res.status(201).json({ message: `Online lecture for class ${className} ${section} created successfully.`, onlineLecture });
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message })
+    }
+};
+
+
+exports.getOnlineLecturesAndTimetable = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
@@ -891,27 +936,37 @@ exports.getTimetable = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        let schoolId, teacherId, teacherClass, teacherSection, studentId, studentClass, studentSection, teacherTimetable, classTimetable;
+        let schoolId, teacherId, teacherClass, teacherSection, studentId, studentClass, studentSection, teacherTimetable, classTimetable, onlineLectures;
 
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
             if (!teacher) {
                 return res.status(404).json({ message: 'Teacher not found.' });
             }
+            if (!teacher.schoolId) { return res.status(404).json({ message: "Teacher is not associated with any school." }) }
             schoolId = teacher.schoolId,
                 teacherId = teacher._id,
                 teacherClass = teacher.profile.class,
                 teacherSection = teacher.profile.section
+
+                const todayIST = moment().tz('Asia/Kolkata').startOf('day');
+
+            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() }}).sort({ startDate: -1});
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
             if (!student) {
                 return res.status(404).json({ message: 'Student not found.' });
             }
+            if (!student.schoolId) { return res.status(404).json({ message: 'Student is not associated with any school.' }) }
             schoolId = student.schoolId
             studentId = student._id,
                 studentClass = student.studentProfile.class,
                 studentSection = student.studentProfile.section
+
+            const todayIST = moment().tz('Asia/Kolkata').startOf('day');
+
+            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: -1});
 
         } else {
             return res.status(403).json({
@@ -955,9 +1010,7 @@ exports.getTimetable = async (req, res) => {
         if (!classTimetable) { return res.status(200).json({ message: 'No timetable found for the class.' }) }
 
         res.status(200).json({
-            message: 'Timetable fetched successfully.',
-            teacherTimetable,
-            classTimetable,
+            message: 'Online Lectures and Timetable fetched successfully.', onlineLectures, teacherTimetable, classTimetable,
         });
     } catch (err) {
         res.status(500).json({
@@ -1999,7 +2052,7 @@ exports.getResults = async (req, res) => {
             return res.status(403).json({ message: 'Access denied, only loggedin users can access.' })
         };
 
-        let result, banner
+        let result, banner, totalExams, attendedExams, pendingExams, examsPercentage, attendance, present, absent, attendancePercentage, totalMarks, marksObtained, remainingMarks, marksPercentage, performancePercentage
 
         if (loggedInUser.role === 'admin') {
             const school = await School.findOne({ userId: loggedInId })
@@ -2018,11 +2071,7 @@ exports.getResults = async (req, res) => {
                 return res.status(404).json({ message: "You do not have access to get results." })
             }
 
-            result = await Results.find({
-                result: {
-                    $elemMatch: { createdBy: teacher._id }
-                }
-            }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 });
+            result = await Results.find({ schoolId: teacher.schoolId, result: { $elemMatch: { createdBy: teacher._id } } }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 });
             if (result.length === 0) {
                 return res.status(404).json({ message: 'No results found for the class.' })
             };
@@ -2036,8 +2085,42 @@ exports.getResults = async (req, res) => {
             //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
             // }
             banner = student.schoolId.schoolBanner
-            result = await Results.find({ student: student._id }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 })
+            result = await Results.find({ schoolId: student.schoolId, student: student._id }).populate('student').populate('exam', 'examType').sort({ createdAt: -1 })
             if (!result.length) { return res.status(404).json({ message: "No results yet." }) }
+
+            totalExams = await Exams.countDocuments({ schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section });
+            attendedExams = await Results.countDocuments({ total: { $ne: '-' }, schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section, student: student._id });
+            pendingExams = totalExams - attendedExams;
+            examsPercentage = ((attendedExams / totalExams) * 100).toFixed(2);
+
+            let marks = await Results.find({ total: { $ne: '-' }, schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section, student: student._id });
+            totalMarks = 0, marksObtained = 0;
+            for (let mark of marks) {
+                let parts = mark.total.split('/');
+                if (parts.length === 2) {
+                    let numerator = parseFloat(parts[0])
+                    let denominator = parseFloat(parts[1]);
+                    // if (!isNaN(denominator)) {
+                    marksObtained += numerator;
+                    totalMarks += denominator;
+                    // }
+                }
+            }
+            remainingMarks = totalMarks - marksObtained
+            marksPercentage = ((marksObtained / totalMarks) * 100).toFixed(2);
+
+            attendance = await Attendance.countDocuments({
+                schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section,
+                attendance: { $elemMatch: { studentId: student._id } }
+            });
+            present = await Attendance.countDocuments({
+                schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section,
+                attendance: { $elemMatch: { studentId: student._id, status: 'Present' } }
+            });
+            absent = attendance - present;
+            attendancePercentage = ((present / attendance) * 100).toFixed(2);
+
+            performancePercentage = ((Number(examsPercentage) + Number(marksPercentage) + Number(attendancePercentage)) / 3).toFixed(2);
         }
         else if (loggedInUser.role === 'parent') {
             const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId', 'schoolBanner');
@@ -2066,7 +2149,7 @@ exports.getResults = async (req, res) => {
         else {
             res.status(404).json({ message: 'You are not allowed to access this.' })
         }
-        res.status(200).json({ message: 'Results fetched successfully.', banner, result });
+        res.status(200).json({ message: 'Results fetched successfully.', totalExams, attendedExams, pendingExams, examsPercentage, attendance, present, absent, attendancePercentage, totalMarks, marksObtained, remainingMarks, marksPercentage, performancePercentage, banner, result });
     }
     catch (err) {
         res.status(500).json({ message: 'Internal server error.', error: err.message, })

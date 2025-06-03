@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, requestBook, getBookRequests } = require('../controllers/student.controller');
-const { getTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
+const { getOnlineLecturesAndTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
 const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -12,7 +12,7 @@ router.get('/notice', protect, authorize('student'), getNotice);
 router.get('/calendar', protect, authorize('student'), getDynamicCalendar);
 router.get('/calendar/:calendarDate', protect, authorize('student'), getDynamicCalendarByDate);
 router.put('/editProfile', protect, authorize('student'), upload.single('photo'), editStudentProfile);
-router.get('/timetable', protect, authorize('student'), getTimetable);
+router.get('/timetable', protect, authorize('student'), getOnlineLecturesAndTimetable);
 router.get('/attendance/:month?/:year?', protect, authorize('student'), attendanceReport);
 router.get('/assignment', protect, authorize('student'), getAssignment);
 router.post('/assignment/:assignmentId', protect, authorize('student'), upload.single('photo'), submitAssignment)
