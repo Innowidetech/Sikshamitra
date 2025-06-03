@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, getClassAndSectionForClassplan, editTeacherExpenseRequests } = require('../controllers/teacher.controller');
-const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, issueBook, returnBook, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook } = require('../controllers/admin.controller');
+const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult } = require('../controllers/teacher.controller');
+const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -46,12 +46,15 @@ router.get('/classPlan/:className?/:section?', protect, authorize('teacher'), ge
 router.get('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
 router.post('/results', protect, authorize('teacher'), createResults);
 router.get('/results', protect, authorize('teacher'), getResults);
+router.patch('/results/:id', protect, authorize('teacher'), editResult);
 router.get('/result/:resultId', protect, authorize('teacher'), getResultById);
 router.post('/createBook', protect, authorize('teacher'), createBook);// librarian
 router.get('/students', protect, authorize('teacher'), getAllStudentsOfSchool);// librarian
 router.get('/books', protect, authorize('teacher'), getBooks);// librarian
 router.patch('/bookRequest/:requestId', protect, authorize('teacher'), issueAndReturnBook);// librarian
+router.patch('/resolveBookRequest/:requestId', protect, authorize('teacher'), resolveBookRequest); //librarian
 router.get('/library', protect, authorize('teacher'), getLibraryData);// librarian
+router.patch('/fineAmount', protect, authorize('admin'), editLibraryFineAmount); //librarian
 // router.patch('/returnBook/:requestId', protect, authorize('teacher'), returnBook);// librarian
 router.patch('/book/:id', protect, authorize('teacher'), upload.single('photo'), editBook);
 router.delete('/book/:bookId', protect, authorize('teacher'), deleteBook);// librarian

@@ -33,6 +33,7 @@ const schoolSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  libraryFineAmount:Number,
   details: {
     boardType: { //ssc, cbse, icse
       type: String,

@@ -7,6 +7,7 @@ const Assignment = require('../models/assignment');
 const SubmitAssignment = require('../models/SubmitAssignment');
 const Books = require('../models/Books');
 const BookRequest = require('../models/BookRequests');
+const School = require('../models/School');
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -90,6 +91,7 @@ exports.attendanceReport = async (req, res) => {
 
         const studentId = student._id;
         const associatedSchool = student.schoolId;
+        if(!associatedSchool){return res.status(404).json({message:"Student is not associated with any school."})}
 
         const reportMonth = month || currentDate.getMonth() + 1;
         const reportYear = year || currentDate.getFullYear();
@@ -113,8 +115,6 @@ exports.attendanceReport = async (req, res) => {
         };
 
         const attendanceRecords = await Attendance.find(query);
-
-
         if (!attendanceRecords.length) {
             return res.status(404).json({ message: 'No attendance records found for this student within the annual report period.' });
         }
@@ -131,7 +131,6 @@ exports.attendanceReport = async (req, res) => {
 
             if (studentAttendance) {
                 totalDays++;
-
                 if (studentAttendance.status === 'Present' || studentAttendance.status === 'Late') {
                     presentCount++;
                 } else if (studentAttendance.status === 'Absent') {
@@ -160,7 +159,6 @@ exports.attendanceReport = async (req, res) => {
                 todaysStatus = todaysRecord.status;
             }
         }
-
         res.status(200).json({
             message: 'Student attendance report fetched successfully',
             monthlySummary: {
@@ -258,7 +256,7 @@ exports.submitAssignment = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
-      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
+        if (!student.schoolId) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
         let uploadedPhotoUrl = '';
         if (req.file) {
@@ -341,15 +339,15 @@ exports.requestBook = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
-      if(!student.schoolId){ return res.status(404).json({message:"Student is not associated with any school."})}
+        if (!student.schoolId) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
         const book = await Books.findOne({ schoolId: student.schoolId, _id: bookId, });
         if (!book) {
             return res.status(404).json({ message: "No book found with the id." });
         }
 
-        if (book.availability == false) {
-            return res.status(409).json({ message: "The book is borrowed by someone else and it is unavailable." })
+        if (book.availableBooks <= 0) {
+            return res.status(409).json({ message: "The book is not available to borrow." })
         }
 
         const bookRequest = new BookRequest({ schoolId: student.schoolId, book: book._id, requestedBy: student._id })
@@ -374,13 +372,15 @@ exports.getBookRequests = async (req, res) => {
         };
 
         const student = await Student.findOne({ userId: loggedInId });
-        if (!student) {
-            return res.status(404).json({ message: 'No student found with the logged-in id.' });
-        }
-        const bookRequests = await BookRequest.find({ requestedBy: student._id }).populate('book');
-        if (!bookRequests || !bookRequests.length) { return res.status(404).json({ message: "No book requests found for the student." }) }
+        if (!student) { return res.status(404).json({ message: 'No student found with the logged-in id.' }); }
+        const associatedSchool = await School.findById(student.schoolId);
+        if (!associatedSchool) { return res.status(404).json({ message: "Logged-in student is not associated with any school." }) }
 
-        res.status(200).json(bookRequests)
+        const bookRequests = await BookRequest.find({ schoolId:student.schoolId, requestedBy: student._id }).populate('book');
+
+        let libraryFineAmount = associatedSchool.libraryFineAmount || '-';
+
+        res.status(200).json({ libraryFineAmount, bookRequests })
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message, });
     }

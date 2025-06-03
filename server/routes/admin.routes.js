@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, issueBook, returnBook, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, getAandLUpdatesHistory, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook } = require('../controllers/admin.controller');
+const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, getAandLUpdatesHistory, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -42,7 +42,8 @@ router.get('/updatedStudentData/:studentId?', protect, authorize('admin'), getUp
 router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
 router.post('/inventory/add', protect, authorize('admin'), addStock);
 router.get('/inventory', protect, authorize('admin'), getInventory);
-router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
+router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
+// router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
 router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), createOrUpdateSyllabus);
 router.get('/syllabus', protect, authorize('admin'), getSyllabus);
@@ -58,9 +59,11 @@ router.delete('/aimobjective/:aimobjectiveId', protect, authorize('admin'), dele
 router.post('/createBook', protect, authorize('admin'), upload.single('photo'), createBook);
 router.get('/books',protect,authorize('admin'),getBooks);
 router.get('/library', protect, authorize('admin'), getLibraryData);
+router.patch('/fineAmount', protect, authorize('admin'), editLibraryFineAmount);
 router.patch('/book/:id', protect,authorize('admin'), upload.single('photo'), editBook);
 router.delete('/book/:bookId', protect,authorize('admin'), deleteBook);
 router.patch('/bookRequest/:requestId', protect, authorize('admin'), issueAndReturnBook);
+router.patch('/resolveBookRequest/:requestId', protect, authorize('admin'), resolveBookRequest);
 // router.patch('/returnBook/:requestId', protect, authorize('admin'), returnBook);
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results',protect, authorize('admin'), getResults);

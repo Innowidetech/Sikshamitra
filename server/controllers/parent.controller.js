@@ -208,7 +208,9 @@ exports.payFees = async (req, res) => {
     const { studentName, amount, purpose, className, section, reason } = req.body;
     if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Proivde student name, amount, purpose, class and section to pay." }) }
 
-    if (purpose === 'Other') { if (!reason) return res.status(400).json({ message: "Please specify the reason." }) }
+    if (purpose === 'Other') {
+      if (!reason) return res.status(400).json({ message: "Please specify the reason." })
+    }
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -310,7 +312,7 @@ exports.verifyFeesPayment = async (req, res) => {
       if (!school) {
         return res.status(404).json({ message: 'School not found.' });
       }
-      const payout = await razorpayInstance.payouts.create({ // to send the amount to schools' bank account after payment verification is success
+      const payout = await razorpayInstance.payouts.create({
         account_number: school.paymentDetails.accountNumber,
         ifsc: school.paymentDetails.ifscCode,
         amount: amountPaid,
