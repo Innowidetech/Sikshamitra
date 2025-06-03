@@ -38,7 +38,7 @@ router.post('/addStudent', protect, authorize('admin'),upload.single('photo'), a
 router.get('/students', protect, authorize('admin'), getAllStudentsOfSchool);
 // router.get('/student/:studentId',protect, authorize('admin'), getStudentById);
 router.post('/student/:studentId', protect, authorize('admin'), updateStudentData);
-router.get('/updatedStudentData/:studentId?', protect, authorize('admin'), getUpdatedStudentData);
+router.get('/updatedStudentData/:studentId', protect, authorize('admin'), getUpdatedStudentData);
 router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
 router.post('/inventory/add', protect, authorize('admin'), addStock);
 router.get('/inventory', protect, authorize('admin'), getInventory);

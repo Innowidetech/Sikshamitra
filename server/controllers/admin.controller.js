@@ -680,14 +680,7 @@ exports.createTeacher = async (req, res) => {
 
     hpass = bcrypt.hashSync(password, 10);
 
-    const user = new User({
-      email,
-      password: hpass,
-      role: 'teacher',
-      employeeType,
-      createdBy: userId
-    });
-
+    const user = new User({ email, password: hpass, role: 'teacher', employeeType, createdBy: userId });
     await user.save();
 
     const teacher = new Teacher({
@@ -716,10 +709,7 @@ exports.createTeacher = async (req, res) => {
       }
     }
 
-    res.status(201).json({
-      message: `Teacher account created successfully.`,
-      teacher,
-    });
+    res.status(201).json({ message: `Teacher account created successfully.`, teacher, });
   } catch (error) {
     res.status(500).json({ message: 'Failed to register teacher.', error: error.message });
   }
@@ -1001,7 +991,6 @@ exports.getAandLUpdatesHistory = async (req, res) => {
 
 exports.getAllTeachersOfSchool = async (req, res) => {
   try {
-
     const adminId = req.user && req.user.id;
     if (!adminId) {
       return res.status(401).json({ message: 'Unauthorized. Only logged-in admins can perform this action.' });
@@ -1013,9 +1002,7 @@ exports.getAllTeachersOfSchool = async (req, res) => {
     };
 
     const school = await School.findOne({ userId: adminId });
-    if (!school) {
-      return res.status(404).json({ message: 'School not found.' });
-    };
+    if (!school) { return res.status(404).json({ message: 'School not found.' }); };
 
     const teachers = await Teacher.find({ schoolId: school._id }).populate('userId').sort({ createdAt: -1 });
 
@@ -1035,12 +1022,7 @@ exports.getAllTeachersOfSchool = async (req, res) => {
       return aTypeIndex - bTypeIndex;
     });
 
-    res.status(200).json({
-      message: 'Teachers retrieved successfully.',
-      totalTeachersSalary,
-      teachers: sortedTeachers,
-    });
-
+    res.status(200).json({ message: 'Teachers retrieved successfully.', totalTeachersSalary, teachers: sortedTeachers, });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -1503,6 +1485,82 @@ exports.getAllStudentsOfSchool = async (req, res) => {
 // };
 
 
+
+
+// exports.updateStudentData = async (req, res) => {
+//   try {
+//     const adminId = req.user && req.user.id;
+//     if (!adminId) {
+//       return res.status(401).json({ message: 'Unauthorized. Only logged-in admins can perform this action.' });
+//     };
+
+//     const adminUser = await User.findById(adminId);
+//     if (!adminUser || adminUser.role !== 'admin') {
+//       return res.status(403).json({ message: 'Access denied. Only admins can access.' });
+//     };
+
+//     const { studentId } = req.params;
+//     const edit = req.body;
+//     const { isActive, reason } = req.body;
+
+//     if (!studentId || !reason) {
+//       return res.status(400).json({ message: 'Please provide studentId, new data and reason for the update.' })
+//     }
+
+//     const school = await School.findOne({ userId: adminId });
+//     if (!school) {
+//       return res.status(404).json({ message: 'Admin is not associated with any school.' });
+//     };
+
+//     const student = await Student.findOne({ schoolId: school._id, _id: studentId }).populate('userId');
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found.' });
+//     };
+
+//     const previousData = {
+//       ...student.studentProfile.toObject(),
+//       isActive: student.userId.isActive
+//     };
+//     const previousIsActive = student.userId.isActive;
+
+//     for (const key in edit) {
+//       if (student.studentProfile.hasOwnProperty(key)) {
+//         student.studentProfile[key] = edit[key];
+//       }
+//     }
+//     await student.save();
+
+//     let updatedIsActive = previousIsActive;
+//     if (isActive !== undefined) {
+//       student.userId.isActive = isActive,
+//         updatedIsActive = isActive
+//     }
+//     await student.userId.save();
+
+//     const updatedData = {
+//       ...student.studentProfile.toObject(),
+//       isActive: updatedIsActive
+//     };
+
+//     const dataUpdate = new StudentDataUpdates({
+//       schoolId: student.schoolId,
+//       studentId: student._id,
+//       previousData,
+//       updatedData,
+//       reason,
+//       updatedBy: adminId,
+//     });
+//     await dataUpdate.save();
+
+//     res.status(200).json({
+//       message: 'Student data updated successfully.',
+//       updatedStudent: student,
+//     });
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message })
+//   }
+// };
+
 exports.updateStudentData = async (req, res) => {
   try {
     const adminId = req.user && req.user.id;
@@ -1524,20 +1582,15 @@ exports.updateStudentData = async (req, res) => {
     }
 
     const school = await School.findOne({ userId: adminId });
-    if (!school) {
-      return res.status(404).json({ message: 'Admin is not associated with any school.' });
-    };
+    if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
 
     const student = await Student.findOne({ schoolId: school._id, _id: studentId }).populate('userId');
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found.' });
-    };
+    if (!student) { return res.status(404).json({ message: 'Student not found.' }); };
 
     const previousData = {
       ...student.studentProfile.toObject(),
       isActive: student.userId.isActive
     };
-    const previousIsActive = student.userId.isActive;
 
     for (const key in edit) {
       if (student.studentProfile.hasOwnProperty(key)) {
@@ -1546,31 +1599,36 @@ exports.updateStudentData = async (req, res) => {
     }
     await student.save();
 
-    let updatedIsActive = previousIsActive;
     if (isActive !== undefined) {
-      student.userId.isActive = isActive,
-        updatedIsActive = isActive
+      student.userId.isActive = isActive
     }
     await student.userId.save();
 
-    const updatedData = {
-      ...student.studentProfile.toObject(),
-      isActive: updatedIsActive
-    };
-
-    const dataUpdate = new StudentDataUpdates({
-      schoolId: student.schoolId,
-      studentId: student._id,
-      previousData,
-      updatedData,
-      reason,
-      updatedBy: adminId,
-    });
-    await dataUpdate.save();
-
+    let dataUpdate = await StudentDataUpdates.findOne({ schoolId: school._id, studentId });
+    if (dataUpdate) {
+      dataUpdate.dataHistory.push({
+        previousData,
+        reason,
+        updatedBy: adminId,
+        updatedAt: Date.now()
+      });
+      await dataUpdate.save();
+    }
+    else {
+      dataUpdate = new StudentDataUpdates({
+        schoolId: student.schoolId,
+        studentId: student._id,
+        dataHistory: [{
+          previousData,
+          reason,
+          updatedBy: adminId,
+          updatedAt: Date.now()
+        }]
+      });
+      await dataUpdate.save();
+    }
     res.status(200).json({
-      message: 'Student data updated successfully.',
-      updatedStudent: student,
+      message: 'Student data updated successfully.'
     });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -1590,21 +1648,16 @@ exports.getUpdatedStudentData = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
-    // const { studentId } = req.params;
-    // if (!studentId) {
-    //   return res.status(400).json({ message: "Provide student id to get." })
-    // }
+    const { studentId } = req.params;
+    if (!studentId) { return res.status(400).json({ message: "Provide student id to get." }) }
 
     const school = await School.findOne({ userId: loggedInId });
     if (!school) {
       return res.status(404).json({ message: 'Admin is not associated with any school.' });
     };
 
-    // const studentDataUpdates = await StudentDataUpdates.find({ schoolId: school._id, studentId: studentId, updatedBy: loggedInId }).sort({ createdAt: -1 })
-    const studentDataUpdates = await StudentDataUpdates.find({ schoolId: school._id }).sort({ createdAt: -1 })
-    if (!studentDataUpdates.length) {
-      return res.status(404).json({ message: "No updated data of students found." })
-    }
+    const studentDataUpdates = await StudentDataUpdates.findOne({ schoolId: school._id, studentId: studentId })
+    if (!studentDataUpdates) { return res.status(404).json({ message: "No updated data history found for the student." }) }
 
     res.status(200).json({ message: "Updated students data:", studentDataUpdates })
   } catch (err) {
