@@ -72,11 +72,11 @@ router.patch('/expenses/:expenseId', protect, authorize('admin'), editSchoolExpe
 router.delete('/expenses/:expenseId', protect, authorize('admin'), deleteSchoolExpense);
 router.get('/expenseRequest', protect, authorize('admin'), getExpenseRequest);
 router.patch('/expenseRequest/:requestId', protect, authorize('admin'), updateExpenseRequest);
-// router.delete('/expenseRequest/:requestId', protect, authorize('admin'), deleteExpenseRequest)
+// router.delete('/expenseRequest/:requestId', protect, authorize('admin'), deleteExpenseRequest);
 router.get('/accounts',protect, authorize('admin'), getAccounts);
 router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 router.post('/income', protect, authorize('admin'), addSchoolIncome);
 router.post('/income/:id', protect, authorize('admin'), editSchoolIncome);
-router.get('/updatedIncomeHistory', protect, authorize('admin'), getUpdatedSchoolIncomeHistory);
+router.get('/updatedIncomeHistory/:id', protect, authorize('admin'), getUpdatedSchoolIncomeHistory);
     
 module.exports = router;

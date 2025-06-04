@@ -74,6 +74,6 @@ router.get('/accounts', protect, authorize('teacher'), getAccounts); //accountan
 router.get('/accountsData', protect, authorize('teacher'), getAccountsData); //accountant
 router.post('/income', protect, authorize('teacher'), addSchoolIncome); //accountant
 router.post('/income/:id', protect, authorize('teacher'), editSchoolIncome); //accountant
-router.get('/income', protect, authorize('teacher'), getUpdatedSchoolIncomeHistory); //accountant
+router.get('/updatedIncomeHistory/:id', protect, authorize('teacher'), getUpdatedSchoolIncomeHistory); //accountant
 
 module.exports = router;

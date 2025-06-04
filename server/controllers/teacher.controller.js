@@ -949,9 +949,9 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
                 teacherClass = teacher.profile.class,
                 teacherSection = teacher.profile.section
 
-                const todayIST = moment().tz('Asia/Kolkata').startOf('day');
+            const todayIST = moment().tz('Asia/Kolkata').startOf('day');
 
-            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() }}).sort({ startDate: -1});
+            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
@@ -966,7 +966,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
 
             const todayIST = moment().tz('Asia/Kolkata').startOf('day');
 
-            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: -1});
+            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
 
         } else {
             return res.status(403).json({
@@ -1516,7 +1516,7 @@ exports.getExams = async (req, res) => {
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
-            exams = await Exams.find({ schoolId: school._id, toDate: { $gte: currentDate } }).sort({ toDate: 1 });
+            exams = await Exams.find({ schoolId: school._id, toDate: { $gte: currentDate } }).sort({ fromDate: 1 });
         }
         else if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1526,7 +1526,7 @@ exports.getExams = async (req, res) => {
             schoolId = teacher.schoolId;
             className = teacher.profile.class;
             section = teacher.profile.section;
-            exams = await Exams.find({ schoolId: schoolId, class: className, section: section, toDate: { $gte: currentDate }, }).sort({ toDate: 1 });
+            exams = await Exams.find({ schoolId: schoolId, class: className, section: section, toDate: { $gte: currentDate }, }).sort({ fromDate: 1 });
         }
         else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
@@ -1539,7 +1539,7 @@ exports.getExams = async (req, res) => {
             schoolId = student.schoolId;
             className = student.studentProfile.class;
             section = student.studentProfile.section;
-            exams = await Exams.find({ schoolId: schoolId, class: className, section: section, toDate: { $gte: currentDate }, }).sort({ toDate: 1 });
+            exams = await Exams.find({ schoolId: schoolId, class: className, section: section, toDate: { $gte: currentDate }, }).sort({ fromDate: 1 });
         }
         else if (loggedInUser.role === 'parent') {
             const parent = await Parent.findOne({ userId: loggedInId });
@@ -1553,7 +1553,7 @@ exports.getExams = async (req, res) => {
 
                 const childExams = await Exams.find({
                     schoolId: student.schoolId, class: student.studentProfile.class, section: student.studentProfile.section, toDate: { $gte: currentDate },
-                }).sort({ toDate: 1 });
+                }).sort({ fromDate: 1 });
                 allExams = allExams.concat(childExams);
             }
             if (allExams.length === 0) {

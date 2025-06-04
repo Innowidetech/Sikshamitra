@@ -33,6 +33,12 @@ const RequestExpensesSchema = new mongoose.Schema({
         required:true,
         default:'pending'
     },
+    remark:{
+        type:String,
+        required:function(){
+            return this.status=='failed';
+        }
+    },
     createdBy:{
         type:mongoose.Schema.Types.ObjectId,
         required:true,
