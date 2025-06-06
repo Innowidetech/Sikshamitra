@@ -5,11 +5,13 @@ const { editParentProfile,parentDashboard, getChildrenNames, payFees, verifyFees
 const { getAdmitCard } = require('../controllers/student.controller');
 const { getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective } = require('../controllers/admin.controller');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/dashboard', protect, authorize('parent'), parentDashboard)
 router.get('/calendar', protect, authorize('parent'), getDynamicCalendar);
 router.get('/calendar/:calendarDate', protect, authorize('parent'), getDynamicCalendarByDate);
-router.put('/editProfile', protect, authorize('parent'), editParentProfile);
+router.put('/editProfile', protect, authorize('parent'), upload.single('photo'), editParentProfile);
 router.get('/syllabus', protect, authorize('parent'), getSyllabus);
 router.get('/classPlan', protect, authorize('parent'), getClassPlan);
 router.get('/exams', protect, authorize('parent'), getExams);
@@ -24,7 +26,5 @@ router.post('/verifyFeePayment', protect, authorize('parent'), verifyFeesPayment
 router.get('/getExpenses', protect, authorize('parent'), getExpenses);
 router.get('/getFeesReceipts', protect, authorize('parent'), getFeesReceipts);
 router.post('/query', protect, authorize('parent'), postQuery);
-
-
 
 module.exports = router;

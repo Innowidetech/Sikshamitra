@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent', 'manager'],
+    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent'],
     required: true
   },
   employeeType: {
@@ -21,6 +21,12 @@ const userSchema = new mongoose.Schema({
     required: function () {
       return this.role === 'teacher';
     },
+  },
+  mobileNumber: { // only for staff
+    type:String,
+    required:function(){
+      return this.employeeType === 'groupD'
+    }
   },
   isActive: {
     type: Boolean,

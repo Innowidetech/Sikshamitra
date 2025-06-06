@@ -26,6 +26,7 @@ const parentSchema = new mongoose.Schema({
         motherPhoneNumber: {
             type: String,
         },
+        photo:String,
         fatherOccupation: {
             // required: true,
             type: String,

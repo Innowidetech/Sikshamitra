@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs');
 const Blogs = require('../models/Blogs');
 const { uploadImage, deleteImage } = require('../utils/multer');
 const mongoose = require('mongoose');
+const { sendEmail } = require('../utils/sendEmail');
+const registrationTemplate = require('../utils/registrationTemplate');
+const SuperAdminStaff = require('../models/SuperAdminStaff');
 
 
 //create account for admin/school
@@ -31,12 +34,7 @@ exports.registerSchool = async (req, res) => {
 
     hpass = bcrypt.hashSync(password, 10);
 
-    const admin = new User({
-      email,
-      password: hpass,
-      role: 'admin',
-      createdBy: loggedInId
-    });
+    const admin = new User({ email, password: hpass, role: 'admin', createdBy: loggedInId });
     await admin.save();
 
     const school = new School({
@@ -51,13 +49,11 @@ exports.registerSchool = async (req, res) => {
     });
     await school.save()
 
+    await sendEmail(email, loggedInUser.email, `Account registration - Shikshamitra`, registrationTemplate(principalName, schoolName, email, password));
+
     res.status(201).json({
       message: 'School registered successfully',
-      user: {
-        id: admin._id,
-        email: admin.email,
-        role: admin.role,
-      },
+      user: { id: admin._id, email: admin.email, role: admin.role, },
       school
     });
   } catch (err) {
@@ -82,16 +78,10 @@ exports.getAllSchools = async (req, res) => {
     if (!schools.length) {
       return res.status(200).json({ message: 'No schools registered yet.' })
     };
-    res.status(200).json({
-      message: 'Schools data:',
-      schools
-    })
+    res.status(200).json({ message: 'Schools data:', schools })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    });
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
 
@@ -438,5 +428,206 @@ exports.deleteBlog = async (req, res) => {
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })
+  }
+};
+
+
+exports.addSAStaffMember = async (req, res) => { // check figma
+  try {
+    // const { email, password, mobileNumber, name, employeeRole, department, salary } = req.body;
+    if (!email || !password || !mobileNumber || !department || !name || !employeeRole || !salary) {
+      return res.status(400).json({ message: "Provide all the details to add staff member." })
+    }
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in superadmin can access.' });
+    };
+
+    let hpass = bcrypt.hashSync(password, 10);
+
+    const user = new User({ email, password: hpass, mobileNumber, role: 'teacher', employeeType: 'groupD', createdBy: loggedInId });
+    await user.save();
+    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary });
+    await staff.save();
+
+    let schoolName = 'Shikshamitra'
+    await sendEmail(email, loggedInUser.email, `Account registration - Shikshamitra`, registrationTemplate(name, schoolName, email, password));
+
+    res.status(201).json({ message: `New staff member added to school successfully.` })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.getSAStaffMembers = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const staff = await SchoolStaff.find({ schoolId: school._id }).populate({ path: 'userId', select: '-password' }).sort({ createdAt: -1 })
+    if (!staff.length) {
+      return res.status(404).json({ message: "No staff members found in this school." })
+    }
+
+    let totalEmployeesSalary = 0;
+    for (let employee of staff) {
+      totalEmployeesSalary += employee.salary
+    }
+
+    res.status(200).json({ message: `Staff details of school:`, totalEmployeesSalary, staff })
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.editSAStaffMember = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
+
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Provide the staff member id to edit." })
+    }
+    const { email, mobileNumber, isActive, name, employeeRole, department, salary } = req.body;
+    if (!email && !mobileNumber && !isActive && !name && !employeeRole && !department && !salary) {
+      return res.status(400).json({ message: "Please provide atlease one new data to edit staff member details." })
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const employee = await SchoolStaff.findOne({ schoolId: school._id, _id: id }).populate('userId');
+    if (!employee) {
+      return res.status(404).json({ message: "No staff member found with the id in this school." })
+    }
+
+    if (email) { employee.userId.email = email }
+    if (mobileNumber) { employee.userId.role = mobileNumber }
+    if (isActive) { employee.userId.isActive = isActive }
+    if (name) { employee.name = name }
+    if (employeeRole) { employee.employeeRole = employeeRole }
+    if (department) { employee.department = department }
+    if (salary) { employee.salary = salary }
+
+    await employee.userId.save();
+    await employee.save();
+
+    res.status(200).json({ message: `Employee data updated successfully.`, employee })
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.assignTaskToSAStaff = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const { name, employeeRole, startDate, dueDate, title, description } = req.body;
+    if (!name || !employeeRole || !startDate || !dueDate || !title || !description) {
+      return res.status(400).json({ message: "Provide all the details to add task for staff member." })
+    }
+
+    const staffMember = await SchoolStaff.findOne({ schoolId: school._id, name, employeeRole }).populate('userId', 'mobileNumber');
+    if (!staffMember) { return res.status(404).json({ message: "No staff member found with the details in this school." }) }
+
+    const task = new SchoolStaffTasks({ schoolId: school._id, staffId: staffMember._id, startDate, dueDate, title, description });
+    await task.save();
+
+    res.status(201).json({ message: `Task successfully assigned to staff member.`, task })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.getAssignedSATasks = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
+
+    let tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
+
+    if (loggedInUser.role == 'admin') {
+      const school = await School.findOne({ userId: loggedInId });
+      if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
+
+      tasks = await SchoolStaffTasks.find({ schoolId: school._id }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+    }
+    else if (loggedInUser.role == 'teacher' && loggedInUser.employeeType == 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
+      if (!staff.schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+      dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];;
+      role = staff.employeeRole;
+
+      tasks = await SchoolStaffTasks.find({ schoolId: staff.schoolId, staffId: staff._id }).sort({ startDate: 1 });
+
+      if (tasks) {
+        totalTasks = tasks.length;
+        completedTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'completed' });
+        pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'pending' });
+      }
+    }
+    else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+
+    if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
+
+    res.status(200).json({ message: `Tasks data fetched successfully.`, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };

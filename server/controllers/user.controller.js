@@ -2,7 +2,7 @@ const Offline = require('../models/applyOffline');
 const School = require('../models/School');
 const User = require('../models/User');
 const { sendEmail } = require('../utils/sendEmail');
-const offlineTemplete = require('../utils/offlineTemplate');
+const offlineApplicationStudentTemplate = require('../utils/offlineApplicationEmailToStudent');
 const contactUsTemplate = require('../utils/contactUsTemplate');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -11,7 +11,8 @@ const { uploadImage } = require('../utils/multer');
 const ClassWiseFees = require('../models/ClassWiseFees');
 require('dotenv').config();
 const Blogs = require('../models/Blogs');
-const offlineApplicationStudentTemplate = require('../utils/offlineApplicationEmailToStudent');
+const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
+const EntranceExamQuestionPaper = require('../models/EntranceExamQuestionPaper');
 
 
 exports.getAllSchoolsName = async (req, res) => {
@@ -20,16 +21,10 @@ exports.getAllSchoolsName = async (req, res) => {
         if (!schools.length) {
             return res.status(404).json({ message: 'No schools fould' })
         };
-        res.status(200).json({
-            message: 'Schools data',
-            schools
-        })
+        res.status(200).json({ message: 'Schools data', schools })
     }
     catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message
-        });
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
 
@@ -40,7 +35,7 @@ exports.applyOffline = async (req, res) => {
         if (!fullname || !className || !phoneNumber || !dob || !address || !schoolName) {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
-        
+
         const existingUser = await User.findOne({ email: studentDetails.email });
         if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
 
@@ -54,7 +49,6 @@ exports.applyOffline = async (req, res) => {
         let schoolContact = schoolExists.contact.phone;
         let schoolWebsite = schoolExists.contact.website;
         let schoolAddress = schoolExists.address;
-        // await sendEmail(schoolEmail, email, `New offline applicaion - ${fullname}`, offlineTemplete(fullname, className, address, dob, email, phoneNumber, schoolName));
         await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
 
         const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName });
@@ -178,10 +172,7 @@ exports.applyOnline = async (req, res) => {
             });
         });
     } catch (error) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: error.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: error.message, });
     }
 };
 
@@ -270,8 +261,78 @@ exports.getBlogs = async (req, res) => {
         res.status(200).json({ blogs });
     }
     catch (error) {
-        res.status(500).json({
-            message: 'Internal server error', error: error.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: error.message, });
     }
 };
+
+
+exports.applyForEntranceExamination = async (req, res) => {
+    try {
+        const { academicYear, classApplying, school, studentDetails, previousSchoolDetails } = req.body;
+        if (!academicYear || !classApplying || !school || !studentDetails || !previousSchoolDetails) {
+            return res.status(400).json({ message: "Please provide all the details to apply for entrance exam." })
+        }
+
+        if (previousSchoolDetails.board == 'Others') {
+            if (!previousSchoolDetails.schoolBoard) { return res.status(400).json({ message: "Please specify the board type." }) }
+        }
+        let uploadedPhotoUrl;
+        if (req.file) {
+            try {
+                const [photoUrl] = await uploadImage(req.file);
+                uploadedPhotoUrl = photoUrl;
+            } catch (error) {
+                return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+            }
+        }
+        else { return res.status(400).json({ message: "Please provide student photo." }) };
+
+        const existingSchool = await School.findOne({ schoolName: school });
+        if (!existingSchool) {
+            return res.status(404).json({ message: `No school found with the name - ${school}` });
+        };
+        studentDetails.photo = uploadedPhotoUrl;
+
+        const application = new ApplyForEntranceExam({
+            academicYear, classApplying, schoolId: existingSchool._id, previousSchoolDetails,
+            studentDetails: {
+                ...studentDetails,
+                photo: uploadedPhotoUrl
+            }
+        });
+        await application.save();
+
+        res.status(201).json({
+            message: `Your application for the entrance exam has been successfully sent to the school - '${school}'. Please wait while your application is being reviewed.`,
+            application
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error', error: error.message, });
+    }
+};
+
+
+// exports.getQuestionsToApplicants = async (req, res) => {
+//     try {
+//         const loggedInApplicant = req.applicant?.id;
+//         if (!loggedInApplicant) {
+//             return res.status(401).json({ message: 'Unauthorized, only logged-in applicants can get the question paper.' })
+//         };
+
+//         const application = await ApplyForEntranceExam.findById(loggedInApplicant)
+//         if (!application) { return res.status(404).json({ message: "No application found." }) }
+
+//         const associatedSchool = await School.findById(application.schoolId);
+//         if (!associatedSchool || associatedSchool.status !== 'active') {
+//             return res.status(403).json({ message: "School is not active. Please contact the school management." });
+//         }
+
+//         const questionPaper = await EntranceExamQuestionPaper.findOne({schoolId:associatedSchool._id, class:application.classApplying});
+//         if(!questionPaper){
+//             return res.status(404).json({message:"No question paper found for the class"})
+//         }
+//     }
+//     catch (err) {
+//         res.status(500).json({ message: 'Internal server error', error: err.message })
+//     }
+// };

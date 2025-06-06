@@ -1,5 +1,5 @@
 const express = require('express');
-const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs } = require('../controllers/user.controller');
+const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs, applyForEntranceExamination } = require('../controllers/user.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
@@ -18,5 +18,6 @@ router.post('/applyOnline', upload.fields([
 
 router.post('/verifyOnlinePayment', verifyRazorpayPayment);
 router.get('/blogs', getBlogs);
+router.post('/entranceExam', upload.single('photo') ,applyForEntranceExamination);
 
 module.exports = router;

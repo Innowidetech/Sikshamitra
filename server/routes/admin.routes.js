@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, addEmployee, getEmployees, editEmployee, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, getAandLUpdatesHistory, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest } = require('../controllers/admin.controller');
+const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, getAandLUpdatesHistory, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, addStaffMember, getStaffMembers, editStaffMember, assignTaskToStaff, getAssignedTasks, getStudentsBasedOnClassAndSection, getEntranceExamApplications, createOrUpdateQuestionPaperForEntranceExam, getEntranceExamQuestionPapers, sendEntranceExamDetailsToApplicants } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -34,6 +34,7 @@ router.get('/history', protect, authorize('admin'), getAandLUpdatesHistory);
 router.post('/teacher/:teacherId', protect, authorize('admin'), updateTeacherData);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);
 router.post('/registersp', protect, authorize('admin'), upload.single('photo'), createStudentAndParent);
+router.get('/students/:className/:section', protect, authorize('admin'), getStudentsBasedOnClassAndSection);
 router.post('/addStudent', protect, authorize('admin'),upload.single('photo'), addStudentToExistingParent);
 router.get('/students', protect, authorize('admin'), getAllStudentsOfSchool);
 // router.get('/student/:studentId',protect, authorize('admin'), getStudentById);
@@ -50,9 +51,11 @@ router.get('/syllabus', protect, authorize('admin'), getSyllabus);
 router.get('/newAdmission', protect, authorize('admin'), getNewAdmissions);
 router.get('/admission', protect, authorize('admin'), getAdmissionRequests);
 router.post('/admission/:id', protect, authorize('admin'), createInstantAccount);
-router.post('/employee', protect, authorize('admin'), addEmployee);
-router.get('/employee', protect, authorize('admin'), getEmployees);
-router.patch('/employee/:employeeId', protect, authorize('admin'), editEmployee);
+router.post('/staff', protect, authorize('admin'), addStaffMember);
+router.get('/staff', protect, authorize('admin'), getStaffMembers);
+router.patch('/staff/:id', protect, authorize('admin'), editStaffMember);
+router.post('/task', protect, authorize('admin'), assignTaskToStaff);
+router.get('/tasks', protect, authorize('admin'), getAssignedTasks);
 router.post('/aimobjective', protect, authorize('admin'), createAimObjective);
 router.get('/aimobjective', protect, authorize('admin'), getAimObjective);
 router.delete('/aimobjective/:aimobjectiveId', protect, authorize('admin'), deleteAimObjective);
@@ -64,7 +67,6 @@ router.patch('/book/:id', protect,authorize('admin'), upload.single('photo'), ed
 router.delete('/book/:bookId', protect,authorize('admin'), deleteBook);
 router.patch('/bookRequest/:requestId', protect, authorize('admin'), issueAndReturnBook);
 router.patch('/resolveBookRequest/:requestId', protect, authorize('admin'), resolveBookRequest);
-// router.patch('/returnBook/:requestId', protect, authorize('admin'), returnBook);
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results',protect, authorize('admin'), getResults);
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
@@ -78,5 +80,10 @@ router.get('/accountsData',protect, authorize('admin'), getAccountsData);
 router.post('/income', protect, authorize('admin'), addSchoolIncome);
 router.post('/income/:id', protect, authorize('admin'), editSchoolIncome);
 router.get('/updatedIncomeHistory/:id', protect, authorize('admin'), getUpdatedSchoolIncomeHistory);
-    
+
+router.get('/applicants', protect, authorize('admin'), getEntranceExamApplications);
+router.post('/questionPaper', protect, authorize('admin'), upload.any(), createOrUpdateQuestionPaperForEntranceExam);
+router.get('/questionPaper/:className', protect, authorize('admin'), getEntranceExamQuestionPapers);
+router.post('/sendExamDetails', protect, authorize('admin'), sendEntranceExamDetailsToApplicants);
+
 module.exports = router;

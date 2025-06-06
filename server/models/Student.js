@@ -56,7 +56,7 @@ const studentSchema = new mongoose.Schema({
         childOf: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
-            ref: 'Parent',
+            ref: 'User',
         },
         rollNumber:String,
         fees:{

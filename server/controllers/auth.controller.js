@@ -10,19 +10,25 @@ const Student = require('../models/Student');
 const Parent = require('../models/Parent');
 const Teacher = require('../models/Teacher');
 const School = require('../models/School');
+const SchoolStaff = require('../models/SchoolStaff');
+const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
+const moment = require('moment');
 
 
 //user login
 exports.userLogin = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
-    if (!email || !password || !role) {
+    const { email, password, role, mobileNumber } = req.body;
+    if ((!email && !mobileNumber) || !password) {
       return res.status(400).json({ message: 'Email or password or role is missing.' })
     };
 
-    const user = await User.findOne({ email, role });
+    let roleIs = "teacher";
+    if (role) { roleIs = role }
+
+    const user = await User.findOne({ email, role:roleIs }) || await User.findOne({ mobileNumber, role:roleIs });
     if (!user) {
-      return res.status(401).json({ message: 'User not found with the email or role.' });
+      return res.status(401).json({ message: 'User not found with the email/mobile number or role.' });
     };
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
@@ -31,7 +37,7 @@ exports.userLogin = async (req, res) => {
     };
 
     if (user.role !== 'superadmin') {
-      const loggedInUser = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId')
+      const loggedInUser = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({userId:user._id}).populate('schoolId')
       if (user.role !== 'admin') {
         if (loggedInUser.schoolId.status !== 'active') {
           return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })
@@ -44,7 +50,7 @@ exports.userLogin = async (req, res) => {
       }
 
       if (user.role !== 'admin' && !user.isActive) {
-        return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })
+        return res.status(409).json({ message: 'You cannot login right now, please contact your school.' })
       }
     }
 
@@ -59,8 +65,6 @@ exports.userLogin = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
-        role: user.role,
-        employeeType: user.employeeType,
       },
       token
     });
@@ -158,3 +162,50 @@ exports.resetPassword = async (req, res) => {
 // };
 
 
+exports.loginForEntranceExam = async (req, res) => {
+    try {
+        const { examId, email } = req.body;
+        if (!examId || !email) {
+            return res.status(400).json({ message: "Please provide exam ID and email to attempt the exam." });
+        }
+
+        const application = await ApplyForEntranceExam.findOne({ 'studentDetails.email': email, examId, status: 'sent' });
+        if (!application) {
+            return res.status(404).json({ message: "Application not found for the given email and exam ID." });
+        }
+
+        const school = await School.findById(application.schoolId);
+        if (!school || school.status !== 'active') {
+            return res.status(403).json({ message: "School is not active. Please contact the school management." });
+        }
+
+        const currentTime = moment();
+
+        const examDateFormatted = moment(application.examDate).format('YYYY-MM-DD');
+        const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
+        const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
+
+        if (currentTime.isBefore(examStart)) {
+            return res.status(403).json({ message: "The exam has not started yet. Please wait until the scheduled time." });
+        }
+
+        if (currentTime.isAfter(examEnd)) {
+            return res.status(403).json({ message: "The exam time has expired. You can no longer attempt the exam." });
+        }
+
+        const token = jwt.sign(
+            {
+                applicationId: application._id,
+                examId: application.examId,
+                email: application.studentDetails.email,
+                schoolId: application.schoolId,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '3h' }
+        );
+        res.status(200).json({ message: "Login successful for entrance exam.", token });
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+};

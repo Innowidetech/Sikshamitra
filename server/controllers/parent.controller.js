@@ -11,6 +11,7 @@ const Razorpay = require('razorpay');
 const { sendEmail } = require('../utils/sendEmail');
 const queryTemplate = require('../utils/queryTemplate');
 const SchoolIncome = require('../models/SchoolIncome');
+const { uploadImage, deleteImage } = require('../utils/multer');
 
 
 const razorpay = new Razorpay({
@@ -21,7 +22,7 @@ const razorpay = new Razorpay({
 exports.editParentProfile = async (req, res) => {
   try {
     const updatedData = req.body;
-    if (!updatedData) {
+    if (!updatedData && !req.file) {
       return res.status(400).json({ message: 'No new data provided to update.' })
     };
 
@@ -40,16 +41,33 @@ exports.editParentProfile = async (req, res) => {
       return res.status(404).json({ message: 'No parent found with the userId.' })
     };
 
-    const restrictedFields = ['parentOf'];
+    // const restrictedFields = ['parentOf'];
+
+    let uploadedPhotoUrl
+    if (parent.parentProfile.photo) {
+      uploadedPhotoUrl = parent.parentProfile.photo
+    }
+    if (req.file) {
+      try {
+        if (parent.parentProfile.photo) {
+          await deleteImage(parent.parentProfile.photo);
+        }
+        const [photoUrl] = await uploadImage(req.file);
+        uploadedPhotoUrl = photoUrl;
+      } catch (error) {
+        return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+      }
+    }
 
     for (let key in updatedData) {
       if (parent.parentProfile.hasOwnProperty(key)) {
-        if (restrictedFields.includes(key)) {
-          return res.status(404).json({ message: 'You are not allowed to change the parentOf field' })
-        };
+        // if (restrictedFields.includes(key)) {
+        //   return res.status(404).json({ message: 'You are not allowed to change the parentOf field' })
+        // };
         parent.parentProfile[key] = updatedData[key];
       }
     }
+    parent.parentProfile.photo = uploadedPhotoUrl;
     await parent.save();
 
     res.status(200).json({
@@ -206,7 +224,7 @@ exports.getChildrenNames = async (req, res) => {
 exports.payFees = async (req, res) => {
   try {
     const { studentName, amount, purpose, className, section, reason } = req.body;
-    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Proivde student name, amount, purpose, class and section to pay." }) }
+    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Provide student name, amount, purpose, class and section to pay." }) }
 
     if (purpose === 'Other') {
       if (!reason) return res.status(400).json({ message: "Please specify the reason." })
