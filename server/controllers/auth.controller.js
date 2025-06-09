@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const PasswordReset = require('../models/forgotPassword');
 const { sendEmail } = require('../utils/sendEmail');
-const generateOtpTemplate = require('../utils/otpTemplate')
+const generateOtpTemplate = require('../utils/otpTemplate');
 const { addRevokedToken } = require('../utils/tokenRevocation');
 const Student = require('../models/Student');
 const Parent = require('../models/Parent');
@@ -13,6 +13,7 @@ const School = require('../models/School');
 const SchoolStaff = require('../models/SchoolStaff');
 const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
 const moment = require('moment');
+const EntranceExamResults = require('../models/EntranceExamResults');
 
 
 //user login
@@ -23,28 +24,39 @@ exports.userLogin = async (req, res) => {
       return res.status(400).json({ message: 'Email or password or role is missing.' })
     };
 
-    let roleIs = "teacher";
-    if (role) { roleIs = role }
+    let user
+    let allowedRoles = ['superadmin', 'teacher'];
 
-    const user = await User.findOne({ email, role:roleIs }) || await User.findOne({ mobileNumber, role:roleIs });
+    if (role) {
+      user = await User.findOne({ role, email });
+    } else {
+      user = await User.findOne({ role: { $in: allowedRoles }, ...(email ? { email } : { mobileNumber }) });
+    }
+
     if (!user) {
-      return res.status(401).json({ message: 'User not found with the email/mobile number or role.' });
-    };
+      return res.status(401).json({ message: 'User not found with the given credentials or role.' });
+    }
 
     const isValidPassword = bcrypt.compareSync(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Incorrect password!' });
     };
 
+    if (user.role == 'superadmin' && user.employeeType == 'groupD') {
+      if (!user.isActive) {
+        return res.status(409).json({ message: "Please contact the super admin to know details." })
+      }
+    }
+
     if (user.role !== 'superadmin') {
-      const loggedInUser = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({userId:user._id}).populate('schoolId')
+      const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId')
       if (user.role !== 'admin') {
-        if (loggedInUser.schoolId.status !== 'active') {
+        if (school.schoolId.status !== 'active') {
           return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })
         }
       }
       else {
-        if (!user.isActive || loggedInUser.status !== 'active') {
+        if (!user.isActive || school.status !== 'active') {
           return res.status(409).json({ message: "Please contact the super admin to know details." })
         }
       }
@@ -163,49 +175,52 @@ exports.resetPassword = async (req, res) => {
 
 
 exports.loginForEntranceExam = async (req, res) => {
-    try {
-        const { examId, email } = req.body;
-        if (!examId || !email) {
-            return res.status(400).json({ message: "Please provide exam ID and email to attempt the exam." });
-        }
-
-        const application = await ApplyForEntranceExam.findOne({ 'studentDetails.email': email, examId, status: 'sent' });
-        if (!application) {
-            return res.status(404).json({ message: "Application not found for the given email and exam ID." });
-        }
-
-        const school = await School.findById(application.schoolId);
-        if (!school || school.status !== 'active') {
-            return res.status(403).json({ message: "School is not active. Please contact the school management." });
-        }
-
-        const currentTime = moment();
-
-        const examDateFormatted = moment(application.examDate).format('YYYY-MM-DD');
-        const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
-        const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
-
-        if (currentTime.isBefore(examStart)) {
-            return res.status(403).json({ message: "The exam has not started yet. Please wait until the scheduled time." });
-        }
-
-        if (currentTime.isAfter(examEnd)) {
-            return res.status(403).json({ message: "The exam time has expired. You can no longer attempt the exam." });
-        }
-
-        const token = jwt.sign(
-            {
-                applicationId: application._id,
-                examId: application.examId,
-                email: application.studentDetails.email,
-                schoolId: application.schoolId,
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '3h' }
-        );
-        res.status(200).json({ message: "Login successful for entrance exam.", token });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: 'Internal server error', error: error.message });
+  try {
+    const { examId, email } = req.body;
+    if (!examId || !email) {
+      return res.status(400).json({ message: "Please provide exam ID and email to attempt the exam." });
     }
+
+    const application = await ApplyForEntranceExam.findOne({ 'studentDetails.email': email, examId, status: 'sent' });
+    if (!application) {
+      return res.status(404).json({ message: "Please enter a valid email and exam ID." });
+    }
+
+    const school = await School.findById(application.schoolId);
+    if (!school || school.status !== 'active') {
+      return res.status(403).json({ message: "School is not active. Please contact the school management." });
+    }
+
+    const result = await EntranceExamResults.findOne({ schoolId: school._id, applicantId: application._id });
+    if (result) { return res.status(403).json({ message: "You have already attempted the exam." }) }
+
+    const currentTime = moment();
+
+    const examDateFormatted = moment(application.examDate).format('YYYY-MM-DD');
+    const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
+    const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
+
+    if (currentTime.isBefore(examStart)) {
+      return res.status(403).json({ message: "The exam has not started yet. Please wait until the scheduled time." });
+    }
+
+    if (currentTime.isAfter(examEnd)) {
+      return res.status(403).json({ message: "The exam time has expired. You can no longer attempt the exam." });
+    }
+
+    const token = jwt.sign(
+      {
+        applicationId: application._id,
+        examId: application.examId,
+        email: application.studentDetails.email,
+        schoolId: application.schoolId,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '3h' }
+    );
+    res.status(200).json({ message: "Login successful for entrance exam.", token });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 };

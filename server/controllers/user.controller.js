@@ -13,6 +13,8 @@ require('dotenv').config();
 const Blogs = require('../models/Blogs');
 const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
 const EntranceExamQuestionPaper = require('../models/EntranceExamQuestionPaper');
+const EntranceExamResults = require('../models/EntranceExamResults');
+const moment = require('moment');
 
 
 exports.getAllSchoolsName = async (req, res) => {
@@ -31,18 +33,21 @@ exports.getAllSchoolsName = async (req, res) => {
 
 exports.applyOffline = async (req, res) => {
     try {
-        const { fullname, className, email, phoneNumber, dob, address, schoolName } = req.body;
-        if (!fullname || !className || !phoneNumber || !dob || !address || !schoolName) {
+        const { fullname, className, email, phoneNumber, dob, address, schoolName, examId, resultPercentage } = req.body;
+        if (!fullname || !className || !phoneNumber || !dob || !address || !schoolName || !examId || !resultPercentage) {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
 
-        const existingUser = await User.findOne({ email: studentDetails.email });
-        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
+        // const existingUser = await User.findOne({ email: studentDetails.email });
+        // if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
 
         const schoolExists = await School.findOne({ schoolName: schoolName }).populate('userId');
         if (!schoolExists) {
             return res.status(400).json({ message: 'Invalid school name. Please select a valid school.' });
         };
+
+        const result = await EntranceExamResults.findOne({examId, resultPercentage, status:'sent'});
+        if(!result){return res.status(404).json({message:"No result found with the examId and exam percentage."})}
 
         let schoolEmail = schoolExists.userId.email;
         let schoolCode = schoolExists.schoolCode;
@@ -51,7 +56,7 @@ exports.applyOffline = async (req, res) => {
         let schoolAddress = schoolExists.address;
         await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
 
-        const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName });
+        const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName, examId, resultPercentage });
         await newApplication.save();
 
         res.status(200).json({
@@ -100,8 +105,9 @@ exports.applyOnline = async (req, res) => {
         const educationDetails = JSON.parse(req.body.educationDetails);
         const parentDetails = JSON.parse(req.body.parentDetails);
 
-        const existingUser = await User.findOne({ email: studentDetails.email });
-        if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
+        // const existingUser = await User.findOne({ email: studentDetails.email });
+        // if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
+        
         const files = req.files;
         if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
             return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, parentDocuments)' });
@@ -312,27 +318,93 @@ exports.applyForEntranceExamination = async (req, res) => {
 };
 
 
-// exports.getQuestionsToApplicants = async (req, res) => {
-//     try {
-//         const loggedInApplicant = req.applicant?.id;
-//         if (!loggedInApplicant) {
-//             return res.status(401).json({ message: 'Unauthorized, only logged-in applicants can get the question paper.' })
-//         };
+exports.getQuestionsToApplicants = async (req, res) => {
+    try {
+        const loggedInApplicant = req.applicant?.id;
+        if (!loggedInApplicant) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in applicants can get the question paper.' })
+        };
 
-//         const application = await ApplyForEntranceExam.findById(loggedInApplicant)
-//         if (!application) { return res.status(404).json({ message: "No application found." }) }
+        const application = await ApplyForEntranceExam.findById(loggedInApplicant)
+        if (!application) { return res.status(404).json({ message: "No application found." }) }
 
-//         const associatedSchool = await School.findById(application.schoolId);
-//         if (!associatedSchool || associatedSchool.status !== 'active') {
-//             return res.status(403).json({ message: "School is not active. Please contact the school management." });
-//         }
+        const associatedSchool = await School.findById(application.schoolId);
+        if (!associatedSchool || associatedSchool.status !== 'active') {
+            return res.status(403).json({ message: "School is not active. Please contact the school management." });
+        }
 
-//         const questionPaper = await EntranceExamQuestionPaper.findOne({schoolId:associatedSchool._id, class:application.classApplying});
-//         if(!questionPaper){
-//             return res.status(404).json({message:"No question paper found for the class"})
-//         }
-//     }
-//     catch (err) {
-//         res.status(500).json({ message: 'Internal server error', error: err.message })
-//     }
-// };
+        const result = await EntranceExamResults.findOne({ schoolId: associatedSchool._id, applicantId: application._id });
+        if (result) { return res.status(403).json({ message: "You have already attempted the exam." }) }
+
+        const questionPaper = await EntranceExamQuestionPaper.findOne({ schoolId: associatedSchool._id, class: application.classApplying }).select({ 'questions.option1.isAnswer': 0, 'questions.option2.isAnswer': 0, 'questions.option3.isAnswer': 0, 'questions.option4.isAnswer': 0 });
+        if (!questionPaper) {
+            return res.status(404).json({ message: "No question paper found for the class." })
+        }
+
+        const currentTime = moment().tz('Asia/Kolkata');
+        const tokenExpirationTime = moment().add(3, 'hours').tz('Asia/Kolkata');
+
+        const remainingTime = tokenExpirationTime.diff(currentTime, 'seconds');
+
+        // console.log(currentTime, tokenExpirationTime, remainingTime)
+        const remainingTimeFormatted = {
+            hours: Math.floor(remainingTime / 3600),
+            minutes: Math.floor((remainingTime % 3600) / 60),
+            seconds: remainingTime % 60
+        };
+
+        res.status(200).json({ details: { class: application.classApplying, photo: application.studentDetails.photo, school: associatedSchool.schoolName, year: application.academicYear }, remainingTime: remainingTimeFormatted, questionPaper });
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message })
+    }
+};
+
+
+exports.submitExamAnswers = async (req, res) => {
+    try {
+        const loggedInApplicant = req.applicant?.id;
+        if (!loggedInApplicant) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in applicants can get the question paper.' })
+        };
+
+        const application = await ApplyForEntranceExam.findById(loggedInApplicant)
+        if (!application) { return res.status(404).json({ message: "No application found." }) }
+
+        const existringResult = await EntranceExamResults.findOne({ schoolId: application.schoolId, applicantId: application._id });
+        if (existringResult) { return res.status(403).json({ message: "You have already attempted the exam, you are not allowed to submit now." }) }
+
+        const questionPaper = await EntranceExamQuestionPaper.findOne({ schoolId: application.schoolId, class: application.classApplying });
+        if (!questionPaper) {
+            return res.status(404).json({ message: "No question paper found for the class" })
+        }
+
+        const answers = req.body.answers; // [{questionId, selectedOption}]
+        if (answers.length != questionPaper.questions.length) {
+            return res.status(400).json({ message: "The number of submitted answers are not equal to the number of questions." })
+        }
+        let correctAnswersCount = 0;
+
+        answers.forEach(answer => {
+            const question = questionPaper.questions.find(q => q._id.toString() === answer.questionId);
+            if (question) {
+                const selectedOption = question[answer.selectedOption];
+                if (selectedOption.isAnswer) {
+                    correctAnswersCount++;
+                }
+            }
+            else { return res.status(404).json({ message: `No question found with the questionId in the examination paper of class ${application.classApplying}.` }) }
+        });
+
+        const resultPercentage = ((correctAnswersCount / questionPaper.questions.length) * 100).toFixed(2);
+
+        const result = new EntranceExamResults({ schoolId: application.schoolId, applicantId: application._id, examId: application.examId, resultPercentage });
+        await result.save();
+
+        return res.status(200).json({ message: 'Exam submitted successfully.' });
+        // return res.status(200).json({ message: 'Exam submitted successfully.', resultPercentage: `${resultPercentage}%` });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Internal server error.", error: err.message })
+    }
+};

@@ -1,4 +1,4 @@
-const assignmentTemplate = (studentName, assignmentName, subject, teacherName, chapter, startDate, endDate) => `
+const assignmentTemplate = (studentName, chapterName, subject, teacherName, chapter, startDate, endDate) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,15 +61,13 @@ const assignmentTemplate = (studentName, assignmentName, subject, teacherName, c
 </head>
 <body>
     <div class="container">
-        <h1>New Assignment - ${assignmentName}</h1>
+        <h1>New Assignment - ${chapter}</h1>
         <div class="content">
             <p>Dear <b>${studentName}</b>,</p>
-            <p>You have received a new assignment in <b>${subject}</b> from <b>${teacherName} teacher</b>.</p>
-
-            <div class="divider"></div>
+            <p>You have received a new assignment in <b>${subject}</b> from <b>${teacherName} teacher</b>. <a href="https://shikshamitra-i.web.app/student/maindashboard">Click on this link:</a></p>
             
             <p><strong>Assignment Details:</strong></p>
-            <p><strong>Assignment Name:</strong> ${assignmentName}</p>
+            <p><strong>Chapter Name:</strong> ${chapterName}</p>
             <p><strong>Subject:</strong> ${subject}</p>
             <p><strong>Chapter:</strong> ${chapter}</p>
             <p><strong>Start Date:</strong> ${startDate}</p>
@@ -77,7 +75,7 @@ const assignmentTemplate = (studentName, assignmentName, subject, teacherName, c
 
             <div class="divider"></div>
 
-            <p>Please login to the portal and make sure to complete the assignment on time. If you have any questions, feel free to reach out to ${teacherName} teacher or reply to this email directly.</p>
+            <p>Please login to the portal and make sure to complete the assignment on time. If you have any questions, contact to ${teacherName} teacher.</p>
         </div>
 
         <div class="footer">

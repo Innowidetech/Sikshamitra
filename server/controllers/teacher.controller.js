@@ -187,7 +187,7 @@ exports.getStudentsOfTeacher = async (req, res) => {
 //assigning assignments for students
 exports.assignmentForStudents = async (req, res) => {
     try {
-        const { assignmentName, classs, section, subject, chapter, startDate, endDate } = req.body;
+        const { chapterName, classs, section, subject, chapter, startDate, endDate } = req.body;
         if (!classs || !section || !subject || !chapter || !startDate || !endDate) {
             return res.status(400).json({ message: 'Please provide all the fields.' });
         };
@@ -225,7 +225,7 @@ exports.assignmentForStudents = async (req, res) => {
 
         const newAssignment = new Assignment({
             schoolId: teacher.schoolId,
-            assignmentName,
+            chapterName,
             teacherName: teacher.profile.fullname,
             class: classs,
             section,
@@ -239,16 +239,15 @@ exports.assignmentForStudents = async (req, res) => {
 
         await newAssignment.save();
 
-        schoolName = teacher.schoolId.schoolName
-        teacherEmail = loggedInUser.email
-        teacherName = teacher.profile.fullname
+        let teacherEmail = loggedInUser.email
+        let teacherName = teacher.profile.fullname
 
         const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': classs, 'studentProfile.section': section }).populate('userId')
 
         for (let student of students) {
             studentsEmails = student.userId.email
             studentName = student.studentProfile.fullname
-            await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, assignmentName, subject, teacherName, chapter, startDate, endDate))
+            await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate))
         }
 
         res.status(201).json({
@@ -760,7 +759,7 @@ exports.createOrUpdateTimetable = async (req, res) => {
 
                     if (existingLecture) {
                         return res.status(400).json({
-                            message: `Conflict: ${existingLecture.teacher.profile.fullname} teacher has already scheduled a class from ${startTime} to ${endTime} in ${className} section ${section} on ${day}.`
+                            message: `Conflict: ${existingLecture.teacher.profile.fullname} teacher has already scheduled a class from ${startTime} to ${endTime} in ${className} ${section} on ${day}.`
                         });
                     }
 
