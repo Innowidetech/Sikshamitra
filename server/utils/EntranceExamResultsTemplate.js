@@ -77,7 +77,7 @@ const EntranceExamResultsTemplate = (studentName, studentClass, examId, percenta
         <a href="https://shikshamitra-i.web.app/admission" class="apply-link" target="_blank">Apply Now For Offline Application</a>
       </p>
 
-      <p><strong>Note:</strong> While applying, please make sure to use your <strong>Exam ID (${examId})</strong> and <strong>percentage (${percentage}%)</strong> for verification.</p>
+      <p><strong>Note:</strong> While applying, please make sure to use your <strong>Exam ID (${examId})</strong> and <strong>percentage (${percentage})%</strong> for verification.</p>
 
       <br>
       <p><b>Best Wishes,</b></p>

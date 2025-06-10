@@ -1,17 +1,4 @@
-const offlineApplicationStudentTemplate = (
-  fullname,
-  className,
-  address,
-  dob,
-  email,
-  phoneNumber,
-  schoolName,
-  schoolCode,
-  schoolContact,
-  schoolEmail,
-  schoolWebsite,
-  schoolAddress
-) => `
+const offlineApplicationStudentTemplate = (fullname, className, address, dob, email, phoneNumber, examId, resultPercentage, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,6 +84,9 @@ const offlineApplicationStudentTemplate = (
             <p><strong>Phone Number:</strong> ${phoneNumber}</p>
             <p><strong>Address:</strong> ${address}</p>
             <p><strong>Date of Birth:</strong> ${dob}</p>
+            <p><strong>Exam Id:</strong> ${examId}</p>
+            <p><strong>Exam Result:</strong> ${resultPercentage}%</p>
+
 
             <div class="divider"></div>
 

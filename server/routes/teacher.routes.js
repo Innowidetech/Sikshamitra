@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getOnlineLecturesAndTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult, createOnlineLectures } = require('../controllers/teacher.controller');
+const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getOnlineLecturesAndTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult, createOnlineLectures, getClassAndSectionForClassplan } = require('../controllers/teacher.controller');
 const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -32,7 +32,7 @@ router.post('/timetable', protect, authorize('teacher'), createOrUpdateTimetable
 router.post('/onlineLectures', protect, authorize('teacher'), createOnlineLectures);
 router.get('/timetable', protect, authorize('teacher'), getOnlineLecturesAndTimetable);
 router.delete('/timetable/:periodId', protect, authorize('teacher'), deleteTimetablePeriod);
-router.get('/syllabus', protect, authorize('teacher'), getSyllabus);
+router.get('/syllabus/:className?', protect, authorize('teacher'), getSyllabus);
 router.post('/studyMaterial', protect, authorize('teacher'), upload.single('photo'), uploadStudyMaterial);
 router.get('/studyMaterial', protect, authorize('teacher'), getStudyMaterial);
 router.patch('/studyMaterial/:materialId', protect, authorize('teacher'), upload.single('photo'), editStudyMaterial)
@@ -42,7 +42,7 @@ router.get('/exams', protect, authorize('teacher'), getExams);
 router.patch('/exam/:id', protect, authorize('teacher'), editExam);
 router.delete('/exam/:id', protect, authorize('teacher'), deleteExam);
 router.post('/classPlan', protect, authorize('teacher'), createOrUpdateClassPlan);
-// router.get('/classPlan', protect, authorize('teacher'), getClassAndSectionForClassplan);
+router.get('/classPlan', protect, authorize('teacher'), getClassAndSectionForClassplan);
 router.get('/classPlan/:className?/:section?', protect, authorize('teacher'), getClassPlan);
 router.get('/getSandE', protect, authorize('teacher'), getStudentsAndExams);
 router.post('/results', protect, authorize('teacher'), createResults);

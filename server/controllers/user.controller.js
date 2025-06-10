@@ -46,15 +46,19 @@ exports.applyOffline = async (req, res) => {
             return res.status(400).json({ message: 'Invalid school name. Please select a valid school.' });
         };
 
-        const result = await EntranceExamResults.findOne({examId, resultPercentage, status:'sent'});
-        if(!result){return res.status(404).json({message:"No result found with the examId and exam percentage."})}
+        const result = await EntranceExamResults.findOne({ schoolId: schoolExists._id, examId, resultPercentage, status: 'sent' }).populate({ path: 'applicantId', select: 'studentDetails.email classApplying' });
+        if (!result) { return res.status(404).json({ message: "No result found with the examId and exam percentage for the school." }) }
+
+        if (email != result.applicantId.studentDetails.email || className != result.applicantId.classApplying) {
+            return res.status(400).json({ message: "You are only allowed to apply using the same email and class with which you registered and wrote the exam." });
+        }
 
         let schoolEmail = schoolExists.userId.email;
         let schoolCode = schoolExists.schoolCode;
         let schoolContact = schoolExists.contact.phone;
         let schoolWebsite = schoolExists.contact.website;
         let schoolAddress = schoolExists.address;
-        await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
+        await sendEmail(email, schoolEmail, `Offline applicaion - ${schoolName}`, offlineApplicationStudentTemplate(fullname, className, address, dob, email, phoneNumber, examId, resultPercentage, schoolName, schoolCode, schoolContact, schoolEmail, schoolWebsite, schoolAddress));
 
         const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName, examId, resultPercentage });
         await newApplication.save();
@@ -66,10 +70,7 @@ exports.applyOffline = async (req, res) => {
         });
     }
     catch (err) {
-        return res.status(500).json({
-            message: 'An error occurred. Please try again later.',
-            error: err.message
-        });
+        return res.status(500).json({ message: 'An error occurred. Please try again later.', error: err.message });
     }
 };
 
@@ -86,10 +87,7 @@ exports.contactUs = async (req, res) => {
         res.status(200).json({ message: 'Contact Us Form submitted successfully.' });
     }
     catch {
-        return res.status(500).json({
-            message: 'An error occurred. Please try again later.',
-            error: err.message
-        });
+        return res.status(500).json({ message: 'An error occurred. Please try again later.', error: err.message });
     }
 };
 
@@ -99,6 +97,7 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
 exports.applyOnline = async (req, res) => {
     try {
         const studentDetails = JSON.parse(req.body.studentDetails);
@@ -107,7 +106,7 @@ exports.applyOnline = async (req, res) => {
 
         // const existingUser = await User.findOne({ email: studentDetails.email });
         // if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
-        
+
         const files = req.files;
         if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
             return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, parentDocuments)' });
@@ -121,6 +120,20 @@ exports.applyOnline = async (req, res) => {
         if (!school) {
             return res.status(404).json({ message: 'School not found' });
         };
+
+        const result = await EntranceExamResults.findOne({ schoolId: school._id, examId: studentDetails.examId, resultPercentage: studentDetails.resultPercentage, status: 'sent' }).populate({ path: 'applicantId', select: 'studentDetails.email classApplying' });
+        if (!result) { return res.status(404).json({ message: "No result found with the examId and exam percentage for the school." }) }
+
+        if (studentDetails.email != result.applicantId.studentDetails.email || studentDetails.classToJoin != result.applicantId.classApplying) {
+            return res.status(400).json({ message: "You are only allowed to apply using the same email and class with which you registered and wrote the exam." });
+        }
+
+        if (studentDetails.classToJoin) {
+            const classNum = parseInt(studentDetails.classToJoin, 10);
+            if (!isNaN(classNum) && classNum >= 1 && classNum <= 9) {
+                studentDetails.classToJoin = classNum.toString().padStart(2, '0');
+            }
+        }
 
         const classWiseFees = await ClassWiseFees.findOne({ schoolId: school._id, class: studentDetails.classToJoin });
         if (!classWiseFees) { return res.status(404).json({ message: "No admission fees found for the class to join, please contact the school." }) }

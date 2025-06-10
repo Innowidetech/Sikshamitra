@@ -1,6 +1,5 @@
 const SchoolStaffTasks = require('../models/SchoolStaffTasks');
 const User = require('../models/User');
-const School = require('../models/School');
 const SchoolStaff = require('../models/SchoolStaff');
 
 

@@ -752,6 +752,7 @@ exports.createOrUpdateTimetable = async (req, res) => {
 
                     let existingLecture = await Lectures.findOne({
                         schoolId: teacher.schoolId,
+                        teacher: { $ne: teacher._id },
                         [`timetable.${day}`]: {
                             $elemMatch: { class: className, section, startTime, endTime }
                         }
@@ -759,21 +760,26 @@ exports.createOrUpdateTimetable = async (req, res) => {
 
                     if (existingLecture) {
                         return res.status(400).json({
-                            message: `Conflict: ${existingLecture.teacher.profile.fullname} teacher has already scheduled a class from ${startTime} to ${endTime} in ${className} ${section} on ${day}.`
+                            message: `Conflict: ${existingLecture.teacher.profile.fullname} teacher has already scheduled a class from ${startTime} to ${endTime} in ${className}${section} on ${day}.`
                         });
                     }
 
                     let classTimetable = await ClassTimetable.findOne({
                         schoolId: teacher.schoolId,
                         class: className,
-                        section: section.toUpperCase()
+                        section: section.toUpperCase(),
+                        [`timetable.${day}`]: {
+                            $elemMatch: {
+                                teacher: { $ne: teacher._id }
+                            }
+                        }
                     });
 
                     if (classTimetable) {
                         for (let period of classTimetable.timetable[day]) {
                             if (period.startTime === startTime && period.endTime === endTime) {
                                 return res.status(400).json({
-                                    message: `Conflict: This time slot is already booked for class ${className} section ${section} on ${day}.`
+                                    message: `Conflict: This time slot is already booked for class ${className}${section} on ${day}.`
                                 });
                             }
                         }
@@ -1148,12 +1154,17 @@ exports.getSyllabus = async (req, res) => {
         let syllabus = [];
 
         if (loggedInUser.role === 'admin') {
+
+            var classIs = 1;
+            const { className } = req.params;
+            if (className) { classIs = className }
+
             const school = await School.findOne({ userId: loggedInId });
             if (!school) {
                 return res.status(404).json({ message: "Admin is not associated with any school." });
             }
-            syllabus = await Syllabus.find({ schoolId: school._id });
-            syllabus.sort((a, b) => (a.class) - (b.class));
+            syllabus = await Syllabus.find({ schoolId: school._id, class: classIs });
+            // syllabus.sort((a, b) => (a.class) - (b.class));
 
         } else {
             if (loggedInUser.role === 'teacher') {
@@ -1161,15 +1172,20 @@ exports.getSyllabus = async (req, res) => {
                 if (!teacher) {
                     return res.status(404).json({ message: 'No teacher found with the logged-in ID.' });
                 }
-                syllabus = await Syllabus.findOne({ schoolId: teacher.schoolId, class: teacher.profile.class });
-                syllabus = syllabus ? [syllabus] : [];
+
+                var classIs = teacher.profile.class;
+                const { className } = req.params;
+                if (className) { classIs = className }
+
+                const subjectsLower = teacher.profile.subjects.map(subject => subject.toLowerCase());
+
+                syllabus = await Syllabus.find({ schoolId: teacher.schoolId, class: classIs, subject: { $in: subjectsLower } });
             } else if (loggedInUser.role === 'student') {
                 const student = await Student.findOne({ userId: loggedInId });
                 if (!student) {
                     return res.status(404).json({ message: 'No student found with the logged-in ID.' });
                 }
-                syllabus = await Syllabus.findOne({ schoolId: student.schoolId, class: student.studentProfile.class });
-                syllabus = syllabus ? [syllabus] : [];
+                syllabus = await Syllabus.find({ schoolId: student.schoolId, class: student.studentProfile.class });
             } else if (loggedInUser.role === 'parent') {
                 const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf');
                 if (!parent) {
@@ -1181,10 +1197,7 @@ exports.getSyllabus = async (req, res) => {
                 for (let child of parent.parentProfile.parentOf) {
                     const student = await Student.findById(child);
 
-                    const syllabuss = await Syllabus.findOne({
-                        schoolId: student.schoolId,
-                        class: student.studentProfile.class,
-                    }).sort({ createdAt: -1 });
+                    const syllabuss = await Syllabus.find({ schoolId: student.schoolId, class: student.studentProfile.class });
 
                     if (syllabuss) {
                         childSyllabus = childSyllabus.concat(syllabuss);
@@ -1194,22 +1207,13 @@ exports.getSyllabus = async (req, res) => {
             }
         }
 
-        syllabus = Array.isArray(syllabus) ? syllabus : [];
-        syllabus = syllabus.filter(item => item !== null);
-
         if (syllabus.length === 0) {
-            return res.status(404).json({ message: 'No syllabus yet.' });
+            return res.status(404).json({ message: 'No syllabus found.' });
         }
 
-        return res.status(200).json({
-            message: 'Syllabus fetched successfully.',
-            syllabus,
-        });
+        return res.status(200).json({ message: 'Syllabus fetched successfully.', syllabus, });
     } catch (err) {
-        return res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        });
+        return res.status(500).json({ message: 'Internal server error.', error: err.message, });
     }
 };
 
@@ -1697,57 +1701,57 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
-// exports.getClassAndSectionForClassplan = async (req, res) => {
-//     try {
-//         const loggedInId = req.user && req.user.id;
-//         if (!loggedInId) {
-//             return res.status(401).json({ message: 'Unauthorized' });
-//         }
+exports.getClassAndSectionForClassplan = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
 
-//         const loggedInUser = await User.findById(loggedInId);
-//         if (!loggedInUser || loggedInUser.role !== 'teacher') {
-//             return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
-//         }
-//         const teacher = await Teacher.findOne({ userId: loggedInId });
-//         if (!teacher) {
-//             return res.status(404).json({ message: "No teacher found with the logged-in id." });
-//         }
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied, only logged-in teachers can access.' });
+        }
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: "No teacher found with the logged-in id." });
+        }
 
-//         const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
+        const timetables = await ClassTimetable.find({ schoolId: teacher.schoolId });
 
-//         const assigned = new Set();
+        const assigned = new Set();
 
-//         for (const timetable of timetables) {
-//             const days = Object.keys(timetable.timetable);
+        for (const timetable of timetables) {
+            const days = Object.keys(timetable.timetable);
 
-//             for (const day of days) {
-//                 const slots = timetable.timetable[day];
+            for (const day of days) {
+                const slots = timetable.timetable[day];
 
-//                 if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
-//                     assigned.add(`${timetable.class}__${timetable.section}`);
-//                     // break; // No need to check other days if already assigned
-//                 }
-//             }
-//         }
+                if (slots.some(slot => slot.teacher?.toString() === teacher._id.toString())) {
+                    assigned.add(`${timetable.class}__${timetable.section}`);
+                    // break; // No need to check other days if already assigned
+                }
+            }
+        }
 
-//         if (assigned.size === 0) {
-//             return res.status(404).json({ message: "No class or section class plans found for the teacher." });
-//         }
+        if (assigned.size === 0) {
+            return res.status(404).json({ message: "No class or section class plans found for the teacher." });
+        }
 
-//         const results = Array.from(assigned).map(entry => {
-//             const [className, section] = entry.split('__');
-//             return { class: className, section };
-//         });
+        const results = Array.from(assigned).map(entry => {
+            const [className, section] = entry.split('__');
+            return { class: className, section };
+        });
 
-//         return res.status(200).json({ assignedClasses: results });
+        return res.status(200).json({ assignedClasses: results });
 
-//     } catch (err) {
-//         res.status(500).json({
-//             message: 'Internal server error',
-//             error: err.message,
-//         });
-//     }
-// };
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+};
 
 
 //get class and sections for filter from - teacher lectures
@@ -1790,23 +1794,13 @@ exports.getClassPlan = async (req, res) => {
                 const targetClass = teacher.profile.class;
                 const targetSection = teacher.profile.section;
 
-                classPlan = await ClassPlan.findOne({
-                    schoolId: teacher.schoolId,
-                    class: targetClass,
-                    section: targetSection
-                });
-
+                classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: targetClass, section: targetSection });
                 if (!classPlan) {
                     return res.status(404).json({ message: "No class plan found for the teacher's assigned class and section." });
                 }
 
             } else {
-                const timetable = await ClassTimetable.findOne({
-                    schoolId: teacher.schoolId,
-                    class: className,
-                    section: section
-                });
-
+                const timetable = await ClassTimetable.findOne({ schoolId: teacher.schoolId, class: className, section: section });
                 if (!timetable) {
                     return res.status(404).json({ message: "You can't access, as you are not assigned to the specified class and section." });
                 }
@@ -1819,12 +1813,7 @@ exports.getClassPlan = async (req, res) => {
                     return res.status(403).json({ message: "You can't access, as you are not assigned to the specified class and section." });
                 }
 
-                classPlan = await ClassPlan.findOne({
-                    schoolId: teacher.schoolId,
-                    class: className,
-                    section: section
-                });
-
+                classPlan = await ClassPlan.findOne({ schoolId: teacher.schoolId, class: className, section: section });
                 if (!classPlan) {
                     return res.status(404).json({ message: "No class plan found for the specified class and section." });
                 }

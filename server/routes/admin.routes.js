@@ -46,8 +46,8 @@ router.get('/inventory', protect, authorize('admin'), getInventory);
 router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
 // router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
-router.post('/syllabus', protect, authorize('admin'), upload.single('photo'), createOrUpdateSyllabus);
-router.get('/syllabus', protect, authorize('admin'), getSyllabus);
+router.post('/syllabus', protect, authorize('admin'), upload.single('file'), createOrUpdateSyllabus);
+router.get('/syllabus/:className?', protect, authorize('admin'), getSyllabus);
 router.get('/newAdmission', protect, authorize('admin'), getNewAdmissions);
 router.get('/admission', protect, authorize('admin'), getAdmissionRequests);
 router.post('/admission/:id', protect, authorize('admin'), createInstantAccount);
@@ -89,3 +89,4 @@ router.get('/eeresults', protect, authorize('admin'), getEntranceExamResults);
 router.post('/eeresults', protect, authorize('admin'), sendEntranceExamResultToApplicants);
 
 module.exports = router;
+

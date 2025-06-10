@@ -2350,7 +2350,7 @@ exports.getStaffMembers = async (req, res) => {
       return res.status(404).json({ message: 'Admin is not associated with any school.' });
     };
 
-    const staff = await SchoolStaff.find({ schoolId: school._id }).populate({ path: 'userId', select: '-password' }).sort({ createdAt: -1 })
+    const staff = await SchoolStaff.find({ schoolId: school._id }).populate({ path: 'userId', select: 'email mobileNumber isActive' }).sort({ createdAt: -1 })
     if (!staff.length) {
       return res.status(404).json({ message: "No staff members found in this school." })
     }
@@ -2509,15 +2509,18 @@ exports.createOrUpdateSyllabus = async (req, res) => {
 
     const loggedInUser = await User.findById(loggedInId);
     if (!loggedInUser || loggedInUser.role !== 'admin') {
-      return res.status(404).json({
+      return res.status(403).json({
         message: 'Access denied, only admin have access.'
       })
     };
 
-    const { className } = req.body;
-    if (!className) { return res.status(400).json({ message: "Please provide class to upload syllabus." }) }
+    const { className, subject, description } = req.body;
+    if (!className || !subject || !description) { return res.status(400).json({ message: "Please provide class, subject, description to upload syllabus." }) }
+
+    let subjectIs = subject.toLowerCase();
 
     const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
 
     let uploadedPhotoUrl = '';
     if (req.file) {
@@ -2529,43 +2532,30 @@ exports.createOrUpdateSyllabus = async (req, res) => {
       }
     }
 
-    let existingSyllabus = await Syllabus.findOne({ class: className, schoolId: school._id, createdBy: loggedInId });
+    let existingSyllabus = await Syllabus.findOne({ schoolId: school._id, class: className, subject: subjectIs });
 
     if (existingSyllabus) {
       if (existingSyllabus.syllabus) {
         await deleteImage(existingSyllabus.syllabus);
+        existingSyllabus.syllabus = uploadedPhotoUrl;
       }
-      existingSyllabus.syllabus = uploadedPhotoUrl;
+      existingSyllabus.class = className;
+      existingSyllabus.subject = subjectIs;
+      existingSyllabus.description = description;
+
       await existingSyllabus.save();
 
-      return res.status(201).json({
-        message: 'Syllabus updated successfully.',
-        existingSyllabus,
-      });
-    } else {
-      const newSyllabus = new Syllabus({
-        schoolId: school._id,
-        class: className,
-        syllabus: uploadedPhotoUrl,
-        createdBy: loggedInId,
-      });
-      if (!newSyllabus.class) {
-        return res.status(404).json({ message: "Only admin can create syllabus." })
-      }
-
+      return res.status(200).json({ message: 'Syllabus updated successfully.', existingSyllabus });
+    }
+    else {
+      const newSyllabus = new Syllabus({ schoolId: school._id, class: className, subject: subjectIs, description, syllabus: uploadedPhotoUrl, });
       await newSyllabus.save();
 
-      return res.status(200).json({
-        message: 'Syllabus created successfully.',
-        newSyllabus,
-      });
+      return res.status(201).json({ message: 'Syllabus created successfully.', newSyllabus, });
     }
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error.', error: err.message, });
   }
 };
 

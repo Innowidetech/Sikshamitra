@@ -22,10 +22,6 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        phoneNumber: {
-            type: String,
-            required: true
-        },
         aadhar: {
             type: String,
             required: true,
@@ -56,6 +52,14 @@ const onlineSchema = new mongoose.Schema({
                 type: String,
                 required: true,
             },
+        },
+        examId:{
+            type:String,
+            required:true,
+        },
+        resultPercentage:{
+            type:String,
+            required:true,
         },
     },
     educationDetails: [{
