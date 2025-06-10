@@ -859,6 +859,121 @@ exports.createOrUpdateTimetable = async (req, res) => {
 };
 
 
+
+// compare 12-hour AM/PM format
+function compareTimes(a, b) {
+    const aDate = convertToDate(a);
+    const bDate = convertToDate(b);
+    return aDate - bDate;
+}
+
+// convert 12-hour AM/PM to Date
+function convertToDate(time) {
+    const [timePart, modifier] = time.split(' ');  // AM/PM
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    let hours24 = hours;
+
+    if (modifier === 'PM' && hours !== 12) {
+        hours24 += 12;
+    } else if (modifier === 'AM' && hours === 12) {
+        hours24 = 0;
+    }
+
+    const date = new Date();
+    date.setHours(hours24);
+    date.setMinutes(minutes);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+
+    return date;
+}
+
+
+exports.deleteTimetablePeriod = async (req, res) => {
+    try {
+        const { periodId } = req.params;
+        if (!periodId) { return res.status(400).json({ message: "Provide the period id to delete it." }) }
+
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized. Only logged-in teachers can perform this action.' });
+        }
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser || loggedInUser.role !== 'teacher') {
+            return res.status(403).json({ message: 'Access denied. Only teachers can create or update timetables.' });
+        }
+
+        const teacher = await Teacher.findOne({ userId: loggedInId });
+        if (!teacher) {
+            return res.status(404).json({ message: 'Teacher not found.' });
+        }
+
+        const teacherSubjects = teacher.profile.subjects;
+
+        const teacherTimetable = await Lectures.findOne({ teacher: teacher._id });
+        if (!teacherTimetable) {
+            return res.status(404).json({ message: 'Teacher timetable not found.' });
+        }
+
+        let foundPeriod = null;
+        let foundDay = null;
+
+        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        for (const day of daysOfWeek) {
+            const dayTimetable = teacherTimetable.timetable[day];
+            const periodIndex = dayTimetable.findIndex(period => period._id.toString() === periodId);
+            if (periodIndex !== -1) {
+                foundPeriod = dayTimetable[periodIndex];
+                foundDay = day;
+                dayTimetable.splice(periodIndex, 1);
+                break;
+            }
+        }
+
+        if (!foundPeriod) {
+            return res.status(404).json({ message: `Period not found in teacher's timetable.` });
+        }
+
+        if (!teacherSubjects.includes(foundPeriod.subject)) {
+            return res.status(403).json({ message: `The subject ${foundPeriod.subject} is not part of your teaching subjects.` });
+        }
+
+        const { class: className, section, subject } = foundPeriod;
+
+        const classTimetable = await ClassTimetable.findOne({
+            schoolId: teacherTimetable.schoolId,
+            class: className,
+            section: section
+        });
+
+        if (!classTimetable) {
+            return res.status(404).json({ message: 'Class timetable not found.' });
+        }
+
+        const classDayTimetable = classTimetable.timetable[foundDay];
+        const classPeriodIndex = classDayTimetable.findIndex(period =>
+            period.subject === subject && period.teacher.toString() === teacher._id.toString()
+        );
+
+        if (classPeriodIndex === -1) {
+            return res.status(404).json({ message: `Period not found in class timetable.` });
+        }
+
+        classDayTimetable.splice(classPeriodIndex, 1);
+
+        await teacherTimetable.save();
+        await classTimetable.save();
+
+        res.status(200).json({ message: `Period deleted successfully from teacher's and class's timetable.` });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Internal server error.", error: err.message })
+    }
+};
+
+
 exports.createOnlineLectures = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
@@ -995,119 +1110,6 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             message: 'An error occurred while fetching the timetable.',
             error: err.message,
         });
-    }
-};
-
-// compare 12-hour AM/PM format
-function compareTimes(a, b) {
-    const aDate = convertToDate(a);
-    const bDate = convertToDate(b);
-    return aDate - bDate;
-}
-
-// convert 12-hour AM/PM to Date
-function convertToDate(time) {
-    const [timePart, modifier] = time.split(' ');  // AM/PM
-    const [hours, minutes] = timePart.split(':').map(Number);
-
-    let hours24 = hours;
-
-    if (modifier === 'PM' && hours !== 12) {
-        hours24 += 12;
-    } else if (modifier === 'AM' && hours === 12) {
-        hours24 = 0;
-    }
-
-    const date = new Date();
-    date.setHours(hours24);
-    date.setMinutes(minutes);
-    date.setSeconds(0);
-    date.setMilliseconds(0);
-
-    return date;
-}
-
-
-exports.deleteTimetablePeriod = async (req, res) => {
-    try {
-        const { periodId } = req.params;
-        if (!periodId) { return res.status(400).json({ message: "Provide the period id to delete it." }) }
-
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized. Only logged-in teachers can perform this action.' });
-        }
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'teacher') {
-            return res.status(403).json({ message: 'Access denied. Only teachers can create or update timetables.' });
-        }
-
-        const teacher = await Teacher.findOne({ userId: loggedInId });
-        if (!teacher) {
-            return res.status(404).json({ message: 'Teacher not found.' });
-        }
-
-        const teacherSubjects = teacher.profile.subjects;
-
-        const teacherTimetable = await Lectures.findOne({ teacher: teacher._id });
-        if (!teacherTimetable) {
-            return res.status(404).json({ message: 'Teacher timetable not found.' });
-        }
-
-        let foundPeriod = null;
-        let foundDay = null;
-
-        const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        for (const day of daysOfWeek) {
-            const dayTimetable = teacherTimetable.timetable[day];
-            const periodIndex = dayTimetable.findIndex(period => period._id.toString() === periodId);
-            if (periodIndex !== -1) {
-                foundPeriod = dayTimetable[periodIndex];
-                foundDay = day;
-                dayTimetable.splice(periodIndex, 1);
-                break;
-            }
-        }
-
-        if (!foundPeriod) {
-            return res.status(404).json({ message: `Period with ID ${periodId} not found in teacher's timetable.` });
-        }
-
-        if (!teacherSubjects.includes(foundPeriod.subject)) {
-            return res.status(403).json({ message: `The subject ${foundPeriod.subject} is not part of your teaching subjects.` });
-        }
-
-        const { class: className, section, subject } = foundPeriod;
-
-        const classTimetable = await ClassTimetable.findOne({
-            schoolId: teacherTimetable.schoolId,
-            class: className,
-            section: section
-        });
-
-        if (!classTimetable) {
-            return res.status(404).json({ message: 'Class timetable not found.' });
-        }
-
-        const classDayTimetable = classTimetable.timetable[foundDay];
-        const classPeriodIndex = classDayTimetable.findIndex(period =>
-            period.subject === subject && period.teacher.toString() === teacher._id.toString()
-        );
-
-        if (classPeriodIndex === -1) {
-            return res.status(404).json({ message: `Period with ID ${periodId} not found in class timetable.` });
-        }
-
-        classDayTimetable.splice(classPeriodIndex, 1);
-
-        await teacherTimetable.save();
-        await classTimetable.save();
-
-        res.status(200).json({ message: `Period deleted successfully from teacher's and class's timetable.` });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Internal server error.", error: err.message })
     }
 };
 

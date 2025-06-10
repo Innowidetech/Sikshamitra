@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getAllSchools, changeSchoolStatus, postBlog, deleteBlog, getSchoolById, registerSchool, editBlog, addSAStaffMember } = require('../controllers/superAdmin.controller');
+const { getAllSchools, changeSchoolStatus, postBlog, deleteBlog, getSchoolById, registerSchool, editBlog, addSAStaffMember, getSAStaffMembers, editSAStaffMember, assignTaskToSAStaff, getSAAssignedTasks } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
@@ -13,8 +13,12 @@ router.post('/blog', protect, authorize('superadmin'), upload.array('photos'),  
 router.put('/blog/:id', protect, authorize('superadmin'), upload.array('photos'), editBlog);
 router.delete('/blog/:id', protect, authorize('superadmin'), deleteBlog);
 // router.delete('/blogDetail/:blogId', protect, authorize('superadmin'), deleteBlog);
-router.post('/staff', protect, authorize('superadmin'), addSAStaffMember);
 
+router.post('/staff', protect, authorize('superadmin'), addSAStaffMember);
+router.get('/staff', protect, authorize('superadmin'), getSAStaffMembers);
+router.patch('/staff/:id', protect, authorize('superadmin'), editSAStaffMember);
+router.post('/task', protect, authorize('superadmin'), assignTaskToSAStaff);
+router.get('/tasks', protect, authorize('superadmin'), getSAAssignedTasks);
 
 
 module.exports = router;

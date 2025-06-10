@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const { sendEmail } = require('../utils/sendEmail');
 const registrationTemplate = require('../utils/registrationTemplate');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
+const SuperAdminStaffTasks = require('../models/SuperAdminStaffTasks');
 
 
 //create account for admin/school
@@ -21,7 +22,7 @@ exports.registerSchool = async (req, res) => {
     if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
       return res.status(403).json({ message: 'Access denied. Only superadmin can register school.' });
     };
-    if(loggedInUser.employeeType == 'groupD'){
+    if (loggedInUser.employeeType == 'groupD') {
       return res.status
     }
 
@@ -100,7 +101,7 @@ exports.getAllSchools = async (req, res) => {
 //     };
 
 //     const loggedInUser = await User.findById(loggedInId);
-    // if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
 //       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
 //     };
 
@@ -176,7 +177,7 @@ exports.changeSchoolStatus = async (req, res) => {
 //     };
 
 //     const loggedInUser = await User.findById(loggedInId);
-    // if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
 //       return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
 //     };
 
@@ -215,36 +216,40 @@ exports.postBlog = async (req, res) => {
     }
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can post blog.' });
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can post blog.' });
     }
 
-    let uploadedBlog = [];
+    if (loggedInUser.role === 'superadmin') {
+      let uploadedBlog = [];
 
-    if (req.files && req.files.length === blog.length) {
-      for (let i = 0; i < blog.length; i++) {
-        const { description } = blog[i];
-        const file = req.files[i];
+      if (req.files && req.files.length === blog.length) {
+        for (let i = 0; i < blog.length; i++) {
+          const { description } = blog[i];
+          const file = req.files[i];
 
-        if (!description || !file) {
-          return res.status(400).json({ message: 'Each blog detail must include a description and a photo.' });
+          if (!description || !file) {
+            return res.status(400).json({ message: 'Each blog detail must include a description and a photo.' });
+          }
+
+          try {
+            const [photoUrl] = await uploadImage(file);
+            uploadedBlog.push({ description, photo: photoUrl });
+          } catch (error) {
+            return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+          }
         }
-
-        try {
-          const [photoUrl] = await uploadImage(file);
-          uploadedBlog.push({ description, photo: photoUrl });
-        } catch (error) {
-          return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-        }
+      } else {
+        return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
       }
-    } else {
-      return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
+
+      const newBlog = new Blogs({ title, blog: uploadedBlog });
+      await newBlog.save();
+
+      res.status(201).json({ message: "Blog posted successfully.", newBlog });
+
     }
 
-    const newBlog = new Blogs({ title, blog: uploadedBlog });
-    await newBlog.save();
-
-    res.status(201).json({ message: "Blog posted successfully.", newBlog });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
   }
@@ -351,7 +356,7 @@ exports.editBlog = async (req, res) => {
 //     };
 
 //     const loggedInUser = await User.findById(loggedInId);
-    // if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
 //       return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can delete blog.' });
 //     };
 
@@ -469,168 +474,155 @@ exports.addSAStaffMember = async (req, res) => { // check figma
 };
 
 
-// exports.getSAStaffMembers = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
+exports.getSAStaffMembers = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
 
-//     const school = await School.findOne({ userId: loggedInId });
-//     if (!school) {
-//       return res.status(404).json({ message: 'Admin is not associated with any school.' });
-//     };
+    const staff = await SuperAdminStaff.find().populate({ path: 'userId', select: 'email mobileNumber isActive' }).sort({ createdAt: -1 })
+    if (!staff.length) {
+      return res.status(404).json({ message: "No staff members found." })
+    }
 
-//     const staff = await SchoolStaff.find({ schoolId: school._id }).populate({ path: 'userId', select: '-password' }).sort({ createdAt: -1 })
-//     if (!staff.length) {
-//       return res.status(404).json({ message: "No staff members found in this school." })
-//     }
+    let totalStaffSalary = 0;
+    for (let employee of staff) {
+      totalStaffSalary += employee.salary
+    }
 
-//     let totalEmployeesSalary = 0;
-//     for (let employee of staff) {
-//       totalEmployeesSalary += employee.salary
-//     }
-
-//     res.status(200).json({ message: `Staff details of school:`, totalEmployeesSalary, staff })
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
+    res.status(200).json({ message: `Staff details:`, totalStaffSalary, staff })
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
 
 
-// exports.editSAStaffMember = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
+exports.editSAStaffMember = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
 
-//     const { id } = req.params;
-//     if (!id) {
-//       return res.status(400).json({ message: "Provide the staff member id to edit." })
-//     }
-//     const { email, mobileNumber, isActive, name, employeeRole, department, salary } = req.body;
-//     if (!email && !mobileNumber && !isActive && !name && !employeeRole && !department && !salary) {
-//       return res.status(400).json({ message: "Please provide atlease one new data to edit staff member details." })
-//     }
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Provide the staff member id to edit." })
+    }
+    const { email, mobileNumber, isActive, name, employeeRole, department, salary } = req.body;
+    if (!email && !mobileNumber && !isActive && !name && !employeeRole && !department && !salary) {
+      return res.status(400).json({ message: "Please provide atlease one new data to edit staff member details." })
+    }
 
-//     const school = await School.findOne({ userId: loggedInId });
-//     if (!school) {
-//       return res.status(404).json({ message: 'Admin is not associated with any school.' });
-//     };
+    const employee = await SuperAdminStaff.findById(id).populate('userId');
+    if (!employee) {
+      return res.status(404).json({ message: "No staff member found with the id." })
+    }
 
-//     const employee = await SchoolStaff.findOne({ schoolId: school._id, _id: id }).populate('userId');
-//     if (!employee) {
-//       return res.status(404).json({ message: "No staff member found with the id in this school." })
-//     }
+    if (email) { employee.userId.email = email }
+    if (mobileNumber) { employee.userId.role = mobileNumber }
+    if (isActive) { employee.userId.isActive = isActive }
+    if (name) { employee.name = name }
+    if (employeeRole) { employee.employeeRole = employeeRole }
+    if (department) { employee.department = department }
+    if (salary) { employee.salary = salary }
 
-//     if (email) { employee.userId.email = email }
-//     if (mobileNumber) { employee.userId.role = mobileNumber }
-//     if (isActive) { employee.userId.isActive = isActive }
-//     if (name) { employee.name = name }
-//     if (employeeRole) { employee.employeeRole = employeeRole }
-//     if (department) { employee.department = department }
-//     if (salary) { employee.salary = salary }
+    await employee.userId.save();
+    await employee.save();
 
-//     await employee.userId.save();
-//     await employee.save();
-
-//     res.status(200).json({ message: `Employee data updated successfully.`, employee })
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
+    res.status(200).json({ message: `Employee data updated successfully.`, employee })
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
 
 
-// exports.assignTaskToSAStaff = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
+exports.assignTaskToSAStaff = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
 
-//     const school = await School.findOne({ userId: loggedInId });
-//     if (!school) {
-//       return res.status(404).json({ message: 'Admin is not associated with any school.' });
-//     };
+    const { name, employeeRole, startDate, dueDate, title, description } = req.body;
+    if (!name || !employeeRole || !startDate || !dueDate || !title || !description) {
+      return res.status(400).json({ message: "Provide all the details to add task for staff member." })
+    }
 
-//     const { name, employeeRole, startDate, dueDate, title, description } = req.body;
-//     if (!name || !employeeRole || !startDate || !dueDate || !title || !description) {
-//       return res.status(400).json({ message: "Provide all the details to add task for staff member." })
-//     }
+    const staffMember = await SuperAdminStaff.findOne({ name, employeeRole }).populate('userId', 'mobileNumber');
+    if (!staffMember) { return res.status(404).json({ message: "No staff member found with the provided details." }) }
 
-//     const staffMember = await SchoolStaff.findOne({ schoolId: school._id, name, employeeRole }).populate('userId', 'mobileNumber');
-//     if (!staffMember) { return res.status(404).json({ message: "No staff member found with the details in this school." }) }
+    const task = new SuperAdminStaffTasks({ staffId: staffMember._id, startDate, dueDate, title, description });
+    await task.save();
 
-//     const task = new SchoolStaffTasks({ schoolId: school._id, staffId: staffMember._id, startDate, dueDate, title, description });
-//     await task.save();
-
-//     res.status(201).json({ message: `Task successfully assigned to staff member.`, task })
-//   } catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
+    res.status(201).json({ message: `Task successfully assigned to staff member.`, task })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
 
 
-// exports.getAssignedSATasks = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
+exports.getSAAssignedTasks = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser) {
-//       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
 
-//     let tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
+    let name, tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
 
-//     if (loggedInUser.role == 'admin') {
-//       const school = await School.findOne({ userId: loggedInId });
-//       if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
+    if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
 
-//       tasks = await SchoolStaffTasks.find({ schoolId: school._id }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
-//     }
-//     else if (loggedInUser.role == 'teacher' && loggedInUser.employeeType == 'groupD') {
-//       const staff = await SchoolStaff.findOne({ userId: loggedInId });
-//       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
-//       if (!staff.schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
+      completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
+      pendingTasks = await SuperAdminStaffTasks.find({ status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
 
-//       dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];;
-//       role = staff.employeeRole;
+      if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
-//       tasks = await SchoolStaffTasks.find({ schoolId: staff.schoolId, staffId: staff._id }).sort({ startDate: 1 });
+    }
+    else if (loggedInUser.role === 'superadmin' && (loggedInUser.employeeType && loggedInUser.employeeType === 'groupD')) {
+      const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
 
-//       if (tasks) {
-//         totalTasks = tasks.length;
-//         completedTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'completed' });
-//         pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'pending' });
-//       }
-//     }
-//     else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+      name = staff.name;
+      dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];
+      role = staff.employeeRole;
 
-//     if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
+      tasks = await SuperAdminStaffTasks.find({ staffId: staff._id }).sort({ startDate: 1 });
 
-//     res.status(200).json({ message: `Tasks data fetched successfully.`, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
-//   } catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
+      if (tasks) {
+        totalTasks = tasks.length;
+        completedTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'completed' });
+        pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'pending' });
+      }
+      if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
+
+    }
+    else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+
+    res.status(200).json({ message: `Tasks data fetched successfully.`, name, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};

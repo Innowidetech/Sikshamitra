@@ -2355,12 +2355,12 @@ exports.getStaffMembers = async (req, res) => {
       return res.status(404).json({ message: "No staff members found in this school." })
     }
 
-    let totalEmployeesSalary = 0;
+    let totalStaffSalary = 0;
     for (let employee of staff) {
-      totalEmployeesSalary += employee.salary
+      totalStaffSalary += employee.salary
     }
 
-    res.status(200).json({ message: `Staff details of school:`, totalEmployeesSalary, staff })
+    res.status(200).json({ message: `Staff details of school:`, totalStaffSalary, staff })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -2465,14 +2465,16 @@ exports.getAssignedTasks = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
     };
 
-    let tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
+    let name, tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
 
     if (loggedInUser.role == 'admin') {
       const school = await School.findOne({ userId: loggedInId });
       if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
 
-      completedTasks = await SchoolStaffTasks.find({ schoolId: school._id, status:'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
-      pendingTasks = await SchoolStaffTasks.find({ schoolId: school._id, status:'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+      completedTasks = await SchoolStaffTasks.find({ schoolId: school._id, status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
+      pendingTasks = await SchoolStaffTasks.find({ schoolId: school._id, status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+
+      if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
     }
     else if (loggedInUser.role == 'teacher' && loggedInUser.employeeType == 'groupD') {
@@ -2480,7 +2482,8 @@ exports.getAssignedTasks = async (req, res) => {
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
       if (!staff.schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
 
-      dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];;
+      name = staff.name;
+      dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];
       role = staff.employeeRole;
 
       tasks = await SchoolStaffTasks.find({ schoolId: staff.schoolId, staffId: staff._id }).sort({ startDate: 1 });
@@ -2490,12 +2493,13 @@ exports.getAssignedTasks = async (req, res) => {
         completedTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'completed' });
         pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'pending' });
       }
+      if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
+
     }
     else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
 
-    if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
-    res.status(200).json({ message: `Tasks data fetched successfully.`, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
+    res.status(200).json({ message: `Tasks data fetched successfully.`, name, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }

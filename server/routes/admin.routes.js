@@ -51,11 +51,13 @@ router.get('/syllabus/:className?', protect, authorize('admin'), getSyllabus);
 router.get('/newAdmission', protect, authorize('admin'), getNewAdmissions);
 router.get('/admission', protect, authorize('admin'), getAdmissionRequests);
 router.post('/admission/:id', protect, authorize('admin'), createInstantAccount);
+
 router.post('/staff', protect, authorize('admin'), addStaffMember);
 router.get('/staff', protect, authorize('admin'), getStaffMembers);
 router.patch('/staff/:id', protect, authorize('admin'), editStaffMember);
 router.post('/task', protect, authorize('admin'), assignTaskToStaff);
 router.get('/tasks', protect, authorize('admin'), getAssignedTasks);
+
 router.post('/aimobjective', protect, authorize('admin'), createAimObjective);
 router.get('/aimobjective', protect, authorize('admin'), getAimObjective);
 router.delete('/aimobjective/:aimobjectiveId', protect, authorize('admin'), deleteAimObjective);
