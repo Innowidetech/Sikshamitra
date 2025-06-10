@@ -2471,7 +2471,9 @@ exports.getAssignedTasks = async (req, res) => {
       const school = await School.findOne({ userId: loggedInId });
       if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
 
-      tasks = await SchoolStaffTasks.find({ schoolId: school._id }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+      completedTasks = await SchoolStaffTasks.find({ schoolId: school._id, status:'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
+      pendingTasks = await SchoolStaffTasks.find({ schoolId: school._id, status:'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+
     }
     else if (loggedInUser.role == 'teacher' && loggedInUser.employeeType == 'groupD') {
       const staff = await SchoolStaff.findOne({ userId: loggedInId });

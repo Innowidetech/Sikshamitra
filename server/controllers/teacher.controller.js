@@ -720,8 +720,8 @@ exports.viewAttendance = async (req, res) => {
 exports.createOrUpdateTimetable = async (req, res) => {
     try {
         const { monday, tuesday, wednesday, thursday, friday, saturday } = req.body;
-
         const loggedInId = req.user && req.user.id;
+
         if (!loggedInId) {
             return res.status(401).json({ message: 'Unauthorized. Only logged-in teachers can perform this action.' });
         }
@@ -737,9 +737,7 @@ exports.createOrUpdateTimetable = async (req, res) => {
         }
 
         const teacherSubjects = teacher.profile.subjects;
-        let days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        let classTimetableUpdate = {};
-        let teacherTimetableUpdate = {};
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
         for (let day of days) {
             if (req.body[day]) {
@@ -747,10 +745,10 @@ exports.createOrUpdateTimetable = async (req, res) => {
                     let { startTime, endTime, subject, class: className, section } = periodData;
 
                     if (!teacherSubjects.includes(subject)) {
-                        return res.status(403).json({ message: `You are not allowed to create/update timetable for ${subject} subject.` });
+                        return res.status(403).json({ message: `You are not allowed to create/update timetable for ${subject}.` });
                     }
 
-                    let existingLecture = await Lectures.findOne({
+                    const conflictLecture = await Lectures.findOne({
                         schoolId: teacher.schoolId,
                         teacher: { $ne: teacher._id },
                         [`timetable.${day}`]: {
@@ -758,126 +756,101 @@ exports.createOrUpdateTimetable = async (req, res) => {
                         }
                     }).populate('teacher', 'profile.fullname');
 
-                    if (existingLecture) {
+                    if (conflictLecture) {
                         return res.status(400).json({
-                            message: `Conflict: ${existingLecture.teacher.profile.fullname} teacher has already scheduled a class from ${startTime} to ${endTime} in ${className}${section} on ${day}.`
+                            message: `Conflict: ${conflictLecture.teacher.profile.fullname} has a class from ${startTime} to ${endTime} in ${className}${section} on ${day}.`
                         });
                     }
 
-                    let classTimetable = await ClassTimetable.findOne({
+                    const classTimetable = await ClassTimetable.findOne({
                         schoolId: teacher.schoolId,
                         class: className,
                         section: section.toUpperCase(),
                         [`timetable.${day}`]: {
-                            $elemMatch: {
-                                teacher: { $ne: teacher._id }
-                            }
+                            $ne: teacher._id
                         }
                     });
 
                     if (classTimetable) {
-                        for (let period of classTimetable.timetable[day]) {
-                            if (period.startTime === startTime && period.endTime === endTime) {
-                                return res.status(400).json({
-                                    message: `Conflict: This time slot is already booked for class ${className}${section} on ${day}.`
-                                });
-                            }
+                        const dayPeriods = classTimetable.timetable[day] || [];
+                        const existingIndex = dayPeriods.findIndex(p =>
+                            p.startTime == startTime &&
+                            p.endTime == endTime
+                        );
+
+                        if (existingIndex > -1) {
+                            dayPeriods[existingIndex].subject = subject;
+                        } else {
+                            dayPeriods.push({
+                                startTime,
+                                endTime,
+                                subject,
+                                teacher: teacher._id,
+                                class: className,
+                                section: section.toUpperCase()
+                            });
                         }
-                    }
 
-                    if (!classTimetableUpdate[day]) {
-                        classTimetableUpdate[day] = [];
-                    }
-
-                    classTimetableUpdate[day].push({
-                        startTime,
-                        endTime,
-                        subject,
-                        teacher: teacher._id,
-                        class: className,
-                        section: section.toUpperCase()
-                    });
-
-                    if (!teacherTimetableUpdate[day]) {
-                        teacherTimetableUpdate[day] = [];
-                    }
-
-                    teacherTimetableUpdate[day].push({
-                        startTime,
-                        endTime,
-                        subject,
-                        class: className,
-                        section: section.toUpperCase()
-                    });
-                }
-            }
-        }
-
-        for (let day of days) {
-            if (classTimetableUpdate[day] && classTimetableUpdate[day].length > 0) {
-                for (let periodData of classTimetableUpdate[day]) {
-                    let { class: className, section } = periodData;
-
-                    let classTimetable = await ClassTimetable.findOne({
-                        schoolId: teacher.schoolId,
-                        class: className,
-                        section: section.toUpperCase()
-                    });
-
-                    if (!classTimetable) {
-                        classTimetable = new ClassTimetable({
+                        classTimetable.timetable[day] = dayPeriods;
+                        await classTimetable.save();
+                    } else {
+                        await ClassTimetable.create({
                             schoolId: teacher.schoolId,
                             class: className,
                             section: section.toUpperCase(),
+                            timetable: {
+                                monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [],
+                                [day]: [{
+                                    startTime,
+                                    endTime,
+                                    subject,
+                                    teacher: teacher._id
+                                }]
+                            }
+                        });
+                    }
+
+                    let teacherTimetable = await Lectures.findOne({ schoolId: teacher.schoolId, teacher: teacher._id });
+
+                    if (!teacherTimetable) {
+                        teacherTimetable = new Lectures({
+                            teacher: teacher._id,
+                            schoolId: teacher.schoolId,
                             timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [] }
                         });
                     }
 
-                    classTimetable.timetable[day].push(periodData);
-                    await classTimetable.save();
-                }
-            }
-        }
-
-        let teacherTimetable = await Lectures.findOne({ schoolId: teacher.schoolId, teacher: teacher._id });
-
-        if (!teacherTimetable) {
-            teacherTimetable = new Lectures({
-                teacher: teacher._id,
-                schoolId: teacher.schoolId,
-                timetable: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [] }
-            });
-        }
-
-        for (let day of days) {
-            if (teacherTimetableUpdate[day] && teacherTimetableUpdate[day].length > 0) {
-                let dayTimetable = teacherTimetable.timetable[day] || [];
-
-                for (let periodData of teacherTimetableUpdate[day]) {
-                    const { startTime, endTime, class: className, section } = periodData;
-
-                    let existingPeriod = dayTimetable.find(
-                        (period) =>
-                            period.startTime === startTime &&
-                            period.endTime === endTime &&
-                            period.class === className &&
-                            period.section === section.toUpperCase()
+                    let teacherDayPeriods = teacherTimetable.timetable[day] || [];
+                    const teacherIndex = teacherDayPeriods.findIndex(p =>
+                        p.startTime == startTime &&
+                        p.endTime == endTime &&
+                        p.class == className &&
+                        p.section == section.toUpperCase()
                     );
 
-                    if (existingPeriod) {
-                        Object.assign(existingPeriod, periodData);
-                    } else {
-                        dayTimetable.push(periodData);
-                    }
-                }
+                    const newPeriodData = {
+                        startTime,
+                        endTime,
+                        subject,
+                        class: className,
+                        section: section.toUpperCase()
+                    };
 
-                teacherTimetable.timetable[day] = dayTimetable;
+                    if (teacherIndex > -1) {
+                        teacherDayPeriods[teacherIndex] = newPeriodData;
+                    } else {
+                        teacherDayPeriods.push(newPeriodData);
+                    }
+
+                    teacherTimetable.timetable[day] = teacherDayPeriods;
+                    await teacherTimetable.save();
+                }
             }
         }
-        await teacherTimetable.save();
 
         res.status(200).json({ message: 'Timetable created/updated successfully.' });
     } catch (err) {
+        console.error(err);
         res.status(500).json({
             message: 'An error occurred while creating or updating the timetable.',
             error: err.message,
