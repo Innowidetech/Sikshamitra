@@ -29,7 +29,7 @@ router.delete('/calendar/:calendarId', protect, authorize('admin'), deleteDynami
 router.post('/register', protect, authorize('admin'), upload.single('photo'), createTeacher);
 router.get('/teacherNames', protect, authorize('admin'), getTeacherNames);
 router.post('/authorityb', protect, authorize('admin'), updateAandLBody);
-router.get('/history', protect, authorize('admin'), getAandLUpdatesHistory);
+// router.get('/history', protect, authorize('admin'), getAandLUpdatesHistory);
 // router.post('/authorityp/:employeeType/:action/:position?', protect, authorize('admin'), updateAandLParams);
 router.post('/teacher/:teacherId', protect, authorize('admin'), updateTeacherData);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);

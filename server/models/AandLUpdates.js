@@ -6,26 +6,20 @@ const AandLUpdatesSchema = new mongoose.Schema({
         required: true,
         ref: 'School',
     },
-    previousData: {
-        accountants: [{
+    history: [{
+        accountant: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Teacher',
-        }],
-        librarians: [{
+        },
+        librarian: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Teacher',
-        }]
-    },
-    updatedData: {
-        accountants: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Teacher',
-        }],
-        librarians: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Teacher',
-        }]
-    },
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        }
+    }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('AandLUpdates', AandLUpdatesSchema);

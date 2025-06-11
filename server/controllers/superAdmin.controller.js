@@ -220,7 +220,7 @@ exports.postBlog = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in users can post blog.' });
     }
 
-    if (loggedInUser.role === 'superadmin') {
+    if ((loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) || (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD')) {
       let uploadedBlog = [];
 
       if (req.files && req.files.length === blog.length) {
@@ -247,9 +247,7 @@ exports.postBlog = async (req, res) => {
       await newBlog.save();
 
       res.status(201).json({ message: "Blog posted successfully.", newBlog });
-
     }
-
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
   }
@@ -264,84 +262,85 @@ exports.editBlog = async (req, res) => {
     }
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+    if (!loggedInUser) {
       return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can edit blog.' });
     }
 
-    const { id } = req.params;
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Please provide a valid blog id to edit.' });
-    }
+    if ((loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) || (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD')) {
 
-    const existingBlog = await Blogs.findById(id);
-    if (!existingBlog) {
-      return res.status(404).json({ message: 'No blog found with the provided ID.' });
-    }
+      const { id } = req.params;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Please provide a valid blog id to edit.' });
+      }
 
-    const updatedBlogArray = req.body.blog;
-    if (!Array.isArray(updatedBlogArray) || !updatedBlogArray.length) {
-      return res.status(400).json({ message: "Please provide valid blog data to update." });
-    }
+      const existingBlog = await Blogs.findById(id);
+      if (!existingBlog) {
+        return res.status(404).json({ message: 'No blog found with the provided ID.' });
+      }
 
-    const oldBlogArray = existingBlog.blog;
-    let updatedBlog = [];
-    let imagesToDelete = [];
+      const updatedBlogArray = req.body.blog;
+      if (!Array.isArray(updatedBlogArray) || !updatedBlogArray.length) {
+        return res.status(400).json({ message: "Please provide valid blog data to update." });
+      }
 
-    if (req.files && req.files.length === updatedBlogArray.length) {
-      for (let i = 0; i < updatedBlogArray.length; i++) {
-        const { description } = updatedBlogArray[i];
-        const file = req.files[i];
+      const oldBlogArray = existingBlog.blog;
+      let updatedBlog = [];
+      let imagesToDelete = [];
 
-        if (!description || !file) {
-          return res.status(400).json({ message: 'Each blog entry must include a description and a photo.' });
-        }
+      if (req.files && req.files.length === updatedBlogArray.length) {
+        for (let i = 0; i < updatedBlogArray.length; i++) {
+          const { description } = updatedBlogArray[i];
+          const file = req.files[i];
 
-        try {
-          const [photoUrl] = await uploadImage(file);
-
-          if (oldBlogArray[i] && oldBlogArray[i].photo) {
-            imagesToDelete.push(oldBlogArray[i].photo);
+          if (!description || !file) {
+            return res.status(400).json({ message: 'Each blog entry must include a description and a photo.' });
           }
 
-          updatedBlog.push({ description, photo: photoUrl });
+          try {
+            const [photoUrl] = await uploadImage(file);
+
+            if (oldBlogArray[i] && oldBlogArray[i].photo) {
+              imagesToDelete.push(oldBlogArray[i].photo);
+            }
+
+            updatedBlog.push({ description, photo: photoUrl });
+          } catch (error) {
+            return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+          }
+        }
+      } else if (!req.files || req.files.length === 0) {
+        for (let i = 0; i < updatedBlogArray.length; i++) {
+          const { description } = updatedBlogArray[i];
+          const oldEntry = oldBlogArray[i];
+
+          if (!description || !oldEntry || !oldEntry.photo) {
+            return res.status(400).json({ message: 'Each blog entry must include a description and existing photo.' });
+          }
+
+          updatedBlog.push({ description, photo: oldEntry.photo });
+        }
+      } else {
+        return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
+      }
+
+      if (oldBlogArray.length > updatedBlog.length) {
+        const removedImages = oldBlogArray.slice(updatedBlog.length).map(entry => entry.photo);
+        imagesToDelete.push(...removedImages);
+      }
+
+      if (imagesToDelete.length > 0) {
+        try {
+          await deleteImage(imagesToDelete);
         } catch (error) {
-          return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+          console.warn("Failed to delete one or more old images:", error.message);
         }
       }
-    } else if (!req.files || req.files.length === 0) {
-      for (let i = 0; i < updatedBlogArray.length; i++) {
-        const { description } = updatedBlogArray[i];
-        const oldEntry = oldBlogArray[i];
 
-        if (!description || !oldEntry || !oldEntry.photo) {
-          return res.status(400).json({ message: 'Each blog entry must include a description and existing photo.' });
-        }
+      existingBlog.blog = updatedBlog;
+      const blog = await existingBlog.save();
 
-        updatedBlog.push({ description, photo: oldEntry.photo });
-      }
-    } else {
-      return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
+      res.status(200).json({ message: "Blog updated successfully.", blog });
     }
-
-    // If some entries were removed, mark their images for deletion
-    if (oldBlogArray.length > updatedBlog.length) {
-      const removedImages = oldBlogArray.slice(updatedBlog.length).map(entry => entry.photo);
-      imagesToDelete.push(...removedImages);
-    }
-
-    // Perform the deletions after processing
-    if (imagesToDelete.length > 0) {
-      try {
-        await deleteImage(imagesToDelete);
-      } catch (error) {
-        console.warn("Failed to delete one or more old images:", error.message);
-      }
-    }
-
-    existingBlog.blog = updatedBlog;
-    const blog = await existingBlog.save();
-
-    res.status(200).json({ message: "Blog updated successfully.", blog });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
   }
