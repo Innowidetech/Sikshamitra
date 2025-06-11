@@ -992,8 +992,8 @@ exports.createOnlineLectures = async (req, res) => {
         }
         const teacher = await Teacher.findOne({ userId: loggedInId });
         if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
-        if (!teacher.profile.subjects || teacher.profile.subjects.length === 0) {
-            return res.status(409).json({ message: "You are not permitted to create online lectures, as you have not been assigned any subjects." });
+        if (!teacher.profile.subjects || teacher.profile.subjects.length === 0 || !teacher.profile.subjects.includes(subject)) {
+            return res.status(409).json({ message: `You are not permitted to create online lecture for ${subject} subject` });
         }
         const school = await School.findById(teacher.schoolId);
         if (!school) { return res.status(404).json({ message: 'The teacher is not associated with any school.' }); };
@@ -1029,7 +1029,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        let schoolId, teacherId, teacherClass, teacherSection, studentId, studentClass, studentSection, teacherTimetable, classTimetable, onlineLectures;
+        let schoolId, teacherId, teacherClass, teacherSection, studentClass, studentSection, teacherTimetable, classTimetable, onlineLectures;
 
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1053,8 +1053,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             }
             if (!student.schoolId) { return res.status(404).json({ message: 'Student is not associated with any school.' }) }
             schoolId = student.schoolId
-            studentId = student._id,
-                studentClass = student.studentProfile.class,
+            studentClass = student.studentProfile.class,
                 studentSection = student.studentProfile.section
 
             const todayIST = moment().tz('Asia/Kolkata').startOf('day');

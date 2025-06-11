@@ -975,6 +975,9 @@ exports.createTeacher = async (req, res) => {
         await newAandL.save();
       }
     }
+    let teacherName = profile.fullname
+    let schoolName = associatedSchool.schoolName
+    await sendEmail(email, adminUser.email, `Account registration - Shikshamitra`, registrationTemplate(teacherName, schoolName, email, password));
 
     return res.status(201).json({ message: `Teacher account created successfully.`, teacher });
 
