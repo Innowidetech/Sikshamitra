@@ -3248,26 +3248,13 @@ exports.createNotice = async (req, res) => {
       return res.status(404).json({ message: 'You are not allowed to access this.' })
     };
 
-    const newNotice = new Notice({
-      schoolId: associatedSchool,
-      date,
-      title,
-      noticeMessage,
-      createdBy: creator,
-    });
-
+    const newNotice = new Notice({      schoolId: associatedSchool,      date,      title,      noticeMessage,      createdBy: creator,    });
     await newNotice.save();
 
-    res.status(201).json({
-      message: 'Notice created successfully.',
-      newNotice
-    });
+    res.status(201).json({      message: 'Notice created successfully.',      newNotice    });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
+    res.status(500).json({      message: 'Internal server error',      error: err.message,    });
   }
 };
 
@@ -3392,16 +3379,10 @@ exports.getNotice = async (req, res) => {
       }));
     }
 
-    res.status(200).json({
-      message: 'Notices retrieved successfully.',
-      Notices
-    });
+    res.status(200).json({      message: 'Notices retrieved successfully.',      Notices    });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    });
+    res.status(500).json({      message: 'Internal server error',      error: err.message,    });
   }
 };
 

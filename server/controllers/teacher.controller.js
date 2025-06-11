@@ -986,8 +986,8 @@ exports.createOnlineLectures = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Only logged-in teachers can access.' });
         };
 
-        const { subject, topic, teacherName, className, section, startDate, startTime, endDate, endTime } = req.body;
-        if (!subject || !topic || !teacherName || !className || !section || !startDate || !startTime || !endDate || !endTime) {
+        const { subject, topic, className, section, startDate, startTime, endDate, endTime } = req.body;
+        if (!subject || !topic || !className || !section || !startDate || !startTime || !endDate || !endTime) {
             return res.status(400).json({ message: "Please provide all the details to create online lecture." })
         }
         const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -1008,7 +1008,7 @@ exports.createOnlineLectures = async (req, res) => {
         }
         const lectureLink = generateMeetingLink();
 
-        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
+        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName:teacher.profile.fullname, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
         await onlineLecture.save();
         res.status(201).json({ message: `Online lecture for class ${className} ${section} created successfully.`, onlineLecture });
     } catch (err) {
@@ -1045,6 +1045,8 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             const todayIST = moment().tz('Asia/Kolkata').startOf('day');
 
             onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
+
+            await OnlineLectures.deleteMany({endDate:{$lt:todayIST.toDate()}});
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
