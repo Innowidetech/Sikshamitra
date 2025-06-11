@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, requestBook, getBookRequests } = require('../controllers/student.controller');
 const { getOnlineLecturesAndTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
-const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks } = require('../controllers/admin.controller');
+const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks, getNotifications } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
@@ -28,5 +28,7 @@ router.get('/aimobjective', protect, authorize('student'), getAimObjective);
 router.get('/books', protect, authorize('student'), getBooks);
 router.post('/requestBook/:bookId', protect, authorize('student'), requestBook)
 router.get('/bookRequests', protect, authorize('student'), getBookRequests)
+router.get('/notifications', protect, authorize('student'), getNotifications);
+
 
 module.exports = router;

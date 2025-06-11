@@ -1677,7 +1677,7 @@ exports.createOrUpdateClassPlan = async (req, res) => {
     }
 };
 
-exports.getClassAndSectionForClassplan = async (req, res) => {
+exports.getClassAndSectionFor = async (req, res) => {
     try {
         const loggedInId = req.user && req.user.id;
         if (!loggedInId) {
