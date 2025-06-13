@@ -8,6 +8,7 @@ const { sendEmail } = require('../utils/sendEmail');
 const registrationTemplate = require('../utils/registrationTemplate');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
 const SuperAdminStaffTasks = require('../models/SuperAdminStaffTasks');
+const Notifications = require('../models/Notifications');
 
 
 //create account for admin/school
@@ -556,7 +557,7 @@ exports.assignTaskToSAStaff = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType == 'groupD') {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
@@ -568,8 +569,13 @@ exports.assignTaskToSAStaff = async (req, res) => {
     const staffMember = await SuperAdminStaff.findOne({ name, employeeRole }).populate('userId', 'mobileNumber');
     if (!staffMember) { return res.status(404).json({ message: "No staff member found with the provided details." }) }
 
-    const task = new SuperAdminStaffTasks({ staffId: staffMember._id, startDate, dueDate, title, description });
+    const task = new SuperAdminStaffTasks({ staffId: staffMember._id, startDate, dueDate, title, description, createdBy:loggedInId });
     await task.save();
+
+    let memberIds = [];
+    memberIds.push({memberId:staffMember._id});
+    const notification = new Notifications({ section:'task', memberIds, text: `You have been assigned with a new task - ${title}.` });
+    await notification.save()
 
     res.status(201).json({ message: `Task successfully assigned to staff member.`, task })
   } catch (err) {
@@ -600,7 +606,7 @@ exports.getSAAssignedTasks = async (req, res) => {
       if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
     }
-    else if (loggedInUser.role === 'superadmin' && (loggedInUser.employeeType && loggedInUser.employeeType === 'groupD')) {
+    else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
 
@@ -625,3 +631,4 @@ exports.getSAAssignedTasks = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
+

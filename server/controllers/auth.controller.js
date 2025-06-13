@@ -66,11 +66,13 @@ exports.userLogin = async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      // { expiresIn: '2h' }
-    );
+    let payload = { userId: user._id, role: user.role };
+
+    if (user.role === 'teacher' || (user.role === 'superadmin' && user.employeeType === 'groupD')) {
+      payload.employeeType = user.employeeType;
+    }
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET);
 
     res.status(200).json({
       message: 'Login success',

@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'librarian', 'accountant', '-', 'groupD'],
+    enum: ['teaching', 'librarian', 'accountant', 'admissions manager', 'inventory clerk', '-', 'groupD'],
     required: function () {
       return this.role === 'teacher';
     },

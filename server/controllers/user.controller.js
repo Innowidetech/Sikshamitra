@@ -15,6 +15,7 @@ const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
 const EntranceExamQuestionPaper = require('../models/EntranceExamQuestionPaper');
 const EntranceExamResults = require('../models/EntranceExamResults');
 const moment = require('moment');
+const Notifications = require('../models/Notifications');
 
 
 exports.getAllSchoolsName = async (req, res) => {
@@ -38,8 +39,8 @@ exports.applyOffline = async (req, res) => {
             return res.status(400).json({ message: 'Please provide all the details to submit.' })
         };
 
-        // const existingUser = await User.findOne({ email: studentDetails.email });
-        // if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
+        const existingUser = await Offline.findOne({ email, schoolName }) || await Online.findOne({ 'studentDetails.email': email, 'studentDetails.schoolName': schoolName });
+        if (existingUser) { return res.status(400).json({ message: 'You have already applied to this school through Online/Offline. Please contact the school to know more details.' }) }
 
         const schoolExists = await School.findOne({ schoolName: schoolName }).populate('userId');
         if (!schoolExists) {
@@ -62,6 +63,11 @@ exports.applyOffline = async (req, res) => {
 
         const newApplication = new Offline({ fullname, class: className, email, phoneNumber, dob, address, schoolName, examId, resultPercentage });
         await newApplication.save();
+
+        let memberIds = []
+        memberIds.push({ memberId: schoolExists.userId._id });
+        const notification = new Notifications({ section: 'admission', memberIds, text: `Received a new Offline Application from '${fullname}', who scored '${resultPercentage}%' in the entrance examination for class '${className}'.` });
+        await notification.save();
 
         res.status(200).json({
             message: `Application submitted successfully and notified to ${schoolName}, please wait until they review your application and contact you.`,
@@ -104,8 +110,8 @@ exports.applyOnline = async (req, res) => {
         const educationDetails = JSON.parse(req.body.educationDetails);
         const parentDetails = JSON.parse(req.body.parentDetails);
 
-        // const existingUser = await User.findOne({ email: studentDetails.email });
-        // if (existingUser) { return res.status(400).json({ message: 'Email already exists. Please contact the school to know more details.' }) }
+        const existingUser = await Offline.findOne({ email: studentDetails.email, schoolName: studentDetails.schoolName }) || await Online.findOne({ 'studentDetails.email': studentDetails.email, 'studentDetails.schoolName': studentDetails.schoolName });
+        if (existingUser) { return res.status(400).json({ message: 'You have already applied to this school through Online/Offline. Please contact the school to know more details.' }) }
 
         const files = req.files;
         if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
@@ -183,6 +189,11 @@ exports.applyOnline = async (req, res) => {
             });
 
             await onlineApplication.save();
+
+            let memberIds = []
+            memberIds.push({ memberId: school.userId });
+            const notification = new Notifications({ section: 'admission', memberIds, text: `Received a new Online Application from '${studentDetails.firstName} ${studentDetails.lastName}', who scored '${studentDetails.resultPercentage}%' in the entrance examination for class '${studentDetails.classToJoin}'.` });
+            await notification.save();
 
             res.status(201).json({
                 message: 'Application created successfully, Razorpay order initiated',
@@ -321,6 +332,11 @@ exports.applyForEntranceExamination = async (req, res) => {
         });
         await application.save();
 
+        let memberIds = []
+        memberIds.push({ memberId: existingSchool.userId });
+        const notification = new Notifications({ section: 'entranceExam', memberIds, text: `New Entrance exam application by '${studentDetails.firstName} ${studentDetails.lastName}' for class - '${classApplying}'` });
+        await notification.save();
+
         res.status(201).json({
             message: `Your application for the entrance exam has been successfully sent to the school - '${school}'. Please wait while your application is being reviewed.`,
             application
@@ -381,13 +397,13 @@ exports.submitExamAnswers = async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized, only logged-in applicants can get the question paper.' })
         };
 
-        const application = await ApplyForEntranceExam.findById(loggedInApplicant)
+        const application = await ApplyForEntranceExam.findById(loggedInApplicant).populate('schoolId')
         if (!application) { return res.status(404).json({ message: "No application found." }) }
 
-        const existringResult = await EntranceExamResults.findOne({ schoolId: application.schoolId, applicantId: application._id });
+        const existringResult = await EntranceExamResults.findOne({ schoolId: application.schoolId._id, applicantId: application._id });
         if (existringResult) { return res.status(403).json({ message: "You have already attempted the exam, you are not allowed to submit now." }) }
 
-        const questionPaper = await EntranceExamQuestionPaper.findOne({ schoolId: application.schoolId, class: application.classApplying });
+        const questionPaper = await EntranceExamQuestionPaper.findOne({ schoolId: application.schoolId._id, class: application.classApplying });
         if (!questionPaper) {
             return res.status(404).json({ message: "No question paper found for the class" })
         }
@@ -411,11 +427,15 @@ exports.submitExamAnswers = async (req, res) => {
 
         const resultPercentage = ((correctAnswersCount / questionPaper.questions.length) * 100).toFixed(2);
 
-        const result = new EntranceExamResults({ schoolId: application.schoolId, applicantId: application._id, examId: application.examId, resultPercentage });
+        const result = new EntranceExamResults({ schoolId: application.schoolId._id, applicantId: application._id, examId: application.examId, resultPercentage });
         await result.save();
 
+        let memberIds = []
+        memberIds.push({ memberId: application.schoolId.userId });
+        const notification = new Notifications({ section: 'entranceExam', memberIds, text: `Entrance Exam has been submitted by '${application.studentDetails.firstName} ${application.studentDetails.lastName}' for class - '${application.classApplying}'` });
+        await notification.save();
+
         return res.status(200).json({ message: 'Exam submitted successfully.' });
-        // return res.status(200).json({ message: 'Exam submitted successfully.', resultPercentage: `${resultPercentage}%` });
     }
     catch (err) {
         res.status(500).json({ message: "Internal server error.", error: err.message })

@@ -27,7 +27,12 @@ const SuperAdminStaffTasksSchema = new mongoose.Schema({
         required:true,
         enum:['pending', 'completed'],
         default:'pending'
-    }
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SSuperAdminStaffTasks', SuperAdminStaffTasksSchema);

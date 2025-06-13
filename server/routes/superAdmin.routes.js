@@ -2,6 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getAllSchools, changeSchoolStatus, postBlog, deleteBlog, getSchoolById, registerSchool, editBlog, addSAStaffMember, getSAStaffMembers, editSAStaffMember, assignTaskToSAStaff, getSAAssignedTasks } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
+const { getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -20,6 +21,11 @@ router.get('/staff', protect, authorize('superadmin'), getSAStaffMembers);
 router.patch('/staff/:id', protect, authorize('superadmin'), editSAStaffMember);
 router.post('/task', protect, authorize('superadmin'), assignTaskToSAStaff);
 router.get('/tasks', protect, authorize('superadmin'), getSAAssignedTasks);
+
+router.get('/notifications', protect, authorize('superadmin'), getNotifications);
+router.patch('/notification/:id', protect, authorize('superadmin'), markNotificationAsRead);
+
+
 
 
 module.exports = router;

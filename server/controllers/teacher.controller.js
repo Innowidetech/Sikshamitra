@@ -23,6 +23,7 @@ const { sendEmail } = require('../utils/sendEmail');
 const mongoose = require('mongoose');
 const SchoolIncome = require('../models/SchoolIncome');
 const OnlineLectures = require('../models/OnlineLectures');
+const Notifications = require('../models/Notifications');
 
 
 
@@ -223,20 +224,7 @@ exports.assignmentForStudents = async (req, res) => {
             }
         };
 
-        const newAssignment = new Assignment({
-            schoolId: teacher.schoolId,
-            chapterName,
-            teacherName: teacher.profile.fullname,
-            class: classs,
-            section,
-            subject,
-            chapter,
-            startDate,
-            endDate,
-            assignment: uploadedPhotoUrl,
-            createdBy: teacher._id,
-        });
-
+        const newAssignment = new Assignment({ schoolId: teacher.schoolId, chapterName, teacherName: teacher.profile.fullname, class: classs, section, subject, chapter, startDate, endDate, assignment: uploadedPhotoUrl, createdBy: teacher._id, });
         await newAssignment.save();
 
         let teacherEmail = loggedInUser.email
@@ -247,13 +235,16 @@ exports.assignmentForStudents = async (req, res) => {
         for (let student of students) {
             studentsEmails = student.userId.email
             studentName = student.studentProfile.fullname
-            await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate))
+            await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate));
         }
 
-        res.status(201).json({
-            message: 'Assignment created successfully.',
-            newAssignment,
-        });
+        const memberIds = [
+            ...students.map(student => ({memberId:student._id}))
+        ]
+        const notification = new Notifications({ section:'assignment', memberIds, text: `A new assignment for the subject - '${subject}' has been assigned.` });
+        await notification.save();
+
+        res.status(201).json({ message: 'Assignment created successfully.', newAssignment });
     } catch (err) {
         res.status(500).json({
             message: 'An error occurred while creating the assignment.',
@@ -1008,8 +999,15 @@ exports.createOnlineLectures = async (req, res) => {
         }
         const lectureLink = generateMeetingLink();
 
-        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName:teacher.profile.fullname, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
+        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName: teacher.profile.fullname, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
         await onlineLecture.save();
+
+        const students = await Student.find({ schoolId: teacher.schoolId, 'studentProfile.class': className, 'studentProfile.section': section })
+        let memberIds = students.map(s => ({ memberId: s._id, }));
+
+        const notification = new Notifications({ section: 'onlineLectures', memberIds, text: `New online lecture scheduled for subject - '${subject}'` });
+        await notification.save();
+
         res.status(201).json({ message: `Online lecture for class ${className} ${section} created successfully.`, onlineLecture });
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -1046,7 +1044,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
 
             onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
 
-            await OnlineLectures.deleteMany({endDate:{$lt:todayIST.toDate()}});
+            await OnlineLectures.deleteMany({ endDate: { $lt: todayIST.toDate() } });
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
@@ -1235,28 +1233,20 @@ exports.uploadStudyMaterial = async (req, res) => {
             }
         };
 
-        const studyMaterial = new StudyMaterial({
-            schoolId: teacher.schoolId,
-            teacherName: teacher.profile.fullname,
-            subject,
-            chapter,
-            class: classs,
-            section,
-            material: uploadedPhotoUrl,
-            createdBy: teacher._id,
-        });
-
+        const studyMaterial = new StudyMaterial({ schoolId: teacher.schoolId, teacherName: teacher.profile.fullname, subject, chapter, class: classs, section, material: uploadedPhotoUrl, createdBy: teacher._id, });
         await studyMaterial.save();
 
-        res.status(201).json({
-            message: 'Study material uploaded successfully.',
-            studyMaterial,
-        });
+
+        const students = await Student.find({ schoolId: teacher.schoolId, 'studentProfile.class': classs, 'studentProfile.section': section });
+        const memberIds = [
+            ...students.map(student => ({memberId: student._id}))
+        ]
+        const notification = new Notifications({ section:'studyMaterial', memberIds, text: `A new study material for the subject '${subject}' has been provided.` });
+        await notification.save();
+
+        res.status(201).json({ message: 'Study material uploaded successfully.', studyMaterial });
     } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
 
@@ -1445,32 +1435,28 @@ exports.createExams = async (req, res) => {
             return res.status(404).json({ message: `Only ${numberOfSubjects} subjects are allowed to create exam, or change the number to create exam.x` })
         }
 
-        let exams = new Exams({
-            schoolId: teacher.schoolId,
-            examType,
-            fromDate,
-            toDate,
-            numberOfSubjects,
-            class: teacher.profile.class,
-            section: teacher.profile.section,
-            exam,
-            createdBy: teacher._id,
-        });
+        let exams = new Exams({ schoolId: teacher.schoolId, examType, fromDate, toDate, numberOfSubjects, class: teacher.profile.class, section: teacher.profile.section, exam, createdBy: teacher._id, });
         if (!exams.class || !exams.section) {
             return res.status(404).json({ message: "Only class teachers can create exams." })
         }
-
         await exams.save();
 
-        res.status(201).json({
-            message: 'Exams created successfully.',
-            exams,
-        });
+        const students = await Student.find({ schoolId: teacher.schoolId, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section })
+        const parentUserIds = students.map(student => student.studentProfile.childOf);
+        const parents = await Parent.find({ userId: { $in: parentUserIds }, schoolId: teacher.schoolId });
+
+        const uniqueParentIds = [...new Set(parents.map(parent => parent._id.toString()))];
+
+        const memberIds = [
+            ...students.map(student => ({memberId:student._id})),
+            ...uniqueParentIds.map(id => ({memberId:new mongoose.Types.ObjectId(id)})),
+        ];
+        const notification = new Notifications({ section:'exams', memberIds, text: `${examType} has been scheduled from ${fromDate}.` });
+        await notification.save();
+
+        res.status(201).json({ message: 'Exams created successfully.', exams });
     } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
 
@@ -1923,35 +1909,16 @@ exports.createResults = async (req, res) => {
             r.createdBy = teacher._id;
         }
 
-        const existingStudent = await Student.findOne({
-            'studentProfile.fullname': student,
-            schoolId: existingExam.schoolId,
-            'studentProfile.class': existingExam.class,
-            'studentProfile.section': existingExam.section
-        });
+        let memberIds = [];
+
+        const existingStudent = await Student.findOne({ 'studentProfile.fullname': student, schoolId: existingExam.schoolId, 'studentProfile.class': existingExam.class, 'studentProfile.section': existingExam.section });
         if (!existingStudent) {
             return res.status(404).json({ message: 'No student found in this class.' })
         };
 
-        let results = await Results.findOne({
-            schoolId: existingStudent.schoolId,
-            class: classs,
-            section: section,
-            exam: existingExam._id,
-            student: existingStudent._id
-        });
-
+        let results = await Results.findOne({ schoolId: existingStudent.schoolId, class: classs, section: section, exam: existingExam._id, student: existingStudent._id });
         if (!results) {
-            results = new Results({
-                schoolId: existingStudent.schoolId,
-                class: classs,
-                section: section,
-                exam: existingExam._id,
-                student: existingStudent._id,
-                result: [],
-                total: '-',
-                totalPercentage: '-'
-            });
+            results = new Results({ schoolId: existingStudent.schoolId, class: classs, section: section, exam: existingExam._id, student: existingStudent._id, result: [], total: '-', totalPercentage: '-' });
         }
 
         if (results.result.length === existingExam.numberOfSubjects) {
@@ -1990,16 +1957,17 @@ exports.createResults = async (req, res) => {
         }
         await results.save();
 
-        res.status(201).json({
-            message: 'Results submitted successfully.',
-            results,
-        });
+        const parent = await Parent.findOne({ userId: existingStudent.studentProfile.childOf, schoolId: teacher.schoolId });
+        memberIds.push({memberId:parent._id});
+        memberIds.push({memberId:existingStudent._id})
+
+        const notification = new Notifications({ section:'results', memberIds, text: `Result for '${exam}' has been posted.` });
+        await notification.save();
+
+        res.status(201).json({ message: 'Results submitted successfully.', results });
     }
     catch (err) {
-        res.status(500).json({
-            message: 'Internal server error.',
-            error: err.message,
-        })
+        res.status(500).json({ message: 'Internal server error.', error: err.message })
     }
 };
 
@@ -2386,15 +2354,33 @@ exports.requestExpense = async (req, res) => {
         if (!loggedInUser || loggedInUser.role !== 'teacher') {
             return res.status(404).json({ message: "Access denied, only logged-in class teachers have access." })
         }
+
         const teacher = await Teacher.findOne({ userId: loggedInId })
         if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
-
         if (!teacher.profile.class || !teacher.profile.section) { return res.status(404).json({ message: "Only class teachers have access." }) }
+
 
         const newExpense = new RequestExpense({
             schoolId: teacher.schoolId, item, purpose, class: teacher.profile.class, section: teacher.profile.section, createdBy: teacher._id
         });
         await newExpense.save()
+
+        let memberIds = [];
+
+        const school = await School.findById(teacher.schoolId);
+        if (school && school.userId) {
+            memberIds.push({memberId:school.userId});
+        }
+
+        const teachers = await Teacher.find({ schoolId: teacher.schoolId }).populate('userId');
+
+        const accountant = teachers.find(t => t.userId && t.userId.employeeType === 'accountant')
+        if (accountant) {
+            memberIds.push({memberId:accountant._id});
+        }
+
+        const notification = new Notifications({ section:'expenseRequest', memberIds: memberIds, text: `You have received a New expense request from teacher - ${teacher.profile.fullname}` });
+        await notification.save()
 
         res.status(201).json({ message: "Item request created successfully, please wait until the management confirms.", newExpense })
     } catch (err) {

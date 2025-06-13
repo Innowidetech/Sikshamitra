@@ -39,7 +39,8 @@ const EntranceExamQuestionPaper = require('../models/EntranceExamQuestionPaper')
 const EntranceExamDetailsTemplate = require('../utils/EntranceExamDetailsTemplate');
 const EntranceExamResults = require('../models/EntranceExamResults');
 const EntranceExamResultsTemplate = require('../utils/EntranceExamResultsTemplate');
-const Notification = require('../models/Notifications');
+const Notifications = require('../models/Notifications');
+const SuperAdminStaff = require('../models/SuperAdminStaff');
 
 
 //get profile
@@ -1495,13 +1496,7 @@ exports.addStudentToExistingParent = async (req, res) => {
 
     const studentFees = classWiseFees.tutionFees
 
-    const studentUser = new User({
-      email,
-      password: hashedPassword,
-      role: 'student',
-      createdBy: creator,
-    });
-
+    const studentUser = new User({ email, password: hashedPassword, role: 'student', createdBy: creator, });
     const savedStudentUser = await studentUser.save();
 
     const student = new Student({
@@ -1526,10 +1521,7 @@ exports.addStudentToExistingParent = async (req, res) => {
 
     await sendEmail(email, adminEmail, `Account registration - Shikshamitra`, registrationTemplate(studentName, schoolName, email, password));
 
-    res.status(201).json({
-      message: 'Student account created and added to existing parent successfully.',
-      student,
-    });
+    res.status(201).json({ message: 'Student account created and added to existing parent successfully.', student });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -2450,6 +2442,11 @@ exports.assignTaskToStaff = async (req, res) => {
     const task = new SchoolStaffTasks({ schoolId: school._id, staffId: staffMember._id, startDate, dueDate, title, description });
     await task.save();
 
+    let memberIds = [];
+    memberIds.push({ memberId: staffMember._id });
+    const notification = new Notifications({ section: 'task', memberIds, text: `You have been assigned with a new task - ${title}.` });
+    await notification.save()
+
     res.status(201).json({ message: `Task successfully assigned to staff member.`, task })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -3077,7 +3074,7 @@ exports.issueAndReturnBook = async (req, res) => {
     const { status, dueOn } = req.body;
     if (!status) { return res.status(400).json({ message: "Please provide status to update book request." }) }
 
-    let schoolId, fineAmount;
+    let schoolId, fineAmount, memberIds = [];
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ userId: loggedInId })
@@ -3102,6 +3099,11 @@ exports.issueAndReturnBook = async (req, res) => {
     if (status == 'accepted' || status == 'rejected' || status == 'requested') {
       bookRequest.status = status
       await bookRequest.save()
+
+      memberIds.push({ memberId: bookRequest.requestedBy });
+      const notification = new Notifications({ section: 'library', memberIds, text: `Your book request status has been updated to - ${status}` });
+      await notification.save()
+
       return res.status(200).json({ message: "Response updated successfully.", bookRequest })
     }
 
@@ -3126,6 +3128,11 @@ exports.issueAndReturnBook = async (req, res) => {
           const student = await Student.findById(bookRequest.requestedBy);
           student.studentProfile.additionalFees += fineAmount
           await student.save()
+
+          memberIds.push({ memberId: bookRequest.requestedBy });
+          const notification = new Notifications({ section: 'library', memberIds, text: `Your book request status has been updated to - ${status} and because of late return you have to pay \u20B9${fineAmount}/-` });
+          await notification.save()
+
         } else {
           return res.status(400).json({ message: "'Fine' amount is required for late returns." });
         }
@@ -3135,6 +3142,7 @@ exports.issueAndReturnBook = async (req, res) => {
 
       book.availableBooks += 1;
       book.save();
+
       return res.status(200).json({ message: `Book returned successfully, Fine Amount = ${fineAmount || 0}.`, bookRequest });
     }
 
@@ -3240,12 +3248,12 @@ exports.createNotice = async (req, res) => {
       const parents = await Parent.find({ schoolId: associatedSchool });
 
       const memberIds = [
-        ...students.map(student => student._id),
-        ...teachers.map(teacher => teacher._id),
-        ...parents.map(parent => parent._id),
+        ...students.map(student => ({ memberId: student._id })),
+        ...teachers.map(teacher => ({ memberId: teacher._id })),
+        ...parents.map(parent => ({ memberId: parent._id })),
       ];
 
-      const notification = new Notification({ memberIds: memberIds, text: 'You have received a new notice from the school admin.' });
+      const notification = new Notifications({ section: 'notice', memberIds: memberIds, text: 'You have received a new notice from the school admin.' });
       await notification.save();
     }
     else if (loggedInUser.role === 'teacher') {
@@ -3266,11 +3274,11 @@ exports.createNotice = async (req, res) => {
       const uniqueParentIds = [...new Set(parents.map(parent => parent._id.toString()))];
 
       const memberIds = [
-        ...students.map(student => student._id),
-        ...uniqueParentIds.map(id => new mongoose.Types.ObjectId(id)),
+        ...students.map(student => ({ memberId: student._id })),
+        ...uniqueParentIds.map(id => ({ memberId: new mongoose.Types.ObjectId(id) })),
       ];
 
-      const notification = new Notification({ memberIds: memberIds, text: 'You have received a new notice from the class teacher.' });
+      const notification = new Notifications({ section: 'notice', memberIds: memberIds, text: 'You have received a new notice from the class teacher.' });
       await notification.save()
     }
     else {
@@ -3539,7 +3547,7 @@ exports.createDynamicCalendar = async (req, res) => {
       return res.status(404).json({ message: "Access denied, only logged-in user's can access." });
     };
 
-    let associatedSchool, creator, students, parents, teachers
+    let associatedSchool, creator, students, parents, teachers, memberIds = []
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ userId: loggedInId });
@@ -3553,39 +3561,58 @@ exports.createDynamicCalendar = async (req, res) => {
         displayTo.push('admin');
       }
 
-      // if (displayTo.includes('student')) {
-      //   students = await Student.find({ schoolId: associatedSchool });
-      // }
-      // if (displayTo.includes('parent')) {
-      //   parents = await Parent.find({ schoolId: associatedSchool });
-      // }
-      // if (displayTo.includes('teacher')) {
-      //   teachers = await Teacher.find({ schoolId: associatedSchool });
-      // }
+      if (displayTo.includes('student')) {
+        students = await Student.find({ schoolId: associatedSchool });
+        memberIds.push(...students.map(s => ({ memberId: s._id })));
+      }
+      if (displayTo.includes('parent')) {
+        parents = await Parent.find({ schoolId: associatedSchool });
+        memberIds.push(...parents.map(p => ({ memberId: p._id })));
+      }
+      if (displayTo.includes('teacher')) {
+        teachers = await Teacher.find({ schoolId: associatedSchool });
+        memberIds.push(...teachers.map(t => ({ memberId: t._id })));
+      }
 
-      // const memberIds = [
-      //   ...students.map(student => student._id),
-      //   ...teachers.map(teacher => teacher._id),
-      //   ...parents.map(parent => parent._id),
-      // ];
-
-      // const notification = new Notification({ memberIds: memberIds, text: 'You have received a new notice from the school admin.' });
-      // await notification.save();
+      const notification = new Notifications({ section: 'calendar', memberIds, text: `You have received a new calendar update from the school admin - dated ${date}.` });
+      await notification.save();
 
     }
     else if (loggedInUser.role === 'teacher') {
-      const teacher = await Teacher.findOne({ userId: loggedInId })
+      const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId');
       if (!teacher) {
         return res.status(404).json({ message: "No teacher found with the loggedin id." })
       }
 
       if (!teacher.schoolId) { return res.status(404).json({ message: "Teacher is not associated with any school." }) }
-      associatedSchool = teacher.schoolId
+      associatedSchool = teacher.schoolId._id
       creator = teacher._id
 
       if (!displayTo.includes('teacher')) {
         displayTo.push('teacher');
       }
+
+      if (displayTo.includes('student') || displayTo.includes('parent')) {
+        students = await Student.find({ schoolId: associatedSchool, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
+        memberIds.push(...students.map(s => ({ memberId: s._id })));
+
+
+        const parentUserIds = students.map(student => student.studentProfile.childOf);
+        parents = await Parent.find({ userId: { $in: parentUserIds }, schoolId: associatedSchool });
+
+        const uniqueParentIds = [...new Set(parents.map(parent => parent._id.toString()))];
+
+        memberIds.push(...uniqueParentIds.map(p => ({ memberId: new mongoose.Types.ObjectId(p) })))
+      }
+      if (displayTo.includes('admin')) {
+        const school = await School.findById(associatedSchool);
+        if (school && school.userId) {
+          memberIds.push(({ memberId: new mongoose.Types.ObjectId(school.userId) }));
+        }
+      }
+
+      const notification = new Notifications({ section: 'calendar', memberIds: memberIds, text: `You have received a new calendar update from a teacher - dated ${date}.` });
+      await notification.save()
     }
     else {
       return res.status(403).json({ message: "You are not allowed to access this." })
@@ -3596,16 +3623,10 @@ exports.createDynamicCalendar = async (req, res) => {
     })
     await newCalendar.save();
 
-    res.status(201).json({
-      message: 'Calendar created successfully',
-      newCalendar
-    });
+    res.status(201).json({ message: 'Calendar created successfully', newCalendar });
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message,
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message, })
   }
 };
 
@@ -4228,7 +4249,7 @@ exports.updateExpenseRequest = async (req, res) => {
       return res.status(404).json({ message: "Access denied, only logged-in users' have access." })
     }
 
-    let schoolId;
+    let schoolId, memberIds = [];
 
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ userId: loggedInId });
@@ -4276,7 +4297,11 @@ exports.updateExpenseRequest = async (req, res) => {
     //   await newExpense.save();
     // }
 
-    res.status(201).json({ message: "Teacher item request updated successfully, if required - add the amount in school expenses.", teacherRequest })
+    memberIds.push({ memberId: teacherRequest.createdBy });
+    const notification = new Notifications({ section: 'expenseRequest', memberIds: memberIds, text: `Your expense request status has been updated to - ${status}` });
+    await notification.save()
+
+    res.status(200).json({ message: "Teacher item request updated successfully, if required - add the amount in school expenses.", teacherRequest })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -5052,39 +5077,126 @@ exports.getNotifications = async (req, res) => {
       return res.status(403).json({ message: 'User not found.' });
     }
 
-    let query = {};
+    let userRefId;
 
     if (loggedInUser.role === 'admin') {
-      query.memberIds = { $in: [loggedInId] };
+      userRefId = loggedInId;
     }
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId });
-      if (!student) {
-        return res.status(404).json({ message: 'No student found with this ID.' });
-      }
-      query.memberIds = { $in: [student._id] };
+      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
+      userRefId = student._id;
     }
-    else if (loggedInUser.role === 'teacher') {
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
       const teacher = await Teacher.findOne({ userId: loggedInId });
-      if (!teacher) {
-        return res.status(404).json({ message: 'No teacher found with this ID.' });
-      }
-      query.memberIds = { $in: [teacher._id] };
+      if (!teacher) return res.status(404).json({ message: 'No teacher found with this ID.' });
+      userRefId = teacher._id;
+    }
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if (!staff) return res.status(404).json({ message: 'No staff member found with this ID.' });
+      userRefId = staff._id;
     }
     else if (loggedInUser.role === 'parent') {
       const parent = await Parent.findOne({ userId: loggedInId });
-      if (!parent) {
-        return res.status(404).json({ message: 'No parent found with this ID.' });
-      }
-      query.memberIds = { $in: [parent._id] };
+      if (!parent) return res.status(404).json({ message: 'No parent found with this ID.' });
+      userRefId = parent._id;
+    }
+    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      userRefId = loggedInId;
+    }
+    else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+      const sastaff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!sastaff) return res.status(404).json({ message: 'No staff member found with this ID.' });
+      userRefId = sastaff._id;
     }
     else {
       return res.status(404).json({ message: 'Role not recognized.' });
     }
 
-    const notifications = await Notification.find(query).select('text createdAt').sort({ createdAt: -1 });
+    const notificationsRaw = await Notifications.find({ 'memberIds.memberId': userRefId }).sort({ createdAt: -1 });
 
+    const notifications = notificationsRaw.map(notification => {
+      const filteredMember = notification.memberIds.find(m => m.memberId.toString() === userRefId.toString());
+      return {
+        id: notification._id,
+        section: notification.section,
+        text: notification.text,
+        createdAt: notification.createdAt,
+        memberId: filteredMember,
+      };
+    });
     res.status(200).json({ notifications });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'User not found.' });
+    }
+
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: "Please provide notification id to mark it as read." }) }
+
+    let userRefId;
+
+    if (loggedInUser.role === 'admin') {
+      userRefId = loggedInId;
+    } else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
+      userRefId = student._id;
+    } else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) return res.status(404).json({ message: 'No teacher found with this ID.' });
+      userRefId = teacher._id;
+    } else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if (!staff) return res.status(404).json({ message: 'No staff member found with this ID.' });
+      userRefId = staff._id;
+    } else if (loggedInUser.role === 'parent') {
+      const parent = await Parent.findOne({ userId: loggedInId });
+      if (!parent) return res.status(404).json({ message: 'No parent found with this ID.' });
+      userRefId = parent._id;
+    } else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      userRefId = loggedInId;
+    } else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+      const sastaff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!sastaff) return res.status(404).json({ message: 'No staff member found with this ID.' });
+      userRefId = sastaff._id;
+    } else {
+      return res.status(404).json({ message: 'Role not recognized.' });
+    }
+
+    const notification = await Notifications.findById(id);
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found.' });
+    }
+
+    const memberIndex = notification.memberIds.findIndex(m => m.memberId.toString() === userRefId.toString());
+    if (memberIndex === -1) {
+      return res.status(404).json({ message: 'Notification not found for this user.' });
+    }
+
+    notification.memberIds.splice(memberIndex, 1);
+
+    if (notification.memberIds.length === 0) {
+      await Notifications.findByIdAndDelete(id);
+      return res.status(200).json({ message: 'Marked as read.' });
+    } else {
+      await notification.save();
+      return res.status(200).json({ message: 'Marked as read.' });
+    }
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
