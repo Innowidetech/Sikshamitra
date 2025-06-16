@@ -12,6 +12,10 @@ const parentSchema = new mongoose.Schema({
         ref: 'User'
     },
     parentProfile: {
+        priority:{
+            type:String,
+            enum:['Father', 'Mother', 'Guardian']
+        },
         fatherName: {   //or guardian
             required: true,
             type: String,

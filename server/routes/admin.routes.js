@@ -33,21 +33,26 @@ router.post('/authorityb', protect, authorize('admin'), updateAandLBody);
 // router.post('/authorityp/:employeeType/:action/:position?', protect, authorize('admin'), updateAandLParams);
 router.post('/teacher/:teacherId', protect, authorize('admin'), updateTeacherData);
 router.get('/teachers', protect, authorize('admin'), getAllTeachersOfSchool);
+
 router.post('/registersp', protect, authorize('admin'), upload.single('photo'), createStudentAndParent);
 router.get('/students/:className/:section', protect, authorize('admin'), getStudentsBasedOnClassAndSection);
 router.post('/addStudent', protect, authorize('admin'),upload.single('photo'), addStudentToExistingParent);
+
 router.get('/students', protect, authorize('admin'), getAllStudentsOfSchool);
 // router.get('/student/:studentId',protect, authorize('admin'), getStudentById);
 router.post('/student/:studentId', protect, authorize('admin'), updateStudentData);
 router.get('/updatedStudentData/:studentId', protect, authorize('admin'), getUpdatedStudentData);
 router.get('/parents', protect, authorize('admin'), getAllParentsOfSchool);
+
 router.post('/inventory/add', protect, authorize('admin'), addStock);
 router.get('/inventory', protect, authorize('admin'), getInventory);
 router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
 // router.post('/inventory/sale/:id', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
+
 router.post('/syllabus', protect, authorize('admin'), upload.single('file'), createOrUpdateSyllabus);
 router.get('/syllabus/:className?', protect, authorize('admin'), getSyllabus);
+
 router.get('/newAdmission', protect, authorize('admin'), getNewAdmissions);
 router.get('/admission', protect, authorize('admin'), getAdmissionRequests);
 router.post('/admission/:id', protect, authorize('admin'), createInstantAccount);

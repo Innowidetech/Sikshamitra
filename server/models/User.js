@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
   },
   password: {
@@ -12,21 +12,31 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent'],
+    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent', 'authority'],
     required: true
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'librarian', 'accountant', 'admissions manager', 'inventory clerk', '-', 'groupD'],
+    enum: ['teaching', 'librarian', 'accountant', 'admissionsManager', 'inventoryClerk', '-', 'groupD'],
     required: function () {
       return this.role === 'teacher';
     },
   },
   mobileNumber: { // only for staff
-    type:String,
-    required:function(){
+    type: String,
+    required: function () {
       return this.employeeType === 'groupD'
     }
+  },
+  loginId: { // only for authority
+    type: String,
+    required: function () {
+      return this.role === 'authority'
+    }
+  },
+  schoolId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
   },
   isActive: {
     type: Boolean,

@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getOnlineLecturesAndTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult, createOnlineLectures, getClassAndSectionFor } = require('../controllers/teacher.controller');
-const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
+const { createStudentAndParent, getProfile, createBook, deleteBook, getAllStudentsOfSchool, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, getNotifications, markNotificationAsRead, getNewAdmissions, getAdmissionRequests, createInstantAccount, getStudentsBasedOnClassAndSection, addStock, getInventory, saleStockTo, getSaleStock } = require('../controllers/admin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -10,8 +10,6 @@ const router = express.Router()
 router.get('/getProfile', protect, authorize('teacher'), getProfile);
 router.put('/editProfile', protect, authorize('teacher'), upload.single('photo'), editTeacherProfile);
 router.delete('/deleteEducation/:educationId', protect, authorize('teacher'), deleteEducation);
-router.post('/registersp', protect, authorize('teacher'), upload.single('photo'), createStudentAndParent);
-router.post('/addStudent', protect, authorize('teacher'), upload.single('photo'), addStudentToExistingParent);
 router.post('/notice', protect, authorize('teacher'), createNotice);
 router.get('/notice', protect, authorize('teacher'), getNotice);
 router.patch('/notice/:noticeId', protect, authorize('teacher'), editNotice);
@@ -52,9 +50,9 @@ router.get('/result/:resultId', protect, authorize('teacher'), getResultById);
 router.get('/aimobjective', protect, authorize('teacher'), getAimObjective);
 router.get('/dashboard', protect, authorize('teacher'), getTeacherDashboard);
 
+
 router.get('/notifications', protect, authorize('teacher'), getNotifications);
 router.patch('/notification/:id', protect, authorize('teacher'), markNotificationAsRead);
-
 
 
 router.post('/createBook', protect, authorize('teacher'), createBook);// librarian
@@ -83,5 +81,25 @@ router.get('/accountsData', protect, authorize('teacher'), getAccountsData); //a
 router.post('/income', protect, authorize('teacher'), addSchoolIncome); //accountant
 router.post('/income/:id', protect, authorize('teacher'), editSchoolIncome); //accountant
 router.get('/updatedIncomeHistory/:id', protect, authorize('teacher'), getUpdatedSchoolIncomeHistory); //accountant
+
+
+router.get('/newAdmission', protect, authorize('teacher'), getNewAdmissions); // admissions manager
+router.get('/admission', protect, authorize('teacher'), getAdmissionRequests); // admissions manager
+router.post('/admission/:id', protect, authorize('teacher'), createInstantAccount); // admissions manager
+router.post('/registersp', protect, authorize('teacher'), upload.single('photo'), createStudentAndParent); // admissions manager
+router.get('/students/:className/:section', protect, authorize('teacher'), getStudentsBasedOnClassAndSection); // admissions manager
+router.post('/addStudent', protect, authorize('teacher'),upload.single('photo'), addStudentToExistingParent); // admissions manager
+
+
+router.post('/inventory/add', protect, authorize('teacher'), addStock); // inventory clerk
+router.get('/inventory', protect, authorize('teacher'), getInventory); // inventory clerk
+router.post('/inventory/sale', protect, authorize('teacher'), saleStockTo); // inventory clerk
+// router.post('/inventory/sale/:id', protect, authorize('teacher'), saleStockTo); // inventory clerk
+router.get('/inventory/sale', protect, authorize('teacher'), getSaleStock); // inventory clerk
+
+
+//authority access for single section
+
+
 
 module.exports = router;
