@@ -95,7 +95,7 @@ exports.parentDashboard = async (req, res) => {
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email')
+    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email').populate({path:'schoolId', select:'schoolLogo'}); 
 
     const parent = await Parent.findOne({ userId: loggedInId }).populate('userId parentProfile.parentOf');
     if (!parent) {

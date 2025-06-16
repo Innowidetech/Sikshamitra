@@ -601,7 +601,7 @@ exports.getSAAssignedTasks = async (req, res) => {
     if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
 
       completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
-      pendingTasks = await SuperAdminStaffTasks.find({ status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+      pendingTasks = await SuperAdminStaffTasks.find({ status: {$ne:'completed'} }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
 
       if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
@@ -619,7 +619,7 @@ exports.getSAAssignedTasks = async (req, res) => {
       if (tasks) {
         totalTasks = tasks.length;
         completedTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'completed' });
-        pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'pending' });
+        pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: {$ne:'completed'} });
       }
       if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 

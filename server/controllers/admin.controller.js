@@ -70,7 +70,7 @@ exports.getProfile = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'teacher') {
-      const teacher = await Teacher.findOne({ userId: loggedInId }).populate('userId');
+      const teacher = await Teacher.findOne({ userId: loggedInId }).populate('userId').populate({path:'schoolId', select:'schoolLogo'});
       if (!teacher) {
         return res.status(404).json({ message: 'No teacher found with the loggedin Id' })
       };
@@ -78,12 +78,12 @@ exports.getProfile = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'student') {
-      const student = await Student.findOne({ userId: loggedInId }).populate('userId');
+      const student = await Student.findOne({ userId: loggedInId }).populate('userId').populate({path:'schoolId', select:'schoolLogo'});
       if (!student) {
         return res.status(404).json({ message: 'No student found with the loggedin Id' })
       };
 
-      const parent = await Parent.findOne({ userId: student.studentProfile.childOf }).populate('userId')
+      const parent = await Parent.findOne({ userId: student.studentProfile.childOf }).populate('userId');
 
       Data = student
       ParentData = parent;
@@ -2622,7 +2622,7 @@ exports.getAssignedTasks = async (req, res) => {
       if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
 
       completedTasks = await SchoolStaffTasks.find({ schoolId: school._id, status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
-      pendingTasks = await SchoolStaffTasks.find({ schoolId: school._id, status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+      pendingTasks = await SchoolStaffTasks.find({ schoolId: school._id, status: {$ne:'completed'} }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
 
       if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
@@ -2641,13 +2641,12 @@ exports.getAssignedTasks = async (req, res) => {
       if (tasks) {
         totalTasks = tasks.length;
         completedTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'completed' });
-        pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'pending' });
+        pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: {$ne:'completed'} });
       }
       if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
     }
     else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
-
 
     res.status(200).json({ message: `Tasks data fetched successfully.`, name, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
   } catch (err) {

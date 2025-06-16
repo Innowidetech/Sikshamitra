@@ -22,7 +22,7 @@ exports.editSchoolTaskStatus = async (req, res) => {
         const { status } = req.body;
         if (!id || !status) { return res.status(400).json({ message: "Please provide task id and status to update." }) }
 
-        if (status !== 'pending' && status !== 'completed') {
+        if (status !== 'pending' && status !== 'completed' && status !=='inProgress') {
             return res.status(400).json({ message: "Invalid status input." })
         }
         const staff = await SchoolStaff.findOne({ userId: loggedInId });
@@ -63,7 +63,7 @@ exports.editSATaskStatus = async (req, res) => {
         const { status } = req.body;
         if (!id || !status) { return res.status(400).json({ message: "Please provide task id and status to update." }) }
 
-        if (status !== 'pending' && status !== 'completed') {
+        if (status !== 'pending' && status !== 'completed' && status !== 'inProgress') {
             return res.status(400).json({ message: "Invalid status input." })
         }
         const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
