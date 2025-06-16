@@ -20,17 +20,19 @@ const EntranceExamResults = require('../models/EntranceExamResults');
 exports.userLogin = async (req, res) => {
   try {
     const { email, password, role, mobileNumber } = req.body;
-    if ((!email && !mobileNumber) || !password) {
-      return res.status(400).json({ message: 'Email or password or role is missing.' })
-    };
+
+    const loginInput = email || mobileNumber;
+    if (!loginInput || !password) {
+      return res.status(400).json({ message: 'Login (email or mobile number) and password are required.' });
+    }
 
     let user
-    let allowedRoles = ['superadmin', 'teacher'];
+    let allowedRoles = ['superadmin', 'teacher', 'authority'];
 
     if (role) {
       user = await User.findOne({ role, email });
     } else {
-      user = await User.findOne({ role: { $in: allowedRoles }, ...(email ? { email } : { mobileNumber }) });
+      user = await User.findOne({ role: { $in: allowedRoles }, $or: [{ email: loginInput }, { mobileNumber: loginInput }] });
     }
 
     if (!user) {
@@ -48,10 +50,10 @@ exports.userLogin = async (req, res) => {
       }
     }
 
-    if (user.role !== 'superadmin') {
+    if (user.role !== 'superadmin' && user.role !== 'authority') {
       const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId')
       if (user.role !== 'admin') {
-        if (school.schoolId.status !== 'active') {
+        if (school.schoolId.status !== 'active' && !user.isActive) {
           return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })
         }
       }
@@ -60,15 +62,11 @@ exports.userLogin = async (req, res) => {
           return res.status(409).json({ message: "Please contact the super admin to know details." })
         }
       }
-
-      if (user.role !== 'admin' && !user.isActive) {
-        return res.status(409).json({ message: 'You cannot login right now, please contact your school.' })
-      }
     }
 
     let payload = { userId: user._id, role: user.role };
 
-    if (user.role === 'teacher' || (user.role === 'superadmin' && user.employeeType === 'groupD')) {
+    if (user.role === 'teacher' || (user.role === 'superadmin' && user.employeeType === 'groupD') || user.role === 'authority') {
       payload.employeeType = user.employeeType;
     }
 
@@ -79,6 +77,7 @@ exports.userLogin = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        employeeType: user.employeeType ? user.employeeType : null,
       },
       token
     });

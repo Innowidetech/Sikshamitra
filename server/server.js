@@ -13,6 +13,7 @@ const teacherRoute = require('./routes/teacher.routes');
 const studentRoute = require('./routes/student.routes');
 const parentRoute = require('./routes/parent.routes');
 const staffRoute = require('./routes/staff.routes');
+const authorityRoute = require('./routes/authority.routes');
 
 const app = express();
 
@@ -27,7 +28,8 @@ app.use('/api/admin',adminRoute);
 app.use('/api/teacher',teacherRoute);
 app.use('/api/student',studentRoute);
 app.use('/api/parent',parentRoute);
-app.use('/api/staff', staffRoute)
+app.use('/api/staff', staffRoute);
+app.use('/api/authority', authorityRoute);
 
 setInterval(autoMarkHoliday, 3600000)
 

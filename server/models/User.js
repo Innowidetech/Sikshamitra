@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: {
+  email: { // for role = authority, consider email as loginId
     type: String,
-    // required: true,
+    required: true,
     unique: true,
   },
   password: {
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
       return this.employeeType === 'groupD'
     }
   },
-  loginId: { // only for authority
+  passwordIs: { // only for authority
     type: String,
     required: function () {
       return this.role === 'authority'
