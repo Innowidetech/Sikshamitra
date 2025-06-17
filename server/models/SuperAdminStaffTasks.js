@@ -25,7 +25,7 @@ const SuperAdminStaffTasksSchema = new mongoose.Schema({
     status:{
         type:String,
         required:true,
-        enum:['pending', 'inProgress', 'completed'],
+        enum:['pending', 'process', 'completed'],
         default:'pending'
     },
     createdBy: {

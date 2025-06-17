@@ -30,7 +30,7 @@ const SchoolStaffTasksSchema = new mongoose.Schema({
     status:{
         type:String,
         required:true,
-        enum:['pending', 'inProgress', 'completed'],
+        enum:['pending', 'process', 'completed'],
         default:'pending'
     }
 }, { timestamps: true });
