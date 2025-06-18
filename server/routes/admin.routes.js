@@ -4,6 +4,7 @@ const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchoo
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
+const { getQueries } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -100,6 +101,8 @@ router.post('/eeresults', protect, authorize('admin'), sendEntranceExamResultToA
 
 router.get('/notifications', protect, authorize('admin'), getNotifications);
 router.patch('/notification/:id', protect, authorize('admin'), markNotificationAsRead);
+
+router.get('/query', protect, authorize('admin'), getQueries);
 
 
 module.exports = router;

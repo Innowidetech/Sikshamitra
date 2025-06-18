@@ -35,4 +35,4 @@ const SuperAdminStaffTasksSchema = new mongoose.Schema({
       }
 }, { timestamps: true });
 
-module.exports = mongoose.model('SSuperAdminStaffTasks', SuperAdminStaffTasksSchema);
+module.exports = mongoose.model('SuperAdminStaffTasks', SuperAdminStaffTasksSchema);

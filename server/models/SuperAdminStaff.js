@@ -22,6 +22,11 @@ const SuperAdminStaffSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    createdBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:'User'
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SuperAdminStaff', SuperAdminStaffSchema);

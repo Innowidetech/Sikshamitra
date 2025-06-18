@@ -62,7 +62,7 @@ exports.getProfile = async (req, res) => {
       const school = await School.findOne({ userId: loggedInId }).populate('userId')
       if (!school) { return res.status(404).json({ message: "Admin is not associated with any school." }) }
 
-      AuthorityDetails = await AandL.findOne({ schoolId: school._id }).populate('accountant', 'profile.fullname').populate('librarian', 'profile.fullname');
+      AuthorityDetails = await AandL.findOne({ schoolId: school._id }).populate('accountant', 'profile.fullname').populate('librarian', 'profile.fullname').populate('admissionsManager', 'profile.fullname').populate('inventoryClerk', 'profile.fullname');
 
       AuthorityLogins = await User.find({ schoolId: school._id, role: 'authority' }).select('email passwordIs employeeType');
 

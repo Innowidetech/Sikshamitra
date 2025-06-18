@@ -905,7 +905,136 @@ exports.editExpense = async (req, res) => {
 };
 
 
-// exports.sendQuery = async (req, res) => {
+exports.sendQuery = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
+
+    const { name, contact, email, message, sendTo } = req.body;
+    if (!name || !contact || !email || !message || !sendTo || !sendTo.length) {
+      return res.status(400).json({ message: 'Please provide all the details to create query' })
+    }
+
+    const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
+    const schoolStaffs = await SchoolStaff.find({ name: { $in: sendTo } });
+    const teachers = await Teacher.find({ 'profile.fullname': { $in: sendTo } }).populate('userId');
+    const students = await Student.find({ 'studentProfile.fullname': { $in: sendTo } }).populate('userId');
+    const parents = await Parent.find({ 'parentProfile.fullname': { $in: sendTo } }).populate('userId');
+    var superAdmin = null;
+    if (sendTo.includes('Super Admin')) {
+      superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+    }
+
+    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+
+      const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+
+      if (!schools.length) {
+        return res.status(404).json({ message: 'No matching schools found for selected names.' });
+      }
+
+      const queriesToInsert = schools.map((school) => {
+        return new Query({
+          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: staff.employeeRole, createdBy: staff._id,
+          query: [{ message, createdBy: staff._id, sentAt: new Date() }]
+        });
+      });
+      await Query.insertMany(queriesToInsert);
+    }
+
+    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+
+      if (!schools.length) {
+        return res.status(404).json({ message: 'No matching schools found for selected names.' });
+      }
+
+      const queriesToInsert = schools.map((school) => {
+        return new Query({
+          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: 'Super Admin', createdBy: loggedInId,
+          query: [{ message, createdBy: loggedInId, sentAt: new Date() }]
+        });
+      });
+      await Query.insertMany(queriesToInsert);
+    }
+
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    res.status(201).json({ message: `Query successfully sent to all the selected names.` })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.getQueries = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
+
+    let queriesSent, queriesReceived, queries;
+
+    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+
+      const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
+
+      const creatorIds = [staff.createdBy, ...staffIds];
+
+      queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
+
+      const creatorIds = [loggedInId, ...staffIds];
+
+      queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else if (loggedInUser.role === 'admin') {
+
+      queriesSent = await Query.find({ createdBy: loggedInId }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    res.status(200).json({ queriesReceived, queriesSent })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+// exports.replyToQuery = async (req, res) => {
 //   try {
 //     const loggedInId = req.user && req.user.id;
 //     if (!loggedInId) {
@@ -917,51 +1046,48 @@ exports.editExpense = async (req, res) => {
 //       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
 //     };
 
-//     const { name, contact, email, message, sendTo } = req.body;
-//     if (!name || !contact || !email || !message || !sendTo || !sendTo.length) {
-//       return res.status(400).json({ message: 'Please provide all the details to create query' })
+//     let queriesSent, queriesReceived, queries;
+
+//     if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+
+//       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+//       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+
+//       const staffs = await SuperAdminStaff.find();
+//       const staffIds = staffs.map(staff => staff._id)
+
+//       const creatorIds = [staff.createdBy, ...staffIds];
+
+//       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+
+//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
 //     }
 
-//     const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
-//     const schoolStaffs = await SchoolStaff.find({ name: { $in: sendTo } });
-//     const teachers = await Teacher.find({ 'profile.fullname': { $in: sendTo } }).populate('userId');
-//     const students = await Student.find({ 'studentProfile.fullname': { $in: sendTo } }).populate('userId');
-//     const parents = await Parent.find({ 'parentProfile.fullname': { $in: sendTo } }).populate('userId');
-//     var superAdmin = null;
-//     if (sendTo.includes('Super Admin')) {
-//       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+//     else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+
+//       const staffs = await SuperAdminStaff.find();
+//       const staffIds = staffs.map(staff => staff._id)
+
+//       const creatorIds = [loggedInId, ...staffIds];
+
+//       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+
+//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
 //     }
 
-//     if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
-//       if (!schools.length) {
-//         return res.status(404).json({ message: 'No matching schools found for selected names.' });
-//       }
+//     else if (loggedInUser.role === 'admin') {
 
-//       const queriesToInsert = schools.map((school) => {
-//         return new Query({
-//           name,
-//           contact,
-//           email,
-//           sendTo: school.userId._id,
-//           schoolId: school._id,
-//           schoolName: school.schoolName,
-//           role: school.userId.role,
-//           createdBy: loggedInId,
-//           query: [{
-//             message,
-//             createdBy: loggedInId,
-//             sentAt: new Date(),
-//           }]
-//         });
-//       });
-//       await Query.insertMany(queriesToInsert);
+//       queriesSent = await Query.find({ createdBy: loggedInId }).sort({ updatedAt: -1 });
+
+//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
 //     }
-//     else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
 
-//     }
-//     else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+//     else { return res.status(403).json({ message: "Invalid role type." }) }
 
-//     res.status(201).json({ message: `Query successfully sent to all the selected names.` })
+//     res.status(200).json({ queriesReceived, queriesSent })
 //   } catch (err) {
 //     res.status(500).json({ message: 'Internal server error', error: err.message })
 //   }

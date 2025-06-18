@@ -42,7 +42,7 @@ const QuerySchema = new mongoose.Schema({
         ref: 'School'
     },
     schoolName:String,
-    role:String,
+    createdByRole:String,
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         require: true,

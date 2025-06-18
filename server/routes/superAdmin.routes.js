@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getAllSchools, changeSchoolStatus, postBlog, deleteBlog, getSchoolById, registerSchool, editBlog, addSAStaffMember, getSAStaffMembers, editSAStaffMember, assignTaskToSAStaff, getSAAssignedTasks, getDashboard, addIncome, getUpdatedIncomeHistory, editIncome, addExpense, editExpense, getAccounts } = require('../controllers/superAdmin.controller');
+const { getAllSchools, changeSchoolStatus, postBlog, deleteBlog, getSchoolById, registerSchool, editBlog, addSAStaffMember, getSAStaffMembers, editSAStaffMember, assignTaskToSAStaff, getSAAssignedTasks, getDashboard, addIncome, getUpdatedIncomeHistory, editIncome, addExpense, editExpense, getAccounts, sendQuery, getQueries } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
 const { getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -33,6 +33,8 @@ router.get('/tasks', protect, authorize('superadmin'), getSAAssignedTasks);
 router.get('/notifications', protect, authorize('superadmin'), getNotifications);
 router.patch('/notification/:id', protect, authorize('superadmin'), markNotificationAsRead);
 
+router.post('/query', protect, authorize('superadmin'), sendQuery);
+router.get('/query', protect, authorize('superadmin'), getQueries);
 
 
 
