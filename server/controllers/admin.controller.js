@@ -161,10 +161,8 @@ exports.editSchool = async (req, res) => {
         school.paymentDetails[key] = edit[key];
       }
     }
-
     await school.save();
-
-    return res.status(200).json({ message: 'School data updated successfully.', school, });
+    res.status(200).json({ message: 'School data updated successfully.', school, });
   }
   catch (err) {
     return res.status(500).json({ message: 'Internal server', err })
@@ -679,14 +677,7 @@ exports.createClass = async (req, res) => {
       return res.status(404).json({ message: `Class ${classs} ${section} already exist.` })
     }
 
-    const newClass = new Class({
-      schoolId: associatedSchool._id,
-      classType,
-      class: classs,
-      section,
-      teacher: teacherData.profile.fullname,
-      createdBy: loggedInId
-    });
+    const newClass = new Class({ schoolId: associatedSchool._id, classType, class: classs, section, teacher: teacherData.profile.fullname, createdBy: loggedInId });
     await newClass.save();
 
     schoolName = associatedSchool.schoolName
@@ -694,10 +685,7 @@ exports.createClass = async (req, res) => {
       await sendEmail(teacherData.userId.email, adminUser.email, `${associatedSchool.schoolName} - Class Assignment Update`, classUpdateTemplate(teacherName, classs, section, schoolName))
     }
 
-    res.status(201).json({
-      message: `Class created successfully.`,
-      newClass,
-    });
+    res.status(201).json({ message: `Class created successfully.`, newClass });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
@@ -751,10 +739,7 @@ exports.editClass = async (req, res) => {
 
     await sendEmail(teacher.userId.email, adminUser.email, `${associatedSchool.schoolName} - Class Assignment Update`, classUpdateTemplate(teacherName, teacherClass, teacherSection, schoolName))
 
-    res.status(201).json({
-      message: `Class teacher updated successfully.`,
-      existingClass,
-    });
+    res.status(200).json({ message: `Class teacher updated successfully.`, existingClass });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
@@ -811,11 +796,7 @@ exports.getClasses = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching classes:', error);
-    return res.status(500).json({
-      message: 'Internal server error.',
-      error: error.message
-    });
+    return res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
 };
 
@@ -2795,10 +2776,7 @@ exports.getAimObjective = async (req, res) => {
     res.status(200).json({ message: `Aim & Objective of school:`, aimObjectives })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 
@@ -2833,10 +2811,48 @@ exports.deleteAimObjective = async (req, res) => {
     res.status(200).json({ message: `Aim and Objective deleted successfully.` })
   }
   catch (err) {
-    res.status(500).json({
-      message: 'Internal server error',
-      error: err.message
-    })
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.editAimObjective = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    };
+    
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Provide the aim objective id to edit." })
+    }
+    const {title, description} = req.body;
+    if(!title && !description){ return res.status(400).json({message:'Please provide atleast one valid (title, description) field to edit.'})}
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const aimObjective = await AimObjective.findOne({ schoolId: school._id, _id: id })
+    if (!aimObjective) {
+      return res.status(404).json({ message: "No aim objective found with the id in this school." })
+    }
+
+    if(title) aimObjective.title = title;
+    if(description) aimObjective.description = description;
+    await aimObjective.save()
+
+    res.status(200).json({ message: `Aim and Objective updated successfully.` })
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
 

@@ -14,6 +14,9 @@ const Student = require('../models/Student');
 const Parent = require('../models/Parent');
 const SuperAdminIncome = require('../models/SuperAdminIncome');
 const SuperAdminIncomeUpdateHistory = require('../models/SuperAdminIncomeUpdateHistory');
+const SuperAdminExpenses = require('../models/SuperAdminExpenses');
+const Query = require('../models/Query');
+const SchoolStaff = require('../models/SchoolStaff');
 
 
 //create account for admin/school
@@ -686,6 +689,35 @@ exports.addIncome = async (req, res) => {
 };
 
 
+exports.addExpense = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
+    };
+
+    var { name, date, purpose, amount, modeOfPayment, transactionId } = req.body;
+    if (!name || !date || !purpose || !amount || !modeOfPayment || (modeOfPayment == 'Online' && !transactionId)) {
+      return res.status(400).json({ message: "Please provide all the details to add expense." })
+    }
+
+    if (modeOfPayment === 'Cash') { transactionId = '-' }
+
+    const expense = new SuperAdminExpenses({ name, date, purpose, amount, modeOfPayment, transactionId });
+    await expense.save()
+
+    res.status(201).json({ message: 'Expense added successfully.', expense })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
 exports.getAccounts = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -698,10 +730,58 @@ exports.getAccounts = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
     };
 
-    const income = await SuperAdminIncome.find().sort({ updatedAt: -1 })
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    let monthlyData = {};
 
-    res.status(200).json({ income })
-  } catch (err) {
+    const incomes = await SuperAdminIncome.find();
+    for (let income of incomes) {
+      const incomeDate = new Date(income.createdAt);
+      if (isNaN(incomeDate)) continue;
+      const monthName = months[incomeDate.getMonth()];
+      const year = incomeDate.getFullYear();
+      const monthYear = `${monthName} ${year}`;
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      }
+      monthlyData[monthYear].totalIncome += income.paidAmount;
+    }
+
+    const expenses = await SuperAdminExpenses.find();
+    for (let expense of expenses) {
+      const expenseDate = new Date(expense.date);
+      if (isNaN(expenseDate)) continue;
+      const monthName = months[expenseDate.getMonth()];
+      const year = expenseDate.getFullYear();
+      const monthYear = `${monthName} ${year}`;
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      }
+      monthlyData[monthYear].totalExpenses += expense.amount;
+    }
+
+    for (let monthYear in monthlyData) {
+      const data = monthlyData[monthYear];
+      data.totalRevenue = data.totalIncome - data.totalExpenses;
+    }
+
+    const result = Object.keys(monthlyData).map(key => ({
+      monthYear: key,
+      totalIncome: monthlyData[key].totalIncome,
+      totalExpenses: monthlyData[key].totalExpenses,
+      totalRevenue: monthlyData[key].totalRevenue,
+    }));
+
+    result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
+
+    const income = await SuperAdminIncome.find().sort({ updatedAt: -1 })
+    const expense = await SuperAdminExpenses.find().sort({ createdAt: -1 })
+
+    res.status(200).json({ accounts: result, income, expense });
+  }
+  catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
@@ -737,7 +817,7 @@ exports.editIncome = async (req, res) => {
       });
       await income.save();
 
-      res.status(201).json({ message: 'Income added successfully.', income })
+      res.status(200).json({ message: 'Income updated successfully.', income })
     }
     else { return res.status(404).json({ message: "No income found with the id." }) }
 
@@ -787,3 +867,102 @@ exports.getUpdatedIncomeHistory = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
+
+exports.editExpense = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
+    };
+
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: "Please provide expense id to edit." }) }
+
+    const newData = req.body;
+
+    const expense = await SuperAdminExpenses.findOne({ _id: id });
+    if (expense) {
+      Object.keys(newData).forEach(key => {
+        if (expense[key] !== undefined) {
+          expense[key] = newData[key];
+        }
+      });
+      await expense.save();
+
+      return res.status(200).json({ message: 'Expense data updated successfully.', expense })
+    }
+    else { return res.status(404).json({ message: "No expense data found with the id." }) }
+  }
+  catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+// exports.sendQuery = async (req, res) => {
+//   try {
+//     const loggedInId = req.user && req.user.id;
+//     if (!loggedInId) {
+//       return res.status(401).json({ message: 'Unauthorized.' });
+//     };
+
+//     const loggedInUser = await User.findById(loggedInId);
+//     if (!loggedInUser) {
+//       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+//     };
+
+//     const { name, contact, email, message, sendTo } = req.body;
+//     if (!name || !contact || !email || !message || !sendTo || !sendTo.length) {
+//       return res.status(400).json({ message: 'Please provide all the details to create query' })
+//     }
+
+//     const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
+//     const schoolStaffs = await SchoolStaff.find({ name: { $in: sendTo } });
+//     const teachers = await Teacher.find({ 'profile.fullname': { $in: sendTo } }).populate('userId');
+//     const students = await Student.find({ 'studentProfile.fullname': { $in: sendTo } }).populate('userId');
+//     const parents = await Parent.find({ 'parentProfile.fullname': { $in: sendTo } }).populate('userId');
+//     var superAdmin = null;
+//     if (sendTo.includes('Super Admin')) {
+//       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+//     }
+
+//     if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+//       if (!schools.length) {
+//         return res.status(404).json({ message: 'No matching schools found for selected names.' });
+//       }
+
+//       const queriesToInsert = schools.map((school) => {
+//         return new Query({
+//           name,
+//           contact,
+//           email,
+//           sendTo: school.userId._id,
+//           schoolId: school._id,
+//           schoolName: school.schoolName,
+//           role: school.userId.role,
+//           createdBy: loggedInId,
+//           query: [{
+//             message,
+//             createdBy: loggedInId,
+//             sentAt: new Date(),
+//           }]
+//         });
+//       });
+//       await Query.insertMany(queriesToInsert);
+//     }
+//     else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+
+//     }
+//     else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+
+//     res.status(201).json({ message: `Query successfully sent to all the selected names.` })
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message })
+//   }
+// };

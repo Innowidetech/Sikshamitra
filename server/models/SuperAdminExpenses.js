@@ -1,31 +1,23 @@
 const mongoose = require('mongoose');
 
-const SuperAdminIncomeSchema = new mongoose.Schema({
-    schoolCode: {
+const SuperAdminExpensesSchema = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
     },
-    schoolName: {
+    date: {
+        type: Date,
+        required: true,
+    },
+    purpose: {
         type: String,
         required: true,
     },
-    principalName: {
-        type: String,
-        required: true,
-    },
-    totalFees: {
+    amount: {
         type: Number,
         required: true,
     },
-    paidAmount: {
-        type: Number,
-        required: true,
-    },
-    dueAmount: {
-        type: Number,
-        required: true,
-    },
-    paymentMethod: {
+    modeOfPayment: {
         type: String,
         enum: ['Online', 'Cash'],
         required: true,
@@ -36,4 +28,4 @@ const SuperAdminIncomeSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('SuperAdminIncome', SuperAdminIncomeSchema)
+module.exports = mongoose.model('SuperAdminExpenses', SuperAdminExpensesSchema)
