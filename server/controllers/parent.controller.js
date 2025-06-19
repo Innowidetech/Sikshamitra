@@ -12,6 +12,8 @@ const { sendEmail } = require('../utils/sendEmail');
 const queryTemplate = require('../utils/queryTemplate');
 const SchoolIncome = require('../models/SchoolIncome');
 const { uploadImage, deleteImage } = require('../utils/multer');
+const ClassTimetable = require('../models/Timetable');
+const mongoose = require('mongoose');
 
 
 const razorpay = new Razorpay({
@@ -41,8 +43,6 @@ exports.editParentProfile = async (req, res) => {
       return res.status(404).json({ message: 'No parent found with the userId.' })
     };
 
-    // const restrictedFields = ['parentOf'];
-
     let uploadedPhotoUrl
     if (parent.parentProfile.photo) {
       uploadedPhotoUrl = parent.parentProfile.photo
@@ -61,9 +61,6 @@ exports.editParentProfile = async (req, res) => {
 
     for (let key in updatedData) {
       if (parent.parentProfile.hasOwnProperty(key)) {
-        // if (restrictedFields.includes(key)) {
-        //   return res.status(404).json({ message: 'You are not allowed to change the parentOf field' })
-        // };
         parent.parentProfile[key] = updatedData[key];
       }
     }
@@ -95,7 +92,7 @@ exports.parentDashboard = async (req, res) => {
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email').populate({path:'schoolId', select:'schoolLogo'}); 
+    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email').populate({ path: 'schoolId', select: 'schoolLogo' });
 
     const parent = await Parent.findOne({ userId: loggedInId }).populate('userId parentProfile.parentOf');
     if (!parent) {
@@ -413,14 +410,8 @@ exports.getFeesReceipts = async (req, res) => {
 };
 
 
-exports.postQuery = async (req, res) => {
+exports.getTeacherNamesForQuery = async (req, res) => {
   try {
-    const { parentName, parentPhone, studentName, query, sendTo } = req.body;
-
-    if (!parentName || !parentPhone || !studentName || !query || !Array.isArray(sendTo)) {
-      return res.status(400).json({ message: 'Please provide all the details.' });
-    }
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: "Unauthorized." });
@@ -436,42 +427,46 @@ exports.postQuery = async (req, res) => {
       return res.status(404).json({ message: 'No parent found with the logged-in id.' });
     }
 
-    const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId');
-    const admin = await User.findOne({ _id: student.schoolId.userId });
-    const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId');
+    let teacherInfoSet = new Set();
 
-    if (!teacher) {
-      return res.status(404).json({ message: "No class teacher for your child, please contact the admin." });
+
+    const timetables = await Promise.all(
+      parent.parentProfile.parentOf.map(async (sid) => {
+        const student = await Student.findById(sid);
+
+        const timetable = await ClassTimetable.findOne({
+          class: student.studentProfile.class,
+          section: student.studentProfile.section,
+          schoolId: student.schoolId
+        })
+          .populate('timetable.monday.teacher', 'profile.fullname')
+          .populate('timetable.tuesday.teacher', 'profile.fullname')
+          .populate('timetable.wednesday.teacher', 'profile.fullname')
+          .populate('timetable.thursday.teacher', 'profile.fullname')
+          .populate('timetable.friday.teacher', 'profile.fullname')
+          .populate('timetable.saturday.teacher', 'profile.fullname');
+
+        return timetable
+      })
+    )
+
+    for (const timetable of timetables) {
+      if (!timetable) continue;
+
+      for (const day of Object.keys(timetable.timetable)) {
+        for (const slot of timetable.timetable[day]) {
+          const teacherName = slot.teacher?.profile?.fullname;
+          const subject = slot.subject;
+
+          if (teacherName && subject) {
+            teacherInfoSet.add(`${teacherName}-${subject}`);
+          }
+        }
+      }
     }
 
-    const parentEmail = loggedInUser.email;
-    const adminEmail = admin.email;
-    const teacherEmail = teacher.userId.email;
-    const studentClass = student.studentProfile.class;
-    const studentSection = student.studentProfile.section;
-    const schoolName = student.schoolId.schoolName;
-
-    const emailContent = queryTemplate(schoolName, parentName, parentPhone, studentName, studentClass, studentSection, query);
-
-    const recipients = [];
-    if (sendTo.includes('admin')) {
-      recipients.push(adminEmail);
-    }
-    if (sendTo.includes('class teacher')) {
-      recipients.push(teacherEmail);
-    }
-
-    if (recipients.length === 0) {
-      return res.status(404).json({ message: "Invalid sendTo request." });
-    }
-
-    for (const recipientEmail of recipients) {
-      await sendEmail(recipientEmail, parentEmail, ` New Query Submission from ${parentName}`, emailContent);
-    }
-
-    res.status(201).json({
-      message: `An email has been sent to ${sendTo.join(' and ')}. Once they view it, they will contact you shortly.`
-    });
+    const teacherList = Array.from(teacherInfoSet);
+    res.status(200).json({ teachers: teacherList });
   }
   catch (err) {
     res.status(500).json({ message: "Internal server error.", error: err.message });

@@ -30,7 +30,7 @@ const QuerySchema = new mongoose.Schema({
     }],
     sendTo: {
         type: mongoose.Schema.Types.ObjectId,
-        require: true,
+        required: true,
         refPath: 'createdByModel',
     },
     createdByModel: {
@@ -45,7 +45,7 @@ const QuerySchema = new mongoose.Schema({
     createdByRole:String,
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        require: true,
+        required: true,
         refPath: 'createdByModel',
     },
 }, { timestamps: true });

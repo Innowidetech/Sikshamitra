@@ -21,11 +21,6 @@ const syllabusSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    // createdBy: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     required: true,
-    //     ref: 'User',
-    // },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Syllabus', syllabusSchema);

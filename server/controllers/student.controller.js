@@ -205,10 +205,6 @@ exports.getAdmitCard = async (req, res) => {
             };
             if (!student.schoolId || !student.schoolId._id) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
-            // if (student.userId.isActive == false) {
-            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            // }
-
             admitCard = await Exams.findOne({
                 schoolId: student.schoolId,
                 class: student.studentProfile.class,

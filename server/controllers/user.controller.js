@@ -375,7 +375,6 @@ exports.getQuestionsToApplicants = async (req, res) => {
 
         const remainingTime = tokenExpirationTime.diff(currentTime, 'seconds');
 
-        // console.log(currentTime, tokenExpirationTime, remainingTime)
         const remainingTimeFormatted = {
             hours: Math.floor(remainingTime / 3600),
             minutes: Math.floor((remainingTime % 3600) / 60),

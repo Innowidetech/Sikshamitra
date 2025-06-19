@@ -65,28 +65,22 @@ const onlineSchema = new mongoose.Schema({
     educationDetails: [{
         school: {
             type: String,
-            // required: true,
         },
         class: {
             type: String,
-            // required: true,
         },
         startDate: {
             type: Date,
-            // required: true,
         },
         endDate: {
             type: Date,
-            // required: true,
         },
         city: {
             type: String,
-            // required: true,
         },
         documents: {
             url: {
                 type: String,
-                // required: true,
             },
         },
     }],

@@ -4,6 +4,7 @@ const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, re
 const { getOnlineLecturesAndTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
 const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const multer = require('multer');
+const { sendQuery, getQueries, replyToQuery } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -25,11 +26,16 @@ router.get('/results', protect, authorize('student'), getResults);
 router.get('/result/:resultId', protect, authorize('student'), getResultById);
 router.get('/admitCard', protect, authorize('student'), getAdmitCard);
 router.get('/aimobjective', protect, authorize('student'), getAimObjective);
+
 router.get('/books', protect, authorize('student'), getBooks);
 router.post('/requestBook/:bookId', protect, authorize('student'), requestBook)
 router.get('/bookRequests', protect, authorize('student'), getBookRequests)
+
 router.get('/notifications', protect, authorize('student'), getNotifications);
 router.patch('/notification/:id', protect, authorize('student'), markNotificationAsRead);
 
+router.post('/query', protect, authorize('student'), sendQuery);
+router.get('/query', protect, authorize('student'), getQueries);
+router.post('/query/:id', protect, authorize('student'), replyToQuery);
 
 module.exports = router;

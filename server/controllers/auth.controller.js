@@ -158,23 +158,6 @@ exports.resetPassword = async (req, res) => {
 };
 
 
-// exports.register=async(req,res)=>{
-//   try{
-//     const {email,password,role} = req.body;
-//     const hpass = bcrypt.hashSync(password, 10);
-
-//     const newUser = new User({
-//       email,password:hpass,role
-//     });
-//     await newUser.save();
-//     res.status(201).json({message:"Successfully registered."})
-//   }
-//   catch(error) {
-//     res.status(500).json({ message: 'Registraion failed', error: error.message });
-//   }
-// };
-
-
 exports.loginForEntranceExam = async (req, res) => {
   try {
     const { examId, email } = req.body;

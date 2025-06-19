@@ -1,11 +1,12 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getSyllabus, getExams, getResults, getResultById, getClassPlan } = require('../controllers/teacher.controller');
-const { editParentProfile,parentDashboard, getChildrenNames, payFees, verifyFeesPayment, getExpenses, getFeesReceipts, postQuery } = require('../controllers/parent.controller');
+const { editParentProfile,parentDashboard, getChildrenNames, payFees, verifyFeesPayment, getExpenses, getFeesReceipts, getTeacherNamesForQuery } = require('../controllers/parent.controller');
 const { getAdmitCard } = require('../controllers/student.controller');
 const { getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const router = express.Router();
 const multer = require('multer');
+const { sendQuery, getQueries, replyToQuery } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/dashboard', protect, authorize('parent'), parentDashboard)
@@ -25,9 +26,13 @@ router.post('/payFee', protect, authorize('parent'), payFees);
 router.post('/verifyFeePayment', protect, authorize('parent'), verifyFeesPayment);
 router.get('/getExpenses', protect, authorize('parent'), getExpenses);
 router.get('/getFeesReceipts', protect, authorize('parent'), getFeesReceipts);
-router.post('/query', protect, authorize('parent'), postQuery);
 router.get('/notifications', protect, authorize('parent'), getNotifications);
 router.patch('/notification/:id', protect, authorize('parent'), markNotificationAsRead);
+
+router.get('/teacherNames', protect, authorize('parent'), getTeacherNamesForQuery);
+router.post('/query', protect, authorize('parent'), sendQuery);
+router.get('/query', protect, authorize('parent'), getQueries);
+router.post('/query/:id', protect, authorize('parent'), replyToQuery);
 
 
 module.exports = router;

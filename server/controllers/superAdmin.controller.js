@@ -17,6 +17,7 @@ const SuperAdminIncomeUpdateHistory = require('../models/SuperAdminIncomeUpdateH
 const SuperAdminExpenses = require('../models/SuperAdminExpenses');
 const Query = require('../models/Query');
 const SchoolStaff = require('../models/SchoolStaff');
+const ClassTimetable = require('../models/Timetable')
 
 
 //create account for admin/school
@@ -90,39 +91,6 @@ exports.getAllSchools = async (req, res) => {
 };
 
 
-// exports.getSchoolById = async (req, res) => {
-//   try {
-//     const { schoolId } = req.params;
-//     if (!schoolId) { return res.status(400).json({ message: "Please select school to get complete data." }) }
-
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
-//     };
-
-//     const school = await School.findById(schoolId).select('-paymentDetails').populate('userId')
-//     if (!school) {
-//       return res.status(200).json({ message: 'No school found with the id.' })
-//     };
-//     res.status(200).json({
-//       message: 'School data',
-//       school
-//     })
-//   }
-//   catch (err) {
-//     res.status(500).json({
-//       message: 'Internal server error',
-//       error: err.message
-//     });
-//   }
-// };
-
-
 exports.changeSchoolStatus = async (req, res) => {
   try {
     const { id, status } = req.params;
@@ -164,42 +132,6 @@ exports.changeSchoolStatus = async (req, res) => {
     });
   }
 };
-
-
-// exports.postBlog = async (req, res) => {
-//   try {
-//     const { title, description } = req.body;
-//     if (!title || !description) { return res.status(400).json({ message: 'Provide all details to post blog.' }) }
-
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only superadmin can post blog.' });
-//     };
-
-//     let uploadedPhotoUrl;
-//     if (req.file) {
-//       try {
-//         const [photoUrl] = await uploadImage(req.file);
-//         uploadedPhotoUrl = photoUrl;
-//       } catch (error) {
-//         return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-//       }
-//     };
-
-//     const blog = new Blogs({ title, description, photo: uploadedPhotoUrl });
-//     await blog.save()
-
-//     res.status(201).json({ message: "Blog posted successfully.", blog })
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error.', error: err.message })
-//   }
-// };
 
 
 exports.postBlog = async (req, res) => {
@@ -345,64 +277,6 @@ exports.editBlog = async (req, res) => {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
   }
 };
-
-
-// exports.deleteBlog = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-// if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-//       return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can delete blog.' });
-//     };
-
-//     const { id, blogId } = req.params;
-//     if ((!id || !mongoose.Types.ObjectId.isValid(id)) && (!blogId || !mongoose.Types.ObjectId.isValid(blogId))) {
-//       return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
-//     }
-
-//     if (id) {
-//       const blog = await Blogs.findById(id);
-//       if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
-
-//       const imagesToDelete = blog.blog.map(entry => entry.photo);
-//       try {
-//         await deleteImage(imagesToDelete);
-//       } catch (error) {
-//         res.warn("Some images may not have been deleted:", error.message);
-//       }
-//       await Blogs.findByIdAndDelete(id);
-//       res.status(200).json({ message: "Blog deleted successfully." })
-//     }
-//     if (blogId) {
-//       const existingBlog = await Blogs.findOne({ blog: { $elemMatch: { _id: blogId } } })
-//       if (!existingBlog) {
-//         return res.status(404).json({ message: 'Blog detail not found with the id.' });
-//       }
-
-//       const blogEntryToDelete = existingBlog.blog.find(entry => entry._id.toString() === blogId);
-//       if (!blogEntryToDelete) {
-//         return res.status(404).json({ message: 'Blog entry not found with the given blogId.' });
-//       }
-
-//       await Blogs.updateOne({ _id: existingBlog._id }, { $pull: { blog: { _id: blogId } } });
-
-//       const updatedBlog = await Blogs.findById(existingBlog._id);
-
-//       if (updatedBlog.blog.length === 0) {
-//         await Blogs.deleteOne({ _id: updatedBlog._id });
-//         return res.status(200).json({ message: 'Blog detail deleted and blog document removed as it became empty.' });
-//       }
-//       res.status(200).json({ message: 'Blog detail deleted successfully.' });
-//     }
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error.', error: err.message })
-//   }
-// };
 
 
 exports.deleteBlog = async (req, res) => {
@@ -922,52 +796,252 @@ exports.sendQuery = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all the details to create query' })
     }
 
-    const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
-    const schoolStaffs = await SchoolStaff.find({ name: { $in: sendTo } });
-    const teachers = await Teacher.find({ 'profile.fullname': { $in: sendTo } }).populate('userId');
-    const students = await Student.find({ 'studentProfile.fullname': { $in: sendTo } }).populate('userId');
-    const parents = await Parent.find({ 'parentProfile.fullname': { $in: sendTo } }).populate('userId');
-    var superAdmin = null;
+    let superAdmin = null, queriesToInsert = [], admin = null;
     if (sendTo.includes('Super Admin')) {
       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
     }
 
-    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
 
+    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
 
+      const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
       if (!schools.length) {
-        return res.status(404).json({ message: 'No matching schools found for selected names.' });
+        return res.status(404).json({ message: 'No school is selected to send query.' });
       }
 
-      const queriesToInsert = schools.map((school) => {
+      queriesToInsert = schools.map((school) => {
         return new Query({
           name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: staff.employeeRole, createdBy: staff._id,
           query: [{ message, createdBy: staff._id, sentAt: new Date() }]
         });
       });
-      await Query.insertMany(queriesToInsert);
     }
 
     else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
 
+      const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
       if (!schools.length) {
-        return res.status(404).json({ message: 'No matching schools found for selected names.' });
+        return res.status(404).json({ message: 'No school is selected to send query.' });
       }
 
-      const queriesToInsert = schools.map((school) => {
+      queriesToInsert = schools.map((school) => {
         return new Query({
           name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: 'Super Admin', createdBy: loggedInId,
           query: [{ message, createdBy: loggedInId, sentAt: new Date() }]
         });
       });
-      await Query.insertMany(queriesToInsert);
     }
 
+    else if (loggedInUser.role === 'admin') {
+
+      const school = await School.findOne({ userId: loggedInId });
+      if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+      const schoolStaffs = await SchoolStaff.find({ schoolId: school._id, name: { $in: sendTo } });
+      const teachers = await Teacher.find({ schoolId: school._id, 'profile.fullname': { $in: sendTo } }).populate('userId');
+      const students = await Student.find({ schoolId: school._id, 'studentProfile.fullname': { $in: sendTo } }).populate('userId');
+      const parents = await Parent.find({ schoolId: school._id, $or: [{ 'parentProfile.fatherName': { $in: sendTo } }, { 'parentProfile.motherName': { $in: sendTo } }] }).populate('userId');
+
+      if (!superAdmin && !schoolStaffs.length && !teachers.length && !students.length && !parents.length) {
+        return res.status(404).json({ message: 'No name is selected to send query.' });
+      }
+
+      const createQueryPayload = (recipientId) => ({
+        name, contact, email, sendTo: recipientId, schoolId: school._id, schoolName: school.schoolName, createdByRole: loggedInUser.role, createdBy: loggedInId,
+        query: [{ message, createdBy: loggedInId, sentAt: new Date() }]
+      });
+
+      if (superAdmin) {
+        queriesToInsert.push(new Query(createQueryPayload(superAdmin._id)));
+      }
+      schoolStaffs.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id))));
+      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id))));
+      students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id))));
+      parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id))));
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff found with the logged-in id." }) }
+
+      const school = await School.findById(staff.schoolId);
+
+      if (sendTo.includes('Admin')) {
+        admin = await User.findById(school.userId)
+      }
+      const teachers = await Teacher.find({ schoolId: school._id, 'profile.fullname': { $in: sendTo } }).populate('userId');
+
+      if (!admin && !teachers.length) {
+        return res.status(404).json({ message: 'No name is selected to send query.' });
+      }
+
+      const createQueryPayload = (recipientId) => ({
+        name, contact, email, sendTo: recipientId, schoolId: school._id, schoolName: school.schoolName, createdByRole: staff.employeeRole, createdBy: staff._id,
+        query: [{ message, createdBy: staff._id, sentAt: new Date() }]
+      });
+
+      if (admin) {
+        queriesToInsert.push(new Query(createQueryPayload(admin._id)));
+      }
+      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id))));
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+
+      const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId');
+      if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+
+      if (sendTo.includes('Admin')) {
+        admin = await User.findById(teacher.schoolId.userId)
+      }
+      const studentsIs = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
+      const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.fullname': { $in: sendTo }, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section }).populate('userId');
+      const studentIds = studentsIs.map(student => student._id);
+      const parents = await Parent.find({ schoolId: teacher.schoolId._id, 'parentProfile.parentOf': { $in: studentIds }, $or: [{ 'parentProfile.fatherName': { $in: sendTo } }, { 'parentProfile.motherName': { $in: sendTo } }] }).populate('userId');
+
+
+      if (!admin && !students.length && !parents.length) {
+        return res.status(404).json({ message: 'No name is selected to send query.' });
+      }
+
+      const createQueryPayload = (recipientId) => ({
+        name, contact, email, sendTo: recipientId, schoolId: teacher.schoolId._id, schoolName: teacher.schoolId.schoolName, createdByRole: loggedInUser.role, createdBy: teacher._id,
+        query: [{ message, createdBy: teacher._id, sentAt: new Date() }]
+      });
+
+      if (admin) {
+        queriesToInsert.push(new Query(createQueryPayload(admin._id)));
+      }
+      students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id))));
+      parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id))));
+    }
+
+    else if (loggedInUser.role === 'student') {
+
+      const student = await Student.findOne({ userId: loggedInId }).populate('schoolId');
+      if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
+
+      const timetable = await ClassTimetable.findOne({
+        class: student.studentProfile.class,
+        section: student.studentProfile.section,
+        schoolId: student.schoolId._id
+      }).populate('timetable.monday.teacher', 'profile.fullname')
+        .populate('timetable.tuesday.teacher', 'profile.fullname')
+        .populate('timetable.wednesday.teacher', 'profile.fullname')
+        .populate('timetable.thursday.teacher', 'profile.fullname')
+        .populate('timetable.friday.teacher', 'profile.fullname')
+        .populate('timetable.saturday.teacher', 'profile.fullname');
+
+      if (!timetable) {
+        return res.status(404).json({ message: 'Timetable not found for this student.' });
+      }
+
+      const teacherNameSet = new Set();
+      for (const day of Object.keys(timetable.timetable)) {
+        timetable.timetable[day].forEach(slot => {
+          if (slot.teacher?.profile?.fullname) {
+            teacherNameSet.add(slot.teacher.profile.fullname);
+          }
+        });
+      }
+
+      const validSendToNames = sendTo.filter(name => teacherNameSet.has(name));
+
+      if (sendTo.includes('Admin')) {
+        admin = await User.findById(student.schoolId.userId)
+      }
+      const teachers = await Teacher.find({ schoolId: student.schoolId._id, 'profile.fullname': { $in: validSendToNames } }).populate('userId');
+
+      if (!admin && !teachers.length) {
+        return res.status(404).json({ message: 'No name is selected to send query.' });
+      }
+
+      const createQueryPayload = (recipientId) => ({
+        name, contact, email, sendTo: recipientId, schoolId: student.schoolId._id, schoolName: student.schoolId.schoolName, createdByRole: loggedInUser.role, createdBy: student._id,
+        query: [{ message, createdBy: student._id, sentAt: new Date() }]
+      });
+
+      if (admin) {
+        queriesToInsert.push(new Query(createQueryPayload(admin._id)));
+      }
+      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id))));
+    }
+
+    else if (loggedInUser.role === 'parent') {
+
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId');
+      if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+
+      if (sendTo.includes('Admin')) {
+        admin = await User.findById(parent.schoolId.userId)
+      }
+      const teacherNameSet = new Set();
+
+      const timetables = await Promise.all(
+        parent.parentProfile.parentOf.map(async (sid) => {
+          const student = await Student.findById(sid);
+
+          const timetable = await ClassTimetable.findOne({
+            class: student.studentProfile.class,
+            section: student.studentProfile.section,
+            schoolId: student.schoolId
+          })
+            .populate('timetable.monday.teacher', 'profile.fullname')
+            .populate('timetable.tuesday.teacher', 'profile.fullname')
+            .populate('timetable.wednesday.teacher', 'profile.fullname')
+            .populate('timetable.thursday.teacher', 'profile.fullname')
+            .populate('timetable.friday.teacher', 'profile.fullname')
+            .populate('timetable.saturday.teacher', 'profile.fullname');
+
+          return timetable
+        })
+      )
+
+
+      for (const timetable of timetables) {
+        if (!timetable) continue;
+
+        for (const day of Object.keys(timetable.timetable)) {
+          for (const slot of timetable.timetable[day]) {
+            const teacherName = slot.teacher?.profile?.fullname;
+            if (teacherName) {
+              teacherNameSet.add(teacherName);
+            }
+          }
+        }
+      }
+
+      const validSendToNames = sendTo.filter(name => teacherNameSet.has(name));
+
+      const teachers = await Teacher.find({
+        schoolId: parent.schoolId._id,
+        'profile.fullname': { $in: validSendToNames }
+      }).populate('userId');
+
+      if (!admin && !teachers.length) {
+        return res.status(404).json({ message: 'No name is selected to send query.' });
+      }
+
+      const createQueryPayload = (recipientId) => ({
+        name, contact, email, sendTo: recipientId, schoolId: parent.schoolId._id, schoolName: parent.schoolId.schoolName, createdByRole: loggedInUser.role, createdBy: parent._id,
+        query: [{ message, createdBy: parent._id, sentAt: new Date() }]
+      });
+
+      if (admin) {
+        queriesToInsert.push(new Query(createQueryPayload(admin._id)));
+      }
+      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id))));
+    }
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
-    res.status(201).json({ message: `Query successfully sent to all the selected names.` })
+    if (queriesToInsert.length) {
+      await Query.insertMany(queriesToInsert);
+    }
+    else { return res.status(400).json({ message: "No valid recipients found to send the query." }) }
+
+    res.status(201).json({ message: `Query sent successfully.` })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -1000,7 +1074,7 @@ exports.getQueries = async (req, res) => {
 
       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
 
-      queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
+      queries = await Query.find({ sendTo: staff.createdBy }).sort({ updatedAt: -1 });
       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
     }
 
@@ -1025,6 +1099,46 @@ exports.getQueries = async (req, res) => {
       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
     }
 
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+
+      const staff = await SchoolStaff.findOne({userId:loggedInId});
+
+      queriesSent = await Query.find({ createdBy: staff._id }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: staff._id }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+
+      const teacher = await Teacher.findOne({userId:loggedInId});
+
+      queriesSent = await Query.find({ createdBy: teacher._id }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: teacher._id }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else if (loggedInUser.role === 'student') {
+
+      const student = await Student.findOne({userId:loggedInId});
+
+      queriesSent = await Query.find({ createdBy: student._id }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: student._id }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
+    else if (loggedInUser.role === 'parent') {
+
+      const parent = await Parent.findOne({userId:loggedInId});
+
+      queriesSent = await Query.find({ createdBy: parent._id }).sort({ updatedAt: -1 });
+
+      queries = await Query.find({ sendTo: parent._id }).sort({ updatedAt: -1 });
+      queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
+    }
+
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
     res.status(200).json({ queriesReceived, queriesSent })
@@ -1034,61 +1148,121 @@ exports.getQueries = async (req, res) => {
 };
 
 
-// exports.replyToQuery = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
+exports.replyToQuery = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
 
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser) {
-//       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
-//     };
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
 
-//     let queriesSent, queriesReceived, queries;
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: "Please provide query id to reply." }) }
 
-//     if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    const { message } = req.body;
+    if (!message) { return res.status(400).json({ message: "Please type a message to send." }) }
 
-//       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
-//       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+    let query;
 
-//       const staffs = await SuperAdminStaff.find();
-//       const staffIds = staffs.map(staff => staff._id)
+    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
 
-//       const creatorIds = [staff.createdBy, ...staffIds];
+      const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
 
-//       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
 
-//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
-//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
-//     }
+      const creatorIds = [staff.createdBy, ...staffIds];
 
-//     else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+      query = await Query.findOne({ _id: id, createdBy: { $in: creatorIds } }) || await Query.findOne({ _id: id, sendTo: staff.createdBy });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
 
-//       const staffs = await SuperAdminStaff.find();
-//       const staffIds = staffs.map(staff => staff._id)
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
 
-//       const creatorIds = [loggedInId, ...staffIds];
+    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
 
-//       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
 
-//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
-//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
-//     }
+      const creatorIds = [loggedInId, ...staffIds];
 
-//     else if (loggedInUser.role === 'admin') {
+      query = await Query.findOne({ _id: id, createdBy: { $in: creatorIds } }) || await Query.findOne({ _id: id, sendTo: loggedInId });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
 
-//       queriesSent = await Query.find({ createdBy: loggedInId }).sort({ updatedAt: -1 });
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
 
-//       queries = await Query.find({ sendTo: loggedInId }).sort({ updatedAt: -1 });
-//       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
-//     }
+    else if (loggedInUser.role === 'admin') {
 
-//     else { return res.status(403).json({ message: "Invalid role type." }) }
+      query = await Query.findOne({ _id: id, createdBy: loggedInId }) || await Query.findOne({ _id: id, sendTo: loggedInId });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
 
-//     res.status(200).json({ queriesReceived, queriesSent })
-//   } catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+
+      const staff = await SchoolStaff.findOne({userId:loggedInId})
+
+      query = await Query.findOne({ _id: id, createdBy: staff._id }) || await Query.findOne({ _id: id, sendTo: staff._id });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
+
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+
+      const teacher = await Teacher.findOne({userId:loggedInId})
+
+      query = await Query.findOne({ _id: id, createdBy: teacher._id }) || await Query.findOne({ _id: id, sendTo: teacher._id });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
+
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
+
+    else if (loggedInUser.role === 'student') {
+
+      const student = await Student.findOne({userId:loggedInId})
+
+      query = await Query.findOne({ _id: id, createdBy: student._id }) || await Query.findOne({ _id: id, sendTo: student._id });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
+
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
+
+    else if (loggedInUser.role === 'parent') {
+
+      const parent = await Parent.findOne({userId:loggedInId})
+
+      query = await Query.findOne({ _id: id, createdBy: parent._id }) || await Query.findOne({ _id: id, sendTo: parent._id });
+      if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
+
+      const queryMessage = { message: message, createdBy: loggedInId }
+      query.query.push(queryMessage)
+      await query.save();
+    }
+
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    res.status(200).json({ message: 'Replied successfully.' })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};

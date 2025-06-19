@@ -11,10 +11,6 @@ const SuperAdminIncomeUpdateHistorySchema = new mongoose.Schema({
             type: mongoose.Schema.Types.Mixed,
             required: true,
         },
-        // reasonForEdit: {
-        //     type: String,
-        //     required: true,
-        // },
         updatedAt: {
             type: Date,
             default: Date.now,

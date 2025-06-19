@@ -3,6 +3,7 @@ const { protect, authorize } = require('../middleware/auth.middleware');
 const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getOnlineLecturesAndTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult, createOnlineLectures, getClassAndSectionFor } = require('../controllers/teacher.controller');
 const { createStudentAndParent, getProfile, createBook, deleteBook, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, getNotifications, markNotificationAsRead, getNewAdmissions, getAdmissionRequests, createInstantAccount, getStudentsBasedOnClassAndSection, addStock, getInventory, saleStockTo, getSaleStock } = require('../controllers/admin.controller');
 const multer = require('multer');
+const { sendQuery, getQueries, replyToQuery } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router()
@@ -20,7 +21,6 @@ router.patch('/calendar/:calendarId', protect, authorize('teacher'), editDynamic
 router.get('/calendar/:calendarDate', protect, authorize('teacher'), getDynamicCalendarByDate);
 router.delete('/calendar/:calendarId', protect, authorize('teacher'), deleteDynamicCalendar);
 router.get('/getStudents', protect, authorize('teacher'), getStudentsOfTeacher);
-// router.get('/student/:studentId', protect, authorize('teacher'), getStudentById);
 router.post('/assignment', protect, authorize('teacher'), upload.single('photo'), assignmentForStudents);
 router.get('/assignment', protect, authorize('teacher'), getAssignment);
 router.get('/submittedAssignments/:id', protect, authorize('teacher'), getSubmittedAssignments);
@@ -67,6 +67,9 @@ router.patch('/fineAmount', protect, authorize('admin'), editLibraryFineAmount);
 router.patch('/book/:id', protect, authorize('teacher'), upload.single('photo'), editBook);
 router.delete('/book/:bookId', protect, authorize('teacher'), deleteBook);// librarian
 
+router.post('/query', protect, authorize('teacher'), sendQuery);
+router.get('/query', protect, authorize('teacher'), getQueries);
+router.post('/query/:id', protect, authorize('teacher'), replyToQuery);
 
 
 router.post('/expenses', protect, authorize('teacher'), postSchoolExpensesForm); // accountant
@@ -92,8 +95,8 @@ router.post('/addStudent', protect, authorize('teacher'),upload.single('photo'),
 router.post('/inventory/add', protect, authorize('teacher'), addStock); // inventory clerk
 router.get('/inventory', protect, authorize('teacher'), getInventory); // inventory clerk
 router.post('/inventory/sale', protect, authorize('teacher'), saleStockTo); // inventory clerk
-// router.post('/inventory/sale/:id', protect, authorize('teacher'), saleStockTo); // inventory clerk
 router.get('/inventory/sale', protect, authorize('teacher'), getSaleStock); // inventory clerk
+
 
 
 

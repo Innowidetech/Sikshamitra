@@ -45,7 +45,7 @@ const OnlineLecturesSchema = new mongoose.Schema({
     },
     lectureLink:{
         type:String,
-        // require:true
+        require:true
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
