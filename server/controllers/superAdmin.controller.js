@@ -17,7 +17,9 @@ const SuperAdminIncomeUpdateHistory = require('../models/SuperAdminIncomeUpdateH
 const SuperAdminExpenses = require('../models/SuperAdminExpenses');
 const Query = require('../models/Query');
 const SchoolStaff = require('../models/SchoolStaff');
-const ClassTimetable = require('../models/Timetable')
+const ClassTimetable = require('../models/Timetable');
+const { io } = require('../utils/socket');
+const Connect = require('../models/Connect');
 
 
 //create account for admin/school
@@ -471,7 +473,7 @@ exports.getSAAssignedTasks = async (req, res) => {
 
     let name, tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
 
-    if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
 
       completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
       pendingTasks = await SuperAdminStaffTasks.find({ status: { $ne: 'completed' } }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
@@ -819,7 +821,7 @@ exports.sendQuery = async (req, res) => {
       });
     }
 
-    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
 
       const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
       if (!schools.length) {
@@ -1078,7 +1080,7 @@ exports.getQueries = async (req, res) => {
       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
     }
 
-    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1101,7 +1103,7 @@ exports.getQueries = async (req, res) => {
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
 
-      const staff = await SchoolStaff.findOne({userId:loggedInId});
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
 
       queriesSent = await Query.find({ createdBy: staff._id }).sort({ updatedAt: -1 });
 
@@ -1111,7 +1113,7 @@ exports.getQueries = async (req, res) => {
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
 
-      const teacher = await Teacher.findOne({userId:loggedInId});
+      const teacher = await Teacher.findOne({ userId: loggedInId });
 
       queriesSent = await Query.find({ createdBy: teacher._id }).sort({ updatedAt: -1 });
 
@@ -1121,7 +1123,7 @@ exports.getQueries = async (req, res) => {
 
     else if (loggedInUser.role === 'student') {
 
-      const student = await Student.findOne({userId:loggedInId});
+      const student = await Student.findOne({ userId: loggedInId });
 
       queriesSent = await Query.find({ createdBy: student._id }).sort({ updatedAt: -1 });
 
@@ -1131,7 +1133,7 @@ exports.getQueries = async (req, res) => {
 
     else if (loggedInUser.role === 'parent') {
 
-      const parent = await Parent.findOne({userId:loggedInId});
+      const parent = await Parent.findOne({ userId: loggedInId });
 
       queriesSent = await Query.find({ createdBy: parent._id }).sort({ updatedAt: -1 });
 
@@ -1142,6 +1144,80 @@ exports.getQueries = async (req, res) => {
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
     res.status(200).json({ queriesReceived, queriesSent })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.getQueryById = async (req, res) => {
+  try {
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
+    };
+
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: "Please provide the query id to view/reply." }) }
+
+    let query;
+
+    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+
+      const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
+
+      const creatorIds = [staff.createdBy, ...staffIds];
+
+      query = await Query.findOne({ _id: id, createdBy: { $in: creatorIds } }) || await Query.findOne({ _id: id, sendTo: staff.createdBy });
+    }
+
+    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+
+      const staffs = await SuperAdminStaff.find();
+      const staffIds = staffs.map(staff => staff._id)
+
+      const creatorIds = [loggedInId, ...staffIds];
+
+      query = await Query.findOne({ _id: id, createdBy: { $in: creatorIds } }) || await Query.findOne({ _id: id, sendTo: loggedInId });
+    }
+
+    else if (loggedInUser.role === 'admin') {
+      query = await Query.findOne({ _id: id, createdBy: loggedInId }) || await Query.findOne({ _id: id, sendTo: loggedInId });
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId })
+      query = await Query.findOne({ _id: id, createdBy: staff._id }) || await Query.findOne({ _id: id, sendTo: staff._id });
+    }
+
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+      const teacher = await Teacher.findOne({ userId: loggedInId })
+      query = await Query.findOne({ _id: id, createdBy: teacher._id }) || await Query.findOne({ _id: id, sendTo: teacher._id });
+    }
+
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId })
+      query = await Query.findOne({ _id: id, createdBy: student._id }) || await Query.findOne({ _id: id, sendTo: student._id });
+    }
+
+    else if (loggedInUser.role === 'parent') {
+      const parent = await Parent.findOne({ userId: loggedInId })
+      query = await Query.findOne({ _id: id, createdBy: parent._id }) || await Query.findOne({ _id: id, sendTo: parent._id });
+    }
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
+
+    res.status(200).json({ query })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -1186,7 +1262,7 @@ exports.replyToQuery = async (req, res) => {
       await query.save();
     }
 
-    else if (loggedInUser.role === 'superadmin' && (!loggedInUser.employeeType && loggedInUser.employeeType !== 'groupD')) {
+    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1213,7 +1289,7 @@ exports.replyToQuery = async (req, res) => {
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
 
-      const staff = await SchoolStaff.findOne({userId:loggedInId})
+      const staff = await SchoolStaff.findOne({ userId: loggedInId })
 
       query = await Query.findOne({ _id: id, createdBy: staff._id }) || await Query.findOne({ _id: id, sendTo: staff._id });
       if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
@@ -1225,7 +1301,7 @@ exports.replyToQuery = async (req, res) => {
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
 
-      const teacher = await Teacher.findOne({userId:loggedInId})
+      const teacher = await Teacher.findOne({ userId: loggedInId })
 
       query = await Query.findOne({ _id: id, createdBy: teacher._id }) || await Query.findOne({ _id: id, sendTo: teacher._id });
       if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
@@ -1237,7 +1313,7 @@ exports.replyToQuery = async (req, res) => {
 
     else if (loggedInUser.role === 'student') {
 
-      const student = await Student.findOne({userId:loggedInId})
+      const student = await Student.findOne({ userId: loggedInId })
 
       query = await Query.findOne({ _id: id, createdBy: student._id }) || await Query.findOne({ _id: id, sendTo: student._id });
       if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
@@ -1249,7 +1325,7 @@ exports.replyToQuery = async (req, res) => {
 
     else if (loggedInUser.role === 'parent') {
 
-      const parent = await Parent.findOne({userId:loggedInId})
+      const parent = await Parent.findOne({ userId: loggedInId })
 
       query = await Query.findOne({ _id: id, createdBy: parent._id }) || await Query.findOne({ _id: id, sendTo: parent._id });
       if (!query) { return res.status(404).json({ message: "No query found with the id." }) }
@@ -1264,5 +1340,111 @@ exports.replyToQuery = async (req, res) => {
     res.status(200).json({ message: 'Replied successfully.' })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
+  }
+};
+
+
+exports.createConnect = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: "Access Denied. Only logged-in users can access." })
+    }
+
+    const { title, startDate, startTime, endDate, endTime, attendants } = req.body;
+    if (!Array.isArray(attendants)) {
+      return res.status(400).json({ message: 'Invalid payload' });
+    }
+
+    let superAdmin = null, admin = null, connectArray = [], connectDoc, meetingLink = Math.random().toString(36).slice(2, 11);
+
+    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      const schools = await School.find({ schoolName: { $in: attendants } });
+      if (!schools.length) {
+        return res.status(404).json({ message: 'No school is selected to send query.' });
+      }
+      connectArray = schools.map(school => ({ attendant: school.userId }));
+      if (!connectArray.length) {
+        return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
+      }
+      connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: 'Super Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+    }
+
+    else if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ userId: loggedInId });
+      if (!school) {
+        return res.status(404).json({ message: 'You are not associated with any school.' });
+      }
+
+      if (attendants.includes('Super Admin')) {
+        superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+        if (superAdmin) { connectArray.push({ attendant: superAdmin._id }) }
+      }
+      const teachers = await Teacher.find({ schoolId: school._id, 'profile.fullname': { $in: attendants } });
+      const students = await Student.find({ schoolId: school._id, 'studentProfile.fullname': { $in: attendants } });
+      const parents = await Parent.find({ schoolId: school._id, $or: [{ 'parentProfile.fatherName': { $in: attendants } }, { 'parentProfile.motherName': { $in: attendants } }] });
+
+      connectArray = [
+        ...connectArray,
+        ...teachers.map(t => ({ attendant: t._id })),
+        ...students.map(s => ({ attendant: s._id })),
+        ...parents.map(p => ({ attendant: p._id }))
+      ];
+      if (!connectArray.length) {
+        return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
+      }
+      connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: school.principalName || 'Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+    }
+
+    connectArray.forEach(att => {
+      io.to(`user_${att.attendant}`).emit('meeting:invite', {
+        meetingId: connectDoc._id, title, meetingLink,
+      });
+    });
+
+    res.status(201).json({ message: "Meeting scheduled successfully.", connectDoc });
+  }
+  catch (err) {
+    return res.status(500).json({ message: "Internal server error.", error: err.message })
+  }
+};
+
+
+exports.getConnects = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: "Access Denied. Only logged-in users can access." })
+    }
+
+    let sent, received;
+
+    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      sent = await Connect.find({ createdBy: loggedInId }).select('-connect');
+      received = await Connect.find({ "connect.attendant": loggedInId }).select('-connect');
+    }
+    else if (loggedInUser.role === 'admin') {
+      sent = await Connect.find({ createdBy: loggedInId }).select('-connect');
+      received = await Connect.find({ "connect.attendant": loggedInId }).select('-connect');
+    }
+
+    await Connect.deleteMany({ endDate: { $lt: new Date() } });
+
+    const connects = [...sent, ...received].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    res.status(200).json({ connects });
+  }
+  catch (err) {
+    return res.status(500).json({ message: "Internal server error.", error: err.message })
   }
 };

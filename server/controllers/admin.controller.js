@@ -2387,13 +2387,13 @@ exports.editAimObjective = async (req, res) => {
     if (!loggedInUser || loggedInUser.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
-    
+
     const { id } = req.params;
     if (!id) {
       return res.status(400).json({ message: "Provide the aim objective id to edit." })
     }
-    const {title, description} = req.body;
-    if(!title && !description){ return res.status(400).json({message:'Please provide atleast one valid (title, description) field to edit.'})}
+    const { title, description } = req.body;
+    if (!title && !description) { return res.status(400).json({ message: 'Please provide atleast one valid (title, description) field to edit.' }) }
 
     const school = await School.findOne({ userId: loggedInId });
     if (!school) {
@@ -2405,8 +2405,8 @@ exports.editAimObjective = async (req, res) => {
       return res.status(404).json({ message: "No aim objective found with the id in this school." })
     }
 
-    if(title) aimObjective.title = title;
-    if(description) aimObjective.description = description;
+    if (title) aimObjective.title = title;
+    if (description) aimObjective.description = description;
     await aimObjective.save()
 
     res.status(200).json({ message: `Aim and Objective updated successfully.` })
@@ -2660,6 +2660,9 @@ exports.deleteBook = async (req, res) => {
 
     if (book.availableBooks != book.noOfBooks) { return res.status(409).json({ message: "Books can't be deleted as some of them were borrowed." }) }
 
+    if (book.photo) {
+      await deleteImage(book.photo);
+    }
     await Books.deleteOne({ _id: bookId });
 
     res.status(200).json({
@@ -2842,7 +2845,10 @@ exports.issueAndReturnBook = async (req, res) => {
     };
 
     if (status == 'accepted' || status == 'rejected' || status == 'requested') {
-      bookRequest.status = status
+      bookRequest.status = status,
+      bookRequest.dueOn = null,
+      bookRequest.returnedOn = null,
+      bookRequest.fine = 0
       await bookRequest.save()
 
       memberIds.push({ memberId: bookRequest.requestedBy });

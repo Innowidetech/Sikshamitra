@@ -3,7 +3,7 @@ const { protect, authorize } = require('../middleware/auth.middleware');
 const { editTeacherProfile, getStudentsOfTeacher, assignmentForStudents, markAndUpdateAttendance, viewAttendance, createOrUpdateTimetable, getOnlineLecturesAndTimetable, getSyllabus, uploadStudyMaterial, getStudyMaterial, deleteStudyMaterial, createExams, getExams, createResults, getResults, getAssignment, deleteEducation, createOrUpdateClassPlan, getClassPlan, getTeacherDashboard, getSubmittedAssignments, getStudentsAndExams, getResultById, requestExpense, getTeacherAccounts, deleteTimetablePeriod, editStudyMaterial, deleteExam, editExam, getTeacherExpenseRequests, editTeacherExpenseRequests, editResult, createOnlineLectures, getClassAndSectionFor } = require('../controllers/teacher.controller');
 const { createStudentAndParent, getProfile, createBook, deleteBook, getBooks, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createDynamicCalendar, getDynamicCalendar, getDynamicCalendarByDate, getLibraryData, getAimObjective, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, getExpenseRequest, updateExpenseRequest, getUpdatedSchoolIncomeHistory, editSchoolIncome, addSchoolIncome, editBook, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, getNotifications, markNotificationAsRead, getNewAdmissions, getAdmissionRequests, createInstantAccount, getStudentsBasedOnClassAndSection, addStock, getInventory, saleStockTo, getSaleStock } = require('../controllers/admin.controller');
 const multer = require('multer');
-const { sendQuery, getQueries, replyToQuery } = require('../controllers/superAdmin.controller');
+const { sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router()
@@ -69,6 +69,7 @@ router.delete('/book/:bookId', protect, authorize('teacher'), deleteBook);// lib
 
 router.post('/query', protect, authorize('teacher'), sendQuery);
 router.get('/query', protect, authorize('teacher'), getQueries);
+router.get('/query/:id', protect, authorize('teacher'), getQueryById);
 router.post('/query/:id', protect, authorize('teacher'), replyToQuery);
 
 

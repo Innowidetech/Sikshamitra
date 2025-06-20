@@ -4,7 +4,7 @@ const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, re
 const { getOnlineLecturesAndTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
 const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const multer = require('multer');
-const { sendQuery, getQueries, replyToQuery } = require('../controllers/superAdmin.controller');
+const { sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -36,6 +36,7 @@ router.patch('/notification/:id', protect, authorize('student'), markNotificatio
 
 router.post('/query', protect, authorize('student'), sendQuery);
 router.get('/query', protect, authorize('student'), getQueries);
+router.get('/query/:id', protect, authorize('student'), getQueryById);
 router.post('/query/:id', protect, authorize('student'), replyToQuery);
 
 module.exports = router;

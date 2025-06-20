@@ -4,7 +4,7 @@ const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchoo
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
-const { getQueries, replyToQuery, sendQuery } = require('../controllers/superAdmin.controller');
+const { getQueries, replyToQuery, sendQuery, getQueryById, getConnects } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -76,6 +76,7 @@ router.patch('/bookRequest/:requestId', protect, authorize('admin'), issueAndRet
 router.patch('/resolveBookRequest/:requestId', protect, authorize('admin'), resolveBookRequest);
 router.get('/exams', protect, authorize('admin'), getExams);
 router.get('/results', protect, authorize('admin'), getResults);
+
 router.post('/expenses', protect, authorize('admin'), postSchoolExpensesForm);
 router.patch('/expenses/:expenseId', protect, authorize('admin'), editSchoolExpense);
 router.delete('/expenses/:expenseId', protect, authorize('admin'), deleteSchoolExpense);
@@ -99,7 +100,10 @@ router.patch('/notification/:id', protect, authorize('admin'), markNotificationA
 
 router.post('/query', protect, authorize('admin'), sendQuery);
 router.get('/query', protect, authorize('admin'), getQueries);
+router.get('/query/:id', protect, authorize('admin'), getQueryById);
 router.post('/query/:id', protect, authorize('admin'), replyToQuery);
+
+router.get('/connect', protect, authorize('admin'), getConnects)   
 
 
 module.exports = router;

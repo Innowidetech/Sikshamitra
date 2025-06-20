@@ -4,6 +4,10 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const {autoMarkHoliday} = require('./controllers/teacher.controller');
 dotenv.config();
+const {initSocket} = require('./utils/socket');
+const http = require('http');
+
+
 
 const authRoute = require('./routes/auth.routes');
 const userRoute = require('./routes/user.routes');
@@ -16,6 +20,10 @@ const staffRoute = require('./routes/staff.routes');
 const authorityRoute = require('./routes/authority.routes');
 
 const app = express();
+const server = http.createServer(app); // use HTTP server for socket.io
+
+// Initialize Socket.IO
+initSocket(server);
 
 app.use(cors());
 app.use(express.json());
@@ -38,7 +46,7 @@ mongoose.connect(process.env.MONGODB_URL)
 .catch(err => console.error('DataBase connection error:', err));
 
 const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 

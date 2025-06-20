@@ -383,7 +383,7 @@ exports.getBookRequests = async (req, res) => {
         const associatedSchool = await School.findById(student.schoolId);
         if (!associatedSchool) { return res.status(404).json({ message: "Logged-in student is not associated with any school." }) }
 
-        const bookRequests = await BookRequest.find({ schoolId: student.schoolId, requestedBy: student._id }).populate('book');
+        const bookRequests = await BookRequest.find({ schoolId: student.schoolId, requestedBy: student._id }).populate('book').sort({createdAt:-1});
 
         let libraryFineAmount = associatedSchool.libraryFineAmount || '-';
 

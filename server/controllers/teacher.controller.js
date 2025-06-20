@@ -227,16 +227,16 @@ exports.assignmentForStudents = async (req, res) => {
         const newAssignment = new Assignment({ schoolId: teacher.schoolId, chapterName, teacherName: teacher.profile.fullname, class: classs, section, subject, chapter, startDate, endDate, assignment: uploadedPhotoUrl, createdBy: teacher._id, });
         await newAssignment.save();
 
-        let teacherEmail = loggedInUser.email
-        let teacherName = teacher.profile.fullname
-
         const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': classs, 'studentProfile.section': section }).populate('userId')
 
-        for (let student of students) {
-            studentsEmails = student.userId.email
-            studentName = student.studentProfile.fullname
-            await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate));
-        }
+        // let teacherEmail = loggedInUser.email
+        // let teacherName = teacher.profile.fullname
+
+        // for (let student of students) {
+        //     studentsEmails = student.userId.email
+        //     studentName = student.studentProfile.fullname
+        //     await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate));
+        // }
 
         const memberIds = [
             ...students.map(student => ({ memberId: student._id }))
@@ -246,10 +246,7 @@ exports.assignmentForStudents = async (req, res) => {
 
         res.status(201).json({ message: 'Assignment created successfully.', newAssignment });
     } catch (err) {
-        res.status(500).json({
-            message: 'An error occurred while creating the assignment.',
-            error: err.message,
-        });
+        res.status(500).json({ message: 'An error occurred while creating the assignment.', error: err.message, });
     }
 };
 
