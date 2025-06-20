@@ -560,7 +560,11 @@ exports.editClass = async (req, res) => {
 
     teacher.profile.class = existingClass.class;
     teacher.profile.section = existingClass.section;
-    await teacher.save()
+    if (teacher.userId && teacher.userId.employeeType === '-') {
+      teacher.userId.employeeType = 'teaching'
+      await teacher.save()
+    }
+    await teacher.userId.save()
 
     var teacherName = teacher.profile.fullname;
     var teacherClass = existingClass.class;
@@ -575,6 +579,56 @@ exports.editClass = async (req, res) => {
   }
 };
 
+
+exports.removeTeacherFromClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+      return res.status(400).json({ message: "Please provide valid class Id to update the class details." })
+    };
+
+    const loggedInId = req.user && req.user.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(loggedInId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only logged-in admin can edit class.' });
+    };
+
+    const associatedSchool = await School.findOne({ userId: loggedInId });
+    if (!associatedSchool) {
+      return res.status(400).json({ message: 'Admin is not associated with any school.' });
+    };
+
+    const existingClass = await Class.findOne({ _id: classId, schoolId: associatedSchool._id })
+    if (!existingClass) {
+      return res.status(404).json({ message: `No class found with the id in this school.` })
+    }
+
+    const teacher = await Teacher.findOne({ 'profile.fullname': existingClass.teacher, schoolId: associatedSchool._id }).populate('userId')
+    if (!teacher) {
+      return res.status(404).json({ message: "No teacher is not associated with this class." })
+    }
+
+    existingClass.teacher = null
+    await existingClass.save();
+
+    teacher.profile.class = null;
+    teacher.profile.section = null;
+    if (teacher.userId && teacher.userId.employeeType === 'teaching') {
+      teacher.userId.employeeType = '-'
+      await teacher.userId.save()
+    }
+    await teacher.save()
+
+    res.status(200).json({ message: `Teacher removed successfully.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
+  }
+};
 
 exports.getClasses = async (req, res) => {
   try {
@@ -2846,9 +2900,10 @@ exports.issueAndReturnBook = async (req, res) => {
 
     if (status == 'accepted' || status == 'rejected' || status == 'requested') {
       bookRequest.status = status,
-      bookRequest.dueOn = null,
-      bookRequest.returnedOn = null,
-      bookRequest.fine = 0
+        bookRequest.dueOn = null,
+        bookRequest.returnedOn = null,
+        bookRequest.fine = 0,
+        bookRequest.resolved = true
       await bookRequest.save()
 
       memberIds.push({ memberId: bookRequest.requestedBy });
