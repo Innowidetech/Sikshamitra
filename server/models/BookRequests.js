@@ -24,7 +24,7 @@ const BookRequestsSchema = new mongoose.Schema({
     borrowedOn: Date,
     dueOn: Date,
     returnedOn: Date,
-    fine: { // late return of book
+    fine: {
         type: Number,
         required: true,
         default: 0

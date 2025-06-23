@@ -416,7 +416,6 @@ exports.getStudentsRatio = async (req, res) => {
       }
     });
 
-    // Calculate ratios
     const total = male + female;
     const maleRatio = total > 0 ? ((male / total) * 100).toFixed(2) : 0;
     const femaleRatio = total > 0 ? ((female / total) * 100).toFixed(2) : 0;
@@ -1020,7 +1019,7 @@ exports.updateTeacherData = async (req, res) => {
 };
 
 
-//create student and parent account by the teacher or school/admin
+//create student and parent account by the admissions manager or admin
 exports.createStudentAndParent = async (req, res) => {
   try {
     const { email, parentEmail, password, parentPassword, studentProfile, parentProfile } = req.body;
@@ -1665,73 +1664,6 @@ exports.getInventory = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
 };
-
-
-// exports.saleStockTo = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized.' });
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-// if (!loggedInUser) {
-//   return res.status(403).json({ message: 'Access denied. Only logged-in admins and inventory clerk can access.' });
-// };
-
-// let school;
-
-// if (loggedInUser.role === 'admin') {
-//   school = await School.findOne({ userId: loggedInId });
-// }
-// else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'inventoryClerk') {
-//   const teacher = await Teacher.findOne({ userId: loggedInId })
-//   if (!teacher) { return res.status(404).json({ message: "No inventory clerk found with the logged-in id" }) }
-//   school = await School.findById(teacher.schoolId)
-// }
-// if (!school) {
-//   return res.status(404).json({ message: 'Admin is not associated with any school.' });
-// };
-
-//     const { id } = req.params;
-//     if (!id) { return res.status(400).json({ message: "Please provide id to sale stock." }) }
-//     const { count, soldTo, soldToname, soldToId } = req.body; //user type, employeeId or registration number
-//     if (!count || !soldTo || !soldToname || !soldToId) {
-//       return res.status(400).json({ message: "Provide all the details (count, role, name, EmpNo / RegNo) to sale stock." })
-//     }
-
-//     const stock = await Inventory.findOne({ _id: id, schoolId: school._id })
-//     if (!stock) {
-//       return res.status(404).json({ message: `No stock found for the id. ` })
-//     }
-
-//     if (count > stock.count) {
-//       return res.status(404).json({ message: `We have only ${stock.count} items in the inventory for ${stock.itemName}` })
-//     }
-
-//     const amount = count * stock.unitPrice
-
-//     const soldToUser = await Teacher.findOne({ schoolId: school._id, 'profile.fullname': soldToname, 'profile.employeeId': soldToId }) || await Student.findOne({ schoolId: school._id, 'studentProfile.fullname': soldToname, 'studentProfile.registrationNumber': soldToId })
-//     if (!soldToUser) {
-//       return res.status(404).json({ message: `No ${soldTo} found with the provided name and id.` })
-//     }
-//     const newSale = new SaleStock({ schoolId: school._id, itemName: stock.itemName, count, price: amount, soldTo, soldToname, soldToId, createdBy: loggedInId });
-//     await newSale.save()
-
-//     stock.count = stock.count - count
-//     if (stock.count == 0) {
-//       await stock.deleteOne({ _id: stock._id, schoolId: school._id })
-//     }
-//     else {
-//       stock.totalPrice = stock.unitPrice * stock.count
-//       await stock.save()
-//     }
-
-//     res.status(201).json({ message: `Please collect ₹${amount}. The stock has been successfully sold to ${soldToname}, and the inventory data has been updated.`, newSale })
-//   } catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message })
-//   }
-// };
 
 
 //sale by itemNAME
@@ -2949,10 +2881,7 @@ exports.issueAndReturnBook = async (req, res) => {
           memberIds.push({ memberId: bookRequest.requestedBy });
           const notification = new Notifications({ section: 'library', memberIds, text: `Your book request status has been updated to - ${status} and because of late return you have to pay \u20B9${fineAmount}/-` });
           await notification.save()
-        } 
-        // else {
-        //   return res.status(400).json({ message: "'Fine' amount is required for late returns." });
-        // }
+        }
       }
       bookRequest.status = status
       bookRequest.save();
@@ -3737,7 +3666,6 @@ exports.getDynamicCalendarByDate = async (req, res) => {
 
     let calendars = [];
 
-    // Fetch local calendar events
     if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ userId: loggedInId });
       if (!school) return res.status(404).json({ message: 'Admin is not associated with any school.' });
@@ -4212,21 +4140,6 @@ exports.getAccounts = async (req, res) => {
       monthlyData[monthYear].totalAdmissionFees += Number(admission.studentDetails.admissionFees);
     }
 
-    // const transportations1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Transportation' });
-    // const transportations2 = await SchoolIncome.find({ schoolId, purpose: 'Transportation' });
-    // const transportations = transportations1.concat(transportations2)
-    // for (let transportation of transportations) {
-    //   const transportationDate = transportation.date ? new Date(transportation.date) : new Date(transportation.createdAt);
-    //   if (isNaN(transportationDate)) continue;
-    //   const monthName = months[transportationDate.getMonth()];
-    //   const year = transportationDate.getFullYear();
-    //   const monthYear = `${monthName} ${year}`;
-    //   if (!monthlyData[monthYear]) {
-    //     monthlyData[monthYear] = { totalFees: 0, totalAdmissionFees: 0, totalTransportationFees: 0, otherIncome: 0, totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
-    //   }
-    //   monthlyData[monthYear].totalTransportationFees += transportation.amount;
-    // }
-
     const otherIncomes1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Other' });
     const otherIncomes2 = await SchoolIncome.find({ schoolId, purpose: 'Other' });
     const otherIncomes = otherIncomes1.concat(otherIncomes2);
@@ -4254,7 +4167,6 @@ exports.getAccounts = async (req, res) => {
       }
       monthlyData[monthYear].totalExpenses += expense.amount;
     }
-    //teacher/class item request
     for (let monthYear in monthlyData) {
       const data = monthlyData[monthYear];
       data.totalIncome = data.totalFees + data.totalAdmissionFees + data.totalTransportationFees + data.otherIncome;
@@ -4265,7 +4177,6 @@ exports.getAccounts = async (req, res) => {
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
-      // totalTransportationFees: monthlyData[key].totalTransportationFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
       totalExpenses: monthlyData[key].totalExpenses,
@@ -4322,7 +4233,6 @@ exports.getAccountsData = async (req, res) => {
     const admissions = await ApplyOnline.find({ 'studentDetails.schoolName': schoolName, 'paymentDetails.status': 'success' }).select('studentDetails paymentDetails createdAt updatedAt').sort({ createdAt: -1 }).lean();
     const otherIncome = await SchoolIncome.find({ schoolId }).sort({ date: -1 }).lean();
     const expenses = await SchoolExpenses.find({ schoolId }).sort({ date: -1 }).lean();
-    //teacher/class item request
     const formattedIncome = formatTimeToIST(income);
     const formattedAdmissions = formatTimeToIST(admissions);
     const formattedOtherIncome = formatTimeToIST(otherIncome);
@@ -4813,7 +4723,7 @@ exports.sendEntranceExamDetailsToApplicants = async (req, res) => {
         let studentClass = applicant.classApplying;
         const examTime = `${startTime}hrs To ${endTime}hrs`;
         const examId = generateExamId(applicant.classApplying);
-        const examLink = 'https://yourapp.com/exam';
+        const examLink = 'https://shikshamitra-i.web.app/admission'; //exam direction link
         applicant.examId = examId;
         applicant.examDate = examDate;
         applicant.status = 'sent';

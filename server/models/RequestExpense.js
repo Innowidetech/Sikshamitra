@@ -10,10 +10,7 @@ const RequestExpensesSchema = new mongoose.Schema({
         type:Number,
         default:0
     },
-    item:{
-        type: String,
-        // required: true
-    },
+    item:String,
     purpose: {
         type: String,
         required: true

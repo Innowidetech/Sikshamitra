@@ -1627,7 +1627,7 @@ exports.getConnects = async (req, res) => {
     }).sort((a, b) => {
       if (!a.startDate && b.startDate) return -1;
       if (a.startDate && !b.startDate) return 1;
-      
+
       return new Date(a.startDate) - new Date(b.startDate)
     });
 

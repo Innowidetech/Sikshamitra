@@ -36,7 +36,7 @@ const examSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        subject: { //subjectName
+        subject: {
             type: String,
             required: true,
         },

@@ -49,8 +49,8 @@ router.patch('/results/:id', protect, authorize('teacher'), editResult);
 router.get('/result/:resultId', protect, authorize('teacher'), getResultById);
 router.get('/aimobjective', protect, authorize('teacher'), getAimObjective);
 router.get('/dashboard', protect, authorize('teacher'), getTeacherDashboard);
-router.post('/expenseRequest', protect, authorize('teacher'), requestExpense); //request item for class
-router.get('/requests', protect, authorize('teacher'), getTeacherExpenseRequests); // get request data of teacher
+router.post('/expenseRequest', protect, authorize('teacher'), requestExpense);
+router.get('/requests', protect, authorize('teacher'), getTeacherExpenseRequests);
 router.patch('/expenseRequested/:id', protect, authorize('teacher'), editTeacherExpenseRequests);
 router.get('/classAccounts', protect, authorize('teacher'), getTeacherAccounts);
 
@@ -58,7 +58,7 @@ router.get('/notifications', protect, authorize('teacher'), getNotifications);
 router.patch('/notification/:id', protect, authorize('teacher'), markNotificationAsRead);
 
 
-router.post('/createBook', protect, authorize('teacher'), upload.single('photo'), createBook);
+router.post('/createBook', protect, authorize('teacher'), upload.single('photo'), createBook);// librarian
 router.get('/books', protect, authorize('teacher'), getBooks);// librarian
 router.patch('/bookRequest/:requestId', protect, authorize('teacher'), issueAndReturnBook);// librarian
 router.patch('/resolveBookRequest/:requestId', protect, authorize('teacher'), resolveBookRequest); //librarian

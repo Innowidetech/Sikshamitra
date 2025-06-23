@@ -3,7 +3,6 @@ const User = require('../models/User');
 const Student = require('../models/Student');
 const Parent = require('../models/Parent');
 const Assignment = require('../models/assignment')
-const assignmentTemplate = require('../utils/assignmentTemplate');
 const Attendance = require('../models/Attendance');
 const moment = require('moment-timezone');
 const Syllabus = require('../models/Syllabus');
@@ -18,14 +17,11 @@ const Lectures = require('../models/Lectures');
 const ClassTimetable = require('../models/Timetable');
 const RequestExpense = require('../models/RequestExpense');
 const ParentExpenses = require('../models/ParentExpenses');
-const { sendEmail } = require('../utils/sendEmail');
 const mongoose = require('mongoose');
 const SchoolIncome = require('../models/SchoolIncome');
 const OnlineLectures = require('../models/OnlineLectures');
 const Notifications = require('../models/Notifications');
 const { io } = require('../utils/socket');
-
-
 
 //edit teacher profile
 exports.editTeacherProfile = async (req, res) => {
@@ -136,8 +132,6 @@ exports.deleteEducation = async (req, res) => {
     }
 };
 
-
-
 //get all students of teacher class
 exports.getStudentsOfTeacher = async (req, res) => {
     try {
@@ -184,7 +178,6 @@ exports.getStudentsOfTeacher = async (req, res) => {
     }
 };
 
-
 //assigning assignments for students
 exports.assignmentForStudents = async (req, res) => {
     try {
@@ -228,15 +221,6 @@ exports.assignmentForStudents = async (req, res) => {
         await newAssignment.save();
 
         const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': classs, 'studentProfile.section': section }).populate('userId')
-
-        // let teacherEmail = loggedInUser.email
-        // let teacherName = teacher.profile.fullname
-
-        // for (let student of students) {
-        //     studentsEmails = student.userId.email
-        //     studentName = student.studentProfile.fullname
-        //     await sendEmail(studentsEmails, teacherEmail, `New Assignment - ${subject}`, assignmentTemplate(studentName, chapterName, subject, teacherName, chapter, startDate, endDate));
-        // }
 
         const memberIds = [
             ...students.map(student => ({ memberId: student._id }))
@@ -771,7 +755,6 @@ exports.createOrUpdateTimetable = async (req, res) => {
 };
 
 
-
 // compare 12-hour AM/PM format
 function compareTimes(a, b) {
     const aDate = convertToDate(a);
@@ -919,7 +902,7 @@ exports.createOnlineLectures = async (req, res) => {
             for (let i = 0; i < 20; i++) {
                 randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return `meetinglink:${randomPart}`;
+            return `${randomPart}`;
         }
         const meetingLink = generateMeetingLink();
 
@@ -1014,9 +997,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             return obj;
         });
 
-        // Emit socket event with updated lectures
         io().to(`user_${socketUserId}`).emit('onlineLecturesUpdated', normalizedLectures);
-
 
         classTimetable = await ClassTimetable.findOne({
             $or: [

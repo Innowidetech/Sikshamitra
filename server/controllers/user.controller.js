@@ -97,7 +97,6 @@ exports.contactUs = async (req, res) => {
     }
 };
 
-// Razorpay instance configuration
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -154,7 +153,7 @@ exports.applyOnline = async (req, res) => {
 
         educationDetails.forEach((eduDetail, index) => {
             if (files.educationDocuments && files.educationDocuments[index]) {
-                eduDetail.documents = { url: uploadedImages[index + 1] }; // Add document URL for each education entry
+                eduDetail.documents = { url: uploadedImages[index + 1] };
             }
         });
 

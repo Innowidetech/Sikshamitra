@@ -25,7 +25,7 @@ const resultsSchema = new mongoose.Schema({
         required: true,
         ref: 'Student'
     },
-    result: [{  //class and section, exam type
+    result: [{ 
         subjectCode: {
             type: String,
             required: true,

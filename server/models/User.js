@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: { // for role = authority, consider email as loginId
+  email: { // for role as authority, consider email as loginId
     type: String,
     required: true,
     unique: true,

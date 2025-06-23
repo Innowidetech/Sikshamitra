@@ -19,9 +19,8 @@ const staffRoute = require('./routes/staff.routes');
 const authorityRoute = require('./routes/authority.routes');
 
 const app = express();
-const server = http.createServer(app); // use HTTP server for socket.io
+const server = http.createServer(app);
 
-// Initialize Socket.IO
 initSocket(server);
 
 app.use(cors());
@@ -48,56 +47,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-
-// const express = require('express');
-// const http = require('http');
-// const socketIo = require('socket.io');
-
-// const app = express();
-// const server = http.createServer(app);
-// const io = socketIo(server);
-
-// io.on('connection', (socket) => {
-//     console.log('A user connected');
-
-//     socket.on('joinRoom', (room) => {
-//         socket.join(room);
-//         console.log(`User joined room: ${room}`);
-//     });
-
-//     socket.on('sendMessage', (data) => {
-//         io.to(data.room).emit('receiveMessage', data.message);
-//     });
-
-//     socket.on('disconnect', () => {
-//         console.log('User disconnected');
-//     });
-// });
-
-// server.listen(3000, () => {
-//     console.log('Server is running on port 3000');
-// });
-
-
-
-// CLIENT
-{/* <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-
-  socket.emit('joinRoom', 'admin-teacher-room');
-
-  socket.on('receiveMessage', function (message) {
-    console.log('New message:', message);
-  });
-
-  function sendMessage(msg) {
-    socket.emit('sendMessage', { room: 'admin-teacher-room', message: msg });
-  }
-</script> */}

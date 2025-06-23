@@ -74,7 +74,7 @@ const ApplyForEntranceExamSchema = new mongoose.Schema({
             required: true
         }
     },
-    status:{ //exam details status of applicants
+    status:{
         type:String,
         default:'pending',
         enum:['pending','sent'],

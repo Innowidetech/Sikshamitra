@@ -87,19 +87,17 @@ const onlineSchema = new mongoose.Schema({
     parentDetails: {
         fatherName: {
             type: String,
-            required: true,
+            // required: true,
         },
         motherName: {
             type: String,
-            // required: true,
         },
         fatherPhone: {
             type: String,
-            required: true,
+            // required: true,
         },
         motherPhone: {
             type: String,
-            // required: true,
         },
         email: {
             type: String,
