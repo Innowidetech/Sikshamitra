@@ -4,7 +4,7 @@ const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchoo
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
-const { getQueries, replyToQuery, sendQuery, getQueryById, getConnects } = require('../controllers/superAdmin.controller');
+const { getQueries, replyToQuery, sendQuery, getQueryById, getConnects, createConnect, editConnectInviteStatus } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -104,8 +104,9 @@ router.get('/query', protect, authorize('admin'), getQueries);
 router.get('/query/:id', protect, authorize('admin'), getQueryById);
 router.post('/query/:id', protect, authorize('admin'), replyToQuery);
 
-router.get('/connect', protect, authorize('admin'), getConnects)   
-
+router.get('/connect', protect, authorize('admin'), getConnects) ;
+router.post('/connect', protect, authorize('admin'), createConnect);
+router.patch('/connect/:id', protect, authorize('admin'), editConnectInviteStatus);
 
 module.exports = router;
 

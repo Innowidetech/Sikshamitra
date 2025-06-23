@@ -6,7 +6,7 @@ const { getAdmitCard } = require('../controllers/student.controller');
 const { getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const router = express.Router();
 const multer = require('multer');
-const { sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
+const { sendQuery, getQueries, replyToQuery, getQueryById, getConnects, createConnect } = require('../controllers/superAdmin.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/dashboard', protect, authorize('parent'), parentDashboard)
@@ -34,6 +34,10 @@ router.post('/query', protect, authorize('parent'), sendQuery);
 router.get('/query', protect, authorize('parent'), getQueries);
 router.get('/query/:id', protect, authorize('parent'), getQueryById);
 router.post('/query/:id', protect, authorize('parent'), replyToQuery);
+
+router.get('/connect', protect, authorize('parent'), getConnects);
+router.post('/connect', protect, authorize('parent'), createConnect);
+
 
 
 module.exports = router;

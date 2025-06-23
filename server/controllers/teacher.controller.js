@@ -8,7 +8,6 @@ const Attendance = require('../models/Attendance');
 const moment = require('moment-timezone');
 const Syllabus = require('../models/Syllabus');
 const StudyMaterial = require('../models/StudyMaterial');
-const cloudinary = require('cloudinary').v2;
 const { uploadImage } = require('../utils/multer');
 const Exams = require('../models/Exams');
 const Results = require('../models/Results');
@@ -24,6 +23,7 @@ const mongoose = require('mongoose');
 const SchoolIncome = require('../models/SchoolIncome');
 const OnlineLectures = require('../models/OnlineLectures');
 const Notifications = require('../models/Notifications');
+const { io } = require('../utils/socket');
 
 
 
@@ -910,6 +910,9 @@ exports.createOnlineLectures = async (req, res) => {
         const school = await School.findById(teacher.schoolId);
         if (!school) { return res.status(404).json({ message: 'The teacher is not associated with any school.' }); };
 
+        const students = await Student.find({ schoolId: teacher.schoolId, 'studentProfile.class': className, 'studentProfile.section': section })
+        if (!students.length) { return res.status(400).json({ message: "No students found in the selected class and section." }); }
+
         function generateMeetingLink() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let randomPart = '';
@@ -918,12 +921,19 @@ exports.createOnlineLectures = async (req, res) => {
             }
             return `meetinglink:${randomPart}`;
         }
-        const lectureLink = generateMeetingLink();
+        const meetingLink = generateMeetingLink();
 
-        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName: teacher.profile.fullname, class: className, section, startDate, startTime, endDate, endTime, lectureLink, createdBy: teacher._id });
+        const connect = students.map(student => ({ attendant: student._id }));
+
+        const onlineLecture = new OnlineLectures({ schoolId: teacher.schoolId, subject, topic, teacherName: teacher.profile.fullname, class: className, section, startDate, startTime, endDate, endTime, meetingLink, connect, createdBy: teacher._id });
         await onlineLecture.save();
 
-        const students = await Student.find({ schoolId: teacher.schoolId, 'studentProfile.class': className, 'studentProfile.section': section })
+        connect.forEach(att => {
+            io().to(`user_${att.attendant}`).emit('onlineLecture:new', {
+                meetingId: onlineLecture._id, subject, topic, meetingLink
+            });
+        });
+
         let memberIds = students.map(s => ({ memberId: s._id, }));
 
         const notification = new Notifications({ section: 'onlineLectures', memberIds, text: `New online lecture scheduled for subject - '${subject}'` });
@@ -935,6 +945,17 @@ exports.createOnlineLectures = async (req, res) => {
     }
 };
 
+function getLectureStatus(lecture) {
+    const now = new Date();
+    if (!lecture.startDate || !lecture.endDate) return 'Upcoming';
+
+    const start = new Date(lecture.startDate);
+    const end = new Date(lecture.endDate);
+
+    if (now < start) return 'Upcoming';
+    if (now >= start && now <= end) return 'Ongoing';
+    return 'Ended';
+}
 
 exports.getOnlineLecturesAndTimetable = async (req, res) => {
     try {
@@ -948,7 +969,9 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        let schoolId, teacherId, teacherClass, teacherSection, studentClass, studentSection, teacherTimetable, classTimetable, onlineLectures;
+        let schoolId, teacherClass, teacherSection, socketUserId, studentClass, studentSection, teacherTimetable, classTimetable, onlineLectures;
+
+        const todayIST = moment().tz('Asia/Kolkata').startOf('day').toDate();
 
         if (loggedInUser.role === 'teacher') {
             const teacher = await Teacher.findOne({ userId: loggedInId });
@@ -956,16 +979,17 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
                 return res.status(404).json({ message: 'Teacher not found.' });
             }
             if (!teacher.schoolId) { return res.status(404).json({ message: "Teacher is not associated with any school." }) }
+
             schoolId = teacher.schoolId,
-                teacherId = teacher._id,
+                socketUserId = teacher._id,
                 teacherClass = teacher.profile.class,
                 teacherSection = teacher.profile.section
 
-            const todayIST = moment().tz('Asia/Kolkata').startOf('day');
+            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST } }).sort({ startDate: 1 });
 
-            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
+            await OnlineLectures.deleteMany({ endDate: { $lt: todayIST } });
 
-            await OnlineLectures.deleteMany({ endDate: { $lt: todayIST.toDate() } });
+            teacherTimetable = await Lectures.findOne({ schoolId, teacher: socketUserId });
 
         } else if (loggedInUser.role === 'student') {
             const student = await Student.findOne({ userId: loggedInId });
@@ -975,28 +999,24 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             if (!student.schoolId) { return res.status(404).json({ message: 'Student is not associated with any school.' }) }
             schoolId = student.schoolId
             studentClass = student.studentProfile.class,
-                studentSection = student.studentProfile.section
+                studentSection = student.studentProfile.section,
+                socketUserId = student._id;
 
-            const todayIST = moment().tz('Asia/Kolkata').startOf('day');
-
-            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST.toDate() } }).sort({ startDate: 1 });
+            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST } }).sort({ startDate: 1 });
 
         } else {
             return res.status(403).json({
                 message: 'Access denied. Only teachers and students can view the timetable.',
             });
-        }
+        } const normalizedLectures = onlineLectures.map(lecture => {
+            const obj = lecture.toObject();
+            obj.status = getLectureStatus(lecture);
+            return obj;
+        });
 
-        teacherTimetable = await Lectures.findOne({ schoolId, teacher: teacherId });
+        // Emit socket event with updated lectures
+        io().to(`user_${socketUserId}`).emit('onlineLecturesUpdated', normalizedLectures);
 
-        if (teacherTimetable) {
-            teacherTimetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            teacherTimetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            teacherTimetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            teacherTimetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            teacherTimetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            teacherTimetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-        }
 
         classTimetable = await ClassTimetable.findOne({
             $or: [
@@ -1011,25 +1031,26 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
             .populate('timetable.friday.teacher', 'profile.fullname')
             .populate('timetable.saturday.teacher', 'profile.fullname');
 
-        if (classTimetable) {
-            classTimetable.timetable.monday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            classTimetable.timetable.tuesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            classTimetable.timetable.wednesday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            classTimetable.timetable.thursday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            classTimetable.timetable.friday.sort((a, b) => compareTimes(a.startTime, b.startTime));
-            classTimetable.timetable.saturday.sort((a, b) => compareTimes(a.startTime, b.startTime));
+        if (teacherTimetable) {
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].forEach(day => {
+                teacherTimetable.timetable[day]?.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            });
         }
+
+        if (classTimetable) {
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].forEach(day => {
+                classTimetable.timetable[day]?.sort((a, b) => compareTimes(a.startTime, b.startTime));
+            });
+        }
+
         if (!teacherTimetable && !classTimetable) { return res.status(200).json({ message: "No timetable found, please create." }) }
         if (!classTimetable) { return res.status(200).json({ message: 'No timetable found for the class.' }) }
 
         res.status(200).json({
-            message: 'Online Lectures and Timetable fetched successfully.', onlineLectures, teacherTimetable, classTimetable,
+            message: 'Online Lectures and Timetable fetched successfully.', onlineLectures: normalizedLectures, teacherTimetable, classTimetable,
         });
     } catch (err) {
-        res.status(500).json({
-            message: 'An error occurred while fetching the timetable.',
-            error: err.message,
-        });
+        res.status(500).json({ message: 'An error occurred while fetching the timetable.', error: err.message, });
     }
 };
 

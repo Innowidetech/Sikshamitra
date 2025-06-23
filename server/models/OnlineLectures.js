@@ -6,47 +6,56 @@ const OnlineLecturesSchema = new mongoose.Schema({
         required: true,
         ref: 'School',
     },
-    subject:{
-        type:String,
-        required:true
+    subject: {
+        type: String,
+        required: true
     },
-    topic:{
-        type:String,
-        required:true
+    topic: {
+        type: String,
+        required: true
     },
-    teacherName:{
-        type:String,
-        required:true
+    teacherName: {
+        type: String,
+        required: true
     },
-    class:{
-        type:String,
-        required:true
+    class: {
+        type: String,
+        required: true
     },
-    section:{
-        type:String,
-        required:true,
-        uppercase:true
+    section: {
+        type: String,
+        required: true,
+        uppercase: true
     },
-    startDate:{
-        type:Date,
-        required:true
+    startDate: {
+        type: Date,
+        required: true
     },
-    startTime:{
-        type:String,
-        required:true
+    startTime: {
+        type: String,
+        required: true
     },
-    endDate:{
-        type:Date,
-        required:true
+    endDate: {
+        type: Date,
+        required: true
     },
-    endTime:{
-        type:String,
-        required:true
+    endTime: {
+        type: String,
+        required: true
     },
-    lectureLink:{
-        type:String,
-        require:true
+    meetingLink: {
+        type: String,
+        required: true
     },
+    connect: [
+        {
+            attendant: {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true,
+                ref: 'Student'
+            }
+        }
+    ],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',

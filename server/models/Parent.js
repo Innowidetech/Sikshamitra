@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const parentSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
-        // required: true,
         ref: 'School'
     },
     userId: {
@@ -17,14 +16,12 @@ const parentSchema = new mongoose.Schema({
             enum:['Father', 'Mother', 'Guardian']
         },
         fatherName: {   //or guardian
-            required: true,
             type: String,
         },
         motherName: {
             type: String,
         },
         fatherPhoneNumber: { //or guardian
-            required: true,
             type: String,
         },
         motherPhoneNumber: {
@@ -32,7 +29,6 @@ const parentSchema = new mongoose.Schema({
         },
         photo:String,
         fatherOccupation: {
-            // required: true,
             type: String,
         },
         motherOccupation: {

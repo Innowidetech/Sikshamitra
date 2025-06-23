@@ -20,7 +20,6 @@ const ConnectSchema = new mongoose.Schema({
             enum: ['Pending', 'Accepted', 'Denied'],
         },
     }],
-
     membersModel: {
         type: String,
         enum: ['User', 'SuperAdminStaff', 'School', 'SchoolStaff', 'Teacher', 'Student', 'Parent']
@@ -44,15 +43,3 @@ const ConnectSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('Connect', ConnectSchema);
-
-
-
-// super admin --> can schedule meeting with school/admin - (admin must attend it)
-
-// admin --> superadmin, teachers, students, parents - (superadmin can change status)
-
-// teacher --> admin, students(of their class), parents(of their class) - (admin can change status)
-
-// student --> admin, teachers(who teach them) - (both can change status)
-
-// parent --> admin, teachers(who teach them) - (both can change status)

@@ -610,19 +610,21 @@ exports.removeTeacherFromClass = async (req, res) => {
 
     const teacher = await Teacher.findOne({ 'profile.fullname': existingClass.teacher, schoolId: associatedSchool._id }).populate('userId')
     if (!teacher) {
-      return res.status(404).json({ message: "No teacher is not associated with this class." })
+      existingClass.teacher = null;
+      await existingClass.save();
     }
+    else {
+      existingClass.teacher = null
+      await existingClass.save();
 
-    existingClass.teacher = null
-    await existingClass.save();
-
-    teacher.profile.class = null;
-    teacher.profile.section = null;
-    if (teacher.userId && teacher.userId.employeeType === 'teaching') {
-      teacher.userId.employeeType = '-'
-      await teacher.userId.save()
+      teacher.profile.class = null;
+      teacher.profile.section = null;
+      if (teacher.userId && teacher.userId.employeeType === 'teaching') {
+        teacher.userId.employeeType = '-'
+        await teacher.userId.save()
+      }
+      await teacher.save()
     }
-    await teacher.save()
 
     res.status(200).json({ message: `Teacher removed successfully.` });
   } catch (error) {
@@ -1026,6 +1028,14 @@ exports.createStudentAndParent = async (req, res) => {
     if (!email || !parentEmail || !parentPassword || !password || !studentProfile || !parentProfile) {
       return res.status(400).json({ message: 'Please provide all the required details.' });
     };
+
+    const { fatherName, motherName, fatherPhoneNumber, motherPhoneNumber } = parentProfile;
+    if (!fatherName && !motherName) {
+      return res.status(400).json({ message: 'At least one parent name (father/guardian or mother) must be provided.' });
+    }
+    if (!fatherPhoneNumber && !motherPhoneNumber) {
+      return res.status(400).json({ message: 'At least one parent phone number (father/guardian or mother) must be provided.' });
+    }
 
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
@@ -2900,6 +2910,7 @@ exports.issueAndReturnBook = async (req, res) => {
 
     if (status == 'accepted' || status == 'rejected' || status == 'requested') {
       bookRequest.status = status,
+      bookRequest.borrowedOn = null,
         bookRequest.dueOn = null,
         bookRequest.returnedOn = null,
         bookRequest.fine = 0,
@@ -2938,10 +2949,10 @@ exports.issueAndReturnBook = async (req, res) => {
           memberIds.push({ memberId: bookRequest.requestedBy });
           const notification = new Notifications({ section: 'library', memberIds, text: `Your book request status has been updated to - ${status} and because of late return you have to pay \u20B9${fineAmount}/-` });
           await notification.save()
-
-        } else {
-          return res.status(400).json({ message: "'Fine' amount is required for late returns." });
-        }
+        } 
+        // else {
+        //   return res.status(400).json({ message: "'Fine' amount is required for late returns." });
+        // }
       }
       bookRequest.status = status
       bookRequest.save();
@@ -2951,7 +2962,6 @@ exports.issueAndReturnBook = async (req, res) => {
 
       return res.status(200).json({ message: `Book returned successfully, Fine Amount = ${fineAmount || 0}.`, bookRequest });
     }
-
     if (status == 'issued') {
       if (!dueOn) {
         return res.status(400).json({ message: "Please provide due date to issue book." })

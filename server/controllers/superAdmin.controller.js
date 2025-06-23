@@ -20,6 +20,7 @@ const SchoolStaff = require('../models/SchoolStaff');
 const ClassTimetable = require('../models/Timetable');
 const { io } = require('../utils/socket');
 const Connect = require('../models/Connect');
+const dayjs = require('dayjs');
 
 
 //create account for admin/school
@@ -781,6 +782,82 @@ exports.editExpense = async (req, res) => {
 };
 
 
+async function getTeacherNamesOfParent(loggedInId) {
+  const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId');
+  if (!parent) {
+    return res.status(404).json({ message: 'No student found with the logged-in ID.' });
+  }
+
+  const teacherNameSet = new Set();
+
+  const timetables = await Promise.all(
+    parent.parentProfile.parentOf.map(async (sid) => {
+      const student = await Student.findById(sid);
+
+      const timetable = await ClassTimetable.findOne({
+        class: student.studentProfile.class,
+        section: student.studentProfile.section,
+        schoolId: student.schoolId
+      })
+        .populate('timetable.monday.teacher', 'profile.fullname')
+        .populate('timetable.tuesday.teacher', 'profile.fullname')
+        .populate('timetable.wednesday.teacher', 'profile.fullname')
+        .populate('timetable.thursday.teacher', 'profile.fullname')
+        .populate('timetable.friday.teacher', 'profile.fullname')
+        .populate('timetable.saturday.teacher', 'profile.fullname');
+
+      return timetable;
+    })
+  );
+
+  for (const timetable of timetables) {
+    if (!timetable) continue;
+
+    for (const day of Object.keys(timetable.timetable)) {
+      for (const slot of timetable.timetable[day]) {
+        const teacherName = slot.teacher?.profile?.fullname;
+        if (teacherName) {
+          teacherNameSet.add(teacherName);
+        }
+      }
+    }
+  }
+  return teacherNameSet;
+};
+
+
+async function getTeacherNamesOfStudent(loggedInId) {
+  const student = await Student.findOne({ userId: loggedInId }).populate('schoolId');
+  if (!student) {
+    return res.status(404).json({ message: 'No student found with the logged-in id.' });
+  }
+
+  const teacherNameSet = new Set();
+
+  const timetable = await ClassTimetable.findOne({
+    class: student.studentProfile.class,
+    section: student.studentProfile.section,
+    schoolId: student.schoolId._id
+  }).populate('timetable.monday.teacher', 'profile.fullname')
+    .populate('timetable.tuesday.teacher', 'profile.fullname')
+    .populate('timetable.wednesday.teacher', 'profile.fullname')
+    .populate('timetable.thursday.teacher', 'profile.fullname')
+    .populate('timetable.friday.teacher', 'profile.fullname')
+    .populate('timetable.saturday.teacher', 'profile.fullname');
+
+  if (timetable) {
+    for (const day of Object.keys(timetable.timetable)) {
+      timetable.timetable[day].forEach(slot => {
+        if (slot.teacher?.profile?.fullname) {
+          teacherNameSet.add(slot.teacher.profile.fullname);
+        }
+      });
+    }
+    return teacherNameSet
+  }
+};
+
+
 exports.sendQuery = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -899,9 +976,9 @@ exports.sendQuery = async (req, res) => {
         admin = await User.findById(teacher.schoolId.userId)
       }
       const studentsIs = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
-      const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.fullname': { $in: sendTo }, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section }).populate('userId');
+      const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.fullname': { $in: sendTo }, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
       const studentIds = studentsIs.map(student => student._id);
-      const parents = await Parent.find({ schoolId: teacher.schoolId._id, 'parentProfile.parentOf': { $in: studentIds }, $or: [{ 'parentProfile.fatherName': { $in: sendTo } }, { 'parentProfile.motherName': { $in: sendTo } }] }).populate('userId');
+      const parents = await Parent.find({ schoolId: teacher.schoolId._id, 'parentProfile.parentOf': { $in: studentIds }, $or: [{ 'parentProfile.fatherName': { $in: sendTo } }, { 'parentProfile.motherName': { $in: sendTo } }] });
 
 
       if (!admin && !students.length && !parents.length) {
@@ -921,40 +998,16 @@ exports.sendQuery = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'student') {
-
       const student = await Student.findOne({ userId: loggedInId }).populate('schoolId');
-      if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
 
-      const timetable = await ClassTimetable.findOne({
-        class: student.studentProfile.class,
-        section: student.studentProfile.section,
-        schoolId: student.schoolId._id
-      }).populate('timetable.monday.teacher', 'profile.fullname')
-        .populate('timetable.tuesday.teacher', 'profile.fullname')
-        .populate('timetable.wednesday.teacher', 'profile.fullname')
-        .populate('timetable.thursday.teacher', 'profile.fullname')
-        .populate('timetable.friday.teacher', 'profile.fullname')
-        .populate('timetable.saturday.teacher', 'profile.fullname');
-
-      if (!timetable) {
-        return res.status(404).json({ message: 'Timetable not found for this student.' });
-      }
-
-      const teacherNameSet = new Set();
-      for (const day of Object.keys(timetable.timetable)) {
-        timetable.timetable[day].forEach(slot => {
-          if (slot.teacher?.profile?.fullname) {
-            teacherNameSet.add(slot.teacher.profile.fullname);
-          }
-        });
-      }
+      const teacherNameSet = await getTeacherNamesOfStudent(loggedInId);
 
       const validSendToNames = sendTo.filter(name => teacherNameSet.has(name));
 
       if (sendTo.includes('Admin')) {
         admin = await User.findById(student.schoolId.userId)
       }
-      const teachers = await Teacher.find({ schoolId: student.schoolId._id, 'profile.fullname': { $in: validSendToNames } }).populate('userId');
+      const teachers = await Teacher.find({ schoolId: student.schoolId._id, 'profile.fullname': { $in: validSendToNames } });
 
       if (!admin && !teachers.length) {
         return res.status(404).json({ message: 'No name is selected to send query.' });
@@ -972,55 +1025,17 @@ exports.sendQuery = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'parent') {
-
-      const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId');
-      if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+      const parent = await Parent.findOne({ userId: loggedInId })
 
       if (sendTo.includes('Admin')) {
         admin = await User.findById(parent.schoolId.userId)
       }
-      const teacherNameSet = new Set();
 
-      const timetables = await Promise.all(
-        parent.parentProfile.parentOf.map(async (sid) => {
-          const student = await Student.findById(sid);
-
-          const timetable = await ClassTimetable.findOne({
-            class: student.studentProfile.class,
-            section: student.studentProfile.section,
-            schoolId: student.schoolId
-          })
-            .populate('timetable.monday.teacher', 'profile.fullname')
-            .populate('timetable.tuesday.teacher', 'profile.fullname')
-            .populate('timetable.wednesday.teacher', 'profile.fullname')
-            .populate('timetable.thursday.teacher', 'profile.fullname')
-            .populate('timetable.friday.teacher', 'profile.fullname')
-            .populate('timetable.saturday.teacher', 'profile.fullname');
-
-          return timetable
-        })
-      )
-
-
-      for (const timetable of timetables) {
-        if (!timetable) continue;
-
-        for (const day of Object.keys(timetable.timetable)) {
-          for (const slot of timetable.timetable[day]) {
-            const teacherName = slot.teacher?.profile?.fullname;
-            if (teacherName) {
-              teacherNameSet.add(teacherName);
-            }
-          }
-        }
-      }
+      const teacherNameSet = await getTeacherNamesOfParent(loggedInId);
 
       const validSendToNames = sendTo.filter(name => teacherNameSet.has(name));
 
-      const teachers = await Teacher.find({
-        schoolId: parent.schoolId._id,
-        'profile.fullname': { $in: validSendToNames }
-      }).populate('userId');
+      const teachers = await Teacher.find({ schoolId: parent.schoolId._id, 'profile.fullname': { $in: validSendToNames } });
 
       if (!admin && !teachers.length) {
         return res.status(404).json({ message: 'No name is selected to send query.' });
@@ -1344,6 +1359,22 @@ exports.replyToQuery = async (req, res) => {
 };
 
 
+function parseMeetingDateTime(dateObj, timeStr) {
+  const dateOnly = dayjs(dateObj).format('YYYY-MM-DD');
+  const fullDateTime = dayjs(`${dateOnly} ${timeStr}`, 'YYYY-MM-DD hh:mm A');
+  return fullDateTime.toDate();
+}
+
+function getMeetingStatus(connectDoc) {
+  const now = new Date();
+  const start = parseMeetingDateTime(connectDoc.startDate, connectDoc.startTime);
+  const end = parseMeetingDateTime(connectDoc.endDate, connectDoc.endTime);
+  if (now < start) return 'Not Started';
+  if (now > end) return 'Expired';
+  return 'Live';
+}
+
+
 exports.createConnect = async (req, res) => {
   try {
     const loggedInId = req.user?.id;
@@ -1361,7 +1392,8 @@ exports.createConnect = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payload' });
     }
 
-    let superAdmin = null, admin = null, connectArray = [], connectDoc, meetingLink = Math.random().toString(36).slice(2, 11);
+    let meetingLink = Math.random().toString(36).slice(2, 11);
+    let superAdmin = null, admin = null, connectArray = [], connectDoc;
 
     if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
       const schools = await School.find({ schoolName: { $in: attendants } });
@@ -1372,7 +1404,13 @@ exports.createConnect = async (req, res) => {
       if (!connectArray.length) {
         return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
       }
-      connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: 'Super Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+
+      if (!startDate && !startTime && !endDate && !endTime) {
+        connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName: 'Super Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+      }
+      else if (title && startDate && startTime && endDate && endTime && connectArray.length) {
+        connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: 'Super Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+      }
     }
 
     else if (loggedInUser.role === 'admin') {
@@ -1383,7 +1421,7 @@ exports.createConnect = async (req, res) => {
 
       if (attendants.includes('Super Admin')) {
         superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
-        if (superAdmin) { connectArray.push({ attendant: superAdmin._id }) }
+        if (superAdmin) { connectArray.push({ attendant: superAdmin._id, status: 'Pending' }) }
       }
       const teachers = await Teacher.find({ schoolId: school._id, 'profile.fullname': { $in: attendants } });
       const students = await Student.find({ schoolId: school._id, 'studentProfile.fullname': { $in: attendants } });
@@ -1398,12 +1436,127 @@ exports.createConnect = async (req, res) => {
       if (!connectArray.length) {
         return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
       }
-      connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: school.principalName || 'Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId, });
+      if (!startDate && !startTime && !endDate && !endTime) {
+        connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName: school.principalName || 'Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId });
+      }
+      else if (title && startDate && startTime && endDate && endTime && connectArray.length) {
+        connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: school.principalName || 'Admin', hostedByRole: loggedInUser.role, createdBy: loggedInId });
+      }
     }
 
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+      const teacher = await Teacher.findOne({ userId: loggedInId }).populate('schoolId');
+      if (!teacher) {
+        return res.status(404).json({ message: 'No teacher found with the logged-in id.' });
+      }
+
+      if (attendants.includes('Admin')) {
+        admin = await User.findById(teacher.schoolId.userId);
+        if (admin) { connectArray.push({ attendant: admin._id, status: 'Pending' }) }
+      }
+
+      const studentsIs = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
+      const students = await Student.find({ schoolId: teacher.schoolId._id, 'studentProfile.fullname': { $in: attendants }, 'studentProfile.class': teacher.profile.class, 'studentProfile.section': teacher.profile.section });
+      const studentIds = studentsIs.map(student => student._id);
+      const parents = await Parent.find({ schoolId: teacher.schoolId._id, 'parentProfile.parentOf': { $in: studentIds }, $or: [{ 'parentProfile.fatherName': { $in: attendants } }, { 'parentProfile.motherName': { $in: attendants } }] });
+
+      connectArray = [
+        ...connectArray,
+        ...students.map(s => ({ attendant: s._id })),
+        ...parents.map(p => ({ attendant: p._id }))
+      ];
+      if (!connectArray.length) {
+        return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
+      }
+      if (!startDate && !startTime && !endDate && !endTime) {
+        connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName: teacher.profile.fullname, hostedByRole: loggedInUser.role, createdBy: teacher._id });
+      }
+      else if (title && startDate && startTime && endDate && endTime && connectArray.length) {
+        connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: teacher.profile.fullname, hostedByRole: loggedInUser.role, createdBy: teacher._id });
+      }
+    }
+
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId }).populate('schoolId');
+
+      const teacherNameSet = await getTeacherNamesOfStudent(loggedInId);
+
+      const validSendToNames = attendants.filter(name => teacherNameSet.has(name));
+
+      const teachers = await Teacher.find({ schoolId: student.schoolId._id, 'profile.fullname': { $in: validSendToNames } });
+
+      if (attendants.includes('Admin')) {
+        admin = await User.findById(student.schoolId.userId);
+        if (admin) { connectArray.push({ attendant: admin._id, status: 'Pending' }) }
+      }
+
+      connectArray = [
+        ...connectArray,
+        ...teachers.map(t => ({ attendant: t._id, status: 'Pending' }))
+      ];
+      if (!connectArray.length) {
+        return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
+      }
+      if (!startDate && !startTime && !endDate && !endTime) {
+        connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName: student.studentProfile.fullname, hostedByRole: loggedInUser.role, createdBy: student._id });
+      }
+      else if (title && startDate && startTime && endDate && endTime && connectArray.length) {
+        connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName: student.studentProfile.fullname, hostedByRole: loggedInUser.role, createdBy: student._id });
+      }
+    }
+
+    else if (loggedInUser.role === 'parent') {
+      const parent = await Parent.findOne({ userId: loggedInId })
+
+      const teacherNameSet = await getTeacherNamesOfParent(loggedInId);
+
+      const validSendToNames = attendants.filter(name => teacherNameSet.has(name));
+
+      const teachers = await Teacher.find({ schoolId: parent.schoolId._id, 'profile.fullname': { $in: validSendToNames } });
+
+      if (attendants.includes('Admin')) {
+        admin = await User.findById(parent.schoolId.userId);
+        if (admin) { connectArray.push({ attendant: admin._id, status: 'Pending' }) }
+      }
+
+      connectArray = [
+        ...connectArray,
+        ...teachers.map(t => ({ attendant: t._id, status: 'Pending' }))
+      ];
+      if (!connectArray.length) {
+        return res.status(400).json({ message: 'No valid attendants found for the meeting.' });
+      }
+
+      let hostedByName;
+
+      if (parent.parentProfile.priority) {
+        if (parent.parentProfile.priority === 'Father' || parent.parentProfile.priority === 'Guardian') {
+          hostedByName = parent.parentProfile.fatherName || parent.parentProfile.motherName;
+        } else if (parent.parentProfile.priority === 'Mother') {
+          hostedByName = parent.parentProfile.motherName || parent.parentProfile.fatherName;
+        }
+      } else {
+        hostedByName = parent.parentProfile.fatherName || parent.parentProfile.motherName;
+      }
+
+      if (!startDate && !startTime && !endDate && !endTime) {
+        connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName, hostedByRole: loggedInUser.role, createdBy: parent._id });
+      }
+      else if (title && startDate && startTime && endDate && endTime && connectArray.length) {
+        connectDoc = await Connect.create({ title, startDate, startTime, endDate, endTime, connect: connectArray, meetingLink, hostedByName, hostedByRole: loggedInUser.role, createdBy: parent._id });
+      }
+    }
+
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    const meetingStatus = getMeetingStatus(connectDoc);
+
     connectArray.forEach(att => {
-      io.to(`user_${att.attendant}`).emit('meeting:invite', {
-        meetingId: connectDoc._id, title, meetingLink,
+      io().to(`user_${att.attendant}`).emit('meeting:invite', {
+        meetingId: connectDoc._id,
+        title,
+        meetingLink,
+        status: meetingStatus
       });
     });
 
@@ -1428,21 +1581,106 @@ exports.getConnects = async (req, res) => {
     }
 
     let sent, received;
+    let socketUserId = loggedInId;
 
     if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
       sent = await Connect.find({ createdBy: loggedInId }).select('-connect');
-      received = await Connect.find({ "connect.attendant": loggedInId }).select('-connect');
+      received = await Connect.find({ "connect.attendant": loggedInId });
     }
     else if (loggedInUser.role === 'admin') {
       sent = await Connect.find({ createdBy: loggedInId }).select('-connect');
-      received = await Connect.find({ "connect.attendant": loggedInId }).select('-connect');
+      received = await Connect.find({ "connect.attendant": loggedInId });
     }
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+      socketUserId = teacher._id;
+
+      sent = await Connect.find({ createdBy: teacher._id }).select('-connect');
+      received = await Connect.find({ "connect.attendant": teacher._id });
+
+    }
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) { return res.status(404).json({ message: "No student found with the logged-in id." }) }
+      socketUserId = student._id;
+
+      sent = await Connect.find({ createdBy: student._id }).select('-connect');
+      received = await Connect.find({ "connect.attendant": student._id }).select('-connect');
+    }
+    else if (loggedInUser.role === 'parent') {
+      const parent = await Parent.findOne({ userId: loggedInId });
+      if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
+      socketUserId = parent._id;
+
+      sent = await Connect.find({ createdBy: parent._id }).select('-connect');
+      received = await Connect.find({ "connect.attendant": parent._id }).select('-connect');
+    }
+    else { return res.status(403).json({ message: "Invalid role type." }) }
 
     await Connect.deleteMany({ endDate: { $lt: new Date() } });
 
-    const connects = [...sent, ...received].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    const merged = [...sent, ...received].map(doc => {
+      doc = doc.toObject();
+      doc.status = getMeetingStatus(doc);
+      return doc;
+    }).sort((a, b) => {
+      if (!a.startDate && b.startDate) return -1;
+      if (a.startDate && !b.startDate) return 1;
+      
+      return new Date(a.startDate) - new Date(b.startDate)
+    });
 
-    res.status(200).json({ connects });
+    io().to(`user_${socketUserId}`).emit('connectsUpdated', merged);
+
+    res.status(200).json({ connects: merged });
+  }
+  catch (err) {
+    return res.status(500).json({ message: "Internal server error.", error: err.message })
+  }
+};
+
+
+exports.editConnectInviteStatus = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    };
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: "Access Denied. Only logged-in users can access." })
+    }
+
+    const { id } = req.params;
+    if (!id) { return res.status(400).json({ message: 'Please provide the meeting id to edit status.' }) }
+
+    const { status } = req.body;
+    if (status !== 'Pending' && status !== 'Accepted' && status !== 'Denied') {
+      return res.status(400).json({ message: "Please provide a valid status to updated." })
+    }
+
+    let connect;
+
+    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      connect = await Connect.findOneAndUpdate({ _id: id, "connect.attendant": loggedInId }, { $set: { "connect.$.status": status } }, { new: true });
+      if (!connect) { return res.status(404).json({ message: 'No status found for the scheduled meeting to update.' }) }
+    }
+    else if (loggedInUser.role === 'admin') {
+      connect = await Connect.findOneAndUpdate({ _id: id, "connect.attendant": loggedInId }, { $set: { "connect.$.status": status } }, { new: true });
+      if (!connect) { return res.status(404).json({ message: 'No status found for the scheduled meeting to update.' }) }
+    }
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
+      const teacher = await Teacher.findOne({ userId: loggedInId });
+      if (!teacher) { return res.status(404).json({ message: "No teacher found with the logged-in id." }) }
+
+      connect = await Connect.findOneAndUpdate({ _id: id, "connect.attendant": teacher._id }, { $set: { "connect.$.status": status } }, { new: true });
+      if (!connect) { return res.status(404).json({ message: 'No status found for the scheduled meeting to update.' }) }
+    }
+    else { return res.status(403).json({ message: "Invalid role type." }) }
+
+    res.status(200).json({ message: `Meeting status successfully updated to '${status}'.` });
   }
   catch (err) {
     return res.status(500).json({ message: "Internal server error.", error: err.message })
