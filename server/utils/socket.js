@@ -54,7 +54,7 @@ exports.initSocket = (server) => {
 
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth?.token || socket.handshake.query.token;
+      const token = socket.handshake.auth?.token;
       if (!token) {
         return next(new Error('Authentication error'));
       }

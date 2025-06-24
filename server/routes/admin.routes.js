@@ -50,7 +50,7 @@ router.get('/inventory', protect, authorize('admin'), getInventory);
 router.post('/inventory/sale', protect, authorize('admin'), saleStockTo);
 router.get('/inventory/sale', protect, authorize('admin'), getSaleStock);
 
-router.post('/syllabus', protect, authorize('admin'), upload.single('file'), createOrUpdateSyllabus);
+router.post('/syllabus/:id?', protect, authorize('admin'), upload.single('file'), createOrUpdateSyllabus);
 router.get('/syllabus/:className?', protect, authorize('admin'), getSyllabus);
 
 router.get('/newAdmission', protect, authorize('admin'), getNewAdmissions);
