@@ -2961,7 +2961,7 @@ exports.resolveBookRequest = async (req, res) => {
     }
     else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
 
-    const bookRequest = await BookRequests.findOne({ _id: requestId, schoolId });
+    const bookRequest = await BookRequests.findOne({ _id: requestId, status:'returned', schoolId });
     if (!bookRequest) { return res.status(404).json({ message: 'No book request found with the id.' }) };
 
     bookRequest.resolved = true;

@@ -14,7 +14,7 @@ const SchoolIncome = require('../models/SchoolIncome');
 const { uploadImage, deleteImage } = require('../utils/multer');
 const ClassTimetable = require('../models/Timetable');
 const mongoose = require('mongoose');
-const crypto = require('crypto')
+const crypto = require('crypto');
 
 
 const razorpay = new Razorpay({
@@ -221,6 +221,12 @@ exports.getChildrenNames = async (req, res) => {
 
 exports.payFees = async (req, res) => {
   try {
+    const { studentName, amount, purpose, className, section, reason } = req.body;
+    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Provide student name, amount, purpose, class and section to pay." }) }
+
+    if (purpose === 'Other') {
+      if (!reason) return res.status(400).json({ message: "Please specify the reason." })
+    }
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -231,13 +237,6 @@ exports.payFees = async (req, res) => {
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const { studentName, amount, purpose, className, section, reason } = req.body;
-    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Provide student name, amount, purpose, class and section to pay." }) }
-
-    if (purpose === 'Other' && !reason) {
-      return res.status(400).json({ message: "Please specify the reason." })
-    }
-
     const parent = await Parent.findOne({ userId: loggedInId }).populate('parentProfile.parentOf')
     if (!parent) { return res.status(404).json({ message: "No parent found with the logged-in id." }) }
 
@@ -246,11 +245,10 @@ exports.payFees = async (req, res) => {
       return res.status(404).json({ message: "No child found with the provided name." });
     }
 
-    const razorpayOrder = await razorpayInstance.orders.create({
+    const razorpayOrder = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
-      payment_capture: 1
     });
 
     const existingExpense = await ParentExpenses.findOne({
@@ -283,7 +281,7 @@ exports.payFees = async (req, res) => {
 
     await newExpense.save();
 
-    res.status(200).json({ message: 'Payment order created successfully.', newExpense, key: process.env.RAZORPAY_KEY_ID });
+    res.status(200).json({ message: 'Payment order created successfully.', newExpense });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message, });
   }
@@ -293,7 +291,6 @@ exports.payFees = async (req, res) => {
 exports.verifyFeesPayment = async (req, res) => {
   try {
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) { return res.status(400).json({ message: "Missing payment verification fields" }) }
 
     const body = razorpayOrderId + "|" + razorpayPaymentId;
     const expectedSignature = razorpay.crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -309,42 +306,42 @@ exports.verifyFeesPayment = async (req, res) => {
       return res.status(404).json({ message: 'Payment record not found.' });
     }
 
-    if (paymentRecord.paymentDetails.status !== 'pending') {
+    if (paymentRecord.paymentDetails.status === 'pending') {
+      paymentRecord.paymentDetails.razorpayPaymentId = razorpayPaymentId;
+      paymentRecord.paymentDetails.status = 'success';
+
+      const amountPaid = paymentRecord.amount;
+
+      if (paymentRecord.paymentDetails.purpose === 'Fees') {
+        paymentRecord.pendingAmount ? paymentRecord.pendingAmount -= amountPaid : paymentRecord.pendingAmount = '';
+      }
+
+      await paymentRecord.save();
+
+      const school = await School.findById(paymentRecord.schoolId);
+      if (!school) {
+        return res.status(404).json({ message: 'School not found.' });
+      }
+      const payout = await razorpayInstance.payouts.create({
+        account_number: school.paymentDetails.accountNumber,
+        ifsc: school.paymentDetails.ifscCode,
+        amount: amountPaid,
+        currency: 'INR',
+        purpose: paymentRecord.purpose,
+        notes: {
+          schoolId: school._id,
+          studentId: paymentRecord.studentId,
+          paymentId: razorpayPaymentId,
+        },
+      });
+
+      res.status(200).json({
+        message: 'Payment verified and amount transferred to the school.',
+        payoutId: payout,
+      });
+    } else {
       return res.status(400).json({ message: 'Payment already processed or failed.' });
     }
-
-    paymentRecord.paymentDetails.razorpayPaymentId = razorpayPaymentId;
-    paymentRecord.paymentDetails.status = 'success';
-
-    const amountPaid = paymentRecord.amount;
-
-    if (paymentRecord.paymentDetails.purpose === 'Fees') {
-      paymentRecord.pendingAmount ? paymentRecord.pendingAmount -= amountPaid : paymentRecord.pendingAmount = '';
-    }
-
-    await paymentRecord.save();
-
-    const school = await School.findById(paymentRecord.schoolId);
-    if (!school) {
-      return res.status(404).json({ message: 'School not found.' });
-    }
-    const payout = await razorpayInstance.payouts.create({
-      account_number: school.paymentDetails.accountNumber,
-      ifsc: school.paymentDetails.ifscCode,
-      amount: amountPaid,
-      currency: 'INR',
-      purpose: paymentRecord.purpose,
-      notes: {
-        schoolId: school._id,
-        studentId: paymentRecord.studentId,
-        paymentId: razorpayPaymentId,
-      },
-    });
-
-    res.status(200).json({
-      message: 'Payment verified and amount transferred to the school.',
-      payoutId: payout,
-    });
   } catch (err) {
     res.status(500).json({ message: 'Internal server error during payment verification.', error: err.message, });
   }
