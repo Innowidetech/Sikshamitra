@@ -322,27 +322,28 @@ exports.verifyFeesPayment = async (req, res) => {
 
       await paymentRecord.save();
 
-      const school = await School.findById(paymentRecord.schoolId);
-      if (!school) {
-        return res.status(404).json({ message: 'School not found.' });
-      }
-      const payout = await razorpayInstance.payouts.create({
-        account_number: school.paymentDetails.accountNumber,
-        ifsc: school.paymentDetails.ifscCode,
-        amount: amountPaid,
-        currency: 'INR',
-        purpose: paymentRecord.purpose,
-        notes: {
-          schoolId: school._id,
-          studentId: paymentRecord.studentId,
-          paymentId: razorpayPaymentId,
-        },
-      });
+      // const school = await School.findById(paymentRecord.schoolId);
+      // if (!school) {
+      //   return res.status(404).json({ message: 'School not found.' });
+      // }
+      // const payout = await razorpayInstance.payouts.create({
+      //   account_number: school.paymentDetails.accountNumber,
+      //   ifsc: school.paymentDetails.ifscCode,
+      //   amount: amountPaid,
+      //   currency: 'INR',
+      //   purpose: paymentRecord.purpose,
+      //   notes: {
+      //     schoolId: school._id,
+      //     studentId: paymentRecord.studentId,
+      //     paymentId: razorpayPaymentId,
+      //   },
+      // });
 
-      res.status(200).json({
-        message: 'Payment verified and amount transferred to the school.',
-        payoutId: payout,
-      });
+      // res.status(200).json({
+      //   message: 'Payment verified and amount transferred to the school.',
+      //   payoutId: payout,
+      // });
+      res.status (200).json({message:"Payment verified successfully", paymentRecord})
     } else {
       return res.status(400).json({ message: 'Payment already processed or failed.' });
     }
