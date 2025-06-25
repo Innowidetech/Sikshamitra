@@ -216,67 +216,32 @@ exports.verifyRazorpayPayment = async (req, res) => {
             .digest('hex');
 
         if (signature === expectedSignature) {
-            try {
-                const payment = await razorpay.payments.fetch(paymentId);
 
-                const onlineApplication = await Online.findOneAndUpdate(
-                    { 'paymentDetails.razorpayOrderId': orderId },
-                    {
-                        $set: {
-                            'paymentDetails.razorpayPaymentId': paymentId,
-                            'paymentDetails.status': 'success',
-                            // 'paymentDetails.paymentDate': new Date(),
-                        },
+            const payment = await razorpay.payments.fetch(paymentId);
+
+            const onlineApplication = await Online.findOneAndUpdate(
+                { 'paymentDetails.razorpayOrderId': orderId },
+                {
+                    $set: {
+                        'paymentDetails.razorpayPaymentId': paymentId,
+                        'paymentDetails.status': 'success',
                     },
-                    { new: true }
-                );
+                },
+                { new: true }
+            );
 
-                const school = await School.findOne({ _id: onlineApplication.studentDetails.schoolId });
-                if (!school || !school.paymentDetails) {
-                    return res.status(404).json({ message: 'School bank details not found.' });
-                }
-
-                const payoutOptions = {
-                    account_number: school.paymentDetails.accountNumber,
-                    ifsc: school.paymentDetails.ifscCode,
-                    amount: payment.amount, //payment.admissionFees
-                    currency: 'INR',
-                    purpose: 'Online Application Fees',
-                    notes: {
-                        schoolId: school._id,
-                        studentId: onlineApplication.studentDetails._id,
-                        paymentId: paymentId,
-                    },
-                };
-
-                razorpay.payouts.create(payoutOptions, async (err, payout) => {
-                    if (err) {
-                        return res.status(500).json({ message: 'Error initiating payout', error: err });
-                    }
-
-                    onlineApplication.paymentDetails.payoutStatus = payout.status;
-                    onlineApplication.paymentDetails.payoutId = payout.id;
-                    await onlineApplication.save();
-
-                    res.status(200).json({
-                        message: 'Payment successfully verified, and amount sent to the school.',
-                        payment,
-                        payout,
-                        onlineApplication,
-                    });
-                });
-
-            } catch (error) {
-                res.status(500).json({ message: 'Error capturing the payment', error: error.message });
+            if (!onlineApplication) {
+                return res.status(404).json({ message: 'Application not found for given order ID.' });
             }
+            res.status(200).json({
+                message: 'Payment successfully verified, and amount sent to the school.',
+                payment, onlineApplication,
+            });
         } else {
             res.status(400).json({ message: 'Invalid signature, payment verification failed' });
         }
     } catch (error) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: error.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: error.message, });
     }
 };
 
