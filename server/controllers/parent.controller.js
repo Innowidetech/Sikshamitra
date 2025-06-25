@@ -274,7 +274,7 @@ exports.payFees = async (req, res) => {
       paidBy: parent._id,
       paymentDetails: {
         razorpayOrderId: razorpayOrder.id,
-        razorpayPaymentId: '',
+        // razorpayPaymentId: '',
         status: 'pending',
       },
     });
@@ -296,7 +296,8 @@ exports.verifyFeesPayment = async (req, res) => {
     }
 
     const body = razorpayOrderId + "|" + razorpayPaymentId;
-    const expectedSignature = razorpay.crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest('hex');
 
