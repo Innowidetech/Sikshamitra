@@ -291,6 +291,9 @@ exports.payFees = async (req, res) => {
 exports.verifyFeesPayment = async (req, res) => {
   try {
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+      return res.status(400).json({ message: "Missing payment verification fields" })
+    }
 
     const body = razorpayOrderId + "|" + razorpayPaymentId;
     const expectedSignature = razorpay.crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
