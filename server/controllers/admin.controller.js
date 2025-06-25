@@ -2865,9 +2865,10 @@ exports.issueAndReturnBook = async (req, res) => {
     const book = await Books.findOne({ _id: bookRequest.book._id, schoolId });
 
     if (status == 'returned') {
-      if (book.noOfBooks == book.availableBooks) {
-        return res.status(404).json({ message: 'Book is not issued to any student.' })
-      };
+      if(bookRequest.status == 'issued') {
+        bookRequest.status = status
+      }
+      else { return res.status(404).json({message:"Book is not issued to return."})}
       bookRequest.returnedOn = new Date().toISOString().split('T')[0];
       if (bookRequest.returnedOn > bookRequest.dueOn) {
         let associatedSchool = await School.findById(schoolId);
@@ -2889,7 +2890,6 @@ exports.issueAndReturnBook = async (req, res) => {
           await notification.save()
         }
       }
-      bookRequest.status = status
       bookRequest.save();
 
       book.availableBooks += 1;
