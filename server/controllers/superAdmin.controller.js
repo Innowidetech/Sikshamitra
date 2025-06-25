@@ -1392,7 +1392,7 @@ exports.createConnect = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payload' });
     }
 
-    let meetingLink = Math.random().toString(36).slice(2, 11);
+    let meetingLink = 'https://meet.shikshamitra.com/'+Math.random().toString(36).slice(2, 11);
     let superAdmin = null, admin = null, connectArray = [], connectDoc;
 
     if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {

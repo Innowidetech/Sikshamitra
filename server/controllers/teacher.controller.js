@@ -902,7 +902,7 @@ exports.createOnlineLectures = async (req, res) => {
             for (let i = 0; i < 20; i++) {
                 randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return `${randomPart}`;
+            return `https://onlinelecture.shikshamitra.com/${randomPart}`;
         }
         const meetingLink = generateMeetingLink();
 
@@ -968,7 +968,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
                 teacherClass = teacher.profile.class,
                 teacherSection = teacher.profile.section
 
-            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST } }).sort({ startDate: 1 });
+            onlineLectures = await OnlineLectures.find({ schoolId, createdBy: teacher._id, endDate: { $gte: todayIST } }).select('-connect').sort({ startDate: 1 });
 
             await OnlineLectures.deleteMany({ endDate: { $lt: todayIST } });
 
@@ -985,7 +985,7 @@ exports.getOnlineLecturesAndTimetable = async (req, res) => {
                 studentSection = student.studentProfile.section,
                 socketUserId = student._id;
 
-            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST } }).sort({ startDate: 1 });
+            onlineLectures = await OnlineLectures.find({ schoolId, class: studentClass, section: studentSection, endDate: { $gte: todayIST } }).select('-connect').sort({ startDate: 1 });
 
         } else {
             return res.status(403).json({

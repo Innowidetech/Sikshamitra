@@ -2191,66 +2191,6 @@ exports.getAssignedTasks = async (req, res) => {
   }
 };
 
-
-// exports.createOrUpdateSyllabus = async (req, res) => {
-//   try {
-//     const loggedInId = req.user && req.user.id;
-//     if (!loggedInId) {
-//       return res.status(401).json({ message: 'Unauthorized, only loggedin users can access this.' })
-//     };
-
-//     const loggedInUser = await User.findById(loggedInId);
-//     if (!loggedInUser || loggedInUser.role !== 'admin') {
-//       return res.status(403).json({
-//         message: 'Access denied, only admin have access.'
-//       })
-//     };
-
-//     const { className, subject, description } = req.body;
-//     if (!className || !subject || !description) { return res.status(400).json({ message: "Please provide class, subject, description to upload syllabus." }) }
-
-//     let subjectIs = subject.toLowerCase();
-
-//     const school = await School.findOne({ userId: loggedInId });
-//     if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
-
-//     let uploadedPhotoUrl = '';
-//     if (req.file) {
-//       try {
-//         const [photoUrl] = await uploadImage(req.file);
-//         uploadedPhotoUrl = photoUrl;
-//       } catch (error) {
-//         return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
-//       }
-//     }
-
-//     let existingSyllabus = await Syllabus.findOne({ schoolId: school._id, class: className, subject: subjectIs });
-
-//     if (existingSyllabus) {
-//       if (existingSyllabus.syllabus) {
-//         await deleteImage(existingSyllabus.syllabus);
-//         existingSyllabus.syllabus = uploadedPhotoUrl;
-//       }
-//       existingSyllabus.class = className;
-//       existingSyllabus.subject = subjectIs;
-//       existingSyllabus.description = description;
-
-//       await existingSyllabus.save();
-
-//       return res.status(200).json({ message: 'Syllabus updated successfully.', existingSyllabus });
-//     }
-//     else {
-//       const newSyllabus = new Syllabus({ schoolId: school._id, class: className, subject: subjectIs, description, syllabus: uploadedPhotoUrl, });
-//       await newSyllabus.save();
-
-//       return res.status(201).json({ message: 'Syllabus created successfully.', newSyllabus, });
-//     }
-//   }
-//   catch (err) {
-//     res.status(500).json({ message: 'Internal server error.', error: err.message, });
-//   }
-// };
-
 exports.createOrUpdateSyllabus = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
@@ -2971,6 +2911,10 @@ exports.issueAndReturnBook = async (req, res) => {
     bookRequest.status = status;
     bookRequest.borrowedOn = new Date();
     bookRequest.dueOn = new Date(dueOn).toISOString().split('T')[0];
+    if (bookRequest.returnedOn) bookRequest.returnedOn = null;
+    if (bookRequest.fine != 0) bookRequest.fine = 0
+    if (bookRequest.resolved == false) bookRequest.resolved = true;
+
     await bookRequest.save();
 
     res.status(200).json({ message: 'Book issued to the student successfully.', bookRequest });
