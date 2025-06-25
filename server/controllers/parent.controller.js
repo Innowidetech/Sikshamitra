@@ -8,8 +8,6 @@ const Notice = require('../models/Notice');
 require('dotenv').config();
 const ParentExpenses = require('../models/ParentExpenses');
 const Razorpay = require('razorpay');
-const { sendEmail } = require('../utils/sendEmail');
-const queryTemplate = require('../utils/queryTemplate');
 const SchoolIncome = require('../models/SchoolIncome');
 const { uploadImage, deleteImage } = require('../utils/multer');
 const ClassTimetable = require('../models/Timetable');
