@@ -2154,7 +2154,7 @@ exports.getAssignedTasks = async (req, res) => {
 
     let name, tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
 
-    if (loggedInUser.role == 'admin') {
+    if (loggedInUser.role === 'admin') {
       const school = await School.findOne({ userId: loggedInId });
       if (!school) { return res.status(404).json({ message: 'Admin is not associated with any school.' }); };
 
@@ -2164,7 +2164,7 @@ exports.getAssignedTasks = async (req, res) => {
       if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
     }
-    else if (loggedInUser.role == 'teacher' && loggedInUser.employeeType == 'groupD') {
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
       const staff = await SchoolStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
       if (!staff.schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
@@ -2178,7 +2178,7 @@ exports.getAssignedTasks = async (req, res) => {
       if (tasks) {
         totalTasks = tasks.length;
         completedTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'completed' });
-        pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: { $ne: 'completed' } });
+        pendingTasks = await SchoolStaffTasks.countDocuments({ schoolId: staff.schoolId, staffId: staff._id, status: 'pending' });
       }
       if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
@@ -2865,10 +2865,10 @@ exports.issueAndReturnBook = async (req, res) => {
     const book = await Books.findOne({ _id: bookRequest.book._id, schoolId });
 
     if (status == 'returned') {
-      if(bookRequest.status == 'issued') {
+      if (bookRequest.status == 'issued') {
         bookRequest.status = status
       }
-      else { return res.status(404).json({message:"Book is not issued to return."})}
+      else { return res.status(404).json({ message: "Book is not issued to return." }) }
       bookRequest.returnedOn = new Date().toISOString().split('T')[0];
       if (bookRequest.returnedOn > bookRequest.dueOn) {
         let associatedSchool = await School.findById(schoolId);
@@ -2961,7 +2961,7 @@ exports.resolveBookRequest = async (req, res) => {
     }
     else { return res.status(403).json({ message: "Only logged-in admins and librarians have access to issue book." }) }
 
-    const bookRequest = await BookRequests.findOne({ _id: requestId, status:'returned', schoolId });
+    const bookRequest = await BookRequests.findOne({ _id: requestId, status: 'returned', schoolId });
     if (!bookRequest) { return res.status(404).json({ message: 'No book request found with the id.' }) };
 
     bookRequest.resolved = true;

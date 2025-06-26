@@ -495,7 +495,7 @@ exports.getSAAssignedTasks = async (req, res) => {
       if (tasks) {
         totalTasks = tasks.length;
         completedTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'completed' });
-        pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: { $ne: 'completed' } });
+        pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'pending' });
       }
       if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
 
