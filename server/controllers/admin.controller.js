@@ -907,15 +907,26 @@ exports.getTeacherNames = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     };
 
-    const adminUser = await User.findById(loggedInId);
-    if (!adminUser || adminUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Only admins are allowed to create teacher accounts.' });
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'Only logged-in users are allowed to get teacher names.' });
     };
 
-    const associatedSchool = await School.findOne({ userId: loggedInId });
-    if (!associatedSchool) {
-      return res.status(400).json({ message: 'Admin is not associated with any school.' });
-    };
+    let associatedSchool;
+
+    if (loggedInUser.role === 'admin') {
+      associatedSchool = await School.findOne({ userId: loggedInId });
+      if (!associatedSchool) {
+        return res.status(400).json({ message: 'Admin is not associated with any school.' });
+      };
+    }
+    else if(loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD'){
+      const staff = await SchoolStaff.findOne({userId:loggedInId});
+      associatedSchool = await School.findById(staff.schoolId);
+      if (!associatedSchool) {
+        return res.status(400).json({ message: 'You are not associated with any school.' });
+      };
+    }
 
     const teachers = await Teacher.find({ schoolId: associatedSchool._id }).populate({ path: 'userId', select: 'employeeType' }).select('profile.fullname');
     if (!teachers.length) { return res.status(404).json({ message: "No teachers found for this school." }) }
@@ -926,7 +937,6 @@ exports.getTeacherNames = async (req, res) => {
     res.status(500).json({ message: 'Failed to register teacher.', error: error.message });
   }
 };
-
 
 
 exports.getAllTeachersOfSchool = async (req, res) => {

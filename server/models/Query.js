@@ -33,6 +33,8 @@ const QuerySchema = new mongoose.Schema({
         required: true,
         refPath: 'createdByModel',
     },
+    sendToName:String,
+    sendToRole:String,
     createdByModel: {
         type: String,
         enum: ['User', 'SuperAdminStaff', 'School', 'SchoolStaff', 'Teacher', 'Student', 'Parent']

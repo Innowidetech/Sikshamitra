@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { getAssignedTasks, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
+const { getAssignedTasks, getNotifications, markNotificationAsRead, getTeacherNames } = require('../controllers/admin.controller');
 const { editSchoolTaskStatus, editSATaskStatus } = require('../controllers/staff.controller');
 const { getSAAssignedTasks, editBlog, postBlog, deleteBlog, sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
@@ -13,6 +13,8 @@ router.patch('/stask/:id', protect, authorize('teacher'), editSchoolTaskStatus);
 
 router.get('/notifications', protect, authorize('teacher'), getNotifications);
 router.patch('/notification/:id', protect, authorize('teacher'), markNotificationAsRead);
+
+router.get('/teacherNames', protect, authorize('teacher'), getTeacherNames);
 
 router.post('/query', protect, authorize('teacher'), sendQuery);
 router.get('/query', protect, authorize('teacher'), getQueries);
