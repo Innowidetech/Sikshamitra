@@ -1388,7 +1388,7 @@ exports.createConnect = async (req, res) => {
     }
 
     const { title, startDate, startTime, endDate, endTime, attendants } = req.body;
-    if (!Array.isArray(attendants)) {
+    if (!title || !Array.isArray(attendants)) {
       return res.status(400).json({ message: 'Invalid payload' });
     }
 
