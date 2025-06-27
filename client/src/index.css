@@ -202,12 +202,15 @@
 }
 
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> d1a30a44b7a750e63246ebf5b0cfdfbabb002274
 .hide-scrollbar::-webkit-scrollbar {
   display: none;                
 }
 
+
+
+/* Prevent Horizontal Scroll */
+body {
+  overflow-x: hidden;  /* Prevents horizontal scroll */
+  margin: 0;           /* Remove default margin */
+  padding: 0;          /* Remove any padding that could cause overflow */
+}

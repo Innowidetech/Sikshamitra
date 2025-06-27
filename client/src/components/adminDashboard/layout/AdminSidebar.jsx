@@ -18,7 +18,7 @@ const menuItems = [
   { id: 'library', icon: Library, label: 'Library'},
   { id: 'admission', icon: FileSpreadsheet, label: 'Admission'},
   { id: 'classes', icon: FaGraduationCap, label: 'Classes'},
-  { id: 'employee', icon: UserCog, label: 'Employee'},
+  { id: 'employee', icon: UserCog, label: 'Staff'},
   { id: 'results', icon: Award, label: 'Results'},
   { id: 'curriculum', icon: BookCopy, label: 'Curriculum'},
 ];

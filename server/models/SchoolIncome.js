@@ -57,9 +57,6 @@ const schoolIncomeSchema = new mongoose.Schema({
     section: {
         type: String,
         uppercase: true,
-        // required: function () {
-        //     return this.source === 'student';
-        // }
     },
     studentId: {
         type: mongoose.Schema.Types.ObjectId,

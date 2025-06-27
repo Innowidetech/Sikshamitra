@@ -55,16 +55,16 @@ export const fetchNotices = createAsyncThunk(
   }
 );
 
-// Fetch Calendar Events
+// Fetch Calendar Events (updated to return response.data.calendars)
 export const fetchCalendar = createAsyncThunk(
   'parent/fetchCalendar',
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('https://sikshamitra.onrender.com/api/parent/calendar', getAuthHeader());
-      console.log('Calendar API Response:', response.data); // Add this line for debugging
-      return response.data;
+      console.log('Calendar API Response:', response.data); // Debugging line
+      return response.data.calendars; // <-- Updated here to get the array inside 'calendars'
     } catch (error) {
-      console.error('Calendar API Error:', error); // Add this line for debugging
+      console.error('Calendar API Error:', error); // Debugging line
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch calendar events');
     }
   }
@@ -126,7 +126,7 @@ const parentDashboard = createSlice({
       })
       .addCase(fetchCalendar.fulfilled, (state, action) => {
         state.loading = false;
-        state.calendar = action.payload; // Store calendar events
+        state.calendar = action.payload; // Store calendar events array here
       })
       .addCase(fetchCalendar.rejected, (state, action) => {
         state.loading = false;

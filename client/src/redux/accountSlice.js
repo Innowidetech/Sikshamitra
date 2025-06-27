@@ -85,7 +85,7 @@ export const fetchUpdatedIncomeHistory = createAsyncThunk(
     });
     if (!response.ok) throw new Error('Failed to fetch updated income history');
     const data = await response.json();
-    return data.updatedIncomeHistory || [];
+    return data;
   }
 );
 
@@ -287,7 +287,7 @@ const accountSlice = createSlice({
       })
       .addCase(fetchUpdatedIncomeHistory.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.updatedIncomeHistory = action.payload;
+        state.updatedIncomeHistory = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchUpdatedIncomeHistory.rejected, (state, action) => {
         state.status = 'failed';

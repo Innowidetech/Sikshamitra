@@ -7,7 +7,7 @@ import TeacherDashboard from './TeacherDashboard';
 import MyStudents from './MyStudents';
 import Assignments from './Assignments';
 import Results from './Results';
-import Attendance from './Attendance';
+import Attendence from './Attendence';
 import Lectures from './Lectures';
 import Curriculum from './Curriculum';
 import StudyMaterial from './StudyMaterial';
@@ -20,6 +20,10 @@ import Tsyllabus from './Tsyllabus';
 import TclassPlans from './Tclassplans';
 import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
+import CreateDynamicCalendar from './CreateDynamicCalendar';
+import MarkAttendance from './MarkAttendance';
+import EditLectureTimetable from './EditLectureTimetable';
+import ScheduledLec from './ScheduledLec'; // ✅ Import ScheduledLec page
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -43,11 +47,11 @@ const MainDashboard = () => {
     navigate(`/teacher/${tabId}`);
   };
 
-  // Render tab content
+  // Render tab content based on active tab
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
       case 'mystudents':
         return <MyStudents />;
       case 'assignments':
@@ -60,10 +64,16 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
-      case 'attendance':
-        return <Attendance />;
+      case 'attendence':
+        return <Attendence handleTabChange={handleTabChange} />;
+      case 'markattendance':
+        return <MarkAttendance />;
       case 'lectures':
-        return <Lectures />;
+        return <Lectures handleTabChange={handleTabChange} />;
+      case 'editlectures':
+        return <EditLectureTimetable />;
+      case 'scheduledlec':
+        return <ScheduledLec />; // ✅ Added new tab for scheduled lectures
       case 'curriculam':
         return <Curriculum setActiveTab={handleTabChange} />;
       case 'studymaterial':
@@ -80,8 +90,10 @@ const MainDashboard = () => {
         return <Exams />;
       case 'about':
         return <About />;
+      case 'createdynamiccalendar':
+        return <CreateDynamicCalendar />;
       default:
-        return <TeacherDashboard />;
+        return <TeacherDashboard handleTabChange={handleTabChange} />;
     }
   };
 

@@ -1,4 +1,5 @@
 // src/components/teacherDashboard/AssignmentDetails.jsx
+
 import React, { useEffect, useState } from 'react';
 import { FaBook } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,13 +8,11 @@ import Header from '../adminDashboard/layout/Header';
 
 const AssignmentDetails = ({ assignment }) => {
   const dispatch = useDispatch();
-  const { teacherAssignments, loading, error } = useSelector((state) => state.assignments);
-
-  // Our new array lives under teacherAssignments.submittedBy
-  const submissions = teacherAssignments?.submittedBy || [];
+  const { submittedAssignments, loading, error } = useSelector((state) => state.assignments);
 
   const [currentPage, setCurrentPage] = useState(1);
   const assignmentsPerPage = 5;
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (assignment?._id) {
@@ -21,50 +20,47 @@ const AssignmentDetails = ({ assignment }) => {
     }
   }, [assignment, dispatch]);
 
-  // Download helper (unchanged)
   const handleDownload = async (url, fallbackName = 'download') => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error('Download failed');
       const blob = await res.blob();
 
       let ext = '.pdf';
-      if      (blob.type.includes('pdf'))  ext = '.pdf';
-      // else if (blob.type.includes('jpeg')) ext = '.jpg';
-      // else if (blob.type.includes('png'))  ext = '.png';
-      // else if (blob.type.includes('mp4'))  ext = '.mp4';
-      // else if (blob.type.includes('msword')) ext = '.doc';
-      // else if (blob.type.includes('officedocument.wordprocessingml.document')) ext = '.docx';
+      if (blob.type.includes('pdf')) ext = '.pdf';
 
       const filename = `${fallbackName}${ext}`;
-      const urlBlob = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = urlBlob;
+      link.href = blobUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(urlBlob);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error('Download error:', err);
       alert('Failed to download file.');
     }
   };
 
-  if (!assignment) {
-    return <div className="p-6">No assignment selected.</div>;
+  if (!submittedAssignments || !submittedAssignments.assignmentId) {
+    return <div className="p-6">Invalid assignment data or loading...</div>;
   }
 
-  // Pagination
+  const assignmentData = submittedAssignments.assignmentId;
+  const submissions = submittedAssignments.submittedBy || [];
+
   const indexOfLast = currentPage * assignmentsPerPage;
   const indexOfFirst = indexOfLast - assignmentsPerPage;
   const current = submissions.slice(indexOfFirst, indexOfLast);
-  const pages = Math.ceil(submissions.length / assignmentsPerPage);
+  const totalPages = Math.ceil(submissions.length / assignmentsPerPage);
 
   return (
     <div className="flex flex-col mx-4 md:ml-72 mt-20">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-light xl:text-[35px]">Assignments</h1>
@@ -83,24 +79,18 @@ const AssignmentDetails = ({ assignment }) => {
       </div>
       <div className="bg-[#146192D9] p-4 rounded-2xl shadow-md max-w-3xl w-full mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailRow label="Title" value={assignment.assignmentName} />
-          <DetailRow label="Class" value={assignment.class} />
-          <DetailRow label="Subject" value={assignment.subject} />
-          <DetailRow label="Section" value={assignment.section} />
-          <DetailRow label="Chapter" value={assignment.chapter} />
-          <DetailRow
-            label="Start Date"
-            value={new Date(assignment.startDate).toLocaleDateString()}
-          />
-          <DetailRow
-            label="End Date"
-            value={new Date(assignment.endDate).toLocaleDateString()}
-          />
+          <DetailRow label="Title" value={assignmentData.assignmentName} />
+          <DetailRow label="Class" value={assignmentData.class} />
+          <DetailRow label="Subject" value={assignmentData.subject} />
+          <DetailRow label="Section" value={assignmentData.section} />
+          <DetailRow label="Chapter" value={assignmentData.chapter} />
+          <DetailRow label="Start Date" value={new Date(assignmentData.startDate).toLocaleDateString()} />
+          <DetailRow label="End Date" value={new Date(assignmentData.endDate).toLocaleDateString()} />
           <div className="flex items-center gap-4">
             <p className="text-white font-medium">File:</p>
-            {assignment.assignment ? (
+            {assignmentData.assignment ? (
               <button
-                onClick={() => handleDownload(assignment.assignment, assignment.assignmentName)}
+                onClick={() => handleDownload(assignmentData.assignment, assignmentData.assignmentName)}
                 className="bg-white text-[#146192] px-4 py-1 rounded-md font-medium hover:bg-blue-100 transition"
               >
                 Download
@@ -112,13 +102,11 @@ const AssignmentDetails = ({ assignment }) => {
         </div>
       </div>
 
-      {/* Submitted List */}
+      {/* Submissions */}
       <div className="mt-12 max-w-5xl mx-auto">
         <div className="flex items-center mb-4">
           <FaBook className="text-[#146192] text-2xl mr-2" />
-          <h2 className="text-xl font-semibold text-[#146192]">
-            Submitted Assignments
-          </h2>
+          <h2 className="text-xl font-semibold text-[#146192]">Submitted Assignments</h2>
         </div>
 
         {loading && <p className="text-gray-700 mb-4">Loading...</p>}
@@ -137,34 +125,31 @@ const AssignmentDetails = ({ assignment }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {current.length > 0 ? (
                 current.map((sub) => {
-                  const stu = sub.studentId.studentProfile;
-                  const date = new Date(sub.createdAt).toLocaleDateString();
+                  const profile = sub.studentId?.studentProfile || {};
+                  const submittedDate = sub?.submittedDate
+                    ? new Date(sub.submittedDate).toLocaleDateString()
+                    : 'Not Available';
+
                   return (
                     <tr key={sub._id}>
-                      <td className="px-4 py-2 text-sm">{stu.registrationNumber}</td>
-                      <td className="px-4 py-2 text-sm">{stu.fullname}</td>
-                      <td className="px-4 py-2 text-sm">{date}</td>
+                      <td className="px-4 py-2 text-sm">{profile.registrationNumber || 'N/A'}</td>
+                      <td className="px-4 py-2 text-sm">{profile.fullname || 'N/A'}</td>
+                      <td className="px-4 py-2 text-sm">{submittedDate}</td>
                       <td className="px-4 py-2 text-sm">
-                        {sub.assignmentWork ? (
-                          <button
-                            onClick={() =>
-                              handleDownload(sub.assignmentWork, stu.fullname)
-                            }
-                            className="bg-[#146192] text-white px-3 py-1 rounded-md"
-                          >
-                            Download
-                          </button>
-                        ) : (
-                          '—'
-                        )}
+                        <button
+                          onClick={() => handleDownload(sub.assignmentWork, profile.fullname)}
+                          className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e]"
+                        >
+                          Download
+                        </button>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-500">
-                    No submissions found
+                  <td colSpan="4" className="px-4 py-4 text-center text-sm text-gray-500">
+                    No submissions found.
                   </td>
                 </tr>
               )}
@@ -172,18 +157,17 @@ const AssignmentDetails = ({ assignment }) => {
           </table>
         </div>
 
-        {/* Pagination */}
-        {pages > 1 && (
-          <div className="flex justify-center gap-2 mt-4">
-            {Array.from({ length: pages }, (_, i) => (
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-4 gap-2">
+            {Array.from({ length: totalPages }, (_, idx) => (
               <button
-                key={i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1 ? 'bg-[#146192] text-white' : 'bg-gray-200'
+                key={idx}
+                onClick={() => setCurrentPage(idx + 1)}
+                className={`px-3 py-1 rounded-md ${
+                  currentPage === idx + 1 ? 'bg-[#146192] text-white' : 'bg-gray-200'
                 }`}
               >
-                {i + 1}
+                {idx + 1}
               </button>
             ))}
           </div>
@@ -196,7 +180,7 @@ const AssignmentDetails = ({ assignment }) => {
 const DetailRow = ({ label, value }) => (
   <div className="flex items-center gap-2">
     <p className="text-white font-medium">{label}:</p>
-    <p className="text-white">{value}</p>
+    <p className="text-white">{value || 'N/A'}</p>
   </div>
 );
 

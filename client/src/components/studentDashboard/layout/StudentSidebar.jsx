@@ -102,7 +102,8 @@ import { GoChecklist } from "react-icons/go";
 import { FiFileText } from "react-icons/fi";
 import { IoBookSharp } from "react-icons/io5";
 import { MdAssignmentAdd } from "react-icons/md";
-import { MdOutlineAssignmentReturned } from "react-icons/md";
+import { MdOutlineAssignmentReturned  } from "react-icons/md";
+import {  MdBook } from "react-icons/md";
 import { AiOutlineMenu } from "react-icons/ai"; // Toggle button icon
 
 const menuItems = [
@@ -114,6 +115,7 @@ const menuItems = [
   { id: 'syllabus', icon: IoBookSharp, label: 'Syllabus' },
   { id: 'exams', icon: FiFileText, label: 'Exams' },
   { id: 'admitcard', icon: MdOutlineAssignmentReturned, label: 'Admit Card' },
+  { id: 'bookrequest', icon: MdBook ,label: 'Book Request' },
 ];
 
 const StudentSidebar = ({ setActiveSection, activeTab }) => {

@@ -1,72 +1,131 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
+// Auth header using token
+const getAuthHeader = () => {
   const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('No token found in localStorage');
-  }
   return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   };
 };
 
-// Fetch students for the dropdown
-export const fetchStudents = createAsyncThunk(
-  'query/fetchStudents',
+// Base URLs
+const QUERY_API = 'https://sikshamitra.onrender.com/api/parent/query';
+const TEACHERS_API = 'https://sikshamitra.onrender.com/api/parent/teacherNames';
+const CONNECT_API = 'https://sikshamitra.onrender.com/api/parent/connect';
+
+// ✅ Get teacher names
+export const fetchTeacherNames = createAsyncThunk(
+  'query/fetchTeacherNames',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://sikshamitra.onrender.com/api/parent/children', {
-        method: 'GET',
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch students');
-      }
-      const data = await response.json();
-      return data.children || [];
+      const response = await axios.get(TEACHERS_API, getAuthHeader());
+      return response.data.teachers;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch teacher names');
     }
   }
 );
 
-// Send the query to the API
+// ✅ Send query (POST)
 export const sendQuery = createAsyncThunk(
   'query/sendQuery',
-  async (queryData, { rejectWithValue }) => {
+  async ({ name, contact, email, message, sendTo }, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://sikshamitra.onrender.com/api/parent/query', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(queryData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send query');
-      }
-
-      const data = await response.json();
-      return data.message || 'Query sent successfully';
+      const response = await axios.post(
+        QUERY_API,
+        { name, contact, email, message, sendTo },
+        getAuthHeader()
+      );
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to send query');
     }
   }
 );
 
-// Slice for handling query data
+// ✅ Fetch all queries
+export const fetchQueries = createAsyncThunk(
+  'query/fetchQueries',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(QUERY_API, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch queries');
+    }
+  }
+);
+
+// ✅ Fetch single query by ID
+export const fetchQueryById = createAsyncThunk(
+  'query/fetchQueryById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${QUERY_API}/${id}`, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch query');
+    }
+  }
+);
+
+// ✅ Send reply via PUT
+export const sendReply = createAsyncThunk(
+  'query/sendReply',
+  async ({ id, replyData }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${QUERY_API}/${id}`, replyData, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to send reply');
+    }
+  }
+);
+
+// ✅ Send reply via POST
+export const postReply = createAsyncThunk(
+  'query/postReply',
+  async ({ id, message }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${QUERY_API}/${id}`, { message }, getAuthHeader());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to post reply');
+    }
+  }
+);
+
+// ✅ Get connects/meetings
+export const fetchConnects = createAsyncThunk(
+  'query/fetchConnects',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(CONNECT_API, getAuthHeader());
+      return response.data.connects;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch connects');
+    }
+  }
+);
+
+// Slice
 const querySlice = createSlice({
   name: 'query',
   initialState: {
-    students: [],
+    queries: [],
+    selectedQuery: null,
+    teacherNames: [],
+    connects: [], // ✅ connects/meetings
     loading: false,
-    errorMessage: null,
+    error: null,
     successMessage: null,
   },
   reducers: {
     clearErrorMessage: (state) => {
-      state.errorMessage = null;
+      state.error = null;
     },
     clearSuccessMessage: (state) => {
       state.successMessage = null;
@@ -74,27 +133,105 @@ const querySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchStudents.pending, (state) => {
+      // ✅ Fetch queries
+      .addCase(fetchQueries.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-      .addCase(fetchStudents.fulfilled, (state, action) => {
+      .addCase(fetchQueries.fulfilled, (state, action) => {
         state.loading = false;
-        state.students = action.payload;
+        state.queries = action.payload;
       })
-      .addCase(fetchStudents.rejected, (state, action) => {
+      .addCase(fetchQueries.rejected, (state, action) => {
         state.loading = false;
-        state.errorMessage = action.payload;
+        state.error = action.payload;
       })
+
+      // ✅ Fetch single query by ID
+      .addCase(fetchQueryById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchQueryById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedQuery = action.payload;
+      })
+      .addCase(fetchQueryById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ Send reply (PUT)
+      .addCase(sendReply.pending, (state) => {
+        state.loading = true;
+        state.successMessage = null;
+        state.error = null;
+      })
+      .addCase(sendReply.fulfilled, (state) => {
+        state.loading = false;
+        state.successMessage = 'Reply sent successfully';
+      })
+      .addCase(sendReply.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ Post reply (POST)
+      .addCase(postReply.pending, (state) => {
+        state.loading = true;
+        state.successMessage = null;
+        state.error = null;
+      })
+      .addCase(postReply.fulfilled, (state) => {
+        state.loading = false;
+        state.successMessage = 'Reply posted successfully';
+      })
+      .addCase(postReply.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ Fetch teacher names
+      .addCase(fetchTeacherNames.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTeacherNames.fulfilled, (state, action) => {
+        state.loading = false;
+        state.teacherNames = action.payload;
+      })
+      .addCase(fetchTeacherNames.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ Send query
       .addCase(sendQuery.pending, (state) => {
         state.loading = true;
+        state.successMessage = null;
+        state.error = null;
       })
-      .addCase(sendQuery.fulfilled, (state, action) => {
+      .addCase(sendQuery.fulfilled, (state) => {
         state.loading = false;
-        state.successMessage = action.payload;
+        state.successMessage = 'Query sent successfully';
       })
       .addCase(sendQuery.rejected, (state, action) => {
         state.loading = false;
-        state.errorMessage = action.payload;
+        state.error = action.payload;
+      })
+
+      // ✅ Fetch connects/meetings
+      .addCase(fetchConnects.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchConnects.fulfilled, (state, action) => {
+        state.loading = false;
+        state.connects = action.payload;
+      })
+      .addCase(fetchConnects.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

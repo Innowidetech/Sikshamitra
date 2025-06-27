@@ -2,8 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSyllabus } from "../../redux/parent/curriculumSlice";
 import { FaBookOpen } from "react-icons/fa";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import axios from "axios";
 
 const SyllabusPage = () => {
   const dispatch = useDispatch();
@@ -15,36 +14,32 @@ const SyllabusPage = () => {
 
   const syllabusList = syllabus?.syllabus || [];
 
-  const downloadPdf = () => {
-    const doc = new jsPDF("landscape");
-    doc.setFontSize(14);
-    doc.text("Class Syllabus Uploaded Information", 14, 20);
+  // Secure PDF download handler
+  const downloadFile = async (fileUrl, fileName) => {
+    try {
+      const response = await axios.get(fileUrl, {
+        responseType: 'blob',
+        // withCredentials: true, // Uncomment if your backend uses cookies
+        // headers: {
+        //   Authorization: `Bearer YOUR_TOKEN`, // Add auth header if needed
+        // },
+      });
 
-    const tableData = syllabusList.map((item) => [
-      item.class,
-      item.section,
-      item.createdBy,
-      new Date(item.createdAt).toLocaleDateString(),
-      item.syllabus,
-    ]);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blobUrl = window.URL.createObjectURL(blob);
 
-    autoTable(doc, {
-      head: [["Class", "Section", "Created By", "Uploaded On", "Syllabus File"]],
-      body: tableData,
-      startY: 30,
-      theme: "grid",
-      headStyles: { fillColor: [20, 97, 146] },
-      styles: { fontSize: 10, cellPadding: 3 },
-      didDrawCell: (data) => {
-        if (data.column.index === 4 && data.cell.text[0]) {
-          doc.textWithLink("View PDF", data.cell.x + 2, data.cell.y + 8, {
-            url: data.cell.text[0],
-          });
-        }
-      },
-    });
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', fileName || 'syllabus.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-    doc.save("syllabus.pdf");
+      window.URL.revokeObjectURL(blobUrl); // clean up
+    } catch (error) {
+      console.error("Failed to download PDF:", error);
+      alert("Unable to download file. Please try again.");
+    }
   };
 
   return (
@@ -70,7 +65,7 @@ const SyllabusPage = () => {
               <thead>
                 <tr>
                   <th className="border border-black px-4 py-2 text-left">Class</th>
-                  <th className="border border-black px-4 py-2 text-left">Section</th>
+                  
                   <th className="border border-black px-4 py-2 text-left">Created By</th>
                   <th className="border border-black px-4 py-2 text-left">Uploaded On</th>
                   <th className="border border-black px-4 py-2 text-left">Syllabus File</th>
@@ -80,13 +75,16 @@ const SyllabusPage = () => {
                 {syllabusList.map((item) => (
                   <tr key={item._id}>
                     <td className="border border-black px-4 py-2">{item.class}</td>
-                    <td className="border border-black px-4 py-2">{item.section}</td>
+                    
                     <td className="border border-black px-4 py-2">{item.createdBy}</td>
                     <td className="border border-black px-4 py-2">
                       {new Date(item.createdAt).toLocaleDateString()}
                     </td>
                     <td className="border border-black px-4 py-2">
-                      <button onClick={downloadPdf} className="text-blue-600 hover:underline">
+                      <button
+                        onClick={() => downloadFile(item.syllabus, `Syllabus_${item.class}.pdf`)}
+                        className="text-blue-600 hover:underline"
+                      >
                         View / Download PDF
                       </button>
                     </td>
@@ -111,7 +109,7 @@ const SyllabusPage = () => {
                   [
                     "Syllabus File",
                     <button
-                      onClick={downloadPdf}
+                      onClick={() => downloadFile(item.syllabus, `Syllabus_${item.class}.pdf`)}
                       className="text-blue-600 underline"
                     >
                       View / Download PDF

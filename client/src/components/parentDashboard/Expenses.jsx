@@ -17,38 +17,56 @@ function Expenses() {
     dispatch(fetchExpenses());
   }, [dispatch]);
 
-  const students = [...new Set(expenses.map(exp => exp.studentId.studentProfile.fullname))];
+  const students = [
+    ...new Set(
+      expenses.map((exp) => {
+        const fullname =
+          exp?.studentId?.studentProfile?.fullname ||
+          exp?.studentId?.fullname ||
+          exp?.fullname ||
+          'Unknown';
+        return fullname;
+      })
+    ),
+  ];
 
   const transactionIds = selectedStudent
     ? expenses
-        .filter(exp => exp.studentId.studentProfile.fullname === selectedStudent)
-        .map(exp => exp.paymentDetails.razorpayOrderId)
+        .filter(exp => {
+          const fullname = exp?.studentId?.studentProfile?.fullname || '';
+          return fullname === selectedStudent;
+        })
+        .map(exp => exp?.paymentDetails?.razorpayOrderId || 'Cash')
         .filter((v, i, a) => a.indexOf(v) === i)
-    : expenses.map(exp => exp.paymentDetails.razorpayOrderId).filter((v, i, a) => a.indexOf(v) === i);
+    : expenses
+        .map(exp => exp?.paymentDetails?.razorpayOrderId || 'Cash')
+        .filter((v, i, a) => a.indexOf(v) === i);
 
   const dates = selectedTransactionId
     ? expenses
-        .filter(exp => exp.paymentDetails.razorpayOrderId === selectedTransactionId)
+        .filter(exp => (exp?.paymentDetails?.razorpayOrderId || 'Cash') === selectedTransactionId)
         .map(exp => new Date(exp.createdAt).toLocaleDateString())
         .filter((v, i, a) => a.indexOf(v) === i)
     : selectedStudent
     ? expenses
-        .filter(exp => exp.studentId.studentProfile.fullname === selectedStudent)
+        .filter(exp => {
+          const fullname = exp?.studentId?.studentProfile?.fullname || '';
+          return fullname === selectedStudent;
+        })
         .map(exp => new Date(exp.createdAt).toLocaleDateString())
         .filter((v, i, a) => a.indexOf(v) === i)
-    : expenses.map(exp => new Date(exp.createdAt).toLocaleDateString())
+    : expenses
+        .map(exp => new Date(exp.createdAt).toLocaleDateString())
         .filter((v, i, a) => a.indexOf(v) === i);
 
   const handleStudentChange = (e) => {
-    const student = e.target.value;
-    setSelectedStudent(student);
+    setSelectedStudent(e.target.value);
     setSelectedTransactionId('');
     setSelectedDate('');
   };
 
   const handleTransactionIdChange = (e) => {
-    const transactionId = e.target.value;
-    setSelectedTransactionId(transactionId);
+    setSelectedTransactionId(e.target.value);
     setSelectedDate('');
   };
 
@@ -57,8 +75,10 @@ function Expenses() {
   };
 
   const filteredExpenses = expenses.filter((expense) => {
-    const matchesStudent = !selectedStudent || expense.studentId.studentProfile.fullname === selectedStudent;
-    const matchesTransactionId = !selectedTransactionId || expense.paymentDetails.razorpayOrderId === selectedTransactionId;
+    const fullname = expense?.studentId?.studentProfile?.fullname || '';
+    const transactionId = expense?.paymentDetails?.razorpayOrderId || 'Cash';
+    const matchesStudent = !selectedStudent || fullname === selectedStudent;
+    const matchesTransactionId = !selectedTransactionId || transactionId === selectedTransactionId;
     const matchesDate = !selectedDate || new Date(expense.createdAt).toLocaleDateString() === selectedDate;
     return matchesStudent && matchesTransactionId && matchesDate;
   });
@@ -87,13 +107,15 @@ function Expenses() {
       doc.line(20, yOffset, 190, yOffset);
       yOffset += 5;
 
+      const transactionId = expense?.paymentDetails?.razorpayOrderId || 'Cash';
+
       const rowData = [
         new Date(expense.createdAt).toLocaleDateString(),
-        expense.studentId.studentProfile.fullname,
+        expense?.studentId?.studentProfile?.fullname || 'Unknown',
         expense.purpose,
         `$${expense.amount}`,
-        expense.paymentDetails.status === 'success' ? 'Verified' : 'Pending',
-        expense.paymentDetails.razorpayOrderId || 'N/A'
+        expense?.paymentDetails?.status === 'success' ? 'Verified' : 'Pending',
+        transactionId,
       ];
 
       doc.setFont('helvetica', 'normal');
@@ -112,7 +134,7 @@ function Expenses() {
       doc.text('For inquiries, contact: info@institution.com', 20, yOffset);
       doc.text('Phone: +123 456 7890', 20, yOffset + 5);
 
-      const filename = `${expense.paymentDetails.razorpayOrderId}_receipt_${expense.studentId.studentProfile.fullname}.pdf`;
+      const filename = `${transactionId}_receipt_${rowData[1].replace(/\s+/g, '_')}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error('Download failed:', error);
@@ -140,7 +162,7 @@ function Expenses() {
           <h1 className="text-lg md:text-xl font-semibold text-[#121313]">Expenses Details</h1>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2  m">
+        <div className="flex flex-col sm:flex-row gap-2">
           <select value={selectedStudent} onChange={handleStudentChange} className="px-4 py-2 rounded-lg border border-[#146192] text-[#146192]">
             <option value="">Student Name</option>
             {students.map((studentName) => (
@@ -187,12 +209,12 @@ function Expenses() {
                   {filteredExpenses.map((expense) => (
                     <tr key={expense._id}>
                       <td className="text-center border-black border-r py-2 px-4">{new Date(expense.createdAt).toLocaleDateString()}</td>
-                      <td className="text-center border-black border-r py-2 px-4">{expense.studentId.studentProfile.fullname}</td>
+                      <td className="text-center border-black border-r py-2 px-4">{expense?.studentId?.studentProfile?.fullname || 'Unknown'}</td>
                       <td className="text-center border-black border-r py-2 px-4">{expense.purpose}</td>
                       <td className="text-center border-black border-r py-2 px-4">{expense.amount}</td>
                       <td className="text-center border-black border-r py-2 px-4">
                         <div className="flex justify-center items-center">
-                          {expense.paymentDetails.status === 'success' ? (
+                          {expense?.paymentDetails?.status === 'success' ? (
                             <>
                               <FaCheck className="text-green-600 mr-2" /> Verified
                             </>
@@ -203,7 +225,9 @@ function Expenses() {
                           )}
                         </div>
                       </td>
-                      <td className="text-center border-black border-r py-2 px-4">{expense.paymentDetails.razorpayOrderId}</td>
+                      <td className="text-center border-black border-r py-2 px-4">
+                        {expense?.paymentDetails?.razorpayOrderId || 'Cash'}
+                      </td>
                       <td className="text-center py-2 px-4">
                         <button onClick={() => handleDownloadReceipt(expense)} className="flex items-center px-4 py-2 bg-[#146192] text-white rounded-lg">
                           <FaDownload className="mr-2" /> Download
@@ -221,11 +245,11 @@ function Expenses() {
                 <div key={expense._id} className="border rounded-lg overflow-hidden shadow-md">
                   {[
                     ['Date', new Date(expense.createdAt).toLocaleDateString()],
-                    ['Student Name', expense.studentId.studentProfile.fullname],
+                    ['Student Name', expense?.studentId?.studentProfile?.fullname || 'Unknown'],
                     ['Purpose', expense.purpose],
                     ['Amount', expense.amount],
-                    ['Payment Status', expense.paymentDetails.status === 'success' ? '✔ Verified' : '⨉ Pending'],
-                    ['Transaction ID', expense.paymentDetails.razorpayOrderId],
+                    ['Payment Status', expense?.paymentDetails?.status === 'success' ? '✔ Verified' : '⨉ Pending'],
+                    ['Transaction ID', expense?.paymentDetails?.razorpayOrderId || 'Cash'],
                   ].map(([label, value], i) => (
                     <div key={i} className={`flex justify-between px-4 py-2 text-sm ${i % 2 === 0 ? 'bg-[#d5e7f0]' : 'bg-white'}`}>
                       <span className="font-medium text-[#146192]">{label}</span>
@@ -235,7 +259,7 @@ function Expenses() {
                   <div className="flex justify-between items-center bg-[#d5e7f0] px-4 py-2">
                     <span className="font-medium text-[#146192]">Receipt Download</span>
                     <button onClick={() => handleDownloadReceipt(expense)} className="text-[#146192] flex items-center">
-                      <FaDownload className="mr-2" /> <span>uniform.pdf</span>
+                      <FaDownload className="mr-2" /> <span>Download</span>
                     </button>
                   </div>
                 </div>
