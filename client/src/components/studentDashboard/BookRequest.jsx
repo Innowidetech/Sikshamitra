@@ -1,48 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBooks } from '../../redux/student/bookSlice'; // Adjust path as needed
-
-const subjects = [
-  'All', 'History', 'Math', 'Novel', 'Fiction',
-  'Literature', 'Economics', 'Political', 'Geography', 'Magazine'
-];
+import { fetchBooks, requestBook, clearRequestStatus } from '../../redux/student/bookSlice'; // Adjust path
+import { useNavigate } from 'react-router-dom';
 
 const subjectColors = [
   'bg-[#003b5b]',
-  'bg-[#145DA0]',
-  'bg-[#0C2D48]',
-  'bg-[#2E8BC0]',
-  'bg-[#1B3B6F]',
-  'bg-[#5b9bbf]',
-  'bg-[#5885AF]',
-  'bg-[#3C6E71]',
-  'bg-[#336699]',
-  'bg-[#5DADE2]'
+  'bg-[#013A63]',
+  'bg-[#01497C]',
+  'bg-[#014F86]',
+  'bg-[#2A6F97]',
+  'bg-[#2C7DA0]',
+  'bg-[#61A5C2]',
+  'bg-[#61A5C2]',
+  'bg-[#89C2D9]',
+  'bg-[#A9D6E5]'
 ];
 
-const BookRequest = () => {
+const BookRequest = ({ onNavigateBorrowingHistory }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // Extract data from Redux store
-  const { items: books, loading, error } = useSelector(state => state.book);
+  const { items: books, loading, error, requestStatus, requestError } = useSelector(state => state.book);
 
-  // State to track selected subject filter
   const [selectedSubject, setSelectedSubject] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [requestedBookName, setRequestedBookName] = useState('');
+  const [requestedBookId, setRequestedBookId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchBooks());
   }, [dispatch]);
 
-  // Filter books based on selected subject
-  const filteredBooks = selectedSubject === 'All'
-    ? books
-    : books.filter(book => 
-        book.subject?.toLowerCase() === selectedSubject.toLowerCase()
-      );
+  // Close modal & clear status
+  const closeModal = () => {
+    setModalOpen(false);
+    setRequestedBookName('');
+    setRequestedBookId(null);
+    dispatch(clearRequestStatus());
+  };
+
+  // When request API succeeds or fails
+  useEffect(() => {
+    if (requestStatus === 'success') {
+      setModalOpen(true);
+    }
+    if (requestStatus === 'failed') {
+      alert(`Failed to request book: ${requestError}`);
+      dispatch(clearRequestStatus());
+    }
+  }, [requestStatus, requestError, dispatch]);
+
+  // Filter books by subject & search term
+  const uniqueSubjects = ['All', ...Array.from(new Set(books.map(b => b.subject).filter(Boolean)))];
+  const filteredBooks = books.filter(book => {
+    const subjectMatch = selectedSubject === 'All' || (book.subject?.toLowerCase() === selectedSubject.toLowerCase());
+    const searchMatch =
+      book.bookName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    return subjectMatch && searchMatch;
+  });
+
+  const handleRequestClick = (book) => {
+    // if (!book.availability) return;
+    setRequestedBookName(book.bookName);
+    setRequestedBookId(book._id);
+    dispatch(requestBook(book._id));
+  };
 
   return (
-    <div className="pt-24 px-4 md:px-8">
+    <div className="pt-20 px-4 md:px-8 relative">
       {/* Header & Breadcrumb */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div>
@@ -60,14 +89,21 @@ const BookRequest = () => {
         <div className="flex items-center w-full md:w-[400px] border border-gray-300 rounded-md overflow-hidden">
           <input
             type="text"
-            placeholder="Search book author or category"
+            placeholder="Search book, author or category"
             className="w-full px-4 py-2 outline-none"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
           />
           <FaSearch className="mx-3 text-gray-500" />
         </div>
         <div className="flex flex-wrap gap-4">
-          <button className="px-4 py-2 border border-blue-500 text-blue-500 rounded-md">Borrowing History</button>
-          <button className="px-4 py-2 bg-blue-700 text-white rounded-md">Class Books</button>
+          <button
+            className="px-4 py-2 border border-[#285A87] text-[#285A87] rounded-md"
+            onClick={onNavigateBorrowingHistory}
+          >
+            Borrowing History
+          </button>
+          <button className="px-4 py-2 bg-[#285A87] text-white rounded-md">Class Books</button>
         </div>
       </div>
 
@@ -75,12 +111,12 @@ const BookRequest = () => {
       <div className="mt-8">
         <h2 className="font-semibold text-lg mb-4">Browse by Subject</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {subjects.map((subject, index) => (
+          {uniqueSubjects.map((subject, index) => (
             <button
-              key={index}
+              key={subject}
               onClick={() => setSelectedSubject(subject)}
               className={`px-4 py-3 rounded-md text-white text-sm w-full min-h-[60px] 
-                ${subjectColors[index]} 
+                ${subjectColors[index % subjectColors.length]} 
                 ${selectedSubject === subject ? 'ring-2 ring-yellow-400' : ''}`}
             >
               {subject}
@@ -99,7 +135,7 @@ const BookRequest = () => {
 
         {!loading && !error && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.isArray(filteredBooks) && filteredBooks.length > 0 ? (
+            {filteredBooks.length > 0 ? (
               filteredBooks.map(book => (
                 <div key={book._id} className="bg-[#f1f5f9] rounded-md p-4 flex flex-col">
                   <img
@@ -121,18 +157,25 @@ const BookRequest = () => {
                   <div className="mt-4">
                     <span
                       className={`inline-block text-sm mb-2 px-2 py-0.5 rounded ${
-                        book.availability ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"
+                        book.availableBooks>0 ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"
                       }`}
                     >
-                      {book.availability ? "Available" : "Unavailable"}
+                      {book.availableBooks>0 ? "Available" : "Unavailable"}
                     </span>
                     <button
                       className={`w-full py-2 rounded-md text-white ${
-                        book.availability ? "bg-[#003b5b] hover:bg-[#002f48]" : "bg-gray-400 cursor-not-allowed"
+                        book.availableBooks>0
+                          ? (requestStatus === 'loading' && requestedBookId === book._id
+                              ? 'bg-gray-500 cursor-not-allowed'
+                              : 'bg-[#003b5b] hover:bg-[#002f48]')
+                          : "bg-gray-400 cursor-not-allowed"
                       }`}
-                      disabled={!book.availability}
+                      disabled={book.availableBooks<=0 || (requestStatus === 'loading' && requestedBookId === book._id)}
+                      onClick={() => handleRequestClick(book)}
                     >
-                      Request a book
+                      {requestStatus === 'loading' && requestedBookId === book._id
+                        ? 'Requesting...'
+                        : 'Request a book'}
                     </button>
                   </div>
                 </div>
@@ -143,6 +186,30 @@ const BookRequest = () => {
           </div>
         )}
       </div>
+
+      {/* Modal */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-md p-6 w-[280px] text-center relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-3">Request Sent!</h3>
+            <p className="mb-4">
+              You have successfully requested: <strong>{requestedBookName}</strong>
+            </p>
+            <button
+              className="bg-[#003b5b] text-white px-4 py-2 rounded hover:bg-[#002f48]"
+              onClick={closeModal}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

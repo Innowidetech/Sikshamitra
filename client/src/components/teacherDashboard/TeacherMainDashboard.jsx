@@ -22,11 +22,13 @@ import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
 import CreateDynamicCalendar from './CreateDynamicCalendar';
 import MarkAttendance from './MarkAttendance';
+import EditResult from './EditResult';
 
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [selectedResult, setSelectedResult] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,6 +44,8 @@ const MainDashboard = () => {
     setActiveTab(tabId);
     if (tabId === 'assignmentdetails') {
       setSelectedAssignment(data);
+    }else if (tabId === 'editresult') {
+      setSelectedResult(data);
     }
     navigate(`/teacher/${tabId}`);
   };
@@ -63,6 +67,8 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
+        case 'editresult':
+       return <EditResult result={selectedResult} />;
      case 'attendence':
       return <Attendence handleTabChange={handleTabChange} />;
     case 'markattendance':

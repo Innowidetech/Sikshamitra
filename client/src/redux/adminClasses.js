@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
+
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -77,6 +79,32 @@ export const createClass = createAsyncThunk(
   }
 );
 
+// Async thunk for updating teacher name
+export const updateTeacherName = createAsyncThunk(
+  'adminClasses/updateTeacherName',
+  async ({ classId, newTeacher }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `https://sikshamitra.onrender.com/api/admin/class/${classId}`, // ✅ Corrected endpoint
+        { newTeacher }, // ✅ Payload
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('❌ API Error:', error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update teacher name'
+      );
+    }
+  }
+);
+
 const adminClassesSlice = createSlice({
   name: 'adminClasses',
   initialState: {
@@ -133,7 +161,25 @@ const adminClassesSlice = createSlice({
       .addCase(createClass.rejected, (state, action) => {
         state.createClassLoading = false;
         state.createClassError = action.payload;
+      })
+            // Update Teacher Name
+      .addCase(updateTeacherName.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateTeacherName.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedClass = action.payload;
+        const index = state.classes.findIndex(cls => cls._id === updatedClass._id);
+        if (index !== -1) {
+          state.classes[index] = updatedClass;
+        }
+      })
+      .addCase(updateTeacherName.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
+
   },
 });
 

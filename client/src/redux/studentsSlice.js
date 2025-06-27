@@ -117,6 +117,46 @@ export const fetchStudentDetails = createAsyncThunk(
   }
 );
 
+export const fetchUpdatedStudentHistory = createAsyncThunk(
+  'students/fetchUpdatedStudentHistory',
+  async (studentId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.get(
+        `https://sikshamitra.onrender.com/api/admin/updatedStudentData/${studentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Always return array (even if empty) to avoid triggering errors
+      return {
+        studentId,
+        dataHistory: response.data?.dataHistory || [],
+      };
+    } catch (error) {
+      // ⚠️ IF error is 404, treat as no history, not failure
+      if (error.response?.status === 404) {
+        return {
+          studentId,
+          dataHistory: [],
+        };
+      }
+
+      // Other errors (like 500, 401) = real failure
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+
 // Slice
 const studentsSlice = createSlice({
   name: 'students',
@@ -124,6 +164,8 @@ const studentsSlice = createSlice({
     students: [],
     filteredStudents: [],
     selectedStudent: null,
+     studentUpdateHistory: {},
+
     loading: false,
     error: null,
     searchQuery: ''
@@ -212,7 +254,24 @@ const studentsSlice = createSlice({
       .addCase(fetchUpdatedStudents.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      // fetchUpdatedStudentHistory
+.addCase(fetchUpdatedStudentHistory.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(fetchUpdatedStudentHistory.fulfilled, (state, action) => {
+  const { studentId, dataHistory } = action.payload;
+  state.studentUpdateHistory[studentId] = dataHistory;
+  state.loading = false;
+})
+
+
+.addCase(fetchUpdatedStudentHistory.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+});
+
   },
 });
 

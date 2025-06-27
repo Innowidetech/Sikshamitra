@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useMemo } from "react";
+import { School } from "lucide-react"; // Add at the top
+
 import {
   fetchAccounts,
   fetchRevenueAndExpenses,
@@ -9,6 +12,9 @@ import {
   deleteExpense,
   postExpense,
   postIncome,
+  editIncome,
+  fetchUpdatedIncomeHistoryById
+
 } from '../../redux/accountSlice';
 import Header from './layout/Header';
 import { Pie, Line } from 'react-chartjs-2';
@@ -33,7 +39,7 @@ Chart.register(
   Legend
 );
 
-const Accounts = () => {
+const Accounts = ({ openHistory }) => {
   const dispatch = useDispatch();
   const { accounts, revenueAndExpenses, teacherRequests, status, error } = useSelector(
     (state) => state.accounts
@@ -47,14 +53,25 @@ const Accounts = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editFormData, setEditFormData] = useState({ purpose: '', amount: '' });
-
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+const updatedIncomeHistoryById = useSelector(
+  (state) => state.accounts.updatedIncomeHistoryById
+);
+
+
+  const [expandedIncomeId, setExpandedIncomeId] = useState(null);
+  const [loadingIncomeId, setLoadingIncomeId] = useState(null);
   const [expenseFormData, setExpenseFormData] = useState({
     title: '',
     amount: '',
     date: '',
     category: '',
   });
+
+ 
+
 
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const resetIncomeForm = () => {
@@ -93,6 +110,7 @@ const Accounts = () => {
     dispatch(fetchAccounts());
     dispatch(fetchRevenueAndExpenses());
     dispatch(fetchTeacherRequests());
+   
   }, [dispatch]);
 
   const handleExpenseChange = (e) => {
@@ -175,6 +193,40 @@ const Accounts = () => {
     setEditingExpense(null);
   };
 
+// 👇 Income Generated Section Data Setup
+const [currentMonthData, previousMonthData] = useMemo(() => {
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+
+  const sorted = [...safeAccounts].sort(
+    (a, b) => new Date(b.monthYear) - new Date(a.monthYear)
+  );
+
+  const [current = {}, previous = {}] = sorted;
+
+  const formatData = (item) => {
+    const { monthYear, totalRevenue, totalIncome } = item || {};
+    const percentage =
+      totalIncome && totalIncome !== 0
+        ? Math.round((totalRevenue / totalIncome) * 100)
+        : 0;
+
+    return {
+      month: monthYear?.split(" ")[0] || "",
+      value: totalRevenue || 0,
+      percentage: Math.max(0, Math.min(percentage, 100)),
+    };
+  };
+
+  return [formatData(current), formatData(previous)];
+}, [accounts]);
+
+const cards = [
+  { title: "CURRENT MONTH", data: currentMonthData },
+  { title: "PREVIOUS MONTH", data: previousMonthData },
+];
+
+
+
   const handleDeleteExpense = async (row) => {
     if (window.confirm('Are you sure you want to delete this expense?')) {
       await dispatch(deleteExpense(row._id));
@@ -197,7 +249,7 @@ const Accounts = () => {
           accountsArray.reduce((total, acc) => total + acc.otherIncome, 0),
           accountsArray.reduce((total, acc) => total + acc.totalExpenses, 0),
         ],
-        backgroundColor: ['#4CAF50', '#FFC107',  '#8979FF', '#2196F3'],
+        backgroundColor: ['#4CAF50', '#FFC107', '#8979FF', '#2196F3'],
         borderWidth: 1,
       },
     ],
@@ -270,6 +322,82 @@ const Accounts = () => {
       },
     },
   };
+
+  
+
+ const handleRowClick = (incomeId) => {
+  console.log("Clicked Income ID:", incomeId);
+
+  // Always check if the key exists before accessing
+  const history = updatedIncomeHistoryById?.[incomeId];
+  console.log("All History for This ID:", history);
+
+  if (expandedIncomeId === incomeId) {
+    setExpandedIncomeId(null);
+  } else {
+    setExpandedIncomeId(incomeId);
+    setLoadingIncomeId(incomeId);
+
+    dispatch(fetchUpdatedIncomeHistoryById(incomeId))
+      .unwrap()
+      .then((res) => {
+        console.log("Fetched history for", incomeId, ":", res);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch income history:", err);
+      })
+      .finally(() => setLoadingIncomeId(null));
+  }
+};
+
+
+const allRevenueData = [
+  ...(revenueAndExpenses.income || []).map((rev) => ({
+    id: rev._id,
+    date: new Date(rev.createdAt).toISOString().split("T")[0],
+    purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+    amount: rev.amount,
+    transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash',
+    name: rev.studentId?.studentProfile?.fullname +
+      (rev.studentId?.studentProfile?.registrationNumber
+        ? ` (${rev.studentId.studentProfile.registrationNumber})`
+        : ''),
+    className: rev.class || '-',
+    section: rev.section || '-',
+    originalData: rev,
+  })),
+
+  ...(revenueAndExpenses.otherIncome || []).map((rev) => ({
+    id: rev._id,
+    date: new Date(rev.date).toISOString().split("T")[0],
+    purpose: rev.purpose === 'Other' ? rev.reason : rev.purpose,
+    amount: rev.amount,
+    transactionId: rev.transactionId || 'Cash',
+    name: rev.fullname +
+      (rev.source === 'student'
+        ? ` (${rev.registrationNumber})`
+        : ` (${rev.organization})`),
+    className: rev.class || '-',
+    section: rev.section || '-',
+    originalData: rev,
+  })),
+
+  ...(revenueAndExpenses.admissions || []).map((rev) => ({
+    id: rev._id,
+    date: new Date(rev.createdAt).toISOString().split("T")[0],
+    purpose: 'New Admission',
+    amount: rev.studentDetails.admissionFees,
+    transactionId: rev.paymentDetails?.razorpayOrderId?.slice(6) || '-',
+    name: `${rev.studentDetails.firstName} ${rev.studentDetails.lastName}`,
+    className: rev.studentDetails.classToJoin || '-',
+    section: '-',
+    originalData: rev,
+  })),
+];
+
+
+
+
 
 
   return (
@@ -653,67 +781,62 @@ const Accounts = () => {
         </div>
       </div>
 
-      <div className="mt-6">
-        <h2 className="font-semibold text-lg border-b-2 border-[#146192] inline-block mb-4">
-          Income Generated
-        </h2>
+     <div className="mt-6">
+  <h2 className="font-semibold text-lg border-b-2 border-[#146192] inline-block mb-4">
+    Income Generated
+  </h2>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Reusable Card Component */}
-          {['currentMonth', 'previousMonth'].map((key, index) => {
-            const value = revenueAndExpenses?.[key]?.amount || 0;
-            const month = revenueAndExpenses?.[key]?.month || '';
-            const percentage = revenueAndExpenses?.[key]?.percentage || 0; // 0–100 expected
-
-            return (
-              <div
-                key={key}
-                className="flex-1 bg-white rounded-xl shadow-md p-4 flex items-center gap-4"
-              >
-                {/* Circular progress */}
-                <div className="relative w-16 h-16">
-                  <svg
-                    className="w-full h-full transform -rotate-90"
-                    viewBox="0 0 36 36"
-                  >
-                    <path
-                      className="text-gray-200"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      d="M18 2.0845
+  <div className="flex flex-col sm:flex-row gap-4">
+    {cards.map(({ title, data }, idx) => (
+      <div
+        key={idx}
+        className="flex-1 bg-white rounded-xl shadow-md p-4 flex items-center gap-4"
+      >
+        {/* Circular progress */}
+        <div className="relative w-16 h-16">
+          <svg
+            className="w-full h-full transform -rotate-90"
+            viewBox="0 0 36 36"
+          >
+            <path
+              className="text-gray-200"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+              d="M18 2.0845
                    a 15.9155 15.9155 0 0 1 0 31.831
                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-yellow-400"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeDasharray={`${percentage}, 100`}
-                      d="M18 2.0845
+            />
+            <path
+              className="text-yellow-400"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+              strokeDasharray={`${data.percentage}, 100`}
+              d="M18 2.0845
                    a 15.9155 15.9155 0 0 1 0 31.831
                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <img src="/icons/teacher-icon.svg" alt="icon" className="w-6 h-6" />
-                  </div>
-                </div>
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <School className="w-6 h-6 text-[#146192]" />
+          </div>
+        </div>
 
-                {/* Text Content */}
-                <div className="text-left">
-                  <p className="text-sm text-[#146192] font-semibold">
-                    {key === 'currentMonth' ? 'CURRENT MONTH' : 'PREVIOUS MONTH'}
-                  </p>
-                  <p className="text-xs text-gray-500">{month}</p>
-                  <p className="text-2xl font-bold text-[#146192]">₹{value}</p>
-                </div>
-              </div>
-            );
-          })}
+        {/* Text Content */}
+        <div className="text-left">
+          <p className="text-sm text-[#146192] font-semibold">{title}</p>
+          <p className="text-xs text-gray-500">{data.month}</p>
+          <p className="text-2xl font-bold text-[#146192]">₹{data.value}</p>
         </div>
       </div>
+    ))}
+  </div>
+</div>
+
+
+
+
       {/* Expenses Table */}
       <div className="overflow-x-auto mt-8 ">
         {selectedChartSection === 'expenses' && (
@@ -790,168 +913,263 @@ const Accounts = () => {
           </div>
         )}
       </div>
-      {selectedChartSection === 'revenue' && (
-        <div className="overflow-x-auto mt-8 ">
-          <h2 className="text-xl font-medium text-[#146192] mb-2">Revenue Table</h2>
 
-          {/* Filters (Optional — Add if needed, like you did for Teacher Requests) */}
-          <div className="flex flex-wrap gap-4 justify-end mb-2">
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>Purpose</option>
-              {/* Add dynamic purpose options */}
-            </select>
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>Class</option>
-              {/* Add dynamic class options */}
-            </select>
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-              <option>Section</option>
-              {/* Add dynamic section options */}
-            </select>
+     {selectedChartSection === 'revenue' && (
+  <div className="overflow-x-auto mt-8">
+    <h2 className="text-xl font-medium text-[#146192] mb-2">School Income</h2>
+
+    {/* Filters */}
+    <div className="flex flex-wrap gap-4 justify-end mb-2">
+      <select className="border border-gray-300 rounded px-2 py-1 text-sm">
+        <option>Purpose</option>
+      </select>
+      <select className="border border-gray-300 rounded px-2 py-1 text-sm">
+        <option>Class</option>
+      </select>
+      <select className="border border-gray-300 rounded px-2 py-1 text-sm">
+        <option>Section</option>
+      </select>
+    </div>
+
+  {/* Revenue Table */}
+{/* Revenue Table */}
+<div className="overflow-auto rounded-xl shadow-md">
+  <table className="min-w-full text-sm">
+    <thead className="bg-[#146192] text-white">
+      <tr className="text-center">
+        <th className="p-2 border">DATE</th>
+        <th className="p-2 border">PURPOSE</th>
+        <th className="p-2 border">AMOUNT</th>
+        <th className="p-2 border">TRANSACTION ID</th>
+        <th className="p-2 border">NAME</th>
+        <th className="p-2 border">CLASS</th>
+        <th className="p-2 border">SECTION</th>
+        <th className="p-2 border">EDIT</th>
+      </tr>
+    </thead>
+
+   <tbody>
+  {allRevenueData.length === 0 ? (
+    <tr>
+      <td colSpan="8" className="p-4 text-center text-gray-500">
+        No revenue records available.
+      </td>
+    </tr>
+  ) : (
+    allRevenueData.map((rev) => {
+      const incomeId = rev.originalData?._id;
+      const historyData = updatedIncomeHistoryById?.[incomeId] || [];
+      const isExpanded = expandedIncomeId === incomeId;
+      const isLoading = loadingIncomeId === incomeId;
+
+      return (
+        <React.Fragment key={incomeId}>
+          {/* Main Revenue Row */}
+          <tr
+            onClick={() => handleRowClick(incomeId)}
+            className="cursor-pointer hover:bg-gray-100 text-center"
+          >
+            <td className="p-2 border">{rev.date}</td>
+            <td className="p-2 border">{rev.purpose}</td>
+            <td className="p-2 border">₹{rev.amount}</td>
+            <td className="p-2 border">{rev.transactionId}</td>
+            <td className="p-2 border">{rev.name}</td>
+            <td className="p-2 border">{rev.className}</td>
+            <td className="p-2 border">{rev.section}</td>
+            <td className="p-2 border">
+              <button
+                className="text-blue-600 hover:text-blue-800 text-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditData(rev.originalData);
+                  setIsEditOpen(true);
+                }}
+              >
+                ✏️
+              </button>
+            </td>
+          </tr>
+
+          {/* Expanded History Row(s) */}
+          {isExpanded &&
+            (isLoading ? (
+              <tr>
+                <td colSpan="8" className="text-center p-3 text-sm text-gray-500">
+                  Loading history...
+                </td>
+              </tr>
+            ) : historyData.length > 0 ? (
+              historyData.map((entry, index) => (
+                <tr
+                  key={index}
+                  className="text-center text-sm text-gray-700 bg-gray-400"
+                > 
+                  {/* <td className="p-2 border"> */}
+                   <td className="p-2">
+                    {new Date(entry.updatedAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-2 ">{entry.previousData?.purpose || "-"}</td>
+                  <td className="p-2 ">₹{entry.previousData?.amount || "-"}</td>
+                  <td className="p-2 ">
+                    {entry.previousData?.paymentDetails?.razorpayOrderId || "-"}
+                  </td>
+                  <td className="p-2 ">{rev.name}</td>
+                  <td className="p-2 ">{entry.previousData?.class || "-"}</td>
+                  <td className="p-2 ">{entry.previousData?.section || "-"}</td>
+                  <td className="p-2  italic text-gray-500">-</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="8" className="text-center p-3 text-sm italic text-gray-500 bg-gray-50">
+                  No update history found.
+                </td>
+              </tr>
+            ))}
+        </React.Fragment>
+      );
+    })
+  )}
+</tbody>
+
+  </table>
+</div>
+
+  </div>
+)}
+
+{/* Edit Modal */}
+{isEditOpen && editData && (
+  <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center px-2">
+    <div className="bg-white p-6 rounded shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <h2 className="text-lg font-semibold mb-4 text-center text-[#262626]">Edit Income</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!editData.reasonForEdit?.trim()) {
+            alert("Reason For Edit is required.");
+            return;
+          }
+          await dispatch(editIncome({ incomeId: editData._id, incomeData: editData }));
+          setIsEditOpen(false);
+        }}
+      >
+        <div className="flex flex-wrap -mx-2">
+          <div className="w-full md:w-1/2 px-2">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Date</label>
+              <input
+                type="date"
+                name="date"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.date?.substring(0, 10)}
+                onChange={(e) => setEditData({ ...editData, date: e.target.value })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Purpose</label>
+              <input
+                type="text"
+                name="purpose"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.purpose}
+                onChange={(e) => setEditData({ ...editData, purpose: e.target.value })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Amount</label>
+              <input
+                type="number"
+                name="amount"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.amount}
+                onChange={(e) => setEditData({ ...editData, amount: parseFloat(e.target.value) })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Transaction ID</label>
+              <input
+                type="text"
+                name="transactionId"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={
+                  editData.transactionId ||
+                  editData.paymentDetails?.razorpayOrderId ||
+                  ''
+                }
+                onChange={(e) => setEditData({ ...editData, transactionId: e.target.value })}
+              />
+            </div>
           </div>
 
-          {/* Revenue Table */}
-          <div className="overflow-auto rounded-xl shadow-md">
-            <table className="min-w-full text-sm">
-              <thead className="bg-[#146192] text-white">
-                <tr className="text-center">
-                  <th className="p-2 border">DATE</th>
-                  <th className="p-2 border">PURPOSE</th>
-                  <th className="p-2 border">AMOUNT</th>
-                  <th className="p-2 border">TRANSACTION ID</th>
-                  <th className="p-2 border">NAME</th>
-                  <th className="p-2 border">CLASS</th>
-                  <th className="p-2 border">SECTION</th>
-                  <th className="p-2 border">EDIT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {revenueAndExpenses.income?.length > 0 ? (
-                  revenueAndExpenses.income.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.createdAt).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
-                      </td>
-                      <td className="p-2 border">₹{rev.amount}</td>
-                      <td className="p-2 border">
-                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || 'Cash'}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.studentId?.studentProfile?.fullname}
-                        {rev.studentId?.studentProfile?.registrationNumber && (
-                          <> ({rev.studentId.studentProfile.registrationNumber})</>
-                        )}
-
-
-                      </td>
-                      <td className="p-2 border">{rev.class || '-'}</td>
-                      <td className="p-2 border">{rev.section || '-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
-
-                {revenueAndExpenses.otherIncome?.length > 0 ? (
-                  revenueAndExpenses.otherIncome.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.date).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.purpose == 'Other' ? rev.reason : rev.purpose}
-                      </td>
-                      <td className="p-2 border">₹{rev.amount}</td>
-                      <td className="p-2 border">
-                        {rev.transactionId ? rev.transactionId : 'Cash'}
-                      </td>
-                      <td className="p-2 border">
-                        <div>
-                          <p>{rev.fullname}</p>
-                          {rev.source === "student" ? `(${rev.registrationNumber})` : `(${rev.organization})`}
-                        </div>
-
-
-                      </td>
-                      <td className="p-2 border">{rev.class || '-'}</td>
-                      <td className="p-2 border">{rev.section || '-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
-
-                {revenueAndExpenses.admissions?.length > 0 ? (
-                  revenueAndExpenses.admissions.map((rev) => (
-                    <tr key={rev._id} className="text-center border-b hover:bg-gray-50">
-                      <td className="p-2 border">
-                        {new Date(rev.createdAt).toISOString().split("T")[0]}
-                      </td>
-                      <td className="p-2 border">
-                        {'New Admission'}
-                      </td>
-                      <td className="p-2 border">₹{rev.studentDetails.admissionFees}</td>
-                      <td className="p-2 border">
-                        {rev.paymentDetails?.razorpayOrderId?.slice(6) || '-'}
-                      </td>
-                      <td className="p-2 border">
-                        {rev.studentDetails.firstName} {rev.studentDetails.lastName}
-                      </td>
-                      <td className="p-2 border">{rev.studentDetails.classToJoin || '-'}</td>
-                      <td className="p-2 border">{'-'}</td>
-                      <td className="p-2 border">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 text-lg"
-
-                        >
-                          ✏️
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )
-                  : (
-                    <tr>
-                      <td colSpan="8" className="p-4 text-center text-gray-500">
-                        {/* No revenue records available. */}
-                      </td>
-                    </tr>
-                  )}
-              </tbody>
-            </table>
+          <div className="w-full md:w-1/2 px-2">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                type="text"
+                name="name"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.fullname || editData.studentId?.studentProfile?.fullname || ''}
+                onChange={(e) => setEditData({ ...editData, fullname: e.target.value })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Class</label>
+              <input
+                type="text"
+                name="class"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.class}
+                onChange={(e) => setEditData({ ...editData, class: e.target.value })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Section</label>
+              <input
+                type="text"
+                name="section"
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.section}
+                onChange={(e) => setEditData({ ...editData, section: e.target.value })}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Reason For Edit <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="reasonForEdit"
+                required
+                className="w-full border px-3 py-2 rounded bg-[#1461921A]"
+                value={editData.reasonForEdit || ''}
+                onChange={(e) => setEditData({ ...editData, reasonForEdit: e.target.value })}
+              />
+            </div>
           </div>
         </div>
 
-      )}
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            type="button"
+            onClick={() => setIsEditOpen(false)}
+            className="px-4 py-2 bg-gray-300 text-gray-800 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#146192] text-white rounded"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+
 
       {/* Teacher Requests Table */}
       <div className="overflow-x-auto mt-8  ">

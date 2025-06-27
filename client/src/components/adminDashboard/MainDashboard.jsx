@@ -16,6 +16,9 @@ import Results from './Results';
 import Curriculam from './Curriculam';
 import Header from './layout/Header';
 import AdminProfile from './AdminProfile';
+import Application from './admissionpage/Application';
+import ResolvePage from './ResolvePage';
+import Allbook from './Allbook';
 
 const MainDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -55,10 +58,19 @@ const MainDashboard = () => {
                 return <Accounts />;
             case 'inventory':
                 return <Inventory />;
-            case 'library':
-                return <Library />;
+           case 'library':
+  return <Library setActiveTab={setActiveTab} />;
+
+                case 'resolve':
+  return <ResolvePage  setActiveTab={setActiveTab}  />;
+
+    case 'allbook':
+  return <Allbook setActiveTab={setActiveTab} />;
+
             case 'admission':
-                return <Admission />;
+      return <Admission setActiveTab={setActiveTab} />;  // ⬅️ Pass setter so button can change tab
+  case 'admission-application':                      // ✅ NEW CASE
+    return <Application />;
             case 'classes':
                 return <Classes />;
             case 'employee':
@@ -67,6 +79,7 @@ const MainDashboard = () => {
                 return <Results />;
             case 'curriculum':
                 return <Curriculam />;
+             
             default:
                 return <AdminDashboard />;
         }

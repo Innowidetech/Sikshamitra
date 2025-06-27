@@ -30,7 +30,7 @@ function Students() {
             </span>
           </h1>
         </div>
-        <div className="flex justify-end lg:mx-16 overflow-x-hidden">
+        {/* <div className="flex justify-end lg:mx-16 overflow-x-hidden">
           <button
             onClick={() => {
               setIsModalOpen(true);
@@ -46,7 +46,7 @@ function Students() {
             onClose={handleCloseModal}
             onAdd={handleAddStudent}
           />
-        </div>
+        </div> */}
       </div>
       <div>
         <StudentsTable />

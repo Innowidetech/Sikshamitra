@@ -8,7 +8,7 @@ import resultsReducer from './parent/results';
 import examReducer from './parent/examSlice';
 import studentDashboardReducer from './student/studashboardSlice';
 import dashboardReducer from './dashboard';
-import adminProfileReducer from './adminprofile';
+import adminProfileReducer from './adminProfileSlice';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
 import inventoryReducer from './adminInventory';
@@ -46,6 +46,8 @@ import teacherResultsReducer from './teacher/teacherResultSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
 import teacherDashboardReducer from './teacher/teacherDashboardSlice';
 import bookReducer from './student/bookSlice';
+import connectQueriesReducer from './student/connectQueriesSlice';
+
 
 
 
@@ -88,15 +90,17 @@ const store = configureStore({
     about : aboutSliceReducer,
     createExam :createExamSliceReducer,
     studyMaterial : studyMSliceReducer,
-    // myStudents: myStudentsReducer,
+    myStudents: myStudentsReducer,
     assignments: assignmentsReducer,
     tcurriculum: tcurriculumSliceReducer, 
     lecture: lectureSlice,
     teacherResults: teacherResultsReducer,
     teaAttendance: teaAttendanceReducer,
-     teacherDashboard: teacherDashboardReducer,
-      students: myStudentsReducer,
-       book: bookReducer,
+    teacherDashboard: teacherDashboardReducer,
+      // students: myStudentsReducer,
+    book: bookReducer,  
+    connectQueries: connectQueriesReducer,
+      
    },
 });
 
