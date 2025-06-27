@@ -1,6 +1,8 @@
 const express = require('express');
-const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs } = require('../controllers/user.controller');
+const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs, applyForEntranceExamination, getQuestionsToApplicants, submitExamAnswers } = require('../controllers/user.controller');
 const multer = require('multer');
+const { loginForEntranceExam } = require('../controllers/auth.controller');
+const { protectEntranceApplicant } = require('../middleware/auth.middleware');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -18,5 +20,10 @@ router.post('/applyOnline', upload.fields([
 
 router.post('/verifyOnlinePayment', verifyRazorpayPayment);
 router.get('/blogs', getBlogs);
+router.post('/entranceExam', upload.single('photo'), applyForEntranceExamination);
+router.post('/examLogin', loginForEntranceExam);
+router.get('/questionPaper', protectEntranceApplicant, getQuestionsToApplicants);
+router.post('/submitAnswers', protectEntranceApplicant, submitExamAnswers);
+
 
 module.exports = router;

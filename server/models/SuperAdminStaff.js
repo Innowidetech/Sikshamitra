@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 
-const EmployeeSchema = new mongoose.Schema({
-    schoolId: {
+const SuperAdminStaffSchema = new mongoose.Schema({
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'School',
+        ref: 'User',
     },
     name: {
         type: String,
         required: true,
     },
-    role: {
+    employeeRole: {
         type: String,
         required: true,
     },
@@ -18,14 +18,15 @@ const EmployeeSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    mobileNumber: {
-        type: String,
-        required:true,
+    salary: {
+        type: Number,
+        required: true,
     },
-    salary:{
-        type:Number,
+    createdBy:{
+        type:mongoose.Schema.Types.ObjectId,
         required:true,
-    },
+        ref:'User'
+    }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Employee', EmployeeSchema);
+module.exports = mongoose.model('SuperAdminStaff', SuperAdminStaffSchema);

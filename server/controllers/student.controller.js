@@ -7,6 +7,9 @@ const Assignment = require('../models/assignment');
 const SubmitAssignment = require('../models/SubmitAssignment');
 const Books = require('../models/Books');
 const BookRequest = require('../models/BookRequests');
+const School = require('../models/School');
+const Teacher = require('../models/Teacher');
+const Notifications = require('../models/Notifications');
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -90,6 +93,7 @@ exports.attendanceReport = async (req, res) => {
 
         const studentId = student._id;
         const associatedSchool = student.schoolId;
+        if (!associatedSchool) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
         const reportMonth = month || currentDate.getMonth() + 1;
         const reportYear = year || currentDate.getFullYear();
@@ -113,8 +117,6 @@ exports.attendanceReport = async (req, res) => {
         };
 
         const attendanceRecords = await Attendance.find(query);
-
-
         if (!attendanceRecords.length) {
             return res.status(404).json({ message: 'No attendance records found for this student within the annual report period.' });
         }
@@ -131,7 +133,6 @@ exports.attendanceReport = async (req, res) => {
 
             if (studentAttendance) {
                 totalDays++;
-
                 if (studentAttendance.status === 'Present' || studentAttendance.status === 'Late') {
                     presentCount++;
                 } else if (studentAttendance.status === 'Absent') {
@@ -160,7 +161,6 @@ exports.attendanceReport = async (req, res) => {
                 todaysStatus = todaysRecord.status;
             }
         }
-
         res.status(200).json({
             message: 'Student attendance report fetched successfully',
             monthlySummary: {
@@ -203,9 +203,7 @@ exports.getAdmitCard = async (req, res) => {
             if (!student) {
                 return res.status(404).json({ message: 'No student found with the logged-in id.' })
             };
-            // if (student.userId.isActive == false) {
-            //     return res.status(404).json({ message: "Please contact your class teacher or admin to get exams data." })
-            // }
+            if (!student.schoolId || !student.schoolId._id) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
             admitCard = await Exams.findOne({
                 schoolId: student.schoolId,
@@ -256,6 +254,7 @@ exports.submitAssignment = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
+        if (!student.schoolId) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
         let uploadedPhotoUrl = '';
         if (req.file) {
@@ -267,23 +266,12 @@ exports.submitAssignment = async (req, res) => {
             }
         };
 
-        const assignment = await Assignment.findOne({
-            schoolId: student.schoolId,
-            _id: assignmentId,
-            class: student.studentProfile.class,
-            section: student.studentProfile.section
-        });
-
+        const assignment = await Assignment.findOne({ schoolId: student.schoolId, _id: assignmentId, class: student.studentProfile.class, section: student.studentProfile.section });
         if (!assignment) {
             return res.status(404).json({ message: "No assignment found with the id." });
         }
 
-        const existingSubmission = await SubmitAssignment.findOne({
-            schoolId: student.schoolId,
-            assignmentId: assignmentId,
-            class: student.studentProfile.class,
-            section: student.studentProfile.section
-        });
+        const existingSubmission = await SubmitAssignment.findOne({ schoolId: student.schoolId, assignmentId: assignmentId, class: student.studentProfile.class, section: student.studentProfile.section });
 
         if (existingSubmission) {
             existingSubmission.submittedBy.push({
@@ -304,15 +292,17 @@ exports.submitAssignment = async (req, res) => {
                     assignmentWork: uploadedPhotoUrl
                 }]
             });
-
             await newSubmission.save();
+
+            let memberIds = []
+            memberIds.push({memberId:assignment.createdBy});
+            const notification = new Notifications({ section:'assignment', memberIds, text: `An assignment of subject - '${assignment.subject}' has been submitted by '${student.studentProfile.fullname}'` });
+            await notification.save();
+
             return res.status(201).json({ message: "Assignment submitted successfully.", submit: newSubmission });
         }
     } catch (err) {
-        res.status(500).json({
-            message: 'Internal server error',
-            error: err.message,
-        });
+        res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
 
@@ -338,18 +328,37 @@ exports.requestBook = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'No student found with the logged-in id.' });
         }
+        if (!student.schoolId) { return res.status(404).json({ message: "Student is not associated with any school." }) }
 
         const book = await Books.findOne({ schoolId: student.schoolId, _id: bookId, });
         if (!book) {
             return res.status(404).json({ message: "No book found with the id." });
         }
 
-        if (book.availability == false) {
-            return res.status(409).json({ message: "The book is borrowed by someone else and it is unavailable." })
+        if (book.availableBooks <= 0) {
+            return res.status(409).json({ message: "The book is not available to borrow." })
         }
 
         const bookRequest = new BookRequest({ schoolId: student.schoolId, book: book._id, requestedBy: student._id })
         await bookRequest.save();
+
+        let memberIds = [];
+
+        const school = await School.findById(student.schoolId);
+        if (school && school.userId) {
+            memberIds.push({memberId:school.userId});
+        }
+
+        const teachers = await Teacher.find({ schoolId: student.schoolId }).populate('userId');
+
+        const librarian = teachers.find(t => t.userId && t.userId.employeeType === 'librarian')
+        if (librarian) {
+            memberIds.push({memberId:librarian._id});
+        }
+
+        const notification = new Notifications({ section:'library', memberIds: memberIds, text: `New book request received from student - ${student.studentProfile.fullname} of class ${student.studentProfile.class}${student.studentProfile.section}` });
+        await notification.save()
+
         res.status(201).json({ message: "Book requested successfully. Please wait until the librarian confirms." })
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message, });
@@ -370,13 +379,15 @@ exports.getBookRequests = async (req, res) => {
         };
 
         const student = await Student.findOne({ userId: loggedInId });
-        if (!student) {
-            return res.status(404).json({ message: 'No student found with the logged-in id.' });
-        }
-        const bookRequests = await BookRequest.find({ requestedBy: student._id }).populate('book');
-        if (!bookRequests || !bookRequests.length) { return res.status(404).json({ message: "No book requests found for the student." }) }
+        if (!student) { return res.status(404).json({ message: 'No student found with the logged-in id.' }); }
+        const associatedSchool = await School.findById(student.schoolId);
+        if (!associatedSchool) { return res.status(404).json({ message: "Logged-in student is not associated with any school." }) }
 
-        res.status(200).json(bookRequests)
+        const bookRequests = await BookRequest.find({ schoolId: student.schoolId, requestedBy: student._id }).populate('book').sort({createdAt:-1});
+
+        let libraryFineAmount = associatedSchool.libraryFineAmount || '-';
+
+        res.status(200).json({ libraryFineAmount, bookRequests })
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message, });
     }

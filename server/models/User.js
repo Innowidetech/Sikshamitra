@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: {
+  email: { // for role as authority, consider email as loginId
     type: String,
     required: true,
-    unique:true,
+    unique: true,
   },
   password: {
     type: String,
@@ -12,24 +12,40 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['superadmin','admin','teacher','student','parent'],
+    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent', 'authority'],
     required: true
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'librarian', 'accountant','-'],
+    enum: ['teaching', 'librarian', 'accountant', 'admissionsManager', 'inventoryClerk', '-', 'groupD'],
     required: function () {
       return this.role === 'teacher';
     },
   },
-  isActive:{
-    type:Boolean,
-    default:true,
+  mobileNumber: { // only for staff
+    type: String,
+    required: function () {
+      return this.employeeType === 'groupD'
+    }
   },
-  createdBy:{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:'User',
-    required:true,
+  passwordIs: { // only for authority
+    type: String,
+    required: function () {
+      return this.role === 'authority'
+    }
+  },
+  schoolId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   }
 }, {
   timestamps: true

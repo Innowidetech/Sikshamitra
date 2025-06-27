@@ -1,26 +1,32 @@
 const mongoose = require('mongoose');
-const syllabusSchema = new mongoose.Schema({
+
+const SchoolStaffSchema = new mongoose.Schema({
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'School',
     },
-    class: {
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User',
+    },
+    name: {
         type: String,
         required: true,
     },
-    subject: {
+    employeeRole: {
         type: String,
         required: true,
     },
-    description: {
+    department: {
         type: String,
         required: true,
     },
-    syllabus: {
-        type: String,
+    salary: {
+        type: Number,
         required: true,
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Syllabus', syllabusSchema);
+module.exports = mongoose.model('SchoolStaff', SchoolStaffSchema);

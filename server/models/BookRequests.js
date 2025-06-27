@@ -9,26 +9,33 @@ const BookRequestsSchema = new mongoose.Schema({
     book: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref:'Books'
+        ref: 'Books'
     },
-    requestedBy:{
+    requestedBy: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref:'Student'
+        ref: 'Student'
     },
-    status:{
-        type:String,
-        enum:['requested', 'accepted', 'rejected', 'issued', 'returned'],
-        default:'requested'
+    status: {
+        type: String,
+        enum: ['requested', 'accepted', 'rejected', 'issued', 'returned'],
+        default: 'requested'
     },
-    borrowedOn:Date,
-    dueOn:Date,
-    returnedOn:Date,
-    fine:{ // late return of book
-        type:Number,
-        required:true,
-        default:0
-    } 
+    borrowedOn: Date,
+    dueOn: Date,
+    returnedOn: Date,
+    fine: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    resolved: {
+        type: Boolean,
+        default: true,
+        required: function () {
+            return this.status == 'returned'
+        }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('BookRequests', BookRequestsSchema);

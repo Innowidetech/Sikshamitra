@@ -20,7 +20,7 @@ const ClassPlanSchema = new mongoose.Schema({
                 required:true,
             },
             data:[{
-                chapter:{ //number
+                chapter:{
                     type:String,
                     required:true,
                 },

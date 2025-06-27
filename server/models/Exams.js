@@ -6,23 +6,19 @@ const examSchema = new mongoose.Schema({
         required: true,
         ref: 'School'
     },
-    examType: { // annual exam, quarterly, half yearly
+    examType: {
         type: String,
         required: true
     },
-    examDuration: {
-        type: String,
-        required: true,
-    },
-    fromDate:{
+    fromDate: {
         type: Date,
         required: true,
     },
-    toDate:{
+    toDate: {
         type: Date,
         required: true,
     },
-    numberOfSubjects:{
+    numberOfSubjects: {
         type: Number,
         required: true,
     },
@@ -40,7 +36,7 @@ const examSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        subject: { //subjectName
+        subject: {
             type: String,
             required: true,
         },
@@ -50,6 +46,10 @@ const examSchema = new mongoose.Schema({
         },
         date: {
             type: Date,
+            required: true,
+        },
+        duration: {
+            type: String,
             required: true,
         },
     }],
