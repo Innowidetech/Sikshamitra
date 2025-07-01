@@ -875,7 +875,7 @@ exports.sendQuery = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all the details to create query' })
     }
 
-    let superAdmin = null, queriesToInsert = [], admin = null;
+    let superAdmin = null, queriesToInsert = [], admin = null, senderName, senderRole, memberIds = [];
     if (sendTo.includes('Super Admin')) {
       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
     }
