@@ -875,7 +875,7 @@ exports.sendQuery = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all the details to create query' })
     }
 
-    let superAdmin = null, queriesToInsert = [], admin = null, senderName, senderRole, memberIds = [];
+    let superAdmin = null, queriesToInsert = [], admin = null, memberIds = [];
     if (sendTo.includes('Super Admin')) {
       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
     }
@@ -896,6 +896,10 @@ exports.sendQuery = async (req, res) => {
           query: [{ message, createdBy: staff._id, sentAt: new Date() }]
         });
       });
+
+      memberIds.push(...schools.map(s => ({ memberId: s.userId._id })));
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the Super Admin Staff.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
@@ -911,6 +915,10 @@ exports.sendQuery = async (req, res) => {
           query: [{ message, createdBy: loggedInId, sentAt: new Date() }]
         });
       });
+
+      memberIds.push(...schools.map(s => ({ memberId: s.userId._id })));
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the Super Admin.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'admin') {
@@ -934,11 +942,16 @@ exports.sendQuery = async (req, res) => {
 
       if (superAdmin) {
         queriesToInsert.push(new Query(createQueryPayload(superAdmin._id, 'Super Admin', 'Super Admin')));
+        memberIds.push({ memberId: superadmin._id })
+
       }
       schoolStaffs.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.name, s.employeeRole))));
       teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
       students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.studentProfile.fullname, 'Student'))));
       parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id, p.parentProfile.fatherName ? p.parentProfile.fatherName : p.parentProfile.motherName, 'Parent'))));
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the Super Admin Staff.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {

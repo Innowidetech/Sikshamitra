@@ -301,15 +301,15 @@ exports.initSocket = (server) => {
       });
     });
 
-    // socket.on('disconnect', () => {
-    //   if (userSockets.has(socket.user.id)) {
-    //     userSockets.get(socket.user.id).delete(socket.id);
-    //     if (userSockets.get(socket.user.id).size === 0) {
-    //       userSockets.delete(socket.user.id);
-    //     }
-    //   }
-    //   console.log(`Socket disconnected.`);
-    // });
+    socket.on('disconnect', () => {
+      if (userSockets.has(socket.user.id)) {
+        userSockets.get(socket.user.id).delete(socket.id);
+        if (userSockets.get(socket.user.id).size === 0) {
+          userSockets.delete(socket.user.id);
+        }
+      }
+      console.log(`Socket disconnected.`);
+    });
 
   });
 };
