@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAims,
   deleteAim,
   createAim,
+  updateAim, // <-- ✅ ADD THIS
   fetchSyllabus,
   fetchExams,
+  createOrUpdateSyllabus,
 } from "../../redux/curriculum";
+import html2pdf from "html2pdf.js";
 import { Trash2, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,66 +22,56 @@ function Curriculam() {
   const { aims, syllabus, exams, loading, error } = useSelector(
     (state) => state.adminCurriculum
   );
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSyllabusModalOpen, setIsSyllabusModalOpen] = useState(false);
+  const [isSyllabusFormOpen, setIsSyllabusFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState("add");
   const [isExamsModalOpen, setIsExamsModalOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [editingAim, setEditingAim] = useState(null);
+
+  const [selectedClass, setSelectedClass] = useState("1");
   const [selectedSection, setSelectedSection] = useState("");
   const [newAim, setNewAim] = useState({ title: "", description: "" });
+
+  const [syllabusForm, setSyllabusForm] = useState({
+    className: "1",
+    subject: "",
+    description: "",
+    file: null,
+  });
+
+  const staticClasses = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
+
+  const availableClasses = Array.from(
+    new Set((exams?.examTimeTables || []).map((e) => e.class))
+  );
 
   useEffect(() => {
     dispatch(fetchAims());
   }, [dispatch]);
 
-  const availableClasses = [
-    ...new Set((syllabus?.syllabus || []).map((item) => item.class)),
-  ].sort();
-  const availableSections = [
-    ...new Set(
-      (syllabus?.syllabus || [])
-        .filter((item) => item.class === selectedClass)
-        .map((item) => item.section)
-    ),
-  ].sort();
-
   useEffect(() => {
-    if (availableClasses.length > 0 && !selectedClass) {
-      setSelectedClass(availableClasses[0]);
-    }
-  }, [availableClasses]);
+    dispatch(fetchSyllabus(selectedClass));
+  }, [dispatch, selectedClass]);
 
-  useEffect(() => {
-    if (availableSections.length > 0 && !selectedSection) {
-      setSelectedSection(availableSections[0]);
-    }
-  }, [selectedClass, availableSections]);
-
-  const handleSyllabusClick = async () => {
-    try {
-      await dispatch(fetchSyllabus()).unwrap();
-      setIsSyllabusModalOpen(true);
-    } catch (error) {
-      toast.error(error.message || "Failed to fetch syllabus");
-    }
+  const handleClassChange = (e) => {
+    setSelectedClass(e.target.value);
+    setSelectedSection(""); // Reset section when class changes
   };
 
-  const handleExamsClick = async () => {
+  const handleDownloadSyllabus = async (url) => {
     try {
-      await dispatch(fetchExams()).unwrap();
-      setIsExamsModalOpen(true);
-    } catch (error) {
-      toast.error(error.message || "Failed to fetch exams");
-    }
-  };
-
-  const handleDelete = async (aimId) => {
-    if (window.confirm("Are you sure you want to delete this aim?")) {
-      try {
-        await dispatch(deleteAim(aimId)).unwrap();
-        toast.success("Aim deleted successfully");
-      } catch (error) {
-        toast.error(error.message || "Failed to delete aim");
-      }
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "syllabus.pdf";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      toast.error("Download failed");
     }
   };
 
@@ -85,220 +79,190 @@ function Curriculam() {
     e.preventDefault();
     try {
       await dispatch(createAim(newAim)).unwrap();
-      toast.success("Aim created successfully");
-      setIsModalOpen(false);
+      toast.success("Aim added");
       setNewAim({ title: "", description: "" });
-    } catch (error) {
-      toast.error(error.message || "Failed to create");
+      setIsModalOpen(false);
+    } catch (err) {
+      toast.error(err.message || "Failed");
     }
   };
 
-  const handleClassChange = (e) => {
-    const newClass = e.target.value;
-    setSelectedClass(newClass);
-    setSelectedSection("");
+  const handleDelete = async (id) => {
+    if (window.confirm("Delete this aim?")) {
+      try {
+        await dispatch(deleteAim(id)).unwrap();
+        toast.success("Deleted successfully");
+      } catch (err) {
+        toast.error(err.message || "Failed");
+      }
+    }
+  };
+
+  const handleSyllabusClick = async () => {
+    try {
+      await dispatch(fetchSyllabus(selectedClass)).unwrap();
+      setIsSyllabusModalOpen(true);
+    } catch (err) {
+      toast.error(err.message || "Failed to load syllabus");
+    }
+  };
+
+  const handleExamsClick = async () => {
+    try {
+      await dispatch(fetchExams()).unwrap();
+      setIsExamsModalOpen(true);
+    } catch (err) {
+      toast.error(err.message || "Failed to load exams");
+    }
   };
 
   const filteredSyllabus =
-    syllabus?.syllabus?.filter(
-      (item) =>
-        item.class === selectedClass &&
-        (selectedSection ? item.section === selectedSection : true)
-    ) || [];
+    syllabus?.syllabus?.filter((s) => s.class === selectedClass) || [];
 
   const filteredExams =
-    exams?.exams?.filter(
-      (item) =>
-        item.class === selectedClass &&
-        (selectedSection ? item.section === selectedSection : true)
+    exams?.exam?.filter(
+      (et) =>
+        String(et.class) === String(selectedClass) &&
+        (!selectedSection || et.section === selectedSection)
     ) || [];
 
-  const handleDownloadSyllabus = async (url) => {
+  const openAddSyllabus = () => {
+    setFormMode("add");
+    setSyllabusForm({
+      className: selectedClass,
+      subject: "",
+      description: "",
+      file: null,
+    });
+    setIsSyllabusFormOpen(true);
+  };
+
+  const handleSyllabusSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("className", syllabusForm.className);
+    formData.append("subject", syllabusForm.subject);
+    formData.append("description", syllabusForm.description);
+    if (syllabusForm.file) {
+      formData.append("file", syllabusForm.file);
+    }
+
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch PDF");
-      }
-      const blob = await response.blob();
-      const objectURL = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = objectURL;
-      link.download = "syllabus.pdf";
-      link.click();
-      URL.revokeObjectURL(objectURL);
-    } catch (error) {
-      toast.error("Error downloading syllabus: " + error.message);
+      await dispatch(createOrUpdateSyllabus(formData)).unwrap();
+      toast.success("Syllabus saved");
+      setIsSyllabusFormOpen(false);
+      dispatch(fetchSyllabus(selectedClass));
+    } catch (err) {
+      toast.error(err.message || "Failed to save");
     }
   };
 
-  const SyllabusModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl relative mx-6">
-        <button
-          onClick={() => setIsSyllabusModalOpen(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X size={24} />
-        </button>
-        <h2 className="text-2xl font-semibold mb-4 text-[#146192] text-center">
-          Syllabus
-        </h2>
-        <div className="mb-4 flex gap-4">
-          <div>
-            <label className="mr-2">Class:</label>
-            <select
-              value={selectedClass}
-              onChange={handleClassChange}
-              className="border rounded px-2 py-1"
-            >
-              {availableClasses
-                .slice()
-                .sort((a, b) => a - b)
-                .map((classNum) => (
-                  <option key={classNum} value={classNum}>
-                    {classNum}
-                  </option>
-                ))}
-            </select>
+
+
+
+  const ExamsModal = () => {
+    const exams2 = useSelector((state) => state.adminCurriculum.exams?.exams || []);
+    const [filterClass, setFilterClass] = useState("");
+    const contentRef = useRef(); // For PDF
+
+    const uniqueClasses = [...new Set(exams2.map((e) => e.class))];
+
+    const filteredExams = exams2.filter((exam) => {
+      return filterClass ? String(exam.class) === String(filterClass) : true;
+    });
+
+    const handleDownload = () => {
+      const element = contentRef.current;
+      const opt = {
+        margin: 0.5,
+        filename: `exam_timetable_class_${filterClass || "all"}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      };
+
+      html2pdf().set(opt).from(element).save();
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+          <button
+            onClick={() => setIsExamsModalOpen(false)}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-semibold text-[#146192]">Exam Timetable</h2>
           </div>
-          <div>
-            <label className="mr-2">Section:</label>
+
+          <div className="mb-6">
+            <label className="mr-2 text-sm">Class - </label>
             <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="border rounded px-2 py-1"
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="border px-3 py-1 rounded text-sm"
             >
-              <option value="">All Sections</option>
-              {availableSections.map((section) => (
-                <option key={section} value={section}>
-                  {section}
+              <option value="">Select</option>
+              {uniqueClasses.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
                 </option>
               ))}
             </select>
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border p-2">Class</th>
-                <th className="border p-2">Section</th>
-                <th className="border p-2">Syllabus Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSyllabus.map((item) => (
-                <tr key={item._id}>
-                  <td className="border p-2 text-center">{item.class}</td>
-                  <td className="border p-2 text-center">{item.section}</td>
-                  <td className="border p-2 text-center">
-                    <button
-                      onClick={() => handleDownloadSyllabus(item.syllabus)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Download Syllabus
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
 
-  const ExamsModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
-        <button
-          onClick={() => setIsExamsModalOpen(false)}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X size={24} />
-        </button>
-        <h2 className="text-2xl text-center font-semibold mb-4 text-[#146192]">
-          Timetable
-        </h2>
-        <div className="mb-4 flex gap-4">
-          <div>
-            <label className="mr-2">Class:</label>
-            <select
-              value={selectedClass}
-              onChange={handleClassChange}
-              className="border rounded px-2 py-1"
+          {/* PDF Content */}
+          <div ref={contentRef}>
+            {filteredExams.length === 0 ? (
+              <p className="text-center text-gray-500">No exams found for selected class.</p>
+            ) : (
+              filteredExams.map((schedule) => (
+                <div key={schedule._id} className="mb-6 border border-gray-300 rounded-lg">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 text-left">
+                        <th className="border px-4 py-2">DATE</th>
+                        <th className="border px-4 py-2">SUBJECT NAME</th>
+                        <th className="border px-4 py-2">TIMINGS</th>
+                        <th className="border px-4 py-2">SYLLABUS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {schedule.exam.map((e) => (
+                        <tr key={e._id}>
+                          <td className="border px-4 py-2">
+                            {new Date(e.date).toLocaleDateString()}
+                          </td>
+                          <td className="border px-4 py-2">{e.subject}</td>
+                          <td className="border px-4 py-2">10:00 am - 1:00 pm</td>
+                          <td className="border px-4 py-2">{e.syllabus}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Download Button */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={handleDownload}
+              className="bg-[#146192] hover:bg-[#0f4c7a] text-white px-6 py-2 rounded-md"
             >
-              {availableClasses
-                .slice()
-                .sort((a, b) => a - b)
-                .map((classNum) => (
-                  <option key={classNum} value={classNum}>
-                    {classNum}
-                  </option>
-                ))}
-            </select>
+              Download ⤓
+            </button>
           </div>
-          <div>
-            <label className="mr-2">Section:</label>
-<select
-  value={selectedSection}
-  onChange={(e) => setSelectedSection(e.target.value)}
-  className="border rounded px-2 py-1"
->
-  <option value="">All Sections</option>
-  {[
-    ...new Set(
-      (syllabus?.syllabus || [])
-        .filter((item) => String(item.class).trim() === String(selectedClass).trim())
-        .map((item) => item.section)
-    ),
-  ]
-    .sort()
-    .map((section) => (
-      <option key={section} value={section}>
-        {section}
-      </option>
-    ))}
-</select>
-
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          {filteredExams.map((examSchedule) => (
-            <div key={examSchedule._id} className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">
-                {examSchedule.examType}
-              </h3>
-              <p className="mb-2">Duration: {examSchedule.examDuration}</p>
-              <table className="w-full border-collapse border">
-                <thead>
-                  <tr className="bg-[#FFC107]">
-                    <th className="border p-2">Date</th>
-                    <th className="border p-2">Subject</th>
-                    <th className="border p-2">Subject Code</th>
-                    <th className="border p-2">Syllabus</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {examSchedule.exam.map((exam) => (
-                    <tr key={exam._id} className="bg-[#E3F2FD]">
-                      <td className="border p-2 text-center">
-                        {new Date(exam.date).toLocaleDateString()}
-                      </td>
-                      <td className="border p-2 text-center">{exam.subject}</td>
-                      <td className="border p-2 text-center">{exam.subjectCode}</td>
-                      <td className="border p-2 text-center">{exam.syllabus}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
         </div>
       </div>
-    </div>
-  );
-  
+    );
+  };
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
@@ -317,26 +281,51 @@ function Curriculam() {
         </div>
         <button
           className="bg-[#146192] text-white px-6 py-2 rounded-md hover:bg-[#0f4c7a] transition-colors"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setIsModalOpen(true);
+            setEditMode(false);
+            setNewAim({ title: "", description: "" });
+          }}
         >
           Create
         </button>
       </div>
 
-      {/* Create Modal */}
-      {isModalOpen && (
+      {(isModalOpen || editMode) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsModalOpen(false);
+                setEditMode(false);
+                setNewAim({ title: "", description: "" });
+              }}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
               <X size={24} />
             </button>
             <h2 className="text-2xl font-semibold mb-4 text-[#146192]">
-              Create New Aim
+              {editMode ? "Edit Aim" : "Create New Aim"}
             </h2>
-            <form onSubmit={handleCreate}>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  if (editMode) {
+                    await dispatch(updateAim({ id: editingAim._id, updatedData: newAim })).unwrap();
+                    toast.success("Aim updated successfully");
+                    setEditMode(false);
+                  } else {
+                    await dispatch(createAim(newAim)).unwrap();
+                    toast.success("Aim created successfully");
+                    setIsModalOpen(false);
+                  }
+                  setNewAim({ title: "", description: "" });
+                } catch (err) {
+                  toast.error(err.message || "Operation failed");
+                }
+              }}
+            >
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">
                   Title
@@ -368,15 +357,14 @@ function Curriculam() {
                 type="submit"
                 className="w-full bg-[#146192] text-white py-2 rounded-md hover:bg-[#0f4c7a] transition-colors"
               >
-                Create
+                {editMode ? "Update" : "Create"}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modals */}
-      {isSyllabusModalOpen && <SyllabusModal />}
+
       {isExamsModalOpen && <ExamsModal />}
 
       {loading ? (
@@ -402,8 +390,20 @@ function Curriculam() {
                   <button
                     onClick={() => handleDelete(aim._id)}
                     className="absolute top-4 right-4 text-red-300 hover:text-red-500 transition-colors"
+                    title="Delete"
                   >
                     <Trash2 size={20} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditMode(true);
+                      setEditingAim(aim);
+                      setNewAim({ title: aim.title, description: aim.description });
+                    }}
+                    className="absolute top-4 left-4 text-blue-200 hover:text-white transition-colors"
+                    title="Edit"
+                  >
+                    ✏️
                   </button>
                   <h3 className="text-xl font-semibold text-white text-center mb-4 border-b-2 pb-2">
                     {aim.title}
@@ -422,10 +422,10 @@ function Curriculam() {
                 className="w-full h-auto rounded-lg"
               />
               <button
-                onClick={handleSyllabusClick}
-                className="absolute bg-transparent text-white border border-white rounded-full px-6 py-2 text-lg font-medium hover:bg-white hover:text-[#146192] transition-colors"
+                className="absolute bottom-20 px-6 py-2 border border-b-2  text-[#146192] rounded-3xl text-lg font-bold"
+                onClick={() => navigate('/admin/curriculum/syllabus')}
               >
-                Syllabus
+                View Syllabus
               </button>
             </div>
 
@@ -436,17 +436,17 @@ function Curriculam() {
                 className="w-full h-auto rounded-lg"
               />
               <button
-                onClick={handleExamsClick}
-                className="absolute bg-[#233255] text-white rounded-full px-6 py-2 text-lg font-medium hover:bg-white hover:text-[#233255] transition-colors"
+                className="absolute bottom-20 px-6 py-2 border border-b-2  text-[#146192] rounded-3xl text-lg font-bold"
+                onClick={() => navigate("/admin/curriculum/exams")}
               >
-                Exams
+                View Exam Timetable
               </button>
             </div>
           </div>
         </>
       )}
     </>
-  );
-}
+  )
+};
 
 export default Curriculam;

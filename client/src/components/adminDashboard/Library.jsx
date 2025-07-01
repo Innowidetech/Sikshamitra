@@ -1,709 +1,406 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  fetchLibrary,
-  fetchAllBooks,
-  addBook,
-  issueBook,
-  deleteBook,
-  setSearchQuery,
-  resetStatus,
+  fetchLibraryRequests,
+  updateBookRequest,
+  clearUpdateStatus,
 } from "../../redux/librarySlice";
-import {
-  Search,
-  BookMinus,
-  BookPlus,
-  X,
-  Upload,
-  Trash2,
-  Grid as GridIcon,
-} from "lucide-react";
 
 function Library() {
   const dispatch = useDispatch();
-  const {
-    filteredBooks,
-    allBooks = [],
-    loading,
-    error,
-    addBookStatus,
-    issueBookStatus,
-    deleteBookStatus,
-  } = useSelector((state) => state.library);
+  const { requests, loading, error, updateStatus, updateError } = useSelector(
+    (state) => state.library
+  );
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAllBooks, setShowAllBooks] = useState(false);
-  const [showIssueBook, setShowIssueBook] = useState(false);
-  const [showAddBook, setShowAddBook] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  const [addBookForm, setAddBookForm] = useState({
-    bookName: "",
-    author: "",
-    subject: "",
-    edition: "",
-    price: "",
-    pages: "",
-    photo: null,
-  });
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [selectedBookId, setSelectedBookId] = useState("");
+  const [selectedRegistrationId, setSelectedRegistrationId] = useState("");
 
-  const [issueBookForm, setIssueBookForm] = useState({
-    bookId: "",
-    studentRegNo: "",
-    dueDate: "",
-  });
+  // Holds local inputs for updating status, dates, fine per request ID
+  const [statusInputs, setStatusInputs] = useState({});
+
+  // Toast visibility
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchLibrary());
-    dispatch(fetchAllBooks());
+    dispatch(fetchLibraryRequests());
   }, [dispatch]);
 
   useEffect(() => {
-    if (addBookStatus === "succeeded") {
-      setShowAddBook(false);
-      dispatch(fetchAllBooks());
-      setAddBookForm({
-        bookName: "",
-        author: "",
-        subject: "",
-        edition: "",
-        price: "",
-        pages: "",
-        photo: null,
-      });
-      dispatch(resetStatus());
-    }
-  }, [addBookStatus, dispatch]);
+    setCurrentPage(1);
+  }, [selectedClass, selectedSection, selectedBookId, selectedRegistrationId]);
 
+  // Show toast when updateStatus changes to success
   useEffect(() => {
-    if (issueBookStatus === "succeeded") {
-      setShowIssueBook(false);
-      dispatch(fetchLibrary());
-      setIssueBookForm({
-        bookId: "",
-        studentRegNo: "",
-        dueDate: "",
-      });
-      dispatch(resetStatus());
+    if (updateStatus === "succeeded") {
+      setShowToast(true);
+      const timer = setTimeout(() => {
+        setShowToast(false);
+        dispatch(clearUpdateStatus());
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  }, [issueBookStatus, dispatch]);
+  }, [updateStatus, dispatch]);
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    dispatch(setSearchQuery(value));
-  };
+  const classes = useMemo(
+    () =>
+      [...new Set(requests.map((r) => r.requestedBy.studentProfile.class))].sort(),
+    [requests]
+  );
+  const sections = useMemo(
+    () =>
+      [...new Set(requests.map((r) => r.requestedBy.studentProfile.section))].sort(),
+    [requests]
+  );
+  const bookIds = useMemo(
+    () => [...new Set(requests.map((r) => r.book._id))].sort(),
+    [requests]
+  );
+  const registrationIds = useMemo(
+    () =>
+      [...new Set(requests.map((r) => r.requestedBy.studentProfile.registrationNumber))].sort(),
+    [requests]
+  );
 
-  const handleAddBookSubmit = async (e) => {
-    e.preventDefault();
-    dispatch(addBook(addBookForm));
-  };
-
-  const handleIssueBookSubmit = async (e) => {
-    e.preventDefault();
-    const selectedBook = allBooks.find(
-      (book) => book._id === issueBookForm.bookId
-    );
-    if (selectedBook) {
-      dispatch(
-        issueBook({
-          bookId: selectedBook._id,
-          studentRegNo: issueBookForm.studentRegNo,
-          dueDate: issueBookForm.dueDate,
-        })
+  const filteredRequests = useMemo(() => {
+    return requests.filter((req) => {
+      return (
+        (selectedClass === "" || req.requestedBy.studentProfile.class === selectedClass) &&
+        (selectedSection === "" || req.requestedBy.studentProfile.section === selectedSection) &&
+        (selectedBookId === "" || req.book._id === selectedBookId) &&
+        (selectedRegistrationId === "" ||
+          req.requestedBy.studentProfile.registrationNumber === selectedRegistrationId)
       );
+    });
+  }, [requests, selectedClass, selectedSection, selectedBookId, selectedRegistrationId]);
+
+  const paginatedData = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+
+  // Handle input changes for status, dueOn, returnedOn, fine fields
+  const handleStatusChange = (requestId, field, value) => {
+    setStatusInputs((prev) => ({
+      ...prev,
+      [requestId]: {
+        ...prev[requestId],
+        [field]: value,
+      },
+    }));
+
+    // Auto update immediately on input change, except if status is empty
+    if (field === "status" && value === "") {
+      // Do nothing if status is cleared
+      return;
     }
+
+    // Prepare update payload from current and previous data
+    const prevInput = statusInputs[requestId] || {};
+    const payload = {
+      requestId,
+      status: field === "status" ? value : prevInput.status || "",
+      dueOn: field === "dueOn" ? value : prevInput.dueOn || null,
+      returnedOn: field === "returnedOn" ? value : prevInput.returnedOn || null,
+      fine:
+        field === "fine"
+          ? Number(value)
+          : prevInput.fine
+          ? Number(prevInput.fine)
+          : 0,
+    };
+
+    // Only dispatch if status is present (mandatory)
+    if (!payload.status) return;
+
+    dispatch(updateBookRequest(payload));
   };
 
-  const handleDeleteBook = async (bookId) => {
-    if (window.confirm("Are you sure you want to delete this book?")) {
-      dispatch(deleteBook(bookId));
-    }
-  };
-
-  if (error) {
-    return <div className="text-red-500 text-center py-4">Error: {error}</div>;
-  }
+  if (loading) return <p className="text-center">Loading...</p>;
+  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
 
   return (
-    <>
-      <div className="flex justify-between items-center mx-8 py-10">
-        <div className="inline-block">
-          <h1 className="text-xl font-light text-black xl:text-[38px]">
-            Library
-          </h1>
-          <hr className="border-t-2 border-[#146192] mt-1" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xs lg:text-lg">Home</span>
-            {" > "}
-            <span className="xl:text-[17px] text-xs md:text-lg font-medium text-[#146192]">
-              Library's data
-            </span>
-          </h1>
-        </div>
-        <div className="grid md:flex gap-6">
-          <button
-            onClick={() => setShowAllBooks(true)}
-            className="bg-[#146192] text-white text-xs md:text-lg lg:px-4 px-1 py-2 rounded-md flex items-center justify-center gap-2 hover:bg-[#0f4c7a] transition-colors"
-          >
-            <BookMinus className="h-4 w-4" />
-            All Books
+    <div className="p-6">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <select
+          value={selectedClass}
+          onChange={(e) => setSelectedClass(e.target.value)}
+          className="border rounded px-4 py-2 text-sm bg-white shadow"
+        >
+          <option value="">Class</option>
+          {classes.map((cls) => (
+            <option key={cls} value={cls}>
+              {cls}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedSection}
+          onChange={(e) => setSelectedSection(e.target.value)}
+          className="border rounded px-4 py-2 text-sm bg-white shadow"
+        >
+          <option value="">Section</option>
+          {sections.map((sec) => (
+            <option key={sec} value={sec}>
+              {sec}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedBookId}
+          onChange={(e) => setSelectedBookId(e.target.value)}
+          className="border rounded px-4 py-2 text-sm bg-white shadow"
+        >
+          <option value="">Book ID</option>
+          {bookIds.map((bid) => (
+            <option key={bid} value={bid}>
+              {bid}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedRegistrationId}
+          onChange={(e) => setSelectedRegistrationId(e.target.value)}
+          className="border rounded px-4 py-2 text-sm bg-white shadow"
+        >
+          <option value="">Registration ID</option>
+          {registrationIds.map((reg) => (
+            <option key={reg} value={reg}>
+              {reg}
+            </option>
+          ))}
+        </select>
+
+        <div className="ml-auto flex items-center space-x-4">
+          <button className="flex items-center space-x-1 text-sm text-blue-600">
+            <span>📚</span>
+            <span>All Books</span>
           </button>
-          <button
-            onClick={() => setShowAddBook(true)}
-            className="bg-[#146192] text-white text-xs md:text-lg md:px-4 px-1 py-2 rounded-md flex items-center gap-2 hover:bg-[#0f4c7a] transition-colors"
-          >
-            <BookPlus className="h-4 w-4" />
-            Add Books
+          <button className="flex items-center space-x-1 text-sm text-blue-600">
+            <span>➕</span>
+            <span>Add Books</span>
           </button>
         </div>
       </div>
 
-      <div className="mx-8 mb-6 flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search by Book Name, Student Name..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full px-4 py-2 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#146192]"
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-        </div>
+      {/* Table */}
+      <h2 className="text-lg font-semibold mb-4">Issued Books Data</h2>
+      <div className="overflow-auto">
+        <table className="w-full border text-sm text-left">
+          <thead className="bg-gray-100">
+            <tr>
+              {[
+                "S.No",
+                "Book name (Book ID)",
+                "Student Name (Registration No.)",
+                "Class",
+                "Sec",
+                "Issue Date / Return on date",
+                "Due Date",
+                "Contact Info (Email / Phone)",
+                "Fine amt",
+                "Status",
+              ].map((head) => (
+                <th key={head} className="px-4 py-2 border">
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedData.length === 0 && (
+              <tr>
+                <td colSpan={10} className="text-center p-4">
+                  No data found.
+                </td>
+              </tr>
+            )}
+            {paginatedData.map((req, idx) => {
+              const input = statusInputs[req._id] || {};
+              return (
+                <tr key={req._id} className="border-t">
+                  <td className="px-4 py-2 border">
+                    {(currentPage - 1) * itemsPerPage + idx + 1}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.book.bookName} ({req.book._id})
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.requestedBy.studentProfile.fullname} (
+                    {req.requestedBy.studentProfile.registrationNumber})
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.requestedBy.studentProfile.class}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.requestedBy.studentProfile.section}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.borrowedOn
+                      ? new Date(req.borrowedOn).toLocaleDateString()
+                      : "-"}{" "}
+                    <br />
+                    {req.returnedOn
+                      ? new Date(req.returnedOn).toLocaleDateString()
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {req.dueOn ? new Date(req.dueOn).toLocaleDateString() : "-"}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    <div>{req.parentInfo.parentEmail || "-"}</div>
+                    <div>
+                      {req.parentInfo.fatherPhoneNumber ||
+                        req.parentInfo.motherPhoneNumber ||
+                        "-"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 border">₹{req.fine || 0}</td>
+                  <td className="px-4 py-2 border">
+                    {/* Status select */}
+                    <select
+                      value={input.status ?? req.status ?? ""}
+                      onChange={(e) =>
+                        handleStatusChange(req._id, "status", e.target.value)
+                      }
+                      className="w-full mb-1 text-sm border rounded"
+                    >
+                      <option value="">Select status</option>
+                      <option value="requested">Requested</option>
+                      <option value="accepted">Accepted</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="issued">Issued</option>
+                      <option value="returned">Returned</option>
+                    </select>
+
+                    {/* Conditional inputs based on status */}
+                    {(input.status === "issued" || req.status === "issued") && (
+                      <input
+                        type="date"
+                        className="w-full mb-1 text-sm border rounded"
+                        value={
+                          input.dueOn || (req.dueOn ? req.dueOn.slice(0, 10) : "")
+                        }
+                        onChange={(e) =>
+                          handleStatusChange(req._id, "dueOn", e.target.value)
+                        }
+                        placeholder="Due Date"
+                      />
+                    )}
+
+                    {(input.status === "returned" || req.status === "returned") && (
+                      <>
+                        <input
+                          type="date"
+                          className="w-full mb-1 text-sm border rounded"
+                          value={
+                            input.returnedOn ||
+                            (req.returnedOn ? req.returnedOn.slice(0, 10) : "")
+                          }
+                          onChange={(e) =>
+                            handleStatusChange(req._id, "returnedOn", e.target.value)
+                          }
+                          placeholder="Returned On"
+                        />
+                        <input
+                          type="date"
+                          className="w-full mb-1 text-sm border rounded"
+                          value={
+                            input.dueOn || (req.dueOn ? req.dueOn.slice(0, 10) : "")
+                          }
+                          onChange={(e) =>
+                            handleStatusChange(req._id, "dueOn", e.target.value)
+                          }
+                          placeholder="Due Date"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-full mb-1 text-sm border rounded"
+                          value={input.fine ?? req.fine ?? 0}
+                          onChange={(e) =>
+                            handleStatusChange(req._id, "fine", e.target.value)
+                          }
+                          placeholder="Fine Amount"
+                        />
+                      </>
+                    )}
+
+                    {/* Removed Update button as per request */}
+
+                    {updateError && (
+                      <p className="text-xs text-red-500 mt-1">{updateError}</p>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center items-center space-x-2 mt-6">
         <button
-          onClick={() => setShowIssueBook(true)}
-          className="bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-[#0f4c7a] transition-colors"
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="text-sm text-gray-500"
         >
-          Issue Book
+          Previous
+        </button>
+        {[...Array(totalPages)].map((_, idx) => (
+          <button
+            key={idx + 1}
+            onClick={() => setCurrentPage(idx + 1)}
+            className={`w-8 h-8 text-sm border rounded ${
+              currentPage === idx + 1
+                ? "bg-blue-600 text-white"
+                : "bg-white text-gray-700"
+            }`}
+          >
+            {idx + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="text-sm text-gray-500"
+        >
+          Next
         </button>
       </div>
 
-      {showAllBooks && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl w-full max-w-5xl overflow-y-auto">
-            <div className="p-6 border-b">
-              <div className="flex justify-center items-center relative w-full">
-                <h2 className="text-2xl font-semibold text-[#146192]">
-                  All Books
-                </h2>
-                <button
-                  onClick={() => setShowAllBooks(false)}
-                  className="absolute right-0 text-gray-500 hover:text-gray-700"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-4">Loading books...</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {allBooks.map((book) => (
-                    <div
-                      key={book._id}
-                      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow"
-                    >
-                      <div className="flex p-4">
-                        {/* Left: Image */}
-                        <div className="w-2/3 h-full flex justify-center items-center">
-                          <img
-                            src={
-                              book.photo ||
-                              "https://via.placeholder.com/150x200?text=No+Cover"
-                            }
-                            alt={book.bookName}
-                            className="object-cover rounded-lg h-full"
-                          />
-                        </div>
-
-                        {/* Middle: Book Details */}
-                        <div className="w-2/3 px-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="text-sm">Book Name:</div>
-                            <div className="text-sm">{book.bookName}</div>
-
-                            <div className="text-sm">Author:</div>
-                            <div className="text-sm text-gray-600">
-                              {book.author}
-                            </div>
-
-                            <div className="text-sm">Subject:</div>
-                            <div className="text-sm text-gray-600">
-                              {book.subject}
-                            </div>
-
-                            <div className="text-sm">Edition:</div>
-                            <div className="text-sm text-gray-600">
-                              {book.edition}
-                            </div>
-
-                            <div className="text-sm">Price:</div>
-                            <div className="text-sm text-[#146192]">
-                              ₹{book.price}
-                            </div>
-
-                            <div className="text-sm">Pages:</div>
-                            <div className="text-sm text-gray-600">
-                              {book.pages}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right: Availability & Delete Button */}
-                        <div className="w-1/3 flex flex-col justify-between">
-                          {/* Availability */}
-                          <div className="flex items-center gap-2 mb-4">
-                            <span
-                              className={`px-2 py-0.5 text-sm rounded-full ${
-                                book.availability
-                                  ? " border border-green-400 text-green-800"
-                                  : "border border-red-500 text-red-800"
-                              }`}
-                            >
-                              {book.availability
-                                ? "Available"
-                                : "Not Available"}
-                            </span>
-                          </div>
-
-                          {/* Delete Button */}
-                          <button
-                            onClick={() => handleDeleteBook(book._id)}
-                            className="mt-auto w-full bg-red-500 text-white text-sm py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
-                          >
-                            DELETE
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Toast notification */}
+      {showToast && (
+        <div
+          className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg animate-fade-in-out"
+          style={{ zIndex: 1000 }}
+        >
+          Update successful!
         </div>
       )}
 
-      {showAddBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-md">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-[#146192]">
-                Add New Book
-              </h2>
-              <button
-                onClick={() => setShowAddBook(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <form onSubmit={handleAddBookSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Book Name
-                  </label>
-                  <input
-                    type="text"
-                    value={addBookForm.bookName}
-                    onChange={(e) =>
-                      setAddBookForm({
-                        ...addBookForm,
-                        bookName: e.target.value,
-                      })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Author
-                  </label>
-                  <input
-                    type="text"
-                    value={addBookForm.author}
-                    onChange={(e) =>
-                      setAddBookForm({ ...addBookForm, author: e.target.value })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    value={addBookForm.subject}
-                    onChange={(e) =>
-                      setAddBookForm({
-                        ...addBookForm,
-                        subject: e.target.value,
-                      })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Edition
-                  </label>
-                  <input
-                    type="text"
-                    value={addBookForm.edition}
-                    onChange={(e) =>
-                      setAddBookForm({
-                        ...addBookForm,
-                        edition: e.target.value,
-                      })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Price
-                  </label>
-                  <input
-                    type="number"
-                    value={addBookForm.price}
-                    onChange={(e) =>
-                      setAddBookForm({ ...addBookForm, price: e.target.value })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Pages
-                  </label>
-                  <input
-                    type="number"
-                    value={addBookForm.pages}
-                    onChange={(e) =>
-                      setAddBookForm({ ...addBookForm, pages: e.target.value })
-                    }
-                    className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Photo
-                  </label>
-                  <div className="mt-1 flex items-center">
-                    <input
-                      type="file"
-                      onChange={(e) =>
-                        setAddBookForm({
-                          ...addBookForm,
-                          photo: e.target.files[0],
-                        })
-                      }
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#146192] file:text-white hover:file:bg-[#0f4c7a]"
-                      accept="image/*"
-                      required
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-[#146192] text-white py-2 px-4 rounded-md hover:bg-[#0f4c7a] transition-colors flex items-center justify-center gap-2"
-                  disabled={addBookStatus === "loading"}
-                >
-                  <Upload className="h-4 w-4" />
-                  {addBookStatus === "loading" ? "Adding..." : "Add Book"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showIssueBook && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg w-full max-w-md">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-[#146192]">
-                Issue Book
-              </h2>
-              <button
-                onClick={() => setShowIssueBook(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <form onSubmit={handleIssueBookSubmit} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Book Name
-                </label>
-                <select
-                  value={issueBookForm.bookId}
-                  onChange={(e) =>
-                    setIssueBookForm({
-                      ...issueBookForm,
-                      bookId: e.target.value,
-                    })
-                  }
-                  className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                  required
-                >
-                  <option value="">Select a book</option>
-                  {allBooks.map((book) => (
-                    <option key={book._id} value={book._id}>
-                      {book.bookName} - {book.author}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Student Registration No.
-                </label>
-                <input
-                  type="text"
-                  value={issueBookForm.studentRegNo}
-                  onChange={(e) =>
-                    setIssueBookForm({
-                      ...issueBookForm,
-                      studentRegNo: e.target.value,
-                    })
-                  }
-                  className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  value={issueBookForm.dueDate}
-                  onChange={(e) =>
-                    setIssueBookForm({
-                      ...issueBookForm,
-                      dueDate: e.target.value,
-                    })
-                  }
-                  className="mt-1 p-2 border block w-full rounded-md border-gray-300 shadow-sm"
-                  required
-                  min={new Date().toISOString().split("T")[0]}
-                />
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#146192] text-white py-2 px-4 rounded-md hover:bg-[#0f4c7a] transition-colors"
-                  disabled={issueBookStatus === "loading"}
-                >
-                  {issueBookStatus === "loading" ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowIssueBook(false)}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="mx-8 mb-6 hidden lg:block">
-        <div className="bg-white rounded-lg overflow-hidden">
-          {loading ? (
-            <div className="p-4 text-center text-gray-600">Loading...</div>
-          ) : (
-            <table className="min-w-full divide-y border-2">
-              <thead style={{ fontFamily: "Poppins" }}>
-                <tr>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Book ID
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Issued By
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Student ID
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Student Name
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Book Name
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Class
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Section
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Issued Date
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Due Date
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192]">
-                    Return Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {!Array.isArray(filteredBooks) || filteredBooks.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-gray-500"
-                    >
-                      No library data available
-                    </td>
-                  </tr>
-                ) : (
-                  filteredBooks.map((book) => (
-                    <tr key={book._id} className="hover:bg-gray-50">
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book._id || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedBy || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedTo?.studentProfile?.registrationNumber ||
-                          "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedTo?.studentProfile?.fullname || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.bookName || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedTo?.studentProfile?.class || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedTo?.studentProfile?.section || "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.issuedOn
-                          ? new Date(book.issuedOn).toLocaleDateString()
-                          : "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm border-r">
-                        {book.dueDate
-                          ? new Date(book.dueDate).toLocaleDateString()
-                          : "N/A"}
-                      </td>
-                      <td className="px-2 py-2 text-sm">
-                        {book.returnedDate
-                          ? new Date(book.returnedDate).toLocaleDateString()
-                          : "N/A"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      <div className="mx-4 mb-6 lg:hidden shadow-lg">
-        {loading ? (
-          <div className="p-4 text-center text-gray-600">Loading...</div>
-        ) : (
-          <div className="space-y-6">
-            {!Array.isArray(filteredBooks) || filteredBooks.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                No library data available
-              </div>
-            ) : (
-              filteredBooks.map((book) => (
-                <div key={book._id} className="bg-white p-4 rounded-lg">
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="text-[#146192]">Book ID</div>
-                    <div className="text-center">-</div>
-                    <div className="text-xs text-right">
-                      {book._id || "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Issued By</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">{book.issuedBy || "N/A"}</div>
-
-                    <div className="text-[#146192]">Student ID</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.issuedTo?.studentProfile?.registrationNumber ||
-                        "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Student Name</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.issuedTo?.studentProfile?.fullname || "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Book Name</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">{book.bookName || "N/A"}</div>
-
-                    <div className="text-[#146192]">Class</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.issuedTo?.studentProfile?.class || "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Section</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.issuedTo?.studentProfile?.section || "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Issued Date</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.issuedOn
-                        ? new Date(book.issuedOn).toLocaleDateString()
-                        : "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Due Date</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.dueDate
-                        ? new Date(book.dueDate).toLocaleDateString()
-                        : "N/A"}
-                    </div>
-
-                    <div className="text-[#146192]">Return Date</div>
-                    <div className="text-center">-</div>
-                    <div className="text-right">
-                      {book.returnedDate
-                        ? new Date(book.returnedDate).toLocaleDateString()
-                        : "N/A"}
-                    </div>
-                  </div>
-                  <hr className="border mt-4 border-[#146192]" />
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
-    </>
+      <style>{`
+        @keyframes fade-in-out {
+          0% { opacity: 0; transform: translateY(10px); }
+          10% { opacity: 1; transform: translateY(0); }
+          90% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(10px); }
+        }
+        .animate-fade-in-out {
+          animation: fade-in-out 3s forwards;
+        }
+      `}</style>
+    </div>
   );
 }
 

@@ -4,7 +4,7 @@ import axios from 'axios';
 // Replace this with actual token management logic
 const getToken = () => localStorage.getItem('token');
 
-// Async thunk to fetch timetable (GET)
+// ✅ Async thunk to fetch timetable (GET)
 export const fetchLectureTimetable = createAsyncThunk(
   'lecture/fetchLectureTimetable',
   async (_, { rejectWithValue }) => {
@@ -17,7 +17,7 @@ export const fetchLectureTimetable = createAsyncThunk(
           },
         }
       );
-      return response.data; // API response contains teacherTimetable and classTimetable
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch timetable'
@@ -26,21 +26,21 @@ export const fetchLectureTimetable = createAsyncThunk(
   }
 );
 
-// Async thunk to create or update timetable (POST)
+// ✅ Async thunk to create/update timetable (POST)
 export const createOrUpdateLectureTimetable = createAsyncThunk(
   'lecture/createOrUpdateLectureTimetable',
   async (timetableData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        'https://sikshamitra.onrender.com/api/teacher/timetable', // POST request to create or update the timetable
-        timetableData, // This should contain the timetable data (e.g., day, timeSlots, etc.)
+        'https://sikshamitra.onrender.com/api/teacher/timetable',
+        timetableData,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
           },
         }
       );
-      return response.data; // API response with success or the updated timetable
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to create/update timetable'
@@ -49,90 +49,127 @@ export const createOrUpdateLectureTimetable = createAsyncThunk(
   }
 );
 
-// Async thunk to upload the timetable file (e.g., PDF)
-export const uploadLectureTimetableFile = createAsyncThunk(
-  'lecture/uploadLectureTimetableFile',
-  async (file, { rejectWithValue }) => {
+// ✅ Async thunk to create online lecture (POST)
+export const createOnlineLecture = createAsyncThunk(
+  'lecture/createOnlineLecture',
+  async (lectureData, { rejectWithValue }) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file); // Append the file to the form data
-
       const response = await axios.post(
-        'https://sikshamitra.onrender.com/api/teacher/upload-timetable', // API endpoint for file upload
-        formData,
+        'https://sikshamitra.onrender.com/api/teacher/onlineLectures',
+        lectureData,
         {
           headers: {
             Authorization: `Bearer ${getToken()}`,
-            'Content-Type': 'multipart/form-data', // This is important for file upload
           },
         }
       );
-      return response.data; // Response should contain success info or the uploaded file info
+      return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to upload timetable file'
+        error.response?.data?.message || 'Failed to create online lecture'
       );
     }
   }
 );
 
+// ✅ Async thunk to delete a timetable period (DELETE)
+export const deleteLecturePeriod = createAsyncThunk(
+  'lecture/deleteLecturePeriod',
+  async (periodId, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `https://sikshamitra.onrender.com/api/teacher/timetable/${periodId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        }
+      );
+      return { periodId, message: response.data?.message };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to delete timetable period'
+      );
+    }
+  }
+);
+
+// ✅ Initial State
 const lectureSlice = createSlice({
   name: 'lecture',
   initialState: {
     loading: false,
-    data: {}, // Holds the teacherTimetable and classTimetable
+    data: [], // assuming data is an array of periods
     error: null,
-    fileUpload: { loading: false, error: null, success: false }, // Track file upload state
+    onlineLectureStatus: {
+      loading: false,
+      success: false,
+      error: null,
+    },
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Handle fetching timetable (GET)
+      // Fetch timetable
       .addCase(fetchLectureTimetable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchLectureTimetable.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload; // Store fetched timetable data
+        state.data = action.payload;
       })
       .addCase(fetchLectureTimetable.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle creating/updating timetable (POST)
+
+      // Create/update timetable
       .addCase(createOrUpdateLectureTimetable.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createOrUpdateLectureTimetable.fulfilled, (state, action) => {
         state.loading = false;
-        // Update the timetable data with the new or updated timetable
-        state.data = action.payload; // Or handle based on the API response (e.g., show a success message)
+        state.data = action.payload;
       })
       .addCase(createOrUpdateLectureTimetable.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Handle uploading timetable file (file upload)
-      .addCase(uploadLectureTimetableFile.pending, (state) => {
-        state.fileUpload.loading = true;
-        state.fileUpload.error = null;
-        state.fileUpload.success = false;
+
+      // Create online lecture
+      .addCase(createOnlineLecture.pending, (state) => {
+        state.onlineLectureStatus.loading = true;
+        state.onlineLectureStatus.success = false;
+        state.onlineLectureStatus.error = null;
       })
-      .addCase(uploadLectureTimetableFile.fulfilled, (state, action) => {
-        state.fileUpload.loading = false;
-        state.fileUpload.success = true;
-        // Optionally, add uploaded file info to the state if needed
-        state.data.uploadedFile = action.payload; // Store uploaded file info if needed
+      .addCase(createOnlineLecture.fulfilled, (state) => {
+        state.onlineLectureStatus.loading = false;
+        state.onlineLectureStatus.success = true;
       })
-      .addCase(uploadLectureTimetableFile.rejected, (state, action) => {
-        state.fileUpload.loading = false;
-        state.fileUpload.error = action.payload;
+      .addCase(createOnlineLecture.rejected, (state, action) => {
+        state.onlineLectureStatus.loading = false;
+        state.onlineLectureStatus.error = action.payload;
+      })
+
+      // ✅ Delete timetable period
+      .addCase(deleteLecturePeriod.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteLecturePeriod.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedId = action.payload.periodId;
+        if (Array.isArray(state.data)) {
+          state.data = state.data.filter(period => period._id !== deletedId);
+        }
+      })
+      .addCase(deleteLecturePeriod.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
 export default lectureSlice.reducer;
-
-

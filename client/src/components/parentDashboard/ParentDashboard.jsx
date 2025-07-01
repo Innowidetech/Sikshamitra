@@ -12,14 +12,24 @@ function ParentDashboard() {
   const dispatch = useDispatch();
   const { parent, students, calendar, loading, error } = useSelector((state) => state.parent);
 
-  const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.studentId || null);
-  const [selectedStudentData, setSelectedStudentData] = useState(students[0] || null);
+  // Start with null, will set after students load
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [selectedStudentData, setSelectedStudentData] = useState(null);
 
   useEffect(() => {
     dispatch(fetchParentDetails());
     dispatch(fetchCalendar());
   }, [dispatch]);
 
+  // When students load, set the default selected student as the first student
+  useEffect(() => {
+    if (students.length > 0 && !selectedStudentId) {
+      setSelectedStudentId(students[0].studentId);
+      setSelectedStudentData(students[0]);
+    }
+  }, [students, selectedStudentId]);
+
+  // When selectedStudentId changes, update selectedStudentData
   useEffect(() => {
     if (selectedStudentId) {
       const studentData = students.find((student) => student.studentId === selectedStudentId);
@@ -54,7 +64,7 @@ function ParentDashboard() {
   };
 
   return (
-    <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56  mt-24">
+    <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56 mt-24">
       <Header />
 
       {/* Student selection dropdown */}
@@ -64,7 +74,7 @@ function ParentDashboard() {
         </label>
         <select
           id="student-dropdown"
-          value={selectedStudentId}
+          value={selectedStudentId || ''}
           onChange={handleStudentChange}
           className="px-4 py-2 rounded-lg w-full sm:w-48 bg-[#D8E7F5]"
         >
@@ -82,7 +92,9 @@ function ParentDashboard() {
         <div className="w-full md:w-1/2 space-y-6">
           {selectedStudentData && (
             <div className="border rounded-md shadow-lg p-5">
-              <h2 className="text-xl font-semibold mb-4">{selectedStudentData.student.studentProfile.fullname}'s Attendance</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                {selectedStudentData.student.studentProfile.fullname}&apos;s Attendance
+              </h2>
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Pie Chart */}
                 <div className="flex justify-center items-center sm:w-1/3">
@@ -135,7 +147,7 @@ function ParentDashboard() {
             <h2 className="text-xl font-semibold mb-4">Notices</h2>
             {selectedStudentData?.notices?.length > 0 ? (
               selectedStudentData.notices.map((notice, index) => {
-                const bgColors = ["bg-[#14619259]", "bg-[#FF9F1C80]", "bg-[#14619259]"];
+                const bgColors = ['bg-[#14619259]', 'bg-[#FF9F1C80]', 'bg-[#14619259]'];
                 const bgColor = bgColors[index % bgColors.length];
 
                 return (
@@ -167,9 +179,7 @@ function ParentDashboard() {
                   alt="Student"
                   className="w-24 h-24 md:w-32 md:h-32 rounded-full mb-4"
                 />
-                <h2 className="text-lg md:text-xl font-semibold">
-                  {selectedStudentData.student.studentProfile.fullname}
-                </h2>
+                <h2 className="text-lg md:text-xl font-semibold">{selectedStudentData.student.studentProfile.fullname}</h2>
                 <p className="text-sm text-gray-500">
                   {selectedStudentData.student.studentProfile.class} - {selectedStudentData.student.studentProfile.section}
                 </p>
@@ -205,13 +215,21 @@ function ParentDashboard() {
 
                   {/* Previous Education */}
                   <li>
-                    <span className="font-bold text-lg underline text-[#146192] block mt-4">Previous Education:</span>
+                    <span className="font-bold text-lg underline text-[#146192] mt-4 block">
+                      Previous Education:
+                    </span>
                     <div>
                       {selectedStudentData.student.studentProfile.previousEducation.length > 0 ? (
                         selectedStudentData.student.studentProfile.previousEducation.map((edu) => (
                           <div key={edu._id} className="mt-2">
-                            <p className="text-[#146192]">School Name: {edu.schoolName || "N/A"}</p>
-                            <p className="text-[#146192]">Duration: {edu.duration || "N/A"}</p>
+                            <div className="flex justify-between text-[#146192]">
+                              <span>School Name:</span>
+                              <span className='text-black'>{edu.schoolName || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between text-[#146192]">
+                              <span>Duration:</span>
+                              <span className='text-black'>{edu.duration || 'N/A'}</span>
+                            </div>
                           </div>
                         ))
                       ) : (
@@ -219,6 +237,7 @@ function ParentDashboard() {
                       )}
                     </div>
                   </li>
+
 
                   {/* Student Details */}
                   <li>
@@ -230,8 +249,9 @@ function ParentDashboard() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[#146192]">Joining Date:</span>
-                        <span>{selectedStudentData.student.studentProfile.joiningDate}</span>
+                        <span>{new Date(selectedStudentData.student.createdAt).toLocaleDateString()}</span>
                       </div>
+
                     </div>
                   </li>
                 </ul>

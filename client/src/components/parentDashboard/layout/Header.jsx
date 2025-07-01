@@ -18,9 +18,10 @@ const Header = () => {
     }
   };
 
-  const handleProfileClick = () => {
-    navigate('/admin/profile');
-  };
+ const handleProfileClick = () => {
+  navigate('/parents/profile'); // ✅ Correct for parent
+};
+
 
   useEffect(() => {
     if (!token) {
@@ -37,7 +38,7 @@ const Header = () => {
           src="/Assets/logo.png" 
           alt="Logo"
           className="h-6"
-          onClick={() => navigate('/admin')}
+          onClick={() => navigate('/parents')}
         />
       </div>
 

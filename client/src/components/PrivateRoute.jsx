@@ -19,6 +19,8 @@ const PrivateRoute = ({ children, requiredRole }) => {
         return <Navigate to="/student/maindashboard" replace />;
       case 'parent':
         return <Navigate to="/parents/maindashboard" replace />;
+      case 'adminStaff':
+        return <Navigate to="/staff/maindashboard" replace />;  
       default:
         return <Navigate to="/login" replace />;
     }
@@ -28,3 +30,7 @@ const PrivateRoute = ({ children, requiredRole }) => {
 };
 
 export default PrivateRoute;
+
+
+
+

@@ -1,4 +1,4 @@
-import React,{useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Home from './Home';
 import About from './About';
@@ -14,26 +14,27 @@ import ParentMainDashboard from './components/parentDashboard/ParentMainDashboar
 import TeacherMainDashboard from './components/teacherDashboard/TeacherMaindashboard';
 import StudentMainDashboard from './components/studentDashboard/StudentMainDashboard';
 import PrivateRoute from './components/PrivateRoute';
-import { useDispatch, useSelector } from 'react-redux';
-
+import { useDispatch } from 'react-redux';
+import { logoutUser } from './redux/authSlice';
+import Meeting from './components/parentDashboard/Meeting';
+import AdminStaffDashboard from './components/adminStaffDashboard/StaffMainDashboard';
 
 function App() {
   const location = useLocation();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
+  const employeeType = localStorage.getItem('employeeType')?.toLowerCase();
   const dispatch = useDispatch();
 
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
-      dispatch(logout());
+      localStorage.removeItem('employeeType');
+      dispatch(logoutUser());
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      // document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [dispatch]);
 
   useEffect(() => {
@@ -43,16 +44,18 @@ function App() {
         window.history.pushState(null, '', window.location.href);
       };
       window.addEventListener('popstate', handlePopState);
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-      };
+      return () => window.removeEventListener('popstate', handlePopState);
     }
   }, [token]);
 
-
-
-  // Check if user is logged in and tries to access login page
   if (token && location.pathname === '/login') {
+    if (userRole === 'teacher' && employeeType === 'groupd') {
+      return <Navigate to="/adminstaff/maindashboard" replace />;
+    }
+    if (userRole === 'superadmin' && employeeType === 'groupd') {
+      return <Navigate to="/adminstaff/maindashboard" replace />;
+    }
+
     switch (userRole) {
       case 'admin':
         return <Navigate to="/admin/maindashboard" replace />;
@@ -62,6 +65,8 @@ function App() {
         return <Navigate to="/student/maindashboard" replace />;
       case 'parent':
         return <Navigate to="/parents/maindashboard" replace />;
+      case 'superadmin':
+        return <Navigate to="/superadmin/maindashboard" replace />;
       default:
         return <Navigate to="/" replace />;
     }
@@ -73,18 +78,19 @@ function App() {
     '/admin',
     '/parents',
     '/teacher',
-    '/student'
+    '/student',
+    '/adminstaff',
+    '/meeting' // ✅ No Navbar/Footer on this path
   ];
-  
-  // Check if current path starts with any of the noNavbarFooterPaths
-  const isNoNavbarFooter = noNavbarFooterPaths.some(path => 
+
+  const isNoNavbarFooter = noNavbarFooterPaths.some(path =>
     location.pathname.startsWith(path)
   );
 
   return (
     <>
       {!isNoNavbarFooter && <Navbar />}
-      
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -94,8 +100,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
-        
-        
+        <Route path="/meeting" element={<Meeting />} /> {/* ✅ Corrected line */}
 
         {/* Protected Routes */}
         <Route
@@ -130,12 +135,19 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/adminstaff/*"
+          element={
+            <PrivateRoute requiredRole="teacher">
+              <AdminStaffDashboard />
+            </PrivateRoute>
+          }
+        />
 
-        {/* Catch all route - redirect to home */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-        
       </Routes>
-      
+
       {!isNoNavbarFooter && <Footer />}
     </>
   );

@@ -1,201 +1,182 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  sendQuery,
-  fetchStudents,
-  clearErrorMessage,
-  clearSuccessMessage,
-} from '../../redux/parent/querySlice';
+import { fetchQueries, fetchConnects } from '../../redux/parent/querySlice';
 import Header from './layout/Header';
-import contactImage from '../../assets/contact.png';
-import { FaLocationArrow, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
-function Query() {
+const Query = ({ setActiveTab, setSelectedQueryId }) => {
   const dispatch = useDispatch();
-
-  const { students, loading, errorMessage, successMessage } = useSelector(
-    (state) => state.query
-  );
-
-  const [parentName, setParentName] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
-  const [studentName, setStudentName] = useState('');
-  const [queryMessage, setQueryMessage] = useState('');
-  const [sendTo, setSendTo] = useState([]);
+   const navigate = useNavigate();
+  const { queries, connects, loading, error } = useSelector((state) => state.query);
 
   useEffect(() => {
-    dispatch(fetchStudents());
+    dispatch(fetchQueries());
+    dispatch(fetchConnects());
   }, [dispatch]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!parentName || !parentPhone || !studentName || !queryMessage) {
-      return alert('Please fill out all fields!');
-    }
-
-    const queryData = {
-      parentName,
-      parentPhone,
-      studentName,
-      query: queryMessage,
-      sendTo,
-    };
-
-    dispatch(sendQuery(queryData));
-  };
+  const received = queries?.queriesReceived || [];
+  const sent = queries?.queriesSent || [];
 
   return (
-    <div className="min-h-screen pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8 pt-20 md:ml-64">
+    <>
+      <div className="flex justify-between items-center mx-4 mt-20 md:ml-72 flex-wrap">
         <div>
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Queries</h1>
+          <h1 className="text-2xl font-light text-black xl:text-[38px]">Connect & Queries</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2 text-xl">
-            <span className="xl:text-[17px]">Home</span> {'>'}{' '}
-            <span className="font-medium text-[#146192] xl:text-[17px]">Queries</span>
+          <h1 className="mt-2 text-sm md:text-base">
+            <span>Home</span> {'>'} <span className="font-medium text-[#146192]">Connect & Queries</span>
           </h1>
         </div>
-        <div className="mt-4 md:mt-0">
-          <Header />
-        </div>
+        <Header />
       </div>
 
-      <div className="flex flex-col lg:flex-row justify-between gap-8 px-4 md:px-8 mt-8 md:ml-64">
-        {/* Left Column - Form */}
-        <div className="w-full lg:w-1/2">
-          <h2 className="text-xl font-semibold text-[#146192] mb-4">Have a question or query?</h2>
-          <p className="text-base text-gray-700 mb-4">
-            Please feel free to reach out to us. Fill out the form below and we'll get back to you as soon as possible.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-4 border border-gray-200 shadow shadow-gray-500 rounded-md p-4">
-            {/* Parent Info */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="w-full">
-                <label className="block text-sm font-semibold text-[#146192]" htmlFor="parentName">Parent Name</label>
-                <input
-                  type="text"
-                  id="parentName"
-                  value={parentName}
-                  onChange={(e) => setParentName(e.target.value)}
-                  className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
-                />
-              </div>
-              <div className="w-full">
-                <label className="block text-sm font-semibold text-[#146192]" htmlFor="parentMobile">Parent Mobile No</label>
-                <input
-                  type="tel"
-                  id="parentMobile"
-                  value={parentPhone}
-                  onChange={(e) => setParentPhone(e.target.value)}
-                  className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
-                />
-              </div>
-            </div>
-
-            {/* Student and Message */}
-            <div>
-              <label className="block text-sm font-semibold text-[#146192]" htmlFor="studentName">Student Name</label>
-              <select
-                id="studentName"
-                value={studentName}
-                onChange={(e) => setStudentName(e.target.value)}
-                className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
-              >
-                <option value=""></option>
-                {students.map((student) => (
-                  <option key={student._id} value={student.studentProfile.fullname}>
-                    {student.studentProfile.fullname}
-                  </option>
-                ))}
-              </select>
-
-              <label className="block text-sm font-semibold text-[#146192] mt-6" htmlFor="queryMessage">Your Query</label>
-              <textarea
-                id="queryMessage"
-                value={queryMessage}
-                onChange={(e) => setQueryMessage(e.target.value)}
-                rows="4"
-                className="px-4 py-2 border rounded-lg w-full border-[#00000091] mt-2"
-              ></textarea>
-            </div>
-
-            {/* Send To */}
-            <div className="mt-4 flex flex-wrap items-center gap-4">
-              <label className="text-sm font-semibold text-[#146192]">Send To:</label>
-              <div className="flex items-center gap-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value="admin"
-                    checked={sendTo.includes('admin')}
-                    onChange={(e) => {
-                      if (e.target.checked) setSendTo([...sendTo, 'admin']);
-                      else setSendTo(sendTo.filter((item) => item !== 'admin'));
-                    }}
-                    className="mr-2"
-                  />
-                  Admin
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value="class teacher"
-                    checked={sendTo.includes('class teacher')}
-                    onChange={(e) => {
-                      if (e.target.checked) setSendTo([...sendTo, 'class teacher']);
-                      else setSendTo(sendTo.filter((item) => item !== 'class teacher'));
-                    }}
-                    className="mr-2"
-                  />
-                  Class Teacher
-                </label>
-              </div>
-            </div>
-
-            {/* Messages */}
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-            {successMessage && <p className="text-green-500">{successMessage}</p>}
-
-            {/* Submit */}
-            <div className="flex justify-center mt-4">
+      <div className="p-4 md:p-6 min-h-screen md:ml-64">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-blue-800">Contact Us for Any Query!</h2>
+            <div className="space-x-2">
               <button
-                type="submit"
-                className="px-6 py-2 bg-[#146192] text-white rounded-md hover:bg-[#0a4e6f]"
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded"
+                onClick={() => setActiveTab('queryform')}
               >
-                {loading ? 'Submitting...' : 'Submit Query'}
+                Queries
+              </button>
+              <button
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded"
+                onClick={() => navigate('/meeting')}
+              >
+                Connect
               </button>
             </div>
-          </form>
-        </div>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">We are here to help you! How can we help?</p>
 
-        {/* Right Column - Image and Contact */}
-        <div className="w-full lg:w-1/2">
-          <img
-            src={contactImage}
-            alt="Query"
-            className="w-full h-auto rounded-lg mb-4"
-          />
-          <div>
-            <h3 className="text-lg font-semibold text-[#146192] mb-2">Contact Information</h3>
-            <p className="text-sm text-gray-700 mb-2">
-              <FaLocationArrow className="inline mr-2 text-[#146192]" />
-              <strong></strong> ABC International School, Hyderabad
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              <FaPhoneAlt className="inline mr-2 text-[#146192]" />
-              <strong></strong> +2034 4040 3030
-            </p>
-            <p className="text-sm text-gray-700 mb-2">
-              <FaEnvelope className="inline mr-2 text-[#146192]" />
-              <strong></strong> hello@gmail.com
-            </p>
+          {/* ✅ Connect Meetings Table */}
+          <h3 className="font-semibold text-gray-700 mb-2">Ongoing / Upcoming Meetings</h3>
+          <div className="overflow-x-auto mb-6">
+            <table className="w-full text-sm border">
+              <thead className="bg-blue-100">
+                <tr>
+                  <th className="border px-3 py-2">S.NO</th>
+                  <th className="border px-3 py-2">Meeting Title</th>
+                  <th className="border px-3 py-2">Date</th>
+                  <th className="border px-3 py-2">Time</th>
+                  <th className="border px-3 py-2">Hosted By</th>
+                  <th className="border px-3 py-2">Link</th>
+                  <th className="border px-3 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {connects && connects.length > 0 ? (
+                  connects.map((connect, idx) => (
+                    <tr key={connect._id} className="text-center">
+                      <td className="border px-3 py-2">{idx + 1}</td>
+                      <td className="border px-3 py-2">{connect.title}</td>
+                      <td className="border px-3 py-2">
+                        {new Date(connect.startDate).toLocaleDateString()}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {connect.startTime} - {connect.endTime}
+                      </td>
+                      <td className="border px-3 py-2 capitalize">
+                        {connect.hostedByName} ({connect.hostedByRole})
+                      </td>
+                      <td className="border px-3 py-2 text-blue-600 underline cursor-pointer">
+                        <a href={connect.meetingLink} target="_blank" rel="noopener noreferrer">
+                          {connect.meetingLink}
+                        </a>
+                      </td>
+                      <td className="border px-3 py-2">{connect.status}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="border px-3 py-2 text-center text-gray-500">
+                      No upcoming meetings found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ✅ Received Queries */}
+          <h3 className="font-semibold text-gray-700 mb-2">Received Queries</h3>
+          <div className="overflow-x-auto mb-6">
+            <table className="w-full text-sm border">
+              <thead className="bg-blue-100">
+                <tr>
+                  <th className="border px-3 py-2">S.NO</th>
+                  <th className="border px-3 py-2">Name</th>
+                  <th className="border px-3 py-2">Role</th>
+                  <th className="border px-3 py-2">Contact</th>
+                  <th className="border px-3 py-2">Email id</th>
+                  <th className="border px-3 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {received.map((query, idx) => (
+                  <tr key={query._id} className="text-center">
+                    <td className="border px-3 py-2">{idx + 1}</td>
+                    <td className="border px-3 py-2">{query.name}</td>
+                    <td className="border px-3 py-2 capitalize">{query.createdByRole}</td>
+                    <td className="border px-3 py-2">{query.contact}</td>
+                    <td className="border px-3 py-2">{query.email}</td>
+                    <td className="border px-3 py-2">
+                      <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded"
+                        onClick={() => setActiveTab('replypage', query._id)}
+                      >
+                        Reply
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ✅ Sent Queries */}
+          <h3 className="font-semibold text-gray-700 mb-2">Queries Sent by Parent</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border">
+              <thead className="bg-blue-100">
+                <tr>
+                  <th className="border px-3 py-2">S.NO</th>
+                  <th className="border px-3 py-2">Name</th>
+                  <th className="border px-3 py-2">Contact</th>
+                  <th className="border px-3 py-2">Email id</th>
+                  <th className="border px-3 py-2">Sent To</th>
+                  <th className="border px-3 py-2">Role</th>
+                  <th className="border px-3 py-2">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sent.map((query, idx) => (
+                  <tr key={query._id} className="text-center">
+                    <td className="border px-3 py-2">{idx + 1}</td>
+                    <td className="border px-3 py-2">{query.name}</td>
+                    <td className="border px-3 py-2">{query.contact}</td>
+                    <td className="border px-3 py-2">{query.email}</td>
+                    <td className="border px-3 py-2">{query.sendToName}</td>
+                    <td className="border px-3 py-2">{query.sendToRole}</td>
+                    <td className="border px-3 py-2">
+                      <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded"
+                        onClick={() => setActiveTab('replypage', query._id)}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
-}
+};
 
 export default Query;
-

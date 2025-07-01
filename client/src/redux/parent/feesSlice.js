@@ -24,7 +24,7 @@ export const fetchFeesReceipts = createAsyncThunk(
         throw new Error('Failed to fetch fee receipts');
       }
       const data = await response.json();
-      return data.feesReceipts || [];  // Extract feeReceipts from the API response
+      return data.feesReceipts || [];
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -43,7 +43,7 @@ export const fetchChildren = createAsyncThunk(
         throw new Error('Failed to fetch children');
       }
       const data = await response.json();
-      return data.children || [];  // Extract children from the API response
+      return data.children || [];
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -61,7 +61,8 @@ export const payFees = createAsyncThunk(
         body: JSON.stringify(paymentData),
       });
       if (!response.ok) {
-        throw new Error('Failed to pay fees');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to pay fees');
       }
       return await response.json();
     } catch (error) {
@@ -70,7 +71,27 @@ export const payFees = createAsyncThunk(
   }
 );
 
-// Slice
+// Payment verification thunk
+export const verifyPayment = createAsyncThunk(
+  'fees/verifyPayment',
+  async ({ razorpayOrderId, razorpayPaymentId, razorpaySignature }, { rejectWithValue }) => {
+    try {
+      const response = await fetch('https://sikshamitra.onrender.com/api/parent/verifyFeePayment', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ razorpayOrderId, razorpayPaymentId, razorpaySignature }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Payment verification failed');
+      }
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const feesSlice = createSlice({
   name: 'fees',
   initialState: {
@@ -78,6 +99,8 @@ const feesSlice = createSlice({
     children: [],
     loading: false,
     error: null,
+    paymentSuccess: false,
+    paymentVerificationSuccess: false,
   },
   reducers: {
     clearError: (state) => {
@@ -88,7 +111,15 @@ const feesSlice = createSlice({
       state.children = [];
       state.loading = false;
       state.error = null;
+      state.paymentSuccess = false;
+      state.paymentVerificationSuccess = false;
     },
+    clearPaymentSuccess: (state) => {
+      state.paymentSuccess = false;
+    },
+    clearPaymentVerificationSuccess: (state) => {
+      state.paymentVerificationSuccess = false;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -120,17 +151,37 @@ const feesSlice = createSlice({
       // Pay Fees
       .addCase(payFees.pending, (state) => {
         state.loading = true;
+        state.error = null;
+        state.paymentSuccess = false;
       })
       .addCase(payFees.fulfilled, (state, action) => {
         state.loading = false;
-        alert('Payment successful');
+        state.paymentSuccess = true;
+        // Optionally update feesReceipts here if API returns updated data
       })
       .addCase(payFees.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.paymentSuccess = false;
+      })
+      // Verify Payment
+      .addCase(verifyPayment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.paymentVerificationSuccess = false;
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.paymentVerificationSuccess = true;
+        // Optionally update feesReceipts or other state here
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.paymentVerificationSuccess = false;
       });
   },
 });
 
-export const { clearError, resetState } = feesSlice.actions;
+export const { clearError, resetState, clearPaymentSuccess, clearPaymentVerificationSuccess } = feesSlice.actions;
 export default feesSlice.reducer;
