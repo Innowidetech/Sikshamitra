@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getAssignedTasks, getNotifications, markNotificationAsRead, getTeacherNames } = require('../controllers/admin.controller');
-const { editSchoolTaskStatus, editSATaskStatus } = require('../controllers/staff.controller');
+const { editSchoolTaskStatus, editSATaskStatus, getSchoolNamesToSAStaff } = require('../controllers/staff.controller');
 const { getSAAssignedTasks, editBlog, postBlog, deleteBlog, sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -38,6 +38,8 @@ router.post('/saquery', protect, authorize('superadmin'), sendQuery);
 router.get('/saquery', protect, authorize('superadmin'), getQueries);
 router.get('/saquery/:id', protect, authorize('superadmin'), getQueryById);
 router.post('/saquery/:id', protect, authorize('superadmin'), replyToQuery);
+
+router.get('/schoolNames', protect, authorize('superadmin'), getSchoolNamesToSAStaff);
 
 
 module.exports = router;

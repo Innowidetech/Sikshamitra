@@ -40,6 +40,7 @@ const EntranceExamResults = require('../models/EntranceExamResults');
 const EntranceExamResultsTemplate = require('../utils/EntranceExamResultsTemplate');
 const Notifications = require('../models/Notifications');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
+const Vehicles = require('../models/Vehicles');
 
 
 //get profile
@@ -111,6 +112,11 @@ exports.editSchool = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     };
 
+    const adminUser = await User.findById(userId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins are allowed.' });
+    };
+
     const school = await School.findOne({ userId });
     if (!school) {
       return res.status(404).json({ message: "No school is associated with the admin." })
@@ -174,6 +180,11 @@ exports.createOrEditAuthorityAccess = async (req, res) => {
     const userId = req.user && req.user.id;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(userId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins are allowed.' });
     };
 
     const school = await School.findOne({ userId });
@@ -920,8 +931,8 @@ exports.getTeacherNames = async (req, res) => {
         return res.status(400).json({ message: 'Admin is not associated with any school.' });
       };
     }
-    else if(loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD'){
-      const staff = await SchoolStaff.findOne({userId:loggedInId});
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
       associatedSchool = await School.findById(staff.schoolId);
       if (!associatedSchool) {
         return res.status(400).json({ message: 'You are not associated with any school.' });
@@ -4975,4 +4986,261 @@ exports.markNotificationAsRead = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
+
+
+exports.createVehicle = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const vehicleDetails = JSON.parse(req.body.vehicleDetails);
+    const routeDetails = JSON.parse(req.body.routeDetails);
+    let driverDetails = JSON.parse(req.body.driverDetails);
+    let attendantDetails = req.body.attendantDetails ? JSON.parse(req.body.attendantDetails) : null;
+    const { email, password } = req.body;
+    if (!vehicleDetails || !routeDetails.length || !email || !password || !driverDetails) {
+      return res.status(400).json({ message: "Please provide all the details to add vehicle." })
+    }
+
+    const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+    if (!driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
+      return res.status(400).json({ message: 'One or more required files are missing.' });
+    }
+
+    if (vehicleDetails.vehicleType === 'Bus') {
+      if (!attendantDetails || !attendantDetails.fullname || !attendantDetails.contact || !attendantDetails.address || !attendantDetails.licenseNumber || !attendantDetails.aadharCardNumber ||
+        !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
+        return res.status(400).json({ message: "Please provide the attendant details and documents." })
+      }
+    }
+
+    const existingUser = await User.findOne({ email, schoolId: school._id });
+    if (existingUser) {
+      return res.status(409).json({ message: "A user with this email already exist." })
+    }
+
+    let hpass = bcrypt.hashSync(password, 10);
+
+    const user = new User({ email, password: hpass, role: 'teacher', employeeType: 'driver', schoolId: school._id, createdBy: loggedInId })
+    await user.save();
+
+    driverDetails.userId = user._id;
+
+    const driverUploads = await uploadImage([driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
+    if (driverUploads.length !== 3) {
+      return res.status(400).json({ message: 'One or more driver files failed to upload.' });
+    }
+
+    driverDetails.license = driverUploads[0];
+    driverDetails.aadharCard = driverUploads[1];
+    driverDetails.panCard = driverUploads[2];
+
+    if (vehicleDetails.vehicleType === 'Bus') {
+      const attendantUploads = await uploadImage([attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
+      if (attendantUploads.length !== 3) {
+        return res.status(400).json({ message: 'One or more attendant files failed to upload.' });
+      }
+      attendantDetails.license = attendantUploads[0];
+      attendantDetails.aadharCard = attendantUploads[1];
+      attendantDetails.panCard = attendantUploads[2];
+    }
+
+    const vehicle = new Vehicles({ schoolId: school._id, vehicleDetails, routeDetails, driverDetails, attendantDetails: vehicleDetails.vehicleType === 'Bus' ? attendantDetails : undefined });
+    await vehicle.save();
+
+    res.status(201).json({ message: "Vehicle and Driver created successfully.", vehicle })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+
+exports.getAllVehicles = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const vehicles = await Vehicles.find({ schoolId: school._id }).select('vehicleDetails routeDetails[0] driverDetails.fullname driverDetails.contact attendantDetails.fullname attendantDetails.contact');
+    if (!vehicles.length) { return res.status(404).json({ message: 'No vehicles yet.' }) }
+
+    res.status(200).json({ vehicles })
+  }
+  catch (err) {
+    res.status(500).json({ message: "Internal server error.", error: err.message })
+  }
+};
+
+
+exports.getVehicleById = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const { vehicleId } = req.params;
+    if (!vehicleId) { return res.status(400).json({ message: "Provide the vehicle id." }) }
+
+    const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
+      .populate({ path: 'studentDetails.studentId', select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf' });
+
+    const populatedVehicle = vehicle.toObject();
+
+    for (let studentDetail of populatedVehicle.studentDetails) {
+      const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;
+      if (childOfUserId) {
+        const parent = await Parent.findOne({ userId: childOfUserId }).select(
+          'parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress'
+        );
+        studentDetail.parent = parent ? parent.parentProfile : null;
+      }
+    }
+    if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
+
+    res.status(200).json({ vehicle: populatedVehicle });
+  }
+  catch (err) {
+    res.status(500).json({ message: "Internal server error.", error: err.message })
+  }
+};
+
+
+exports.assignStudentToVehicle = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const { vehicleId } = req.params;
+    if (!vehicleId) { return res.status(400).json({ message: "Provide the vehicle id to add student." }) }
+
+    let { studentRegistrationNumber, pickUpLocation, totalFee, amountPaid, amountDue } = req.body;
+    if (!studentRegistrationNumber || !pickUpLocation || !totalFee) {
+      return res.status(400).json({ message: 'Please provide all the details to add student.' })
+    }
+    if (!amountPaid) { amountPaid = 0 }
+
+    const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId });
+    if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
+
+    const validPickup = vehicle.routeDetails.some(route => route.pickUpPoint === pickUpLocation);
+    if (!validPickup) {
+      return res.status(400).json({ message: "Invalid pick-up location. Must match one of the vehicle's route pickup points." });
+    }
+
+    const student = await Student.findOne({ schoolId: school._id, 'studentProfile.registrationNumber': studentRegistrationNumber });
+    if (!student) { return res.status(404).json({ message: "No student found with the registration number in this school." }) }
+
+    const alreadyAssigned = vehicle.studentDetails.find(s => s.studentId.toString() === student._id.toString());
+    if (alreadyAssigned) {
+      return res.status(409).json({ message: "Student is already assigned to this vehicle." });
+    }
+
+    let studentDetailsIs = { studentId: student._id, pickUpLocation, totalFee, amountPaid, amountDue }
+
+    vehicle.studentDetails.push(studentDetailsIs)
+    await vehicle.save();
+
+    res.status(201).json({ message: "Student added to vehicle successfully.", vehicle })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+
+exports.updateVehicleLocation = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser) {
+      return res.status(403).json({ message: 'No user found with the logged-in id.' })
+    }
+
+    const { lat, lng } = req.body;
+    const id = req.params.id;
+
+    if (!id) { return res.status(400).json({ message: "No vehicle is selected." }) }
+    if (!lat || !lng) {
+      return res.status(400).json({ message: "Latitude and longitude are required." });
+    }
+
+    let schoolId;
+
+    if (loggedInUser.role === 'admin') {
+      const school = await School.findOne({ userId: loggedInId });
+      schoolId = school._id;
+    }
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'driver') {
+      const vehicle = await Vehicles.findOne({ 'driverDetails.userId': loggedInId });
+      schoolId = vehicle.schoolId
+    }
+    else { return res.status(403).json({ message: "You are not allowed." }) }
+
+    if (!schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const vehicle = await Vehicles.findOneAndUpdate({ schoolId, _id: id },
+      { $set: { 'vehicleDetails.currentLocation': { lat, lng, updatedAt: new Date() } } },
+      { new: true });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found." });
+    }
+
+    res.status(200).json({ message: "Location updated.", currentLocation: vehicle.vehicleDetails.currentLocation });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update location.", error: err.message });
+  }
+};
+
+// Get current location of a vehicle -----------> take this from get vehicle by id
+// exports.getVehicleCurrentLocation = async (req, res) => {
+//   try {
+//     const vehicle = await Vehicles.findById(req.params.id);
+//     if (!vehicle) {
+//       return res.status(404).json({ message: 'Vehicle not found.' });
+//     }
+
+//     const currentLocation = vehicle.vehicleDetails.currentLocation;
+//     res.status(200).json({ currentLocation });
+//   } catch (err) {
+//     res.status(500).json({ message: 'Internal server error', error: err.message });
+//   }
+// };
 

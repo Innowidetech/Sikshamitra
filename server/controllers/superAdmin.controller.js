@@ -1667,7 +1667,6 @@ exports.getConnects = async (req, res) => {
 
       sent = await Connect.find({ createdBy: teacher._id }).select('-connect');
       received = await Connect.find({ "connect.attendant": teacher._id });
-
     }
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId });
