@@ -10,6 +10,8 @@ const BookRequest = require('../models/BookRequests');
 const School = require('../models/School');
 const Teacher = require('../models/Teacher');
 const Notifications = require('../models/Notifications');
+const Vehicles = require('../models/Vehicles');
+const Parent = require('../models/Parent');
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -295,8 +297,8 @@ exports.submitAssignment = async (req, res) => {
             await newSubmission.save();
 
             let memberIds = []
-            memberIds.push({memberId:assignment.createdBy});
-            const notification = new Notifications({ section:'assignment', memberIds, text: `An assignment of subject - '${assignment.subject}' has been submitted by '${student.studentProfile.fullname}'` });
+            memberIds.push({ memberId: assignment.createdBy });
+            const notification = new Notifications({ section: 'assignment', memberIds, text: `An assignment of subject - '${assignment.subject}' has been submitted by '${student.studentProfile.fullname}'` });
             await notification.save();
 
             return res.status(201).json({ message: "Assignment submitted successfully.", submit: newSubmission });
@@ -346,17 +348,17 @@ exports.requestBook = async (req, res) => {
 
         const school = await School.findById(student.schoolId);
         if (school && school.userId) {
-            memberIds.push({memberId:school.userId});
+            memberIds.push({ memberId: school.userId });
         }
 
         const teachers = await Teacher.find({ schoolId: student.schoolId }).populate('userId');
 
         const librarian = teachers.find(t => t.userId && t.userId.employeeType === 'librarian')
         if (librarian) {
-            memberIds.push({memberId:librarian._id});
+            memberIds.push({ memberId: librarian._id });
         }
 
-        const notification = new Notifications({ section:'library', memberIds: memberIds, text: `New book request received from student - ${student.studentProfile.fullname} of class ${student.studentProfile.class}${student.studentProfile.section}` });
+        const notification = new Notifications({ section: 'library', memberIds: memberIds, text: `New book request received from student - ${student.studentProfile.fullname} of class ${student.studentProfile.class}${student.studentProfile.section}` });
         await notification.save()
 
         res.status(201).json({ message: "Book requested successfully. Please wait until the librarian confirms." })
@@ -383,11 +385,69 @@ exports.getBookRequests = async (req, res) => {
         const associatedSchool = await School.findById(student.schoolId);
         if (!associatedSchool) { return res.status(404).json({ message: "Logged-in student is not associated with any school." }) }
 
-        const bookRequests = await BookRequest.find({ schoolId: student.schoolId, requestedBy: student._id }).populate('book').sort({createdAt:-1});
+        const bookRequests = await BookRequest.find({ schoolId: student.schoolId, requestedBy: student._id }).populate('book').sort({ createdAt: -1 });
 
         let libraryFineAmount = associatedSchool.libraryFineAmount || '-';
 
         res.status(200).json({ libraryFineAmount, bookRequests })
+    } catch (err) {
+        res.status(500).json({ message: 'Internal server error', error: err.message, });
+    }
+};
+
+
+exports.getTransportationDetails = async (req, res) => {
+    try {
+        const loggedInId = req.user && req.user.id;
+        if (!loggedInId) {
+            return res.status(401).json({ message: 'Unauthorized, only logged-in users can have access.' });
+        };
+
+        const loggedInUser = await User.findById(loggedInId);
+        if (!loggedInUser) {
+            return res.status(403).json({ message: 'Access denied, Only logged-in users have access.' });
+        };
+
+        if (loggedInUser.role === 'student' || loggedInUser.role === 'parent' || (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'driver')) {
+            const student = await Student.findOne({ userId: loggedInId });
+            const parent = !student ? await Parent.findOne({ userId: loggedInId }) : null;
+            const driver = (!student && !parent) ? loggedInUser : null
+
+            const user = student || parent || driver;
+
+            if (!user) {
+                return res.status(404).json({ message: 'No user found with the logged-in id.' });
+            }
+
+            let vehicleQuery = { schoolId: user.schoolId };
+
+            if (student) {
+                vehicleQuery['studentDetails.studentId'] = user._id;
+            } else if (parent) {
+                vehicleQuery.$or = [
+                    { 'studentDetails.studentId': { $in: parent.parentProfile.parentOf } }
+                ];
+            } else if (driver) {
+                vehicleQuery['driverDetails.userId'] = loggedInId;
+            }
+
+            const vehicle = await Vehicles.findOne(vehicleQuery).populate({
+                path: 'studentDetails.studentId',
+                select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf',
+            });
+            if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
+
+            populatedVehicle = vehicle.toObject();
+
+            for (let studentDetail of populatedVehicle.studentDetails) {
+                const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;
+                if (childOfUserId) {
+                    const parent = await Parent.findOne({ userId: childOfUserId }).select('parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress');
+                    studentDetail.parent = parent ? parent.parentProfile : null;
+                }
+            }
+            return res.status(200).json({ vehicle: populatedVehicle });
+        }
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message, });
     }

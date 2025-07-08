@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, addStaffMember, getStaffMembers, editStaffMember, assignTaskToStaff, getAssignedTasks, getStudentsBasedOnClassAndSection, getEntranceExamApplications, createOrUpdateQuestionPaperForEntranceExam, getEntranceExamQuestionPapers, sendEntranceExamDetailsToApplicants, getEntranceExamResults, sendEntranceExamResultToApplicants, getNotifications, markNotificationAsRead, createOrEditAuthorityAccess, editAimObjective, removeTeacherFromClass, createVehicle, getAllVehicles, assignStudentToVehicle, getVehicleById } = require('../controllers/admin.controller');
+const { editSchool, createTeacher, createStudentAndParent, getAllTeachersOfSchool, getAllStudentsOfSchool, getAllParentsOfSchool, getStudentsRatio, updateStudentData, updateTeacherData, getProfile, getNewAdmissions, createBook, deleteBook, getBooks, numberOfSPTE, createNotice, getNotice, deleteNotice, addStudentToExistingParent, createClass, editClass, createDynamicCalendar, getClasses, getDynamicCalendar, getDynamicCalendarByDate, createClassWiseFees, getClassWiseFees, editClassWiseFees, getUpdatedStudentData, addStock, getInventory, saleStockTo, getSaleStock, getLibraryData, createAimObjective, getAimObjective, deleteAimObjective, getTeacherNames, updateAandLBody, updateAandLParams, postSchoolExpensesForm, getAccounts, getAccountsData, editSchoolExpense, deleteSchoolExpense, editNotice, editDynamicCalendar, deleteDynamicCalendar, createOrUpdateSyllabus, getExpenseRequest, updateExpenseRequest, addSchoolIncome, editSchoolIncome, getUpdatedSchoolIncomeHistory, editBook, getAdmissionRequests, createInstantAccount, issueAndReturnBook, editLibraryFineAmount, resolveBookRequest, addStaffMember, getStaffMembers, editStaffMember, assignTaskToStaff, getAssignedTasks, getStudentsBasedOnClassAndSection, getEntranceExamApplications, createOrUpdateQuestionPaperForEntranceExam, getEntranceExamQuestionPapers, sendEntranceExamDetailsToApplicants, getEntranceExamResults, sendEntranceExamResultToApplicants, getNotifications, markNotificationAsRead, createOrEditAuthorityAccess, editAimObjective, removeTeacherFromClass, createVehicle, getTransportation, assignStudentToVehicle, getVehicleAndStudentById, editTransportationData } = require('../controllers/admin.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getResults, getSyllabus, getExams } = require('../controllers/teacher.controller');
 const multer = require('multer');
@@ -116,10 +116,19 @@ router.post('/createVehicle', protect, authorize('admin'), upload.fields([
     { name: 'attendantAadharCard', maxCount: 1 },
     { name: 'attendantPanCard', maxCount: 1 },
 ]), createVehicle);
-router.get('/vehicles', protect, authorize('admin'), getAllVehicles);
-router.get('/vehicle/:vehicleId', protect, authorize('admin'), getVehicleById);
-router.post('/vehicle/addStudent/:vehicleId', protect,authorize('admin'), assignStudentToVehicle);
+router.get('/vehicles', protect, authorize('admin'), getTransportation);
+router.get('/vehicle/:vehicleId/:id?', protect, authorize('admin'), getVehicleAndStudentById);
+router.post('/vehicle/addStudent/:vehicleId', protect, authorize('admin'), assignStudentToVehicle);
+
+router.put('/vehicle/:vehicleId/:id?', protect, authorize('admin'), upload.fields([
+    { name: 'driverLicense', maxCount: 1 },
+    { name: 'driverAadharCard', maxCount: 1 },
+    { name: 'driverPanCard', maxCount: 1 },
+    { name: 'attendantLicense', maxCount: 1 },
+    { name: 'attendantAadharCard', maxCount: 1 },
+    { name: 'attendantPanCard', maxCount: 1 },
+]), editTransportationData);
+router.delete('/vehicle/:vehicleId/:id?', protect, authorize('admin'), editTransportationData);
 
 
 module.exports = router;
-

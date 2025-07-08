@@ -86,23 +86,3 @@ exports.editSATaskStatus = async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: err.message })
     }
 };
-
-
-exports.getSchoolNamesToSAStaff = async(req,res)=>{
-    try {
-        const loggedInId = req.user && req.user.id;
-        if (!loggedInId) {
-            return res.status(401).json({ message: 'Unauthorized.' });
-        };
-
-        const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType !== 'groupD') {
-            return res.status(403).json({ message: 'Access denied. Only logged-in staff members can access.' });
-        };
-
-        const schoolNames = await School.find().select('schoolName');
-        res.status(200).json({ schoolNames })
-    } catch (err) {
-        res.status(500).json({ message: 'Internal server error', error: err.message })
-    }
-};

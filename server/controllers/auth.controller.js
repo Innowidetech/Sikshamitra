@@ -51,7 +51,7 @@ exports.userLogin = async (req, res) => {
     }
 
     if (user.role !== 'superadmin' && user.role !== 'authority') {
-      const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId')
+      const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId') || await User.findOne({_id:user._id})
       if (user.role !== 'admin') {
         if (school.schoolId.status !== 'active' && !user.isActive) {
           return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })

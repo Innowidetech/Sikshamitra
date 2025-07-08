@@ -44,6 +44,12 @@ exports.registerSchool = async (req, res) => {
       return res.status(400).json({ message: "Please enter all the details to register." })
     };
 
+    if (!/.+,\s*[^,]+,\s*[^-]+-\s*\d{6}$/.test(address)) {
+      return res.status(400).json({
+        message: 'Invalid address format. It should end with "City, State - Pincode (6 digits only)" using commas and a hyphen.'
+      });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists.' });
