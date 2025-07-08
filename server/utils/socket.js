@@ -116,14 +116,11 @@ exports.initSocket = (server) => {
 
   // SOCKET CONNECTION HANDLING
   io.on('connection', (socket) => {
-
     addUserSocket(socket.user.id, socket.id);
-
     socket.on('error', (err) => {
       console.error('Socket error:', err);
     });
     socket.join(`user_${socket.user.id}`);
-
     socket.meetings = {};
 
     socket.on('requestJoin', async ({ meetingLink }) => {
@@ -223,11 +220,11 @@ exports.initSocket = (server) => {
       }
     });
 
-    socket.on('joinAccepted', ({ meetingLink }) => {
+    socket.on('join-meeting', (meetingLink) => {
       socket.join(`meeting_${meetingLink}`);
       socket.emit('joined', { meetingLink });
-
       emitParticipants(meetingLink);
+      console.log(`🔗 ${socket.user.name} joined meeting ${meetingLink} via join-meeting`);
     });
 
     socket.on('chatMessage', ({ meetingLink, message }) => {

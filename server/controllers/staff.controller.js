@@ -8,6 +8,7 @@ const Vehicles = require('../models/Vehicles');
 const Student = require('../models/Student');
 const moment = require('moment');
 const mongoose = require('mongoose');
+const Parent = require('../models/Parent');
 
 
 exports.editSchoolTaskStatus = async (req, res) => {
@@ -143,12 +144,11 @@ exports.editActionInTransportation = async (req, res) => {
         await vehicle.save();
 
         const studentUserId = student._id;
-        const parentUserId = student.studentProfile?.childOf;
-        console.log(studentUserId,parentUserId)
+        const parent = await Parent.findOne({userId:student.studentProfile.childOf})
 
         let memberIds = []
         memberIds.push({ memberId: studentUserId });
-        memberIds.push({ memberId: parentUserId });
+        memberIds.push({ memberId: parent._id });
 
         const notification = new Notifications({ section: 'transportation', memberIds, text: `Transportation Update: ${action} updated at ${currentTimeIST}.` });
         await notification.save();
@@ -157,4 +157,32 @@ exports.editActionInTransportation = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message })
     }
+};
+
+
+exports.updateVehicleLocation = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'teacher' || loggedInUser.employeeType !== 'driver') {
+      return res.status(403).json({ message: 'No driver found with the logged-in id.' })
+    }
+
+    const { lat, lng } = req.body;
+    if (!lat || !lng) {
+      return res.status(400).json({ message: "Latitude and longitude are required." });
+    }
+
+    const vehicle = await Vehicles.findOneAndUpdate({ schoolId:loggedInUser.schoolId, 'driverDetails.userId':loggedInId },
+      { $set: { 'vehicleDetails.currentLocation': { lat, lng, updatedAt: new Date() } } },
+      { new: true });
+
+    if (!vehicle) {
+      return res.status(404).json({ message: "Vehicle not found." });
+    }
+
+    res.status(200).json({ message: "Location updated.", currentLocation: vehicle.vehicleDetails.currentLocation });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update location.", error: err.message });
+  }
 };

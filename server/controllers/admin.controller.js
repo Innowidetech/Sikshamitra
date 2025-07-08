@@ -4867,11 +4867,6 @@ exports.getNotifications = async (req, res) => {
     if (loggedInUser.role === 'admin') {
       userRefId = loggedInId;
     }
-    else if (loggedInUser.role === 'student') {
-      const student = await Student.findOne({ userId: loggedInId });
-      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
-      userRefId = student._id;
-    }
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
       const teacher = await Teacher.findOne({ userId: loggedInId });
       if (!teacher) return res.status(404).json({ message: 'No teacher found with this ID.' });
@@ -4882,10 +4877,16 @@ exports.getNotifications = async (req, res) => {
       if (!staff) return res.status(404).json({ message: 'No staff member found with this ID.' });
       userRefId = staff._id;
     }
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
+      userRefId = student._id;
+    }
     else if (loggedInUser.role === 'parent') {
       const parent = await Parent.findOne({ userId: loggedInId });
       if (!parent) return res.status(404).json({ message: 'No parent found with this ID.' });
       userRefId = parent._id;
+      console.log(userRefId)
     }
     else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
       userRefId = loggedInId;
@@ -5391,64 +5392,3 @@ exports.editTransportationData = async (req, res) => {
     res.status(500).json({ message: "Internal server error.", error: err.message });
   }
 };
-
-
-exports.updateVehicleLocation = async (req, res) => {
-  try {
-    const loggedInId = req.user?.id;
-    const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser) {
-      return res.status(403).json({ message: 'No user found with the logged-in id.' })
-    }
-
-    const { lat, lng } = req.body;
-    const id = req.params.id;
-
-    if (!id) { return res.status(400).json({ message: "No vehicle is selected." }) }
-    if (!lat || !lng) {
-      return res.status(400).json({ message: "Latitude and longitude are required." });
-    }
-
-    let schoolId;
-
-    if (loggedInUser.role === 'admin') {
-      const school = await School.findOne({ userId: loggedInId });
-      schoolId = school._id;
-    }
-    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'driver') {
-      const vehicle = await Vehicles.findOne({ 'driverDetails.userId': loggedInId });
-      schoolId = vehicle.schoolId
-    }
-    else { return res.status(403).json({ message: "You are not allowed." }) }
-
-    if (!schoolId) { return res.status(404).json({ message: "You are not associated with any school." }) }
-
-    const vehicle = await Vehicles.findOneAndUpdate({ schoolId, _id: id },
-      { $set: { 'vehicleDetails.currentLocation': { lat, lng, updatedAt: new Date() } } },
-      { new: true });
-
-    if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found." });
-    }
-
-    res.status(200).json({ message: "Location updated.", currentLocation: vehicle.vehicleDetails.currentLocation });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update location.", error: err.message });
-  }
-};
-
-// Get current location of a vehicle -----------> take this from get vehicle by id
-// exports.getVehicleCurrentLocation = async (req, res) => {
-//   try {
-//     const vehicle = await Vehicles.findById(req.params.id);
-//     if (!vehicle) {
-//       return res.status(404).json({ message: 'Vehicle not found.' });
-//     }
-
-//     const currentLocation = vehicle.vehicleDetails.currentLocation;
-//     res.status(200).json({ currentLocation });
-//   } catch (err) {
-//     res.status(500).json({ message: 'Internal server error', error: err.message });
-//   }
-// };
-
