@@ -41,8 +41,14 @@ function getUserSocketIds(userId) {
 }
 
 exports.initSocket = (server) => {
-  io = socketIo(server, { cors: { origin: '*' } });
-
+  io = socketIo(server, {
+    cors: {
+      origin: ['http://localhost:5173','https://shikshamitra-i.web.app'],
+      methods: ['GET', 'POST'],
+    },
+    transports: ['websocket', 'polling'],
+  });
+  
   function emitParticipants(meetingLink) {
     const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
     const participantIds = roomSockets.map(sid => io.sockets.sockets.get(sid)?.user?.id);

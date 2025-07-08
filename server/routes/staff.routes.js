@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getAssignedTasks, getNotifications, markNotificationAsRead, getTeacherNames } = require('../controllers/admin.controller');
-const { editSchoolTaskStatus, editSATaskStatus } = require('../controllers/staff.controller');
+const { editSchoolTaskStatus, editSATaskStatus, editActionInTransportation } = require('../controllers/staff.controller');
 const { getSAAssignedTasks, editBlog, postBlog, deleteBlog, sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
 const { getTransportationDetails } = require('../controllers/student.controller');
@@ -43,6 +43,7 @@ router.post('/query/:id', protect, authorize('teacher'), replyToQuery);
 
 //driver
 router.get('/transportation', protect, authorize('teacher'), getTransportationDetails);
+router.patch('/transportation/:id', protect, authorize('teacher'), editActionInTransportation);
 
 
 module.exports = router;
