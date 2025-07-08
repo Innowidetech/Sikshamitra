@@ -4171,6 +4171,21 @@ exports.getAccounts = async (req, res) => {
       monthlyData[monthYear].totalAdmissionFees += Number(admission.studentDetails.admissionFees);
     }
 
+    const tFees1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Transportation' });
+    const tFees2 = await SchoolIncome.find({ schoolId, purpose: 'Transportation' });
+    const tFees = tFees1.concat(tFees2)
+    for (let fee of tFees) {
+      const feeDate = fee.data ? new Date(fee.date) : new Date(fee.createdAt);
+      if (isNaN(feeDate)) continue;
+      const monthName = months[feeDate.getMonth()];
+      const year = feeDate.getFullYear();
+      const monthYear = `${monthName} ${year}`;
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = { totalFees: 0, totalAdmissionFees: 0, totalTransportationFees: 0, otherIncome: 0, totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      }
+      monthlyData[monthYear].totalTransportationFees += fee.amount;
+    }
+
     const otherIncomes1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Other' });
     const otherIncomes2 = await SchoolIncome.find({ schoolId, purpose: 'Other' });
     const otherIncomes = otherIncomes1.concat(otherIncomes2);
@@ -4207,13 +4222,13 @@ exports.getAccounts = async (req, res) => {
     const result = Object.keys(monthlyData).map(key => ({
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
+      totalTransportationFees : monthlyData[key].totalTransportationFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
       totalExpenses: monthlyData[key].totalExpenses,
       totalRevenue: monthlyData[key].totalRevenue,
     }));
-
     result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
 
     res.status(200).json({ accounts: result });
@@ -4306,14 +4321,14 @@ exports.addSchoolIncome = async (req, res) => {
       return res.status(403).json({ message: "Only admins and accountants can access." })
     }
 
-    const { amount, date, purpose, reason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
-    if (!amount || !date || !purpose || !source || !fullname) { return res.status(400).json({ message: "Please provide all the details to add income." }) }
+    const { amount, purpose, reason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
+    if (!amount || !purpose || !source || !fullname) { return res.status(400).json({ message: "Please provide all the details to add income." }) }
 
     if (purpose === 'Other') {
       if (!reason) { return res.status(400).json({ message: "Please provide the reason to add income." }) }
     }
 
-    let studentId, paidBy, pendingAmount;
+    let studentId, paidBy, pendingAmount, vehicle;
 
     if (source === 'student') {
       if (!registrationNumber || !className) { return res.status(400).json({ message: "Please provide student registration number and class." }) }
@@ -4345,13 +4360,47 @@ exports.addSchoolIncome = async (req, res) => {
         }
         pendingAmount = pending - amount
       }
+      else if (purpose === 'Transportation') {
+        vehicle = await Vehicles.findOne({ schoolId, 'studentDetails.studentId': student._id });
+
+        if (!vehicle) { return res.status(404).json({ message: "No transportation record found for this student." }) }
+
+        const studentTransport = vehicle.studentDetails.find(std =>
+          std.studentId.toString() === student._id.toString()
+        );
+        if (!studentTransport) { return res.status(404).json({ message: "Student transport details not found." }) }
+
+        const existingIncome = await SchoolIncome.findOne({ studentId, class: className, purpose: 'Transportation' }).sort({ date: -1 });
+
+        const parentExpense = await ParentExpenses.findOne({ studentId: student._id, class: className, 'paymentDetails.status': 'success', purpose: 'Transportation' }).sort({ createdAt: -1 });
+
+        let fee1 = existingIncome ? existingIncome.pendingAmount : 0;
+        let fee2 = parentExpense ? parentExpense.pendingAmount : 0;
+
+        let pending;
+        if (fee1 !== 0 && fee2 !== 0) {
+          pending = fee1 > fee2 ? fee2 : fee1;
+        } else if (fee1 !== 0) {
+          pending = fee1;
+        } else if (fee2 !== 0) {
+          pending = fee2;
+        } else {
+          pending = studentTransport.amountDue;
+        }
+        pendingAmount = pending - amount;
+
+        studentTransport.amountPaid += amount;
+        studentTransport.amountDue = Math.max(studentTransport.totalFee - studentTransport.amountPaid, 0);
+
+        await vehicle.save();
+      }
     }
 
     if (source === 'other') {
       if (!organization) { return res.status(400).json({ message: "Please provide the organization name." }) }
     }
 
-    const income = new SchoolIncome({ schoolId, amount, date, purpose, pendingAmount, reason, source, fullname, organization, transactionId, registrationNumber, class: className, section, studentId, paidBy })
+    const income = new SchoolIncome({ schoolId, amount, purpose, pendingAmount, reason, source, fullname, organization, transactionId, registrationNumber, class: className, section, studentId, paidBy })
     await income.save();
 
     res.status(201).json({ message: "Income added successfully.", income })
