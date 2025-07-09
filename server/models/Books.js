@@ -18,6 +18,14 @@ const BooksSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    noOfBooks:{
+        type:Number,
+        required:true,
+    },
+    availableBooks:{
+        type:Number,
+        required:true,
+    },
     edition: {
         type: String,
         required:true,
@@ -33,11 +41,6 @@ const BooksSchema = new mongoose.Schema({
     photo: {
         type: String,
         required:true,
-    },
-    availability: {
-        type: Boolean,
-        required: true,
-        default: true
     },
 }, { timestamps: true });
 

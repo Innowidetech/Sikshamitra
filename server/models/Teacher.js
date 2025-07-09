@@ -38,6 +38,7 @@ const teacherSchema = new mongoose.Schema({
         employeeId: {
             type: String,
             required: true,
+            unique:true,
         },
         class: {
             type: String,
@@ -99,7 +100,7 @@ const teacherSchema = new mongoose.Schema({
     },
     schoolId: {
         type: mongoose.Schema.Types.ObjectId,
-        // required: true,
+        required: true,
         ref: 'School'
     },
 }, {

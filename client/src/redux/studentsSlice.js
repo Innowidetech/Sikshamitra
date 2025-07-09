@@ -23,7 +23,7 @@ export const fetchStudents = createAsyncThunk(
   }
 );
 
-// ✅ New Thunk: Fetch Updated Student Data
+// ✅ Thunk: Fetch Updated Student Data
 export const fetchUpdatedStudents = createAsyncThunk(
   'students/fetchUpdatedStudents',
   async (_, { rejectWithValue }) => {
@@ -39,7 +39,8 @@ export const fetchUpdatedStudents = createAsyncThunk(
         },
       });
 
-      return response.data.updatedStudentData; // Adjust based on actual response structure
+      // ✅ Correct key in API response
+      return response.data.studentDataUpdates || [];
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -66,7 +67,6 @@ export const updateStudentAsync = createAsyncThunk(
         }
       );
 
-      // Refresh student list after update
       await dispatch(fetchStudents());
       return response.data;
     } catch (error) {
@@ -220,7 +220,6 @@ const studentsSlice = createSlice({
       .addCase(fetchStudentDetails.fulfilled, (state, action) => {
         state.loading = false;
         state.selectedStudent = action.payload;
-        state.error = null;
       })
       .addCase(fetchStudentDetails.rejected, (state, action) => {
         state.loading = false;
@@ -234,7 +233,6 @@ const studentsSlice = createSlice({
       })
       .addCase(updateStudentAsync.fulfilled, (state) => {
         state.loading = false;
-        state.error = null;
       })
       .addCase(updateStudentAsync.rejected, (state, action) => {
         state.loading = false;
@@ -248,8 +246,7 @@ const studentsSlice = createSlice({
       })
       .addCase(fetchUpdatedStudents.fulfilled, (state, action) => {
         state.loading = false;
-        state.students = action.payload;
-        state.filteredStudents = action.payload;
+        state.updatedStudentHistory = action.payload; // ✅ Correct key for StudentHistory.jsx
       })
       .addCase(fetchUpdatedStudents.rejected, (state, action) => {
         state.loading = false;

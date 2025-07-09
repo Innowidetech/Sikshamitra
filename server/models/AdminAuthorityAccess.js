@@ -6,14 +6,22 @@ const AandLSchema = new mongoose.Schema({
         required: true,
         ref: 'School',
     },
-    accountants: [{
+    accountant: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Teacher'
-    }],
-    librarians: [{
+        ref: 'Teacher'
+    },
+    librarian: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Teacher'
-    }],
+        ref: 'Teacher'
+    },
+    admissionsManager: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Teacher'
+    },
+    inventoryClerk: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Teacher'
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('AandL', AandLSchema);

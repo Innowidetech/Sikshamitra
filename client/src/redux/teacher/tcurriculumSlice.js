@@ -9,17 +9,23 @@ const getAuthHeaders = () => {
   };
 };
 
-// Fetch Teacher Syllabus
+// Fetch Teacher Syllabus by className
 export const fetchTeacherSyllabus = createAsyncThunk(
   'tcurriculum/fetchTeacherSyllabus',
-  async (_, { rejectWithValue }) => {
+  async (className = '', { rejectWithValue }) => {
     try {
-      const res = await fetch('https://sikshamitra.onrender.com/api/teacher/syllabus', {
+      let url = `https://sikshamitra.onrender.com/api/teacher/syllabus`;
+      if (className) {
+        url += `/${className}`;
+      }
+
+      const res = await fetch(url, {
         method: 'GET',
         headers: {
           ...getAuthHeaders(),
         },
       });
+
       if (!res.ok) throw new Error('Failed to fetch syllabus');
       const data = await res.json();
       return data;
@@ -29,26 +35,47 @@ export const fetchTeacherSyllabus = createAsyncThunk(
   }
 );
 
-// Create or Update Syllabus
-export const createOrUpdateSyllabus = createAsyncThunk(
-  'tcurriculum/createOrUpdateSyllabus',
-  async (formData, { rejectWithValue }) => {
+// Fetch Classes and Sections for syllabus and class plans
+export const fetchClassesAndSections = createAsyncThunk(
+  'tcurriculum/fetchClassesAndSections',
+  async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch('https://sikshamitra.onrender.com/api/teacher/syllabus', {
-        method: 'POST',
+      const res = await fetch('https://sikshamitra.onrender.com/api/teacher/get', {
+        method: 'GET',
         headers: {
           ...getAuthHeaders(),
         },
-        body: formData,
       });
-      if (!res.ok) throw new Error('Failed to submit syllabus');
+      if (!res.ok) throw new Error('Failed to fetch classes and sections');
       const data = await res.json();
-      return data;
+      return data; // Expecting data contains classes and sections info
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
+
+// Create or Update Syllabus
+// Uncomment and modify if needed
+// export const createOrUpdateSyllabus = createAsyncThunk(
+//   'tcurriculum/createOrUpdateSyllabus',
+//   async (formData, { rejectWithValue }) => {
+//     try {
+//       const res = await fetch('https://sikshamitra.onrender.com/api/teacher/syllabus', {
+//         method: 'POST',
+//         headers: {
+//           ...getAuthHeaders(),
+//         },
+//         body: formData,
+//       });
+//       if (!res.ok) throw new Error('Failed to submit syllabus');
+//       const data = await res.json();
+//       return data;
+//     } catch (err) {
+//       return rejectWithValue(err.message);
+//     }
+//   }
+// );
 
 // Create Class Plan
 export const createClassPlan = createAsyncThunk(
@@ -120,11 +147,9 @@ export const fetchTeacherClassPlans = createAsyncThunk(
   async ({ className, section }, { rejectWithValue }) => {
     try {
       let url = 'https://sikshamitra.onrender.com/api/teacher/classPlan';
-      // Check if className and section are provided, and append them to the URL
       if (className && section) {
         url += `/${className}/${section}`;
       }
-      // console.log(url)
 
       const res = await fetch(url, {
         method: 'GET',
@@ -145,9 +170,10 @@ export const fetchTeacherClassPlans = createAsyncThunk(
 const tcurriculumSlice = createSlice({
   name: 'tcurriculum',
   initialState: {
-    syllabus: { syllabus: [] },
+    syllabus: { syllabus: [] }, // syllabus API response shape
     aimObjectives: [],
     classPlan: null,
+    classesAndSections: null, // store classes and sections info here
     loading: false,
     errorMessage: null,
     successMessage: null,
@@ -169,6 +195,7 @@ const tcurriculumSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetchTeacherSyllabus
       .addCase(fetchTeacherSyllabus.pending, (state) => {
         state.loading = true;
       })
@@ -180,17 +207,22 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
-      .addCase(createOrUpdateSyllabus.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(createOrUpdateSyllabus.fulfilled, (state, action) => {
-        state.loading = false;
-        state.successMessage = action.payload.message || 'Syllabus saved successfully';
-      })
-      .addCase(createOrUpdateSyllabus.rejected, (state, action) => {
-        state.loading = false;
-        state.errorMessage = action.payload;
-      })
+
+      // createOrUpdateSyllabus
+      // Uncomment and handle if using createOrUpdateSyllabus
+      // .addCase(createOrUpdateSyllabus.pending, (state) => {
+      //   state.loading = true;
+      // })
+      // .addCase(createOrUpdateSyllabus.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.successMessage = action.payload.message || 'Syllabus saved successfully';
+      // })
+      // .addCase(createOrUpdateSyllabus.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.errorMessage = action.payload;
+      // })
+
+      // createClassPlan
       .addCase(createClassPlan.pending, (state) => {
         state.loading = true;
       })
@@ -203,6 +235,8 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
+
+      // updateClassPlan
       .addCase(updateClassPlan.pending, (state) => {
         state.loading = true;
       })
@@ -215,6 +249,8 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
+
+      // fetchAimObjectives
       .addCase(fetchAimObjectives.pending, (state) => {
         state.loading = true;
       })
@@ -226,6 +262,8 @@ const tcurriculumSlice = createSlice({
         state.loading = false;
         state.errorMessage = action.payload;
       })
+
+      // fetchTeacherClassPlans
       .addCase(fetchTeacherClassPlans.pending, (state) => {
         state.loading = true;
       })
@@ -234,6 +272,19 @@ const tcurriculumSlice = createSlice({
         state.classPlan = action.payload;
       })
       .addCase(fetchTeacherClassPlans.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
+      })
+
+      // fetchClassesAndSections
+      .addCase(fetchClassesAndSections.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchClassesAndSections.fulfilled, (state, action) => {
+        state.loading = false;
+        state.classesAndSections = action.payload;
+      })
+      .addCase(fetchClassesAndSections.rejected, (state, action) => {
         state.loading = false;
         state.errorMessage = action.payload;
       });

@@ -3,6 +3,20 @@ import React, { useState } from 'react';
 const Calendar = ({ events }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Helper function to return color based on event source
+  const getEventColor = (source) => {
+    switch (source) {
+      case 'google-calendar':
+        return '#2563EB'; // blue-600
+      case 'school-calendar':
+        return '#16A34A'; // green-600
+      case 'holiday':
+        return '#DC2626'; // red-600
+      default:
+        return '#3B82F6'; // default blue-500
+    }
+  };
+
   // Get days in month
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
@@ -64,11 +78,6 @@ const Calendar = ({ events }) => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const formatEventTitles = (events) => {
-    if (!events || events.length === 0) return '';
-    return events.map(event => event.title).join('\n');
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-md p-4">
       <div className="flex justify-between items-center mb-4">
@@ -101,22 +110,26 @@ const Calendar = ({ events }) => {
       
       <div className="grid grid-cols-7 gap-1">
         {generateCalendarDays().map((day, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className={`
               relative h-12 flex flex-col items-center justify-center
               ${day.isEmpty ? 'text-gray-300' : 'cursor-pointer hover:bg-gray-50'}
-              ${day.hasEvent ? 'bg-blue-50' : ''}
+              ${day.hasEvent ? 'bg-blue-100 border border-blue-400' : ''}
               rounded-md transition-colors duration-200
               group
             `}
           >
-            <span className="mb-2">{day.day}</span>
+            <span className="mb-2 font-semibold">{day.day}</span>
             {day.hasEvent && (
               <>
                 <div className="absolute bottom-1 flex gap-1 justify-center">
-                  {day.events.slice(0, 3).map((_, i) => (
-                    <span key={i} className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                  {day.events.slice(0, 3).map((event, i) => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: getEventColor(event.source) }}
+                    ></span>
                   ))}
                 </div>
                 <div className="absolute invisible group-hover:visible bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full mb-2 z-10 w-max max-w-[200px]">

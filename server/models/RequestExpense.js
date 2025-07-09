@@ -10,10 +10,7 @@ const RequestExpensesSchema = new mongoose.Schema({
         type:Number,
         default:0
     },
-    item:{
-        type: String,
-        // required: true
-    },
+    item:String,
     purpose: {
         type: String,
         required: true
@@ -32,6 +29,12 @@ const RequestExpensesSchema = new mongoose.Schema({
         enum:['pending','success', 'failed'],
         required:true,
         default:'pending'
+    },
+    remark:{
+        type:String,
+        required:function(){
+            return this.status=='failed';
+        }
     },
     createdBy:{
         type:mongoose.Schema.Types.ObjectId,

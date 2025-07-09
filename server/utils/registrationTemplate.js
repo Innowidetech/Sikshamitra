@@ -69,8 +69,8 @@ const registrationTemplate = (fullname, schoolName, email, password) => `
     <div class="container">
         <h1>Account Registration Successful!</h1>
         <div class="content">
-            <p>Dear ${fullname},</p>
-            <p>We are excited to inform you that your account has been successfully created for school - ${schoolName}, with the following details:</p>
+            <p>Dear <b>${fullname}</b>,</p>
+            <p>We are excited to inform you that your account has been successfully created for - <b>${schoolName}</b>, with the following details:</p>
             
             <div class="divider"></div>
             
@@ -86,7 +86,7 @@ const registrationTemplate = (fullname, schoolName, email, password) => `
         </div>
 
         <div class="footer">
-            <p>Thank you for registering with us! We look forward to serving you.</p>
+            <p>Thank you for registering with us!</p>
             <p>&copy; 2025 Shikshamitra. All rights reserved.</p>
         </div>
     </div>

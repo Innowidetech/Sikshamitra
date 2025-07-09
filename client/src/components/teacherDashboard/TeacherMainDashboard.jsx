@@ -24,6 +24,8 @@ import CreateDynamicCalendar from './CreateDynamicCalendar';
 import MarkAttendance from './MarkAttendance';
 import EditResult from './EditResult';
 
+import EditLectureTimetable from './EditLectureTimetable';
+import ScheduledLec from './ScheduledLec'; // ✅ Import ScheduledLec page
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -50,7 +52,7 @@ const MainDashboard = () => {
     navigate(`/teacher/${tabId}`);
   };
 
-  // Render tab content
+  // Render tab content based on active tab
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -74,7 +76,11 @@ const MainDashboard = () => {
     case 'markattendance':
       return <MarkAttendance />;
       case 'lectures':
-        return <Lectures />;
+        return <Lectures handleTabChange={handleTabChange} />;
+      case 'editlectures':
+        return <EditLectureTimetable />;
+      case 'scheduledlec':
+        return <ScheduledLec />; // ✅ Added new tab for scheduled lectures
       case 'curriculam':
         return <Curriculum setActiveTab={handleTabChange} />;
       case 'studymaterial':

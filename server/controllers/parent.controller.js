@@ -8,9 +8,11 @@ const Notice = require('../models/Notice');
 require('dotenv').config();
 const ParentExpenses = require('../models/ParentExpenses');
 const Razorpay = require('razorpay');
-const { sendEmail } = require('../utils/sendEmail');
-const queryTemplate = require('../utils/queryTemplate');
 const SchoolIncome = require('../models/SchoolIncome');
+const { uploadImage, deleteImage } = require('../utils/multer');
+const ClassTimetable = require('../models/Timetable');
+const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 
 const razorpay = new Razorpay({
@@ -21,7 +23,7 @@ const razorpay = new Razorpay({
 exports.editParentProfile = async (req, res) => {
   try {
     const updatedData = req.body;
-    if (!updatedData) {
+    if (!updatedData && !req.file) {
       return res.status(400).json({ message: 'No new data provided to update.' })
     };
 
@@ -40,16 +42,28 @@ exports.editParentProfile = async (req, res) => {
       return res.status(404).json({ message: 'No parent found with the userId.' })
     };
 
-    const restrictedFields = ['parentOf'];
+    let uploadedPhotoUrl
+    if (parent.parentProfile.photo) {
+      uploadedPhotoUrl = parent.parentProfile.photo
+    }
+    if (req.file) {
+      try {
+        if (parent.parentProfile.photo) {
+          await deleteImage(parent.parentProfile.photo);
+        }
+        const [photoUrl] = await uploadImage(req.file);
+        uploadedPhotoUrl = photoUrl;
+      } catch (error) {
+        return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+      }
+    }
 
     for (let key in updatedData) {
       if (parent.parentProfile.hasOwnProperty(key)) {
-        if (restrictedFields.includes(key)) {
-          return res.status(404).json({ message: 'You are not allowed to change the parentOf field' })
-        };
         parent.parentProfile[key] = updatedData[key];
       }
     }
+    parent.parentProfile.photo = uploadedPhotoUrl;
     await parent.save();
 
     res.status(200).json({
@@ -77,7 +91,7 @@ exports.parentDashboard = async (req, res) => {
       return res.status(403).json({ message: 'Access denied, only parents can access this.' });
     }
 
-    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email')
+    const parentData = await Parent.findOne({ userId: loggedInId }).populate('userId', 'email').populate({ path: 'schoolId', select: 'schoolLogo' });
 
     const parent = await Parent.findOne({ userId: loggedInId }).populate('userId parentProfile.parentOf');
     if (!parent) {
@@ -206,9 +220,11 @@ exports.getChildrenNames = async (req, res) => {
 exports.payFees = async (req, res) => {
   try {
     const { studentName, amount, purpose, className, section, reason } = req.body;
-    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Proivde student name, amount, purpose, class and section to pay." }) }
+    if (!studentName || !amount || !purpose || !className || !section) { return res.status(400).json({ message: "Provide student name, amount, purpose, class and section to pay." }) }
 
-    if (purpose === 'Other') { if (!reason) return res.status(400).json({ message: "Please specify the reason." }) }
+    if (purpose === 'Other') {
+      if (!reason) return res.status(400).json({ message: "Please specify the reason." })
+    }
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized, only logged-in users can access their data.' });
@@ -256,22 +272,16 @@ exports.payFees = async (req, res) => {
       paidBy: parent._id,
       paymentDetails: {
         razorpayOrderId: razorpayOrder.id,
-        razorpayPaymentId: '',
+        // razorpayPaymentId: '',
         status: 'pending',
       },
     });
 
     await newExpense.save();
 
-    res.status(200).json({
-      message: 'Payment order created successfully.',
-      newExpense
-    });
+    res.status(200).json({ message: 'Payment order created successfully.', newExpense });
   } catch (err) {
-    res.status(500).json({
-      message: 'Internal server error.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error.', error: err.message, });
   }
 };
 
@@ -279,9 +289,13 @@ exports.payFees = async (req, res) => {
 exports.verifyFeesPayment = async (req, res) => {
   try {
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+      return res.status(400).json({ message: "Missing payment verification fields" })
+    }
 
     const body = razorpayOrderId + "|" + razorpayPaymentId;
-    const expectedSignature = razorpay.crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest('hex');
 
@@ -306,35 +320,33 @@ exports.verifyFeesPayment = async (req, res) => {
 
       await paymentRecord.save();
 
-      const school = await School.findById(paymentRecord.schoolId);
-      if (!school) {
-        return res.status(404).json({ message: 'School not found.' });
-      }
-      const payout = await razorpayInstance.payouts.create({ // to send the amount to schools' bank account after payment verification is success
-        account_number: school.paymentDetails.accountNumber,
-        ifsc: school.paymentDetails.ifscCode,
-        amount: amountPaid,
-        currency: 'INR',
-        purpose: paymentRecord.purpose,
-        notes: {
-          schoolId: school._id,
-          studentId: paymentRecord.studentId,
-          paymentId: razorpayPaymentId,
-        },
-      });
+      // const school = await School.findById(paymentRecord.schoolId);
+      // if (!school) {
+      //   return res.status(404).json({ message: 'School not found.' });
+      // }
+      // const payout = await razorpayInstance.payouts.create({
+      //   account_number: school.paymentDetails.accountNumber,
+      //   ifsc: school.paymentDetails.ifscCode,
+      //   amount: amountPaid,
+      //   currency: 'INR',
+      //   purpose: paymentRecord.purpose,
+      //   notes: {
+      //     schoolId: school._id,
+      //     studentId: paymentRecord.studentId,
+      //     paymentId: razorpayPaymentId,
+      //   },
+      // });
 
-      res.status(200).json({
-        message: 'Payment verified and amount transferred to the school.',
-        payoutId: payout,
-      });
+      // res.status(200).json({
+      //   message: 'Payment verified and amount transferred to the school.',
+      //   payoutId: payout,
+      // });
+      res.status (200).json({message:"Payment verified successfully", paymentRecord})
     } else {
       return res.status(400).json({ message: 'Payment already processed or failed.' });
     }
   } catch (err) {
-    res.status(500).json({
-      message: 'Internal server error during payment verification.',
-      error: err.message,
-    });
+    res.status(500).json({ message: 'Internal server error during payment verification.', error: err.message, });
   }
 };
 
@@ -393,14 +405,8 @@ exports.getFeesReceipts = async (req, res) => {
 };
 
 
-exports.postQuery = async (req, res) => {
+exports.getTeacherNamesForQuery = async (req, res) => {
   try {
-    const { parentName, parentPhone, studentName, query, sendTo } = req.body;
-
-    if (!parentName || !parentPhone || !studentName || !query || !Array.isArray(sendTo)) {
-      return res.status(400).json({ message: 'Please provide all the details.' });
-    }
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: "Unauthorized." });
@@ -416,42 +422,46 @@ exports.postQuery = async (req, res) => {
       return res.status(404).json({ message: 'No parent found with the logged-in id.' });
     }
 
-    const student = await Student.findOne({ schoolId: parent.schoolId, 'studentProfile.fullname': studentName }).populate('schoolId');
-    const admin = await User.findOne({ _id: student.schoolId.userId });
-    const teacher = await Teacher.findOne({ schoolId: student.schoolId, 'profile.class': student.studentProfile.class, 'profile.section': student.studentProfile.section }).populate('userId');
+    let teacherInfoSet = new Set();
 
-    if (!teacher) {
-      return res.status(404).json({ message: "No class teacher for your child, please contact the admin." });
+
+    const timetables = await Promise.all(
+      parent.parentProfile.parentOf.map(async (sid) => {
+        const student = await Student.findById(sid);
+
+        const timetable = await ClassTimetable.findOne({
+          class: student.studentProfile.class,
+          section: student.studentProfile.section,
+          schoolId: student.schoolId
+        })
+          .populate('timetable.monday.teacher', 'profile.fullname')
+          .populate('timetable.tuesday.teacher', 'profile.fullname')
+          .populate('timetable.wednesday.teacher', 'profile.fullname')
+          .populate('timetable.thursday.teacher', 'profile.fullname')
+          .populate('timetable.friday.teacher', 'profile.fullname')
+          .populate('timetable.saturday.teacher', 'profile.fullname');
+
+        return timetable
+      })
+    )
+
+    for (const timetable of timetables) {
+      if (!timetable) continue;
+
+      for (const day of Object.keys(timetable.timetable)) {
+        for (const slot of timetable.timetable[day]) {
+          const teacherName = slot.teacher?.profile?.fullname;
+          const subject = slot.subject;
+
+          if (teacherName && subject) {
+            teacherInfoSet.add(`${teacherName}-${subject}`);
+          }
+        }
+      }
     }
 
-    const parentEmail = loggedInUser.email;
-    const adminEmail = admin.email;
-    const teacherEmail = teacher.userId.email;
-    const studentClass = student.studentProfile.class;
-    const studentSection = student.studentProfile.section;
-    const schoolName = student.schoolId.schoolName;
-
-    const emailContent = queryTemplate(schoolName, parentName, parentPhone, studentName, studentClass, studentSection, query);
-
-    const recipients = [];
-    if (sendTo.includes('admin')) {
-      recipients.push(adminEmail);
-    }
-    if (sendTo.includes('class teacher')) {
-      recipients.push(teacherEmail);
-    }
-
-    if (recipients.length === 0) {
-      return res.status(404).json({ message: "Invalid sendTo request." });
-    }
-
-    for (const recipientEmail of recipients) {
-      await sendEmail(recipientEmail, parentEmail, ` New Query Submission from ${parentName}`, emailContent);
-    }
-
-    res.status(201).json({
-      message: `An email has been sent to ${sendTo.join(' and ')}. Once they view it, they will contact you shortly.`
-    });
+    const teacherList = Array.from(teacherInfoSet);
+    res.status(200).json({ teachers: teacherList });
   }
   catch (err) {
     res.status(500).json({ message: "Internal server error.", error: err.message });

@@ -11,11 +11,11 @@ function CreateExams() {
 
   const [formData, setFormData] = useState({
     examType: '',
-    examDuration: '',
+   
     fromDate: '',
     toDate: '',
     numberOfSubjects: 1,
-    exam: [{ subjectCode: '', subject: '', syllabus: '', date: '' }],
+    exam: [{ subjectCode: '', subject: '', syllabus: '', date: '', duration:'' }],
   });
 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -33,7 +33,7 @@ function CreateExams() {
 
       if (num > updatedExam.length) {
         while (updatedExam.length < num) {
-          updatedExam.push({ subjectCode: '', subject: '', syllabus: '', date: '' });
+          updatedExam.push({ subjectCode: '', subject: '', syllabus: '', date: '', duration: '' });
         }
       } else {
         updatedExam.length = num;
@@ -74,7 +74,7 @@ function CreateExams() {
 
     dispatch(createTeacherExam(formData)).then(() => {
       dispatch(fetchTeacherExams());
-      setShowSuccessMessage(true); // Show the success message
+      setShowSuccessMessage(true);
     });
   };
 
@@ -124,6 +124,22 @@ function CreateExams() {
                   required
                 />
               </div>
+              <div className="space-y-4">
+              <div>
+                <label className="block font-semibold mb-1">To Date</label>
+                <input
+                  type="date"
+                  name="toDate"
+                  value={formData.toDate}
+                  onChange={handleChange}
+                  className="bg-[#1982C424] rounded px-4 py-2 w-full"
+                  required
+                />
+              </div>
+            </div>
+            </div>
+
+            <div className="space-y-4">
               <div>
                 <label className="block font-semibold mb-1">From Date</label>
                 <input
@@ -148,33 +164,9 @@ function CreateExams() {
                 />
               </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">Exam Duration</label>
-                <input
-                  type="text"
-                  name="examDuration"
-                  value={formData.examDuration}
-                  onChange={handleChange}
-                  className="bg-[#1982C424] rounded px-4 py-2 w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">To Date</label>
-                <input
-                  type="date"
-                  name="toDate"
-                  value={formData.toDate}
-                  onChange={handleChange}
-                  className="bg-[#1982C424] rounded px-4 py-2 w-full"
-                  required
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Subjects Dynamic Fields */}
+          {/* Subjects Fields */}
           <div className="space-y-6">
             {formData.exam.map((subject, index) => (
               <div key={index} className="p-4 rounded-md space-y-4 bg-gray-50 border border-gray-200">
@@ -195,6 +187,16 @@ function CreateExams() {
                       type="text"
                       value={subject.subject}
                       onChange={(e) => handleSubjectChange(index, 'subject', e.target.value)}
+                      className="bg-[#1982C424] rounded px-4 py-2 w-full"
+                      required
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block font-semibold mb-1">Exam Duration</label>
+                    <input
+                      type="text"
+                      value={subject.duration}
+                      onChange={(e) => handleSubjectChange(index, 'duration', e.target.value)}
                       className="bg-[#1982C424] rounded px-4 py-2 w-full"
                       required
                     />
@@ -238,7 +240,7 @@ function CreateExams() {
         </div>
       </div>
 
-      {/* Success Message Modal */}
+      {/* Success Modal */}
       {showSuccessMessage && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-xl text-center shadow-lg max-w-sm">

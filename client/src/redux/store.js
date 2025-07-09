@@ -21,8 +21,8 @@ import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
 import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
 import feesReducer from './parent/feesSlice';
-import expensesReducer from './parent/expensesSlice'
-import queryReducer from './parent/querySlice'
+import expensesReducer from './parent/expensesSlice';
+import queryReducer from './parent/querySlice';
 import curriculumReducer from './parent/curriculumSlice';
 import accountReducer from './accountSlice';
 
@@ -48,7 +48,10 @@ import teacherDashboardReducer from './teacher/teacherDashboardSlice';
 import bookReducer from './student/bookSlice';
 import connectQueriesReducer from './student/connectQueriesSlice';
 
+import parentProfileSliceReducer from './parent/parentProfileSlice'
 
+import staffDashboardReducer from './staff/staffDashboardSlice';
+import adminConnectQueriesReducer from './adminConnectQueriesSlice';
 
 
 const store = configureStore({
@@ -74,34 +77,46 @@ const store = configureStore({
     studentProfile: studentProfileReducer,
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
-    fees : feesReducer,
+    fees: feesReducer,
     accounts: accountReducer,
-    expenses:expensesReducer,
+    expenses: expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
     timeTable: timeTableSliceReducer,
     studyMaterial: studyMaterialReducer,
-    admitCard : admitCardSliceReducer,
-    assignment : assignmentSliceReducer,
-    syllabus : syllabusSliceReducer,
-    syllabusView : syllabusViewSliceReducer,
-    classPlan : classPlanSliceReducer,
-    results : resultSliceReducer,
-    about : aboutSliceReducer,
-    createExam :createExamSliceReducer,
-    studyMaterial : studyMSliceReducer,
+    admitCard: admitCardSliceReducer,
+    assignment: assignmentSliceReducer,
+    syllabus: syllabusSliceReducer,
+    syllabusView: syllabusViewSliceReducer,
+    classPlan: classPlanSliceReducer,
+    results: resultSliceReducer,
+    about: aboutSliceReducer,
+    createExam: createExamSliceReducer,
+    studyMaterial: studyMSliceReducer,
     myStudents: myStudentsReducer,
+    parentProfile: parentProfileSliceReducer,
+
+
+    // myStudents: myStudentsReducer,
+
     assignments: assignmentsReducer,
-    tcurriculum: tcurriculumSliceReducer, 
+    tcurriculum: tcurriculumSliceReducer,
     lecture: lectureSlice,
     teacherResults: teacherResultsReducer,
+
+    // teacherAttendance: teaAttendanceReducer,
+
     teaAttendance: teaAttendanceReducer,
     teacherDashboard: teacherDashboardReducer,
-      // students: myStudentsReducer,
-    book: bookReducer,  
+    // students: myStudentsReducer,
+    book: bookReducer,
     connectQueries: connectQueriesReducer,
-      
-   },
+
+    staffDashboard: staffDashboardReducer,
+     adminConnectQueries: adminConnectQueriesReducer,
+
+
+  },
 });
 
 export default store;  

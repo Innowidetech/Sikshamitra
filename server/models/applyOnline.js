@@ -22,13 +22,14 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        phoneNumber: {
-            type: String,
-            required: true
-        },
         aadhar: {
             type: String,
             required: true,
+        },
+        gender:{
+            type:String,
+            enum:['male','female'],
+            required:true,
         },
         schoolName: {
             type: String,
@@ -52,51 +53,51 @@ const onlineSchema = new mongoose.Schema({
                 required: true,
             },
         },
+        examId:{
+            type:String,
+            required:true,
+        },
+        resultPercentage:{
+            type:String,
+            required:true,
+        },
     },
     educationDetails: [{
         school: {
             type: String,
-            // required: true,
         },
         class: {
             type: String,
-            // required: true,
         },
         startDate: {
             type: Date,
-            // required: true,
         },
         endDate: {
             type: Date,
-            // required: true,
         },
         city: {
             type: String,
-            // required: true,
         },
         documents: {
             url: {
                 type: String,
-                // required: true,
             },
         },
     }],
     parentDetails: {
         fatherName: {
             type: String,
-            required: true,
+            // required: true,
         },
         motherName: {
             type: String,
-            // required: true,
         },
         fatherPhone: {
             type: String,
-            required: true,
+            // required: true,
         },
         motherPhone: {
             type: String,
-            // required: true,
         },
         email: {
             type: String,

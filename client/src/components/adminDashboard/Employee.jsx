@@ -1,380 +1,343 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect, useState, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchEmployees,
   addEmployee,
   editEmployee,
-  clearError,
-} from "../../redux/adminEmployee";
-import { Plus, Edit, Search } from "lucide-react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+} from '../../redux/adminEmployee';
+import {
+  Edit,
+  PlusCircle,
+  FileDown,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import Header from '../../components/adminDashboard/layout/Header';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
-function Employee() {
+const Employee = () => {
   const dispatch = useDispatch();
-  const { employees, loading, error } = useSelector(
-    (state) => state.adminEmployee
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { staffList, loading } = useSelector((state) => state.adminEmployee);
+  const employees = staffList;
+  const pdfRef = useRef();
+
+  const [filters, setFilters] = useState({
+    name: '',
+    role: '',
+  });
+
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    role: "",
-    department: "",
-    mobileNumber: "",
-    salary: "",
+    name: '',
+    email: '',
+    password: '',
+    mobileNumber: '',
+    employeeRole: '',
+    department: '',
+    salary: '',
+    isActive: 'true',
+    isEdit: false,
+    staffId: null,
   });
 
   useEffect(() => {
     dispatch(fetchEmployees());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (error === "Unauthorized access") {
-      toast.error("Authentication required. Please log in again.");
-      console.error("Authentication required");
-    } else if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
-  const handleInputChange = (e) => {
+  const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEdit = (employee) => {
-    setIsEditMode(true);
-    setSelectedEmployeeId(employee._id);
-    setFormData({
-      name: employee.name,
-      role: employee.role,
-      department: employee.department,
-      mobileNumber: employee.mobileNumber,
-      salary: employee.salary.toString(),
-    });
-    setIsModalOpen(true);
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      if (isEditMode && selectedEmployeeId) {
-        await dispatch(
-          editEmployee({
-            employeeId: selectedEmployeeId,
-            employeeData: formData,
-          })
-        ).unwrap();
-        toast.success("Employee updated successfully!");
-      } else {
-        await dispatch(addEmployee(formData)).unwrap();
-        toast.success("Employee added successfully!");
-      }
-      setIsModalOpen(false);
-      resetForm();
+    const action = formData.isEdit
+      ? editEmployee({ staffId: formData.staffId, staffData: formData })
+      : addEmployee(formData);
+
+    dispatch(action).then(() => {
       dispatch(fetchEmployees());
-    } catch (err) {
-      toast.error(err?.message || "Operation failed. Please try again.");
-      console.error("Operation failed:", err);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      role: "",
-      department: "",
-      mobileNumber: "",
-      salary: "",
+      setShowModal(false);
     });
-    setIsEditMode(false);
-    setSelectedEmployeeId(null);
-    dispatch(clearError());
   };
 
-  const filteredEmployees = employees?.employees?.filter((employee) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      employee.name.toLowerCase().includes(search) ||
-      employee.role.toLowerCase().includes(search) ||
-      employee.department.toLowerCase().includes(search)
-    );
-  });
+  const openEditModal = (emp) => {
+    setFormData({
+      name: emp.name,
+      email: emp.userId?.email || '',
+      password: '',
+      mobileNumber: emp.userId?.mobileNumber || '',
+      employeeRole: emp.employeeRole,
+      department: emp.department,
+      salary: emp.salary,
+      isActive: emp.userId?.isActive ? 'true' : 'false',
+      isEdit: true,
+      staffId: emp._id,
+    });
+    setShowModal(true);
+  };
 
-  const totalSalary = employees?.totalEmployeesSalary || 0;
+  const openAddModal = () => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      mobileNumber: '',
+      employeeRole: '',
+      department: '',
+      salary: '',
+      isActive: 'true',
+      isEdit: false,
+      staffId: null,
+    });
+    setShowModal(true);
+  };
+
+  const filteredEmployees = employees.filter((emp) =>
+    emp.name?.toLowerCase().includes(filters.name.toLowerCase()) &&
+    emp.employeeRole?.toLowerCase().includes(filters.role.toLowerCase())
+  );
+
+  const exportPDFWithHTML = () => {
+    const input = pdfRef.current;
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+      pdf.save('employees.pdf');
+    });
+  };
 
   return (
     <>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-
-      <div className="flex justify-between items-center mx-8 py-10">
-        <div className="inline-block">
-          <h1 className="text-xl font-light text-black xl:text-[30px]">
-            Employees
-          </h1>
-          <hr className="border-t-2 border-[#146192] mt-1" />
+      {/* Page Title and Header */}
+      <div className="flex justify-between items-center mx-8 pt-10">
+        <div>
+          <h1 className="text-2xl font-light text-black xl:text-[38px]">Staff</h1>
+          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
           <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xs lg:text-lg">Home</span>{" "}
-            {">"}
-            <span className="xl:text-[17px] text-xs md:text-lg font-medium text-[#146192]">
-              Employee 
-            </span>
+            <span className="xl:text-[17px] text-xl">Home</span> {'>'}{' '}
+            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Staff</span>
           </h1>
         </div>
-
-        <button
-          onClick={() => {
-            setIsModalOpen(true);
-            resetForm();
-          }}
-          className="bg-[#146192] text-white text-xs md:text-lg md:px-4 px-1 py-2 rounded-md flex items-center gap-2 hover:bg-[#0f4c7a] transition-colors"
-        >
-          <Plus size={20} />
-          Add Employee
-        </button>
+        <Header />
       </div>
 
-      <div className="mx-4 md:mx-8">
-        {/* Search and Export Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="w-full md:w-96">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by Name, Role or Department"
-                className="w-full px-4 py-2 pr-10 border-2 rounded-lg focus:outline-none focus:border-[#146192]"
-              />
-              <Search
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
-            </div>
+      {/* Main Section */}
+      <div className="p-4 bg-white">
+        {/* Filters and Actions */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <input
+              name="name"
+              value={filters.name}
+              onChange={handleFilterChange}
+              placeholder="Search by Staff name..."
+              className="border p-2 rounded text-sm w-60"
+            />
+            <input
+              name="role"
+              value={filters.role}
+              onChange={handleFilterChange}
+              placeholder="Search by Staff Role..."
+              className="border p-2 rounded text-sm w-60"
+            />
+            <button className="bg-[#146192] text-white px-6 py-2 rounded text-sm">
+              SEARCH
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={exportPDFWithHTML}
+              className="text-sm text-[#146192] font-semibold underline"
+            >
+              Export PDF
+            </button>
+            <button
+              onClick={openAddModal}
+              className="bg-[#146192] text-white px-4 py-2 text-sm rounded"
+            >
+              Add Staff
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Desktop and Laptop View - Table */}
-      <div className="mx-8 mb-6 hidden lg:block">
-        <div className="bg-white rounded-lg overflow-hidden">
-          {loading ? (
-            <div className="p-4 text-center text-gray-600">Loading...</div>
-          ) : (
-            <table className="min-w-full divide-y border-2">
-              <thead className="" style={{ fontFamily: "Poppins" }}>
+        {/* Table */}
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          <div ref={pdfRef} className="overflow-x-auto border">
+            <table className="min-w-full text-sm border">
+              <thead className="bg-[#f5f8fa] text-gray-700 font-medium">
                 <tr>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Employee Name
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Employee Role
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Employee Department
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Mobile Number
-                  </th>
-                  <th className="px-2 py-2 text-left text-sm font-medium text-[#146192] border-r">
-                    Salary
-                  </th>
-                  <th className="px-2 py-2 text-center text-sm font-medium text-[#146192]">
-                    Actions
-                  </th>
+                  <th className="border px-2 py-2">S.no</th>
+                  <th className="border px-2 py-2">Staff Name</th>
+                  <th className="border px-2 py-2">Staff Department</th>
+                  <th className="border px-2 py-2">Wage/Salary</th>
+                  <th className="border px-2 py-2">E-mail ID</th>
+                  <th className="border px-2 py-2">Mobile Number</th>
+                  <th className="border px-2 py-2">Employee Role</th>
+                  <th className="border px-2 py-2">Edit</th>
+                  <th className="border px-2 py-2">Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-white">
-                {filteredEmployees?.map((employee) => (
-                  <tr key={employee._id}>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap border-r">
-                      {employee.name}
-                    </td>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap border-r">
-                      {employee.role}
-                    </td>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap border-r">
-                      {employee.department}
-                    </td>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap border-r">
-                      {employee.mobileNumber}
-                    </td>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap border-r">
-                      ₹{employee.salary.toLocaleString()}
-                    </td>
-                    <td className="px-2 py-2 text-sm text-center">
-                      <button
-                        className="text-[#146192] hover:text-[#0f4c7a]"
-                        onClick={() => handleEdit(employee)}
-                      >
-                        <Edit size={18} />
+              <tbody>
+                {filteredEmployees.map((emp, index) => (
+                  <tr key={emp._id} className="text-center">
+                    <td className="border px-2 py-2">{index + 1}</td>
+                    <td className="border px-2 py-2">{emp.name}</td>
+                    <td className="border px-2 py-2">{emp.department}</td>
+                    <td className="border px-2 py-2">₹{emp.salary}</td>
+                    <td className="border px-2 py-2">{emp.userId?.email}</td>
+                    <td className="border px-2 py-2">{emp.userId?.mobileNumber}</td>
+                    <td className="border px-2 py-2">{emp.employeeRole}</td>
+                    <td className="border px-2 py-2">
+                      <button onClick={() => openEditModal(emp)}>
+                        <Edit className="text-blue-600 h-4 w-4" />
                       </button>
+                    </td>
+                    <td className="border px-2 py-2">
+                      {emp.userId?.isActive === false ? (
+                        <span className="flex items-center justify-center gap-1 text-red-600">
+                          <XCircle className="h-4 w-4" />
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-1 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile and Tablet View - Cards */}
-      <div className="mx-4 mb-6 lg:hidden shadow-lg">
-        {loading ? (
-          <div className="p-4 text-center text-gray-600">Loading...</div>
-        ) : (
-          <div className="space-y-6">
-            {filteredEmployees?.map((employee) => (
-              <div key={employee._id} className="bg-white p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-[#146192]">Employee Name</div>
-                  <div>{employee.name}</div>
-
-                  <div className="text-[#146192]">Employee Role</div>
-                  <div>{employee.role}</div>
-
-                  <div className="text-[#146192]">Employee Department</div>
-                  <div>{employee.department}</div>
-
-                  <div className="text-[#146192]">Mobile Number</div>
-                  <div>{employee.mobileNumber}</div>
-
-                  <div className="text-[#146192]">Salary</div>
-                  <div>₹{employee.salary.toLocaleString()}</div>
-
-                  <div className="text-[#146192]">Action</div>
-                  <div>
-                    <button
-                      className="text-[#146192] hover:text-[#0f4c7a]"
-                      onClick={() => handleEdit(employee)}
-                    >
-                      <Edit size={18} />
-                    </button>
-                  </div>
-                </div>
-                <hr className="border mt-4 border-[#146192]" />
-              </div>
-            ))}
           </div>
         )}
-      </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-md mx-4">
-            <h2 className="text-md md:text-2xl font-semibold mb-4 border-b border-[#000000]">
-              {isEditMode ? "Edit Employee Details" : "Add Employee Details"}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Name
-                </label>
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white rounded shadow-md w-full max-w-4xl"
+            >
+              {/* Modal Header */}
+              <div className="bg-[#146192] text-white px-6 py-3 rounded-t flex justify-between items-center">
+                <h2 className="text-lg font-semibold">
+                  {formData.isEdit ? 'Edit Employee' : 'Add Staff details'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
-                  onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  onChange={handleFormChange}
+                  placeholder="Name"
+                  className="border p-2 rounded w-full"
                   required
                 />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Department
-                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleFormChange}
+                  placeholder="Email-ID"
+                  className="border p-2 rounded w-full"
+                  required
+                />
                 <input
                   type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Employee Role
-                </label>
-                <input
-                  type="text"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Mobile Number
-                </label>
-                <input
-                  type="tel"
                   name="mobileNumber"
                   value={formData.mobileNumber}
-                  onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  onChange={handleFormChange}
+                  placeholder="Mobile Number"
+                  className="border p-2 rounded w-full"
                   required
                 />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Salary
-                </label>
+                {!formData.isEdit && (
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleFormChange}
+                    placeholder="Password"
+                    className="border p-2 rounded w-full"
+                    required
+                  />
+                )}
+                <input
+                  type="text"
+                  name="employeeRole"
+                  value={formData.employeeRole}
+                  onChange={handleFormChange}
+                  placeholder="Staff Role"
+                  className="border p-2 rounded w-full"
+                  required
+                />
                 <input
                   type="number"
                   name="salary"
                   value={formData.salary}
-                  onChange={handleInputChange}
-                  className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+                  onChange={handleFormChange}
+                  placeholder="Salary"
+                  className="border p-2 rounded w-full"
                   required
                 />
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleFormChange}
+                  placeholder="Department"
+                  className="border p-2 rounded w-full"
+                  required
+                />
+                <select
+                  name="isActive"
+                  value={formData.isActive}
+                  onChange={handleFormChange}
+                  className="border p-2 rounded w-full"
+                  required
                 >
-                  Cancel
-                </button>
+                  <option value="">Select Status</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex justify-center px-6 pb-6">
                 <button
                   type="submit"
-                  className="bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-[#0f4c7a] transition-colors"
-                  disabled={loading}
+                  className="bg-[#146192] text-white px-6 py-2 rounded hover:bg-blue-700 transition"
                 >
-                  {loading ? "Processing..." : isEditMode ? "Update" : "Save"}
+                  Save
                 </button>
               </div>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
-}
+};
 
 export default Employee;

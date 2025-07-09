@@ -30,23 +30,6 @@ function Students() {
             </span>
           </h1>
         </div>
-        {/* <div className="flex justify-end lg:mx-16 overflow-x-hidden">
-          <button
-            onClick={() => {
-              setIsModalOpen(true);
-              // resetForm();
-            }}
-            className="bg-[#146192] text-white text-xs lg:text-lg md:px-4 py-2 p-1 rounded-md flex items-center gap-2 hover:bg-[#0f4c7a] transition-colors"
-          >
-            <Plus size={20} />
-            Add Student
-          </button>
-          <AddStudent
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-            onAdd={handleAddStudent}
-          />
-        </div> */}
       </div>
       <div>
         <StudentsTable />

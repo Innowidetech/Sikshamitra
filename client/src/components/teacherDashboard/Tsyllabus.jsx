@@ -1,35 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTeacherSyllabus } from '../../redux/teacher/tcurriculumSlice';
+import {
+  fetchTeacherSyllabus,
+  fetchClassesAndSections,
+  setFilters,
+} from '../../redux/teacher/tcurriculumSlice';
 import { FaBookOpen } from 'react-icons/fa';
 import Header from '../adminDashboard/layout/Header';
 
 const Tsyllabus = () => {
   const dispatch = useDispatch();
-  const { syllabus, loading, errorMessage } = useSelector((state) => state.tcurriculum);
+  const {
+    syllabus,
+    errorMessage,
+    classesAndSections,
+    filters: { className },
+  } = useSelector((state) => state.tcurriculum);
 
-  const [isUploadFormVisible, setIsUploadFormVisible] = useState(false);
-
+  // Load classes and sections on mount
   useEffect(() => {
-    dispatch(fetchTeacherSyllabus());
+    dispatch(fetchClassesAndSections());
   }, [dispatch]);
+
+  // Fetch syllabus whenever class filter changes
+  useEffect(() => {
+    if (className) {
+      dispatch(fetchTeacherSyllabus(className));
+    }
+  }, [dispatch, className]);
 
   const syllabusList = syllabus?.syllabus || [];
 
-  const handleReplaceClick = () => {
-    setIsUploadFormVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsUploadFormVisible(false);
-  };
-
-  // Secure PDF download with token
   const handleDownloadPDF = async (url) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
 
     if (!token) {
-      alert("Authorization token is missing.");
+      alert('Authorization token is missing.');
       return;
     }
 
@@ -46,7 +52,7 @@ const Tsyllabus = () => {
 
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = blobUrl;
       a.download = `syllabus-${new Date().getTime()}.pdf`;
       document.body.appendChild(a);
@@ -55,8 +61,19 @@ const Tsyllabus = () => {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       alert(`Error: ${error.message}`);
-      console.error("Error downloading file:", error);
+      console.error('Error downloading file:', error);
     }
+  };
+
+  // Extract unique classes for dropdown
+  const uniqueClasses = classesAndSections?.assignedClasses
+    ? [...new Set(classesAndSections.assignedClasses.map((c) => c.class.replace(/^0+/, '')))]
+    : [];
+
+  // Handle change in class dropdown
+  const handleClassChange = (e) => {
+    const selectedClass = e.target.value;
+    dispatch(setFilters({ className: selectedClass }));
   };
 
   return (
@@ -81,123 +98,84 @@ const Tsyllabus = () => {
           <h2 className="text-xl font-semibold text-black">Teacher Syllabus</h2>
         </div>
 
-        {loading ? (
-          <p className="text-gray-600 text-lg">Loading syllabus...</p>
-        ) : errorMessage ? (
-          <p className="text-red-600 text-lg">Error: {errorMessage}</p>
-        ) : (
-          <>
-            {/* Buttons Section */}
-            <div className="flex justify-end mb-4 md:ml-72">
-              {syllabusList.length === 0 ? (
-                <button className="bg-blue-600 text-white px-4 py-2 rounded">Create Syllabus</button>
-              ) : (
-                <button
-                  onClick={handleReplaceClick}
-                  className="bg-[#146192] text-white px-4 py-2 rounded"
-                >
-                  Replace
-                </button>
+        {/* Class filter */}
+        <div className="flex gap-4 mb-6 md:ml-72">
+          <div>
+            <label className="block mb-1 font-medium" htmlFor="classSelect">
+              Select Class
+            </label>
+            <select
+              id="classSelect"
+              value={className}
+              onChange={handleClassChange}
+              className="border border-gray-400 rounded p-2"
+            >
+              <option value="">-- Select Class --</option>
+              {uniqueClasses.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {syllabusList.length === 0 && !errorMessage && (
+          <p className="text-red-600 text-lg md:ml-72">No syllabus found for this class.</p>
+        )}
+
+        {/* Desktop Table */}
+        <div className="hidden md:block md:ml-72 overflow-x-auto">
+          <table className="min-w-full border border-black text-sm bg-[#FFF4E9]">
+            <thead>
+              <tr>
+                <th className="border border-black px-4 py-2 text-left">Class</th>
+                <th className="border border-black px-4 py-2 text-left">Subject</th>
+                <th className="border border-black px-4 py-2 text-left">Description</th>
+                <th className="border border-black px-4 py-2 text-left">Syllabus File</th>
+              </tr>
+            </thead>
+            <tbody>
+              {syllabusList.map((item) => (
+                <tr key={item._id}>
+                  <td className="border border-black px-4 py-2">{item.class}</td>
+                  <td className="border border-black px-4 py-2 capitalize">{item.subject}</td>
+                  <td className="border border-black px-4 py-2">{item.description}</td>
+                  <td className="border border-black px-4 py-2">
+                    <button
+                      onClick={() => handleDownloadPDF(item.syllabus)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      View / Download PDF
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile View */}
+        <div className="space-y-6 md:hidden">
+          {syllabusList.map((item) => (
+            <div
+              key={item._id}
+              className="border border-black bg-[#FFF4E9] rounded shadow-sm overflow-hidden"
+            >
+              {[['Class', item.class], ['Subject', item.subject.charAt(0).toUpperCase() + item.subject.slice(1)], ['Description', item.description], ['Syllabus File', <button key={item._id} onClick={() => handleDownloadPDF(item.syllabus)} className="text-blue-600 underline">View / Download PDF</button>]].map(
+                ([label, value], idx) => (
+                  <div key={idx} className="grid grid-cols-2 border-b border-black">
+                    <div className="bg-[#146192] text-white p-2 font-medium border-r border-black whitespace-nowrap">
+                      {label}
+                    </div>
+                    <div className="p-2 break-words min-w-0 w-full">{value}</div>
+                  </div>
+                )
               )}
             </div>
-
-            {/* Modal Section */}
-            {isUploadFormVisible && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-                <div className="bg-white p-6 rounded-lg shadow-lg w-full sm:w-[400px] md:w-[500px] lg:w-[600px]">
-                  <h3 className="text-xl font-semibold text-black mb-4">Upload</h3>
-                  <form>
-                    <div className="flex flex-col gap-4">
-                      <label htmlFor="syllabusFile" className="text-black">
-                        Syllabus File
-                      </label>
-                      <input
-                        type="file"
-                        id="syllabusFile"
-                        name="syllabusFile"
-                        accept=".pdf"
-                        className="border border-red-500 p-8 rounded"
-                      />
-                      <div className="flex gap-4 mt-4">
-                        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-                          Upload
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCloseModal}
-                          className="bg-gray-600 text-white px-4 py-2 rounded"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Desktop Table */}
-            <div className="hidden md:block md:ml-72 overflow-x-auto">
-              <table className="min-w-full border border-black text-sm bg-[#FFF4E9]">
-                <thead>
-                  <tr>
-                    <th className="border border-black px-4 py-2 text-left">Class</th>
-                    <th className="border border-black px-4 py-2 text-left">Section</th>
-                    <th className="border border-black px-4 py-2 text-left">Syllabus File</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {syllabusList.map((item, index) => (
-                    <tr key={index}>
-                      <td className="border border-black px-4 py-2">{item.class}</td>
-                      <td className="border border-black px-4 py-2">{item.section}</td>
-                      <td className="border border-black px-4 py-2">
-                        <button
-                          onClick={() => handleDownloadPDF(item.syllabus)}
-                          className="text-blue-600 hover:underline"
-                        >
-                          View / Download PDF
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile View */}
-            <div className="space-y-6 md:hidden">
-              {syllabusList.map((item, index) => (
-                <div
-                  key={index}
-                  className="border border-black bg-[#FFF4E9] rounded shadow-sm overflow-hidden"
-                >
-                  {[
-                    ['Class', item.class],
-                    ['Section', item.section],
-                    [
-                      'Syllabus File',
-                      <button
-                        key={index}
-                        onClick={() => handleDownloadPDF(item.syllabus)}
-                        className="text-blue-600 underline"
-                      >
-                        View / Download PDF
-                      </button>,
-                    ],
-                  ].map(([label, value], idx) => (
-                    <div key={idx} className="grid grid-cols-2 border-b border-black">
-                      <div className="bg-[#146192] text-white p-2 font-medium border-r border-black whitespace-nowrap">
-                        {label}
-                      </div>
-                      <div className="p-2 break-words min-w-0 w-full">{value}</div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );

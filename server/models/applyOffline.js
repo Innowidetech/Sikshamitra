@@ -28,7 +28,15 @@ const offlineSchema = new mongoose.Schema({
         schoolName:{
             type:String,
             required:true,
-        }
+        },
+        examId:{
+            type:String,
+            required:true,
+        },
+        resultPercentage:{
+            type:String,
+            required:true,
+        },
     },{timestamps:true});
 
 module.exports = mongoose.model('Offline', offlineSchema);

@@ -9,20 +9,17 @@ const getAuthHeaders = () => {
   };
 };
 
-// Async thunks for API calls
+// Fetch Employees
 export const fetchEmployees = createAsyncThunk(
   'adminEmployee/fetchEmployees',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://sikshamitra.onrender.com/api/admin/employee', {
+      const response = await fetch('https://sikshamitra.onrender.com/api/admin/staff', {
         headers: getAuthHeaders()
       });
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthorized access');
-        }
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch employees');
+        throw new Error(errorData.message || 'Failed to fetch staff');
       }
       return await response.json();
     } catch (error) {
@@ -31,59 +28,62 @@ export const fetchEmployees = createAsyncThunk(
   }
 );
 
+// Add Employee
 export const addEmployee = createAsyncThunk(
   'adminEmployee/addEmployee',
-  async (employeeData, { rejectWithValue }) => {
+  async (staffData, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://sikshamitra.onrender.com/api/admin/employee', {
+      const response = await fetch('https://sikshamitra.onrender.com/api/admin/staff', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          name: employeeData.name,
-          role: employeeData.role,
-          department: employeeData.department,
-          mobileNumber: employeeData.mobileNumber,
-          salary: parseInt(employeeData.salary, 10)
+          email: staffData.email,
+          password: staffData.password,
+          mobileNumber: staffData.mobileNumber,
+          name: staffData.name,
+          employeeRole: staffData.employeeRole,
+          department: staffData.department,
+          salary: parseInt(staffData.salary, 10)
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add employee');
+        throw new Error(errorData.message || 'Failed to add staff');
       }
-      
-      // After successful addition, return the new employee data
-      const result = await response.json();
-      return result;
+
+      return await response.json();
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
 
+// Edit Employee
 export const editEmployee = createAsyncThunk(
   'adminEmployee/editEmployee',
-  async ({ employeeId, employeeData }, { rejectWithValue }) => {
+  async ({ staffId, staffData }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`https://sikshamitra.onrender.com/api/admin/employee/${employeeId}`, {
+      const response = await fetch(`https://sikshamitra.onrender.com/api/admin/staff/${staffId}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          newName: employeeData.name,
-          newRole: employeeData.role,
-          newDepartment: employeeData.department,
-          newMobileNumber: employeeData.mobileNumber,
-          newSalary: parseInt(employeeData.salary, 10)
+          email: staffData.email,
+          mobileNumber: staffData.mobileNumber,
+          isActive: staffData.isActive, // ✅ status integration
+          name: staffData.name,
+          employeeRole: staffData.employeeRole,
+          department: staffData.department,
+          salary: parseInt(staffData.salary, 10)
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to edit employee');
+        throw new Error(errorData.message || 'Failed to edit staff');
       }
 
-      const result = await response.json();
-      return result;
+      return await response.json();
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -93,7 +93,7 @@ export const editEmployee = createAsyncThunk(
 const adminEmployeeSlice = createSlice({
   name: 'adminEmployee',
   initialState: {
-    employees: null,
+    staffList: null,
     loading: false,
     error: null,
   },
@@ -104,21 +104,23 @@ const adminEmployeeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Employees
+      // Fetch
       .addCase(fetchEmployees.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.loading = false;
-        state.employees = action.payload;
+        state.staffList = action.payload.staff; // ✅ just store the array
         state.error = null;
       })
+
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Add Employee
+
+      // Add
       .addCase(addEmployee.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -126,14 +128,13 @@ const adminEmployeeSlice = createSlice({
       .addCase(addEmployee.fulfilled, (state) => {
         state.loading = false;
         state.error = null;
-        // Instead of updating the state directly, we'll fetch the updated list
-        // This ensures we have the most current data including the total salary
       })
       .addCase(addEmployee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // Edit Employee
+
+      // Edit
       .addCase(editEmployee.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -141,8 +142,6 @@ const adminEmployeeSlice = createSlice({
       .addCase(editEmployee.fulfilled, (state) => {
         state.loading = false;
         state.error = null;
-        // Instead of updating the state directly, we'll fetch the updated list
-        // This ensures we have the most current data including the total salary
       })
       .addCase(editEmployee.rejected, (state, action) => {
         state.loading = false;

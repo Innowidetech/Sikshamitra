@@ -29,6 +29,8 @@ const MainDashboard = () => {
   const [queryChatData, setQueryChatData] = useState({ queryId: null, mode: 'view' });
 
   const [showQueriesPage, setShowQueriesPage] = useState(false); // ✅ New state
+ 
+
 
   useEffect(() => {
     if (location.pathname === '/student') {
@@ -70,6 +72,9 @@ const MainDashboard = () => {
       return <QueriesPage onBack={() => setShowQueriesPage(false)} />; // ✅ Render queries page
     }
 
+
+
+
     if (location.pathname === '/student/profile') return <StudentProfile />;
     if (location.pathname === '/student/syllabus-view') return <SyllabusView />;
     if (location.pathname === '/student/class-plan') return <ClassPlanView />;
@@ -105,6 +110,7 @@ const MainDashboard = () => {
               setShowQueryChatPage(true);
             }}
             onOpenQueriesPage={() => setShowQueriesPage(true)} // ✅ New prop
+          
           />
         );
       default:

@@ -4,6 +4,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 const API_BASE = 'https://sikshamitra.onrender.com/api/student/query';
+const CONNECT_BASE = 'https://sikshamitra.onrender.com/api/student/connect';
 
 // ✅ Fetch all queries
 export const fetchConnectQueries = createAsyncThunk(
@@ -46,11 +47,7 @@ export const replyToQuery = createAsyncThunk(
       const res = await axios.post(
         `${API_BASE}/${id}`,
         { message },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       return res.data;
     } catch (err) {
@@ -59,7 +56,7 @@ export const replyToQuery = createAsyncThunk(
   }
 );
 
-// ✅ Send a new query (added based on your API)
+// ✅ Send a new query
 export const sendNewQuery = createAsyncThunk(
   'connectQueries/sendNewQuery',
   async ({ name, contact, email, message, sendTo }, { rejectWithValue }) => {
@@ -68,11 +65,7 @@ export const sendNewQuery = createAsyncThunk(
       const res = await axios.post(
         API_BASE,
         { name, contact, email, message, sendTo },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       return res.data;
     } catch (err) {
@@ -81,16 +74,81 @@ export const sendNewQuery = createAsyncThunk(
   }
 );
 
+
+// 🚀 Fetch all connects
+export const fetchConnects = createAsyncThunk(
+  'connectQueries/fetchConnects',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(CONNECT_BASE, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // assuming API returns { connectsReceived, connectsSent } or similar structure
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// ✅ Create meeting (scheduled or instant based on provided fields)
+export const createMeeting = createAsyncThunk(
+  'connectQueries/createMeeting',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      // Build request body conditionally
+      const requestBody = {
+        title: payload.title,
+        attendants: payload.attendants || [],
+      };
+
+      // Add scheduling fields if they exist
+      if (
+        payload.startDate &&
+        payload.startTime &&
+        payload.endDate &&
+        payload.endTime
+      ) {
+        requestBody.startDate = payload.startDate;
+        requestBody.startTime = payload.startTime;
+        requestBody.endDate = payload.endDate;
+        requestBody.endTime = payload.endTime;
+      }
+
+      const res = await axios.post(
+        CONNECT_BASE,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to create meeting.');
+    }
+  }
+);
+
+
 const connectQueriesSlice = createSlice({
   name: 'connectQueries',
   initialState: {
     received: [],
     sent: [],
+    connectsReceived: [], // new
+    connectsSent: [],     // new
     singleQuery: null,
     loading: false,
     error: null,
     replyStatus: null,
-    sendStatus: null, // ✅ New status for sending query
+    sendStatus: null,
+    connectsStatus: null, // new
   },
   reducers: {
     resetReplyStatus: (state) => {
@@ -99,10 +157,13 @@ const connectQueriesSlice = createSlice({
     resetSendStatus: (state) => {
       state.sendStatus = null;
     },
+    resetConnectsStatus: (state) => {
+      state.connectsStatus = null;
+    },
   },
   extraReducers: (builder) => {
     builder
-      // 🔄 Fetch all queries
+      // 🔄 fetchConnectQueries
       .addCase(fetchConnectQueries.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -117,7 +178,7 @@ const connectQueriesSlice = createSlice({
         state.error = action.payload || 'Failed to load queries';
       })
 
-      // 📥 Fetch query by ID
+      // 📥 fetchQueryById
       .addCase(fetchQueryById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -132,7 +193,7 @@ const connectQueriesSlice = createSlice({
         state.error = action.payload || 'Failed to load query';
       })
 
-      // 📨 Reply to query
+      // 📨 replyToQuery
       .addCase(replyToQuery.pending, (state) => {
         state.replyStatus = 'loading';
         state.error = null;
@@ -145,7 +206,7 @@ const connectQueriesSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ✉️ Send new query
+      // ✉️ sendNewQuery
       .addCase(sendNewQuery.pending, (state) => {
         state.sendStatus = 'loading';
         state.error = null;
@@ -156,9 +217,43 @@ const connectQueriesSlice = createSlice({
       .addCase(sendNewQuery.rejected, (state, action) => {
         state.sendStatus = 'error';
         state.error = action.payload;
-      });
+      })
+
+      // 🌐 fetchConnects
+      .addCase(fetchConnects.pending, (state) => {
+        state.connectsStatus = 'loading';
+        state.error = null;
+      })
+    .addCase(fetchConnects.fulfilled, (state, action) => {
+  state.connectsStatus = 'success';
+  state.connectsReceived = action.payload.connects || []; // ✅
+   })
+
+      .addCase(fetchConnects.rejected, (state, action) => {
+        state.connectsStatus = 'error';
+        state.error = action.payload || 'Failed to load connects';
+      })
+
+      // 🧩 createMeeting
+.addCase(createMeeting.pending, (state) => {
+  state.sendStatus = 'loading';
+  state.error = null;
+})
+.addCase(createMeeting.fulfilled, (state) => {
+  state.sendStatus = 'success';
+})
+.addCase(createMeeting.rejected, (state, action) => {
+  state.sendStatus = 'error';
+  state.error = action.payload;
+})
+
   },
 });
 
-export const { resetReplyStatus, resetSendStatus } = connectQueriesSlice.actions;
+export const {
+  resetReplyStatus,
+  resetSendStatus,
+  resetConnectsStatus,
+} = connectQueriesSlice.actions;
+
 export default connectQueriesSlice.reducer;
