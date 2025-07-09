@@ -227,8 +227,12 @@ const MainDashboard = () => {
           : <Accounts openHistory={() => setAccountSubTab('history')} />;
       case 'inventory':
         return <Inventory />;
-      case 'library':
-        return <Library />;
+     case 'library':
+        return <Library setActiveTab={setActiveTab} />;
+      case 'resolve':
+        return <ResolvePage setActiveTab={setActiveTab} />;
+      case 'allbook':
+        return <Allbook setActiveTab={setActiveTab} />;
       case 'admission':
         return <Admission />;
       case 'classes':

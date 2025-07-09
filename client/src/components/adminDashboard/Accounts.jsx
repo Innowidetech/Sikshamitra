@@ -323,12 +323,9 @@ const cards = [
     },
   };
 
-  
-
- const handleRowClick = (incomeId) => {
+  const handleRowClick = (incomeId) => {
   console.log("Clicked Income ID:", incomeId);
 
-  // Always check if the key exists before accessing
   const history = updatedIncomeHistoryById?.[incomeId];
   console.log("All History for This ID:", history);
 
@@ -336,17 +333,18 @@ const cards = [
     setExpandedIncomeId(null);
   } else {
     setExpandedIncomeId(incomeId);
-    setLoadingIncomeId(incomeId);
 
-    dispatch(fetchUpdatedIncomeHistoryById(incomeId))
-      .unwrap()
-      .then((res) => {
-        console.log("Fetched history for", incomeId, ":", res);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch income history:", err);
-      })
-      .finally(() => setLoadingIncomeId(null));
+    // Only dispatch if we don't already have the history
+    if (!history) {
+      dispatch(fetchUpdatedIncomeHistoryById(incomeId))
+        .unwrap()
+        .then((res) => {
+          console.log("Fetched history for", incomeId, ":", res);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch income history:", err);
+        });
+    }
   }
 };
 
