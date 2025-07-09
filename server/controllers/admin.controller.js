@@ -41,6 +41,7 @@ const EntranceExamResultsTemplate = require('../utils/EntranceExamResultsTemplat
 const Notifications = require('../models/Notifications');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
 const Vehicles = require('../models/Vehicles');
+const moment = require('moment');
 
 
 //get profile
@@ -5193,9 +5194,16 @@ exports.getVehicleAndStudentById = async (req, res) => {
           path: 'studentDetails.studentId',
           select: 'studentProfile.fullname studentProfile.registrationNumber studentProfile.class studentProfile.section studentProfile.childOf',
         });
+
       if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }); }
 
       populatedVehicle = vehicle.toObject();
+
+      populatedVehicle.routeDetails.sort((a, b) => {
+        const timeA = moment(a.timing, 'hh:mm A').toDate();
+        const timeB = moment(b.timing, 'hh:mm A').toDate();
+        return timeA - timeB;
+      });
 
       for (let studentDetail of populatedVehicle.studentDetails) {
         const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;
@@ -5221,17 +5229,18 @@ exports.getVehicleAndStudentById = async (req, res) => {
       }
 
       const childOfUserId = studentDetail.studentId?.studentProfile?.childOf;
-
       if (childOfUserId) {
         const parent = await Parent.findOne({ userId: childOfUserId }).select('parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress').lean();
         studentDetail.parent = parent ? parent.parentProfile : null;
       }
+
       return res.status(200).json(studentDetail);
     }
   } catch (err) {
     res.status(500).json({ message: "Internal server error.", error: err.message });
   }
 };
+
 
 
 exports.assignStudentToVehicle = async (req, res) => {
