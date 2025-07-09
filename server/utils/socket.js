@@ -29,6 +29,7 @@ function getMeetingStatus(doc) {
   return 'Live';
 }
 
+// Helper: add socketId to userSockets map
 function addUserSocket(userId, socketId) {
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
@@ -36,19 +37,14 @@ function addUserSocket(userId, socketId) {
   userSockets.get(userId).add(socketId);
 }
 
+// Helper: get all socketIds by userId
 function getUserSocketIds(userId) {
   return userSockets.has(userId) ? Array.from(userSockets.get(userId)) : [];
 }
 
 exports.initSocket = (server) => {
-  io = socketIo(server, {
-    cors: {
-      origin: ['http://localhost:5173','https://shikshamitra-i.web.app'],
-      methods: ['GET', 'POST'],
-    },
-    transports: ['websocket', 'polling'],
-  });
-  
+  io = socketIo(server, { cors: { origin: '*' } });
+
   function emitParticipants(meetingLink) {
     const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
     const participantIds = roomSockets.map(sid => io.sockets.sockets.get(sid)?.user?.id);
@@ -60,7 +56,7 @@ exports.initSocket = (server) => {
 
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth?.token;
+      const token = socket.handshake.auth?.token || socket.handshake.query.token;
       if (!token) {
         return next(new Error('Authentication error'));
       }
@@ -116,11 +112,14 @@ exports.initSocket = (server) => {
 
   // SOCKET CONNECTION HANDLING
   io.on('connection', (socket) => {
+
     addUserSocket(socket.user.id, socket.id);
+
     socket.on('error', (err) => {
       console.error('Socket error:', err);
     });
     socket.join(`user_${socket.user.id}`);
+
     socket.meetings = {};
 
     socket.on('requestJoin', async ({ meetingLink }) => {
@@ -151,6 +150,7 @@ exports.initSocket = (server) => {
           return socket.emit('joinResponse', { meetingLink, success: false, message: 'Not invited.' });
         }
 
+        // Initialize meetings container if doesn't exist
         if (!socket.meetings) socket.meetings = {};
 
         if (socket.user.id === doc.createdBy.toString()) {
@@ -163,6 +163,7 @@ exports.initSocket = (server) => {
           return;
         }
 
+        // Notify the creator of join request
         const creatorId = doc.createdBy.toString();
         socket.meetings[meetingLink] = { creatorId };
         io.to(`user_${creatorId}`).emit('joinRequest', {
@@ -186,6 +187,7 @@ exports.initSocket = (server) => {
 
     socket.on('respondToJoin', async ({ meetingLink, userId, accept }) => {
       try {
+        // Verify host is actually the creator of the meeting
         const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
         if (!meetingDoc || meetingDoc.createdBy.toString() !== socket.user.id) {
           console.warn(`Unauthorized respondToJoin attempt by ${socket.user.name}`);
@@ -220,13 +222,14 @@ exports.initSocket = (server) => {
       }
     });
 
-    socket.on('join-meeting', (meetingLink) => {
+    socket.on('joinAccepted', ({ meetingLink }) => {
       socket.join(`meeting_${meetingLink}`);
       socket.emit('joined', { meetingLink });
+
       emitParticipants(meetingLink);
-      console.log(`🔗 ${socket.user.name} joined meeting ${meetingLink} via join-meeting`);
     });
 
+    //chat
     socket.on('chatMessage', ({ meetingLink, message }) => {
       io.in(`meeting_${meetingLink}`).emit('chatMessage', {
         meetingLink,
@@ -257,6 +260,7 @@ exports.initSocket = (server) => {
 
     socket.on('endMeeting', async ({ meetingLink }) => {
       try {
+        // Only allow the host/creator of the meeting to end it
         const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
         if (!meetingDoc) {
           return socket.emit('error', { message: 'Meeting not found.' });
@@ -267,12 +271,13 @@ exports.initSocket = (server) => {
           return socket.emit('error', { message: 'Unauthorized.' });
         }
 
-        // await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
+        // Delete the meeting document from DB
+        await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
 
-        // Notify all participants
+        // Notify all participants in the meeting room that meeting ended
         io.in(`meeting_${meetingLink}`).emit('meetingEnded', { meetingLink });
 
-        // Disconnect all
+        // Disconnect all sockets in this meeting room gracefully
         const roomSockets = io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || new Set();
         roomSockets.forEach(socketId => {
           const s = io.sockets.sockets.get(socketId);
