@@ -258,11 +258,11 @@ export const fetchTeacherRequests = createAsyncThunk(
 
 export const createTeacherRequest = createAsyncThunk(
   'teacherDashboard/createTeacherRequest',
-  async ({ token, requestData }, thunkAPI) => {
+  async ({ token, item, purpose }, thunkAPI) => {
     try {
       const response = await axios.post(
-        'https://sikshamitra.onrender.com/api/teacher/classRequest',
-        requestData,
+        'https://sikshamitra.onrender.com/api/teacher/expenseRequest',
+        { item, purpose },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -270,12 +270,39 @@ export const createTeacherRequest = createAsyncThunk(
           },
         }
       );
-      return response.data;
+      return response.data; // Assuming API returns the created request object
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message || 'Failed to submit request');
     }
   }
 );
+
+
+export const editTeacherExpenseRequest = createAsyncThunk(
+  'teacherDashboard/editTeacherExpenseRequest',
+  async ({ token, id, updateData }, thunkAPI) => {
+    try {
+      console.log('PATCH payload:', updateData, 'for id:', id); // debug
+      const response = await axios.patch(
+        `https://sikshamitra.onrender.com/api/teacher/expenseRequested/${id}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log('PATCH response:', response.data); // debug
+      return response.data;
+    } catch (error) {
+      console.error('PATCH error:', error.response || error.message); // debug
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to edit expense request'
+      );
+    }
+  }
+);
+
 
 
 
@@ -335,6 +362,10 @@ deleteCalendarError: null,
 createRequestError: null,
 createRequestSuccess: false,
 
+ // ✅ NEW STATE FOR EDIT EXPENSE
+    editExpenseLoading: false,
+    editExpenseError: null,
+    editExpenseSuccess: false,
 
     
   },
@@ -388,6 +419,11 @@ createRequestSuccess: false,
   state.createRequestSuccess = false;
 },
 
+clearEditExpenseStatus: (state) => {
+      state.editExpenseLoading = false;
+      state.editExpenseError = null;
+      state.editExpenseSuccess = false;
+    },
 
 
   },
@@ -607,20 +643,39 @@ createRequestSuccess: false,
       })
 
       .addCase(createTeacherRequest.pending, (state) => {
-  state.createRequestLoading = true;
-  state.createRequestError = null;
-  state.createRequestSuccess = false;
-})
-.addCase(createTeacherRequest.fulfilled, (state, action) => {
-  state.createRequestLoading = false;
-  state.createRequestSuccess = true;
-  state.teacherRequests.unshift(action.payload); // Fix: Add directly
+        state.loadingCreateRequest = true;
+        state.errorCreateRequest = null;
+      })
+    .addCase(createTeacherRequest.fulfilled, (state, action) => {
+  if (Array.isArray(state.teacherRequests?.teacherRequests)) {
+    state.teacherRequests.teacherRequests.push(action.payload);
+  }
 })
 
-.addCase(createTeacherRequest.rejected, (state, action) => {
-  state.createRequestLoading = false;
-  state.createRequestError = action.payload;
-});
+      .addCase(createTeacherRequest.rejected, (state, action) => {
+        state.loadingCreateRequest = false;
+        state.errorCreateRequest = action.payload;
+      })
+
+ // ✅ Edit Expense Request
+      .addCase(editTeacherExpenseRequest.pending, (state) => {
+        state.editExpenseLoading = true;
+        state.editExpenseError = null;
+        state.editExpenseSuccess = false;
+      })
+     .addCase(editTeacherExpenseRequest.fulfilled, (state, action) => {
+      // Replace the updated request in the state array
+      const index = state.teacherRequests.teacherRequests.findIndex(
+        (req) => req._id === action.payload._id
+      );
+      if (index !== -1) {
+        state.teacherRequests.teacherRequests[index] = action.payload;
+      }
+    })
+    .addCase(editTeacherExpenseRequest.rejected, (state, action) => {
+      // Optionally, set an error message or state here
+      state.error = action.payload;
+    });
 
 
   },
@@ -638,6 +693,7 @@ export const {
   clearClassAccountsStatus,
   clearRequestsStatus,
   clearCreateRequestStatus,
+   clearEditExpenseStatus,
 
 
 } = teacherDashboardSlice.actions;

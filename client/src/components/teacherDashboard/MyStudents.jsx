@@ -5,7 +5,7 @@ import { fetchMyStudents } from '../../redux/teacher/myStudentsSlice';
 
 const MyStudents = () => {
   const dispatch = useDispatch();
-  const { data, loading, error } = useSelector((state) => state.students);
+  const { data, loading, error } = useSelector((state) => state.myStudents);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [inputValue, setInputValue] = useState('');

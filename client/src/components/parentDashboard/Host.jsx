@@ -1,4 +1,151 @@
 
+// import React, { useEffect, useRef, useState } from 'react';
+// import { useLocation } from 'react-router-dom';
+// import { useSocket } from '../../../src/hooks/useSocket';
+
+// const Host = () => {
+//   const { state } = useLocation();
+//   const { meetingLink, name = 'Host' } = state || {};
+//   const { socket, isConnected } = useSocket();
+
+//   const [joinRequests, setJoinRequests] = useState([]);
+//   const [localStream, setLocalStream] = useState(null);
+//   const localVideoRef = useRef(null);
+//   const [isCameraOn, setIsCameraOn] = useState(false);
+//   const [isMicOn, setIsMicOn] = useState(false);
+
+//   // Join meeting and handle join requests
+//   useEffect(() => {
+//     if (socket && isConnected && meetingLink) {
+//       // Host joins the meeting room immediately
+//       socket.emit('join-meeting', meetingLink);
+
+//       // Get local media stream for host video
+//       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+//         .then((stream) => {
+//           setLocalStream(stream);
+//           if (localVideoRef.current) {
+//             localVideoRef.current.srcObject = stream;
+//           }
+//           setIsCameraOn(true);
+//           setIsMicOn(true);
+//         })
+//         .catch((err) => {
+//           console.error('Error accessing media devices:', err);
+//         });
+
+//       // Listen for join requests from attendees
+//       socket.on('requestJoin', ({ meetingLink: reqMeetingLink, userId, fullname }) => {
+//         if (reqMeetingLink === meetingLink) {
+//           setJoinRequests((prev) => [...prev, { userId, fullname }]);
+//         }
+//       });
+
+//       return () => {
+//         socket.off('requestJoin');
+//         localStream?.getTracks().forEach((track) => track.stop());
+//       };
+//     }
+//   }, [socket, isConnected, meetingLink, localStream]);
+
+//   // Respond to join requests
+//   const respondToJoin = (userId, accept) => {
+//     if (socket && meetingLink) {
+//       socket.emit('respondToJoin', { meetingLink, userId, accept });
+//       setJoinRequests((prev) => prev.filter((req) => req.userId !== userId));
+//     }
+//   };
+
+//   // Toggle camera
+//   const toggleCamera = () => {
+//     const videoTrack = localStream?.getVideoTracks()[0];
+//     if (videoTrack) {
+//       videoTrack.enabled = !videoTrack.enabled;
+//       setIsCameraOn(videoTrack.enabled);
+//     }
+//   };
+
+//   // Toggle mic
+//   const toggleMic = () => {
+//     const audioTrack = localStream?.getAudioTracks()[0];
+//     if (audioTrack) {
+//       audioTrack.enabled = !audioTrack.enabled;
+//       setIsMicOn(audioTrack.enabled);
+//     }
+//   };
+
+//   const handleDisconnect = () => {
+//     socket?.disconnect();
+//     localStream?.getTracks().forEach((track) => track.stop());
+//   };
+
+//   return (
+//     <div className="relative w-full h-screen bg-black flex flex-col items-center justify-center text-white">
+//       <h1 className="text-2xl font-bold mb-4">🎥 Host Page</h1>
+//       <p className="mb-4">{isConnected ? '🟢 Connected as Host' : '🔴 Not Connected'}</p>
+
+//       {/* Video feed */}
+//       <div className="relative w-full max-w-4xl h-[60vh] border-4 border-blue-500 rounded-lg overflow-hidden mb-6">
+//         {localStream && isCameraOn ? (
+//           <video ref={localVideoRef} autoPlay muted className="w-full h-full object-cover" />
+//         ) : (
+//           <div className="w-full h-full bg-purple-600 flex items-center justify-center relative">
+//             <svg className="w-24 h-24 text-purple-300" fill="currentColor" viewBox="0 0 24 24">
+//               <path d="M17 10.5V7c0-.6-.4-1-1-1H4c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h12c.6 0 1-.4 1-1v-3.5l4 4v-11l-4 4z" />
+//             </svg>
+//             <span className="absolute left-4 bottom-4 text-white text-sm">© {name}</span>
+//           </div>
+//         )}
+//       </div>
+
+//       {/* Controls */}
+//       <div className="mb-6 flex justify-center gap-6 text-white text-xl">
+//         <button onClick={toggleCamera} title="Toggle Camera" className="bg-gray-700 p-2 rounded">
+//           <i className={`fas ${isCameraOn ? 'fa-video' : 'fa-video-slash'}`}></i>
+//         </button>
+//         <button onClick={toggleMic} title="Toggle Mic" className="bg-gray-700 p-2 rounded">
+//           <i className={`fas ${isMicOn ? 'fa-microphone' : 'fa-microphone-slash'}`}></i>
+//         </button>
+//         <button
+//           onClick={handleDisconnect}
+//           disabled={!isConnected}
+//           title="Disconnect Socket"
+//           className="bg-red-600 p-2 rounded disabled:opacity-50"
+//         >
+//           <i className="fas fa-phone-slash"></i> End Call
+//         </button>
+//       </div>
+
+//       {/* Join Requests Panel */}
+//       {joinRequests.length > 0 && (
+//         <div className="absolute top-4 right-4 bg-white text-black p-4 rounded shadow-md w-[320px] max-h-[70vh] overflow-auto">
+//           <h3 className="font-bold mb-2">Join Requests</h3>
+//           {joinRequests.map(({ userId, fullname }) => (
+//             <div key={userId} className="flex justify-between items-center mb-2">
+//               <span>{fullname || userId}</span>
+//               <div>
+//                 <button
+//                   onClick={() => respondToJoin(userId, true)}
+//                   className="text-green-600 mr-2 hover:underline"
+//                 >
+//                   Accept
+//                 </button>
+//                 <button
+//                   onClick={() => respondToJoin(userId, false)}
+//                   className="text-red-600 hover:underline"
+//                 >
+//                   Deny
+//                 </button>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Host;
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../../src/hooks/useSocket';
@@ -25,7 +172,6 @@ const Host = () => {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isMeetingInfoOpen, setIsMeetingInfoOpen] = useState(false);
 
-  // Log meeting link for debugging
   useEffect(() => {
     console.log('Meeting Link:', meetingLink);
   }, [meetingLink]);
@@ -38,7 +184,6 @@ const Host = () => {
     );
   }
 
-  // Initialize media devices
   useEffect(() => {
     const initMedia = async () => {
       try {
@@ -56,12 +201,10 @@ const Host = () => {
     initMedia();
   }, []);
 
-  // Setup socket event listeners
   useEffect(() => {
     if (socket && isConnected && meetingLink) {
       socket.emit('join-meeting', meetingLink);
 
-      // Listen for join requests from participants
       socket.on('joinRequest', ({ meetingLink: reqLink, userId, fullname, role }) => {
         console.log('🔔 joinRequest received:', { reqLink, userId, fullname, role });
         if (reqLink === meetingLink) {
@@ -75,17 +218,14 @@ const Host = () => {
         }
       });
 
-      // Listen for incoming chat messages
       socket.on('chatMessage', ({ userId, text }) => {
         setMessages((prev) => [...prev, { from: userId, text }]);
       });
 
-      // Update participants list when it changes
       socket.on('participantsUpdate', (newParticipants) => {
         setParticipants(newParticipants);
       });
 
-      // Cleanup listeners on unmount or dependencies change
       return () => {
         socket.off('joinRequest');
         socket.off('chatMessage');
@@ -94,15 +234,13 @@ const Host = () => {
     }
   }, [socket, isConnected, meetingLink]);
 
-  // Cleanup media and socket on component unmount
   useEffect(() => {
     return () => {
-      if (socket) socket.disconnect();
+      socket?.disconnect();
       localStream?.getTracks().forEach((track) => track.stop());
     };
   }, [socket, localStream]);
 
-  // Respond to a join request (accept or deny)
   const respondToJoin = (userId, accept) => {
     socket.emit('respondToJoin', { meetingLink, userId, accept });
 
@@ -118,7 +256,6 @@ const Host = () => {
     setJoinRequests((prev) => prev.filter((req) => req.userId !== userId));
   };
 
-  // Toggle camera on/off
   const toggleCamera = () => {
     const track = localStream?.getVideoTracks()[0];
     if (track) {
@@ -127,7 +264,6 @@ const Host = () => {
     }
   };
 
-  // Toggle microphone on/off
   const toggleMic = () => {
     const track = localStream?.getAudioTracks()[0];
     if (track) {
@@ -136,7 +272,6 @@ const Host = () => {
     }
   };
 
-  // Confirm and handle meeting disconnect/end
   const handleDisconnect = () => {
     toast.info(
       <div>
@@ -157,7 +292,6 @@ const Host = () => {
     );
   };
 
-  // Send chat message
   const sendMessage = () => {
     if (!chatInput.trim()) return;
     socket.emit('chatMessage', { meetingLink, userId: name, text: chatInput });
@@ -165,7 +299,6 @@ const Host = () => {
     setChatInput('');
   };
 
-  // Panel toggles (participants, chat, meeting info)
   const openParticipants = () => {
     setIsParticipantsOpen(true);
     setIsChatOpen(false);
@@ -206,6 +339,7 @@ const Host = () => {
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
+      {/* Controls */}
       <div className="absolute bottom-0 w-full bg-black bg-opacity-90 p-3 flex justify-center gap-6 text-xl z-10">
         <button onClick={toggleCamera} title="Toggle Camera" className="hover:text-blue-400">
           <i className={`fas ${isCameraOn ? 'fa-video' : 'fa-video-slash'}`} />
@@ -231,7 +365,7 @@ const Host = () => {
         </button>
       </div>
 
-      {/* Join Requests Panel */}
+      {/* Join Requests */}
       {joinRequests.length > 0 && (
         <div className="absolute top-4 right-4 bg-white text-black p-4 rounded shadow-md w-[320px] max-h-[70vh] overflow-auto z-20">
           <h3 className="font-bold mb-2">Join Requests</h3>
@@ -260,7 +394,7 @@ const Host = () => {
         </div>
       )}
 
-      {/* Chat Panel */}
+      {/* Chat Sidebar */}
       {isChatOpen && (
         <div className="absolute top-0 right-0 h-full w-[320px] bg-white text-black shadow-lg z-30 flex flex-col">
           <div className="p-4 font-bold border-b flex justify-between items-center">
@@ -303,7 +437,7 @@ const Host = () => {
         </div>
       )}
 
-      {/* Participants Panel */}
+      {/* Participants Sidebar */}
       {isParticipantsOpen && (
         <div className="absolute top-0 right-0 h-full w-[320px] bg-white text-black shadow-lg z-30 flex flex-col">
           <div className="p-4 font-bold border-b flex justify-between items-center">
@@ -329,7 +463,7 @@ const Host = () => {
         </div>
       )}
 
-      {/* Meeting Info Panel */}
+      {/* Meeting Info Sidebar */}
       {isMeetingInfoOpen && (
         <div className="absolute top-0 right-0 h-full w-[320px] bg-white text-black shadow-lg z-30 flex flex-col">
           <div className="p-4 font-bold border-b flex justify-between items-center">
@@ -342,13 +476,18 @@ const Host = () => {
             </button>
           </div>
           <div className="flex-1 p-4 space-y-3">
-            <p>
-              <strong>Joined as:</strong> {name}
+            <p><strong>Joined as:</strong> {name}</p>
+            <p className="break-words">
+              <strong>Meeting Link:</strong>{' '}
+              <a
+                href={meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline break-all"
+              >
+                {meetingLink}
+              </a>
             </p>
-            <p>
-              <strong>Meeting Link:</strong>
-            </p>
-            <div className="break-words text-blue-700">{meetingLink || 'No meeting link available'}</div>
           </div>
         </div>
       )}

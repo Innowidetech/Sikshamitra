@@ -3,8 +3,13 @@ import { FaUserGraduate, FaFemale, FaMale } from "react-icons/fa";
 import AdmissionTable from './admissionpage/AdmissionTable';
 import { useSelector } from 'react-redux';
 
-function Admission() {
-    const { admissions } = useSelector((state) => state.admissions);
+function Admission({ setActiveTab }) {
+    const { newAdmissions, newAdmissionsCounts } = useSelector((state) => state.admissions);
+
+    // Use counts directly from newAdmissionsCounts
+    const total = newAdmissionsCounts?.total || 0;
+    const male = newAdmissionsCounts?.male || 0;
+    const female = newAdmissionsCounts?.female || 0;
 
     return (
         <>
@@ -29,7 +34,7 @@ function Admission() {
                     <hr className="h-14 w-[2px] bg-gray-300" />
                     <div>
                         <p className="">New Admissions</p>
-                        <h3 className="text-center text-2xl font-medium">{admissions.total || 0}</h3>
+                        <h3 className="text-center text-2xl font-medium">{total}</h3>
                     </div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6 flex items-center justify-around space-x-4 border-l-[8px] border-[#FFC000]">
@@ -39,7 +44,7 @@ function Admission() {
                     <hr className="h-14 w-[2px] bg-gray-300" />
                     <div>
                         <p className="">Male</p>
-                        <h3 className="text-center text-2xl font-medium">{admissions.male || 0}</h3>
+                        <h3 className="text-center text-2xl font-medium">{male}</h3>
                     </div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6 flex items-center justify-around space-x-4 border-l-[8px] border-[#3FB56F]">
@@ -49,12 +54,12 @@ function Admission() {
                     <hr className="h-14 w-[2px] bg-gray-300" />
                     <div>
                         <p className="">Female</p>
-                        <h3 className="text-center text-2xl font-medium">{admissions.female || 0}</h3>
+                        <h3 className="text-center text-2xl font-medium">{female}</h3>
                     </div>
                 </div>
             </div>
             <div>
-                <AdmissionTable />
+               <AdmissionTable setActiveTab={setActiveTab} />
             </div>
         </>
     );

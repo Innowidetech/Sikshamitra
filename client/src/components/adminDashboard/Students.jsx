@@ -1,11 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import StudentsTable from "./studentsPage/StudentsTable";
-import { History } from "lucide-react";
+import AddStudent from "./studentsPage/AddStudents";
+import { Plus } from "lucide-react";
 
-function Students({ openHistory }) {
+function Students() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleAddStudent = (studentData) => {
+    setIsModalOpen(false);
+  };
+
   return (
     <>
-      <div className="flex justify-between items-center mx-8 py-10">
+      <div className="flex justify-between items-center mx-8 py-10 ">
         <div className="inline-block">
           <h1 className="text-xl font-light text-black xl:text-[32px]">
             Student
@@ -19,18 +30,7 @@ function Students({ openHistory }) {
             </span>
           </h1>
         </div>
-
-        <div className="flex justify-end lg:mx-16 overflow-x-hidden">
-          <button
-            onClick={openHistory}
-            className="bg-[#146192] text-white text-xs lg:text-lg md:px-4 py-2 p-1 rounded-md flex items-center gap-2 hover:bg-[#0f4c7a] transition-colors"
-          >
-            <History size={20} />
-            History
-          </button>
-        </div>
       </div>
-
       <div>
         <StudentsTable />
       </div>
@@ -39,5 +39,3 @@ function Students({ openHistory }) {
 }
 
 export default Students;
-
-

@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+
 import teachersReducer from './teachersSlice';
 import studentsReducer from './studentsSlice';
 import parentsReducer from './parentSlice';
@@ -8,7 +9,7 @@ import resultsReducer from './parent/results';
 import examReducer from './parent/examSlice';
 import studentDashboardReducer from './student/studashboardSlice';
 import dashboardReducer from './dashboard';
-import adminProfileReducer from './adminprofile';
+import adminProfileReducer from './adminProfileSlice';
 import authReducer from './authSlice';
 import adminFeesReducer from './adminfees';
 import inventoryReducer from './adminInventory';
@@ -19,7 +20,7 @@ import adminResultsReducer from './adminResults';
 import adminCurriculumReducer from './curriculum';
 import studentProfileReducer from './student/studentProfileSlice';
 import examSliceReducer from './student/examSlice';
-import parentdashboardReducer from './parent/parentdashboardSlice'; // Parent Dashboard Slice
+import parentdashboardReducer from './parent/parentdashboardSlice';
 import feesReducer from './parent/feesSlice';
 import expensesReducer from './parent/expensesSlice';
 import queryReducer from './parent/querySlice';
@@ -35,8 +36,8 @@ import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import classPlanSliceReducer from './student/classPlanSlice';
 import resultSliceReducer from './student/resultSlice';
 
-import aboutSliceReducer from './teacher/aboutSlice'
-import createExamSliceReducer from './teacher/createExamSlice'
+import aboutSliceReducer from './teacher/aboutSlice';
+import createExamSliceReducer from './teacher/createExamSlice';
 import studyMSliceReducer from './teacher/studyMSlice';
 import assignmentsReducer from './teacher/assignmentsSlice';
 import myStudentsReducer from './teacher/myStudentsSlice';
@@ -46,12 +47,16 @@ import teacherResultsReducer from './teacher/teacherResultSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
 import teacherDashboardReducer from './teacher/teacherDashboardSlice';
 import bookReducer from './student/bookSlice';
-import parentProfileSliceReducer from './parent/parentProfileSlice'
+import connectQueriesReducer from './student/connectQueriesSlice';
+
+import parentProfileSliceReducer from './parent/parentProfileSlice';
 
 import staffDashboardReducer from './staff/staffDashboardSlice';
+import adminConnectQueriesReducer from './adminConnectQueriesSlice';
 import meetingReducer from './parent/meetingSlice';
 import teacherQueryReducer from './teacher/teacherQuerySlice';
-import createMeetingReducer from './teacher/createMeetingSlice'; // ✅ your slice
+import createMeetingReducer from './teacher/createMeetingSlice';
+
 const store = configureStore({
   reducer: {
     teachers: teachersReducer,
@@ -74,51 +79,39 @@ const store = configureStore({
     adminCurriculum: adminCurriculumReducer,
     studentProfile: studentProfileReducer,
     exam: examSliceReducer,
-    parent: parentdashboardReducer, // Add parentdashboardReducer here
-    fees : feesReducer,
+    parent: parentdashboardReducer,
+    fees: feesReducer,
     accounts: accountReducer,
-    expenses:expensesReducer,
+    expenses: expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
     timeTable: timeTableSliceReducer,
     studyMaterial: studyMaterialReducer,
-    admitCard : admitCardSliceReducer,
-    assignment : assignmentSliceReducer,
-    syllabus : syllabusSliceReducer,
-    syllabusView : syllabusViewSliceReducer,
-    classPlan : classPlanSliceReducer,
-    results : resultSliceReducer,
-    about : aboutSliceReducer,
-    createExam :createExamSliceReducer,
-    studyMaterial : studyMSliceReducer,
+    admitCard: admitCardSliceReducer,
+    assignment: assignmentSliceReducer,
+    syllabus: syllabusSliceReducer,
+    syllabusView: syllabusViewSliceReducer,
+    classPlan: classPlanSliceReducer,
+    results: resultSliceReducer,
+    about: aboutSliceReducer,
+    createExam: createExamSliceReducer,
+    studyMaterialTeacher: studyMSliceReducer, // renamed to avoid duplicate key
     myStudents: myStudentsReducer,
-  parentProfile: parentProfileSliceReducer,
-
-
-    // myStudents: myStudentsReducer,
-
+    parentProfile: parentProfileSliceReducer,
     assignments: assignmentsReducer,
-    tcurriculum: tcurriculumSliceReducer, 
+    tcurriculum: tcurriculumSliceReducer,
     lecture: lectureSlice,
     teacherResults: teacherResultsReducer,
-
-    // teacherAttendance: teaAttendanceReducer,
-
     teaAttendance: teaAttendanceReducer,
-     teacherDashboard: teacherDashboardReducer,
-    //   students: myStudentsReducer,
-       book: bookReducer,
-     
-
-
-
-//    AdminStaff Dashboard
-
- staffDashboard: staffDashboardReducer,
- meeting: meetingReducer,
-  teacherQuery: teacherQueryReducer,
-    createmeeting: createMeetingReducer, 
-   },
+    teacherDashboard: teacherDashboardReducer,
+    book: bookReducer,
+    connectQueries: connectQueriesReducer,
+    staffDashboard: staffDashboardReducer,
+    adminConnectQueries: adminConnectQueriesReducer,
+    meeting: meetingReducer,
+    teacherQuery: teacherQueryReducer,
+    createmeeting: createMeetingReducer,
+  },
 });
 
-export default store;  
+export default store;

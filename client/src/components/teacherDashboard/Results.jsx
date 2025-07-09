@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../adminDashboard/layout/Header';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaEdit } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchTeacherResults } from '../../redux/teacher/teacherResultSlice';
+import { useNavigate } from 'react-router-dom';
+
 
 function Results({ handleTabChange }) {
   const dispatch = useDispatch();
+   const navigate = useNavigate();
   const { results, loading, error } = useSelector((state) => state.teacherResults);
 
   const [expandedRow, setExpandedRow] = useState(null);
@@ -24,23 +27,23 @@ function Results({ handleTabChange }) {
   }, [dispatch]);
 
   // Extract unique exam types for the dropdown
-  const examTypes = ['All', ...new Set(results.map((res) => res.exam.examType))];
+  const examTypes = ['All', ...new Set(results.map((res) => res.exam?.examType))];
 
   // Filter results based on selected exam type
   const filteredResults =
     examTypeFilter === 'All'
       ? results
-      : results.filter((res) => res.exam.examType === examTypeFilter);
+      : results.filter((res) => res.exam?.examType === examTypeFilter);
 
   const toggleRow = (index) => {
     setExpandedRow(expandedRow === index ? null : index);
   };
 
+  
   // Handle the form submission of new student result
   const handleAddResult = async (event) => {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault();
 
-    // Ensure all required fields are present
     if (!newResultData.studentId || !newResultData.examType || !newResultData.subjectResults.length) {
       alert('Please provide all the required fields!');
       return;
@@ -51,8 +54,6 @@ function Results({ handleTabChange }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add Authorization header if needed
-          // 'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(newResultData),
       });
@@ -63,15 +64,16 @@ function Results({ handleTabChange }) {
         throw new Error(data.message || 'Failed to submit result');
       }
 
-      // Dispatch to update results after submission
       dispatch(fetchTeacherResults());
       alert('Result added successfully');
-      setNewResultData({ studentId: '', examType: '', marks: '', subjectResults: [] }); // Reset form
+      setNewResultData({ studentId: '', examType: '', marks: '', subjectResults: [] });
     } catch (error) {
       console.error('Error submitting result:', error);
       alert('Error submitting result. Please try again later.');
     }
   };
+
+  
 
   return (
     <>
@@ -123,18 +125,19 @@ function Results({ handleTabChange }) {
                 <th className="py-2 px-4 border">Exam Type</th>
                 <th className="py-2 px-4 border">Marks</th>
                 <th className="py-2 px-4 border">Percentage</th>
+                <th className="py-2 px-4 border">Edit</th> {/* New Actions column */}
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
+                  <td colSpan="6" className="text-center py-4">
                     Loading...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="5" className="text-center text-red-500 py-4">
+                  <td colSpan="6" className="text-center text-red-500 py-4">
                     {error}
                   </td>
                 </tr>
@@ -148,7 +151,7 @@ function Results({ handleTabChange }) {
                       <td className="py-2 px-4 border">
                         {result.student.studentProfile.fullname}
                       </td>
-                      <td className="py-2 px-4 border">{result.exam.examType}</td>
+                      <td className="py-2 px-4 border">{result.exam?.examType || 'N/A'}</td>
                       <td className="py-2 px-4 border">{result.total}</td>
                       <td className="py-2 px-4 border">
                         <div className="flex items-center justify-center gap-2">
@@ -158,11 +161,21 @@ function Results({ handleTabChange }) {
                           </button>
                         </div>
                       </td>
+                      <td className="py-2 px-4 border">
+                         <button
+                          className="text-[#000000] hover:text-blue-800"
+                          onClick={() => handleTabChange('editresult', result)}
+
+                          aria-label={`Edit result for ${result.student.studentProfile.fullname}`}
+                        >
+                          <FaEdit />
+                        </button>
+                      </td>
                     </tr>
 
                     {expandedRow === i && (
                       <tr>
-                        <td colSpan="5" className="p-4 bg-gray-100">
+                        <td colSpan="6" className="p-4 bg-gray-100">
                           <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl mx-auto text-sm">
                             <h2 className="text-lg font-semibold mb-4 text-center">RESULT SLIP</h2>
                             <div className="flex justify-between mb-2">
@@ -182,7 +195,7 @@ function Results({ handleTabChange }) {
                                 <p>
                                   <strong>Section:</strong> {result.section}
                                 </p>
-                              </div>
+                              </div>                                     
                             </div>
                             <table className="w-full border border-gray-300 mt-2 text-center">
                               <thead className="bg-gray-200">
@@ -219,7 +232,7 @@ function Results({ handleTabChange }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-4">
+                  <td colSpan="6" className="text-center py-4">
                     No data found
                   </td>
                 </tr>

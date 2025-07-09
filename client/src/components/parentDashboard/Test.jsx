@@ -1,3 +1,35 @@
+
+// import React, { useEffect } from 'react';
+// import { useLocation } from 'react-router-dom';
+// import { useSocket } from '../../../src/hooks/useSocket';
+
+// const Test = () => {
+//   const { state } = useLocation();
+//   const { meetingLink } = state || {};
+//   const { socket, isConnected } = useSocket();
+
+//   useEffect(() => {
+//     if (socket && isConnected && meetingLink) {
+//       socket.emit('join-meeting', meetingLink);
+//     }
+//   }, [socket, isConnected, meetingLink]);
+
+//   const handleDisconnect = () => {
+//     socket?.disconnect();
+//   };
+
+//   return (
+//     <div>
+//       <h1>🙋‍♂️ Attendee Page</h1>
+//       <p>{isConnected ? '🟢 Connected as Attendee' : '🔴 Not Connected'}</p>
+//       <button onClick={handleDisconnect} disabled={!isConnected}>🔌 Disconnect Socket</button>
+//     </div>
+//   );
+// };
+
+// export default Test;
+
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../../src/hooks/useSocket';
@@ -56,11 +88,9 @@ const Test = () => {
     if (socket && isConnected && meetingLink) {
       const userId = socket.id;
 
-      console.log('📤 Sending requestJoin →', { meetingLink, fullname: name, role });
       socket.emit('requestJoin', { meetingLink, fullname: name, role, userId });
 
       socket.on('joinResponse', (res) => {
-        console.log('🔔 joinResponse →', res);
         if (res.success) {
           toast.info(res.message);
         } else {
@@ -70,7 +100,6 @@ const Test = () => {
 
       socket.on('joinAccepted', ({ meetingLink: acceptedLink, by }) => {
         if (acceptedLink === meetingLink) {
-          console.log('✅ Join accepted by', by || 'host');
           socket.emit('joinAccepted', { meetingLink });
           setCanJoin(true);
           toast.success('You have been allowed into the meeting!');
@@ -112,7 +141,6 @@ const Test = () => {
 
   useEffect(() => {
     if (canJoin && socket && isConnected && meetingLink) {
-      console.log('🎉 Emitting join-meeting');
       socket.emit('join-meeting', meetingLink);
     }
   }, [canJoin, socket, isConnected, meetingLink]);

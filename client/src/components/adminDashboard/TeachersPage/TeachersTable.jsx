@@ -94,19 +94,16 @@ function TeachersTable() {
   };
 
   // Local search functionality
-  const filteredTeachersLocal =
-    filteredTeachers?.filter(
-      (teacher) =>
-        teacher.profile.fullname
-          ?.toLowerCase()
-          .includes(localSearch.toLowerCase()) ||
-        teacher.userId.email
-          ?.toLowerCase()
-          .includes(localSearch.toLowerCase()) ||
-        teacher.profile.employeeId
-          ?.toLowerCase()
-          .includes(localSearch.toLowerCase())
-    ) || [];
+ const filteredTeachersLocal =
+  filteredTeachers?.filter((teacher) =>
+    teacher?.profile?.fullname?.toLowerCase().includes(localSearch.toLowerCase()) ||
+    teacher?.userId?.email?.toLowerCase().includes(localSearch.toLowerCase()) ||
+    teacher?.profile?.employeeId?.toLowerCase().includes(localSearch.toLowerCase())
+  ) || [];
+
+  const validTeachers = teachers.filter(
+  (t) => t.profile && t.userId && t.profile.fullname && t.userId.email
+);
 
   if (loading) {
     return <div className="p-4 text-center text-gray-600">Loading...</div>;

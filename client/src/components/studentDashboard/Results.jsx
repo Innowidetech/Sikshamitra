@@ -1,178 +1,420 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchAllResults, fetchResultById } from '../../redux/student/resultSlice';
-import Header from './layout/Header';
+import React, { useRef, useState, useEffect } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import Header from './layout/Header';
+
+const COLORS = ['#8884d8', '#00C49F', '#FFBB28', '#FF8042', '#146192', '#A569BD'];
+
+const mockData = {
+  message: "Results fetched successfully.",
+  totalExams: 7,
+  attendedExams: 1,
+  pendingExams: 6,
+  examsPercentage: "14.29",
+  attendance: 12,
+  present: 9,
+  absent: 3,
+  attendancePercentage: "75.00",
+  totalMarks: 300,
+  marksObtained: 270,
+  remainingMarks: 30,
+  marksPercentage: "90.00",
+  performancePercentage: "59.76",
+  banner: "https://res.cloudinary.com/dixhganq6/image/upload/v1747397525/s2trtvjyqslihij8php7.jpg",
+  result: [
+    {
+      _id: "67a9c656b480f7d0d9855590",
+      schoolId: "67987506ac1a5dcfa3056aee",
+      class: "6",
+      section: "A",
+      exam: {
+        _id: "683ae255fb856c77d8a1f667",
+        examType: "half yearly "
+      },
+      student: {
+        studentProfile: {
+          fullname: "Unnati",
+          gender: "female",
+          dob: "2004-12-27T00:00:00.000Z",
+          photo: "https://res.cloudinary.com/dixhganq6/image/upload/v1744874338/yghvtvvc1qaxrtvdhf0y.png",
+          address: "mumbai",
+          registrationNumber: "Reg16a1",
+          class: "6",
+          section: "A",
+          classType: "secondary",
+          childOf: "679b448ff7ccf1742a3b1067",
+          fees: "70000",
+          additionalFees: 60,
+          about: "Hello I am a Student of class 6.",
+          rollNumber: "",
+          previousEducation: [
+            {
+              study: "6",
+              schoolName: "vidyabharti",
+              duration: "2015-2018",
+              _id: "6800d749fa31828d67c8b034"
+            },
+            {
+              study: "9",
+              schoolName: "model juniar school",
+              duration: "2021-2023",
+              _id: "6800d749fa31828d67c8b035"
+            }
+          ]
+        },
+        _id: "679b448ff7ccf1742a3b1069",
+        schoolId: "67987506ac1a5dcfa3056aee",
+        userId: "679b448ff7ccf1742a3b1065",
+        createdBy: "67986e3bd7a5e04dc550ba31",
+        createdAt: "2025-01-30T09:21:19.479Z",
+        updatedAt: "2025-06-03T11:41:57.855Z",
+        __v: 18
+      },
+      result: [
+        {
+          subjectCode: "sub3",
+          subject: "Chemistry",
+          marksObtained: 90,
+          totalMarks: 100,
+          grade: "A",
+          createdBy: "679ca8ac0d28f2d8b4ad9825",
+          _id: "67a9c656b480f7d0d9855591"
+        },
+        {
+          subjectCode: "sub1",
+          subject: "Mathematics",
+          marksObtained: 90,
+          totalMarks: 100,
+          grade: "A",
+          createdBy: "679ca8430d28f2d8b4ad981c",
+          _id: "67a9cbd2b480f7d0d985559e"
+        },
+        {
+          subjectCode: "sub2",
+          subject: "English",
+          marksObtained: 90,
+          totalMarks: 100,
+          grade: "A",
+          createdBy: "679ca8430d28f2d8b4ad981c",
+          _id: "67a9d51a56761d09598a3ad9"
+        }
+      ],
+      total: "270/300",
+      totalPercentage: "90.00%",
+      createdAt: "2025-02-10T09:26:46.456Z",
+      updatedAt: "2025-02-10T10:29:46.234Z",
+      __v: 5
+    }
+  ]
+};
 
 function Results() {
-  const dispatch = useDispatch();
   const resultCardRef = useRef(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const { selectedResult, allResults, loading, error, banner } = useSelector((state) => state.results);
+  const [selectedExamIndex, setSelectedExamIndex] = useState(null);
+  const [resultData, setResultData] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchAllResults()).then((res) => {
-      if (res.payload?.results?.length > 0) {
-        dispatch(fetchResultById(res.payload.results[0]._id));
-      }
-    });
-  }, [dispatch]);
+    // Simulate fetching data and setting it
+    const payload = mockData;
 
-  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
-
-  const handleDownloadOption = async (format) => {
-    if (format === 'PDF') {
-      const input = resultCardRef.current;
-      const canvas = await html2canvas(input, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pageWidth;
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-      if (pdfHeight > pageHeight) {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      } else {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      }
-
-      pdf.save('result_card.pdf');
+    if (payload?.result?.length > 0) {
+      setResultData({
+        stats: {
+          present: payload.present || 0,
+          absent: payload.absent || 0,
+          performancePercentage: parseFloat(payload.performancePercentage) || 0,
+          totalExams: payload.totalExams || payload.result.length,
+          attemptedExams: payload.attendedExams || payload.present || 0,
+        },
+        exams: payload.result,
+        totalMarks: payload.totalMarks,
+        marksObtained: payload.marksObtained,
+      });
+    } else {
+      setResultData(null);
     }
+  }, []);
+
+  if (!resultData) {
+    return (
+      <div className="text-center mt-10 text-gray-600 text-xl">No result data found.</div>
+    );
+  }
+
+  const { exams, stats, totalMarks, marksObtained } = resultData;
+
+  const examsPercentage = exams.map((exam, index) => ({
+    name: exam.exam?.examType?.trim() || `Exam ${index + 1}`,
+    percent: parseFloat(exam.totalPercentage) || 0,
+    examId: exam._id,
+    index,
+  }));
+
+  // totalMarks and marksObtained from mockData.stats already available
+  // But let's also compute totalMarksObtained from exams to keep consistent
+  // (Here only one exam, so just marksObtained from state is fine)
+
+  const handleDownloadOption = async () => {
+    const input = resultCardRef.current;
+    if (!input) return;
+
+    const canvas = await html2canvas(input, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save('result_card.pdf');
     setIsDropdownOpen(false);
   };
 
-  if (loading) return <div className="text-center mt-10 text-xl">Loading...</div>;
-  if (error) return <div className="text-center mt-10 text-red-500 text-xl">Error: {error}</div>;
-  if (!selectedResult) return <div className="text-center mt-10 text-gray-600 text-xl">No result data found.</div>;
+  const handleBarClick = (data, index) => {
+    if (index !== null && index >= 0) {
+      setSelectedExamIndex(index);
+    }
+  };
 
-  const { student, result, exam, class: studentClass, section, total, totalPercentage } = selectedResult;
-  const studentProfile = student?.studentProfile || {};
+  const selectedExam = selectedExamIndex !== null ? exams[selectedExamIndex] : null;
+  const studentProfile = selectedExam?.student?.studentProfile || {};
 
   return (
-    <>
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mx-4 md:mx-6 xl:mx-8">
-        <div className="mb-4 xl:mb-0">
-          <h1 className="text-xl md:text-2xl xl:text-[38px] font-light text-black">Results</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[100px] md:w-[120px] xl:w-[150px]" />
-          <h1 className="mt-2 text-base md:text-lg">
-            <span>Home</span> {'>'}{' '}
-            <span className="font-medium text-[#146192]">Results</span>
-          </h1>
+    <div className="mx-4 md:mx-8 mt-8">
+      <Header />
+      <h1 className="text-2xl font-semibold text-[#146192] mb-2">Results</h1>
+      <p className="mb-4 text-gray-600">Home {'>'} Results</p>
+
+      <div ref={resultCardRef} className="bg-white rounded-xl shadow-xl p-6">
+        {/* Bar Chart */}
+        <div className="w-full mb-8">
+          <h2 className="text-lg font-semibold mb-4">Percentage of Exams</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart
+              data={examsPercentage}
+              onClick={(state) => {
+                if (state && state.activeTooltipIndex != null) {
+                  handleBarClick(null, state.activeTooltipIndex);
+                }
+              }}
+            >
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="percent" cursor="pointer">
+                {examsPercentage.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    stroke={selectedExamIndex === index ? '#000' : 'none'}
+                    strokeWidth={selectedExamIndex === index ? 2 : 0}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-        <Header />
-      </div>
 
-      {/* FULL CONTENT TO EXPORT */}
-      <div ref={resultCardRef} className="bg-white mt-6 md:mt-8">
-        <div className="flex justify-center items-center mx-4 md:mx-6 xl:mx-8">
-          <img src={banner} alt="Banner" className="w-full max-w-[1300px] h-[120px] md:h-[160px] xl:h-[180px] rounded-lg " />
-        </div>
+        <div className="mt-10">
+          <h2 className="text-2xl font-semibold text-center mb-8">Overall Performance</h2>
 
-        <div className="flex justify-center items-center mt-6 md:mt-8">
-          <div className="w-[95%] md:w-[90%] p-4 md:p-6 rounded-3xl shadow-2xl h-fit bg-white">
-            <h2 className="text-lg md:text-xl font-medium text-start mb-6">Exam Result Card</h2>
-
-            <div className="flex flex-col items-center pt-4 pb-4 shadow-lg">
-              <div className="flex flex-col lg:flex-row w-full justify-between gap-6">
-                <div className="w-full lg:w-[45%] px-2 md:px-4">
-                  <div className="mb-4 flex items-center">
-                    <label className="text-base md:text-lg mr-2">Name:</label>
-                    <div className="text-base md:text-lg">{studentProfile.fullname || 'N/A'}</div>
-                  </div>
-                  <div className="mb-4 flex items-center">
-                    <label className="text-base md:text-lg mr-2">Class:</label>
-                    <div className="text-base md:text-lg">{studentProfile.class || 'N/A'}</div>
-                  </div>
-                  <div className="mb-4 flex items-center">
-                    <label className="text-base md:text-lg mr-2">Exam:</label>
-                    <div className="text-base md:text-lg">{exam?.examType || 'N/A'}</div>
-                  </div>
-                </div>
-
-                <div className="hidden lg:block border-l-4 border-black h-32 mx-4"></div>
-
-                <div className="w-full lg:w-[45%] px-2 md:px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex flex-col">
-                    <div className="mb-4 flex items-center">
-                      <label className="text-base md:text-lg mr-2">Roll:</label>
-                      <div className="text-base md:text-lg">{studentProfile.rollNumber || 'N/A'}</div>
-                    </div>
-                    <div className="mb-4 flex items-center">
-                      <label className="text-base md:text-lg mr-2">Section:</label>
-                      <div className="text-base md:text-lg">{studentProfile.section || section || 'N/A'}</div>
-                    </div>
-                    <div className="mb-4 flex items-center">
-                      <label className="text-base md:text-lg mr-2">Gender:</label>
-                      <div className="text-base md:text-lg">{studentProfile.gender || 'N/A'}</div>
-                    </div>
-                  </div>
-                  <img src={studentProfile.photo} alt="Avatar" className="w-24 h-24 md:w-32 md:h-32 rounded-lg border-2 border-gray-300 object-cover" />
+          <div className="flex flex-wrap justify-center gap-10">
+            {/* Exams Pie Chart */}
+            <div className="flex flex-col items-center relative">
+              <PieChart width={160} height={160}>
+                <Pie
+                  data={[
+                    { name: 'Attempted Exam', value: stats.attemptedExams || 0 },
+                    { name: 'Exams Not Taken', value: (stats.totalExams || 0) - (stats.attemptedExams || 0) },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={60}
+                  dataKey="value"
+                >
+                  <Cell fill="#00C2FF" />
+                  <Cell fill="#A889FF" />
+                </Pie>
+              </PieChart>
+              <div className="absolute top-[60px] left-[50%] -translate-x-1/2 text-center">
+                <div className="font-semibold text-sm text-[#146192]">Exams</div>
+                <div className="text-xs text-gray-600">Total: {stats.totalExams || 0}</div>
+                <div className="text-xs text-gray-500">
+                  {stats.totalExams
+                    ? `${((stats.attemptedExams / stats.totalExams) * 100).toFixed(0)}%`
+                    : '0%'}
                 </div>
               </div>
             </div>
 
-            <div className="p-2 md:p-4 rounded-xl shadow-md w-full overflow-x-auto mt-10 border-2 border-black">
-              <table className="w-[600px] md:w-full table-auto border-collapse">
-                <thead>
-                  <tr>
-                    <th className="text-center font-semibold border-b-2 border-r-2 border-black py-2 px-4">Subject Code</th>
-                    <th className="text-center font-semibold border-b-2 border-r-2 border-black py-2 px-4">Course Name</th>
-                    <th className="text-center font-semibold border-b-2 border-r-2 border-black py-2 px-4">Marks Obtained</th>
-                    <th className="text-center font-semibold border-b-2 border-r-2 border-black py-2 px-4">Total Marks</th>
-                    <th className="text-center font-semibold border-b-2 border-black py-2 px-4">Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result?.map((subject, index) => (
-                    <tr key={index}>
-                      <td className="text-center border-b border-r border-black py-2 px-4">{subject.subjectCode || 'N/A'}</td>
-                      <td className="text-center border-b border-r border-black py-2 px-4">{subject.subject || 'N/A'}</td>
-                      <td className="text-center border-b border-r border-black py-2 px-4">{subject.marksObtained}</td>
-                      <td className="text-center border-b border-r border-black py-2 px-4">{subject.totalMarks}</td>
-                      <td className="text-center border-b border-black py-2 px-4">{subject.grade || 'N/A'}</td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <td colSpan="2" className="text-right font-bold border-t border-black py-2 px-4">Total</td>
-                    <td className="text-center font-bold border-t border-black py-2 px-4" colSpan="2">{total}</td>
-                    <td className="text-center font-bold border-t border-black py-2 px-4">{totalPercentage}</td>
-                  </tr>
-                </tbody>
-              </table>
+            {/* Attendance Pie Chart */}
+            <div className="flex flex-col items-center relative">
+              <PieChart width={160} height={160}>
+                <Pie
+                  data={[
+                    { name: 'Present', value: stats.present || 0 },
+                    { name: 'Absent', value: stats.absent || 0 },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={60}
+                  dataKey="value"
+                >
+                  <Cell fill="#FF91CA" />
+                  <Cell fill="#7D5AFC" />
+                </Pie>
+              </PieChart>
+              <div className="absolute top-[60px] left-[50%] -translate-x-1/2 text-center">
+                <div className="font-semibold text-sm text-[#146192]">Attendance</div>
+                <div className="text-xs text-gray-600">
+                  Total: {stats.present + stats.absent}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {stats.present + stats.absent
+                    ? `${((stats.present / (stats.present + stats.absent)) * 100).toFixed(0)}%`
+                    : '0%'}
+                </div>
+              </div>
+            </div>
+
+            {/* Result Pie Chart */}
+            <div className="flex flex-col items-center relative">
+              <PieChart width={160} height={160}>
+                <Pie
+                  data={[
+                    { name: 'Marks Obtained', value: marksObtained },
+                    { name: 'Remaining', value: totalMarks - marksObtained },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={60}
+                  dataKey="value"
+                >
+                  <Cell fill="#FF91CA" />
+                  <Cell fill="#7D5AFC" />
+                </Pie>
+              </PieChart>
+              <div className="absolute top-[60px] left-[50%] -translate-x-1/2 text-center">
+                <div className="font-semibold text-sm text-[#146192]">Result</div>
+                <div className="text-xs text-gray-600">Total: {totalMarks}</div>
+                <div className="text-xs text-gray-500">
+                  {totalMarks
+                    ? `${((marksObtained / totalMarks) * 100).toFixed(0)}%`
+                    : '0%'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Percentage */}
+          <div className="text-center mt-6">
+            <div className="bg-[#E8F4FA] text-[#146192] inline-block px-6 py-2 rounded-xl font-semibold text-lg shadow">
+              Performance Percentage: {stats.performancePercentage}%
             </div>
           </div>
         </div>
-      </div>
 
-      {/* DOWNLOAD BUTTON */}
-      <div className="flex justify-center items-center mt-6 md:mt-8 mb-8">
-        <div className="text-center">
+        {/* Conditionally render result only when an exam is selected */}
+        {selectedExam && (
+          <>
+            <h2 className="mt-10 mb-2 text-xl font-bold text-[#146192] border-b border-gray-300 pb-2">
+              {selectedExam.exam?.examType || 'Exam'} Result Details
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div>
+                <p>
+                  <strong>Name:</strong> {studentProfile.fullname}
+                </p>
+                <p>
+                  <strong>Class:</strong> {studentProfile.class}
+                </p>
+                <p>
+                  <strong>Exam Type:</strong> {selectedExam.exam?.examType}
+                </p>
+                <p>
+                  <strong>Total Marks:</strong> {selectedExam.total || 'N/A'}
+                </p>
+                <p>
+                  <strong>Percentage:</strong> {selectedExam.totalPercentage}
+                </p>
+              </div>
+              <div className="text-center">
+                <img
+                  src={studentProfile.photo}
+                  alt={studentProfile.fullname}
+                  className="rounded-full w-24 h-24 object-cover mx-auto"
+                />
+              </div>
+            </div>
+
+            {/* Subjects and marks */}
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto border-collapse border border-gray-300 text-sm">
+                <thead className="bg-[#146192] text-white">
+                  <tr>
+                    <th className="border border-gray-300 px-3 py-2">Subject</th>
+                    <th className="border border-gray-300 px-3 py-2">Marks Obtained</th>
+                    <th className="border border-gray-300 px-3 py-2">Total Marks</th>
+                    <th className="border border-gray-300 px-3 py-2">Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedExam.result.map((subject, i) => (
+                    <tr key={subject._id || i} className="odd:bg-white even:bg-gray-50">
+                      <td className="border border-gray-300 px-3 py-2">{subject.subject}</td>
+                      <td className="border border-gray-300 px-3 py-2">{subject.marksObtained}</td>
+                      <td className="border border-gray-300 px-3 py-2">{subject.totalMarks}</td>
+                      <td className="border border-gray-300 px-3 py-2">{subject.grade}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {/* Download Button */}
+        <div className="relative mt-10 flex justify-center">
           <button
-            onClick={toggleDropdown}
-            className="px-4 md:px-6 py-2 md:py-3 bg-[#146192] text-white font-semibold rounded-lg shadow-md hover:bg-blue-800 focus:outline-none"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="bg-[#146192] hover:bg-[#0f4e7c] text-white font-semibold py-2 px-6 rounded-full shadow-md"
           >
-            Download Result Card
+            Download
           </button>
+
           {isDropdownOpen && (
-            <div className="mt-2 w-28 mx-auto bg-white shadow-lg rounded-lg border border-[#00000045]">
-              <ul>
-                <li
-                  onClick={() => handleDownloadOption('PDF')}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-center text-[#285A87] border-b-2 last:border-b-0"
-                >
-                  PDF
-                </li>
-              </ul>
+            <div className="absolute top-12 bg-white rounded-md shadow-lg border border-gray-300 right-0 w-40 z-50">
+              <button
+                onClick={handleDownloadOption}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Download PDF
+              </button>
+              {/* You can add more options here */}
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 export default Results;
+

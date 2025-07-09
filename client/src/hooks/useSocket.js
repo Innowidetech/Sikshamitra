@@ -1,10 +1,11 @@
+// src/hooks/useSocket.js
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'https://sikshamitra.onrender.com';
 
 export const useSocket = () => {
-  const [socket, setSocket] = useState(null); // 🔄 useState instead of useRef
+  const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export const useSocket = () => {
       auth: { token },
     });
 
-    setSocket(newSocket); // ✅ This triggers re-render
+    setSocket(newSocket);
 
     newSocket.on('connect', () => {
       console.log('✅ Socket connected:', newSocket.id);
@@ -44,4 +45,3 @@ export const useSocket = () => {
     isConnected,
   };
 };
- 
