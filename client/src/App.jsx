@@ -18,6 +18,11 @@ import { useDispatch } from 'react-redux';
 import { logoutUser } from './redux/authSlice';
 import Meeting from './components/parentDashboard/Meeting';
 import AdminStaffDashboard from './components/adminStaffDashboard/StaffMainDashboard';
+import ScheduleMeeting from './components/parentDashboard/ScheduleMeeting';
+import TeacherMeeting from './components/teacherDashboard/TeacherMeeting';
+import CreateMeeting from './components/teacherDashboard/CreateMeeting';
+import Host from './components/parentDashboard/Host'; // ✅ Capitalized import
+import Test from './components/parentDashboard/Test'; // ✅ Capitalized import
 
 function App() {
   const location = useLocation();
@@ -26,6 +31,7 @@ function App() {
   const employeeType = localStorage.getItem('employeeType')?.toLowerCase();
   const dispatch = useDispatch();
 
+  // Handle logout on tab close
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem('token');
@@ -37,6 +43,7 @@ function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [dispatch]);
 
+  // Prevent back navigation
   useEffect(() => {
     if (token) {
       window.history.pushState(null, '', window.location.href);
@@ -48,6 +55,7 @@ function App() {
     }
   }, [token]);
 
+  // Redirect after login based on role
   if (token && location.pathname === '/login') {
     if (userRole === 'teacher' && employeeType === 'groupd') {
       return <Navigate to="/adminstaff/maindashboard" replace />;
@@ -72,6 +80,7 @@ function App() {
     }
   }
 
+  // Paths without navbar/footer
   const noNavbarFooterPaths = [
     '/login',
     '/applyonline',
@@ -80,7 +89,12 @@ function App() {
     '/teacher',
     '/student',
     '/adminstaff',
-    '/meeting' // ✅ No Navbar/Footer on this path
+    '/meeting',
+    '/scheduled-meeting',
+    '/teacher-meeting',
+    '/create-meeting',
+    '/host',
+    '/test'
   ];
 
   const isNoNavbarFooter = noNavbarFooterPaths.some(path =>
@@ -100,7 +114,13 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
-        <Route path="/meeting" element={<Meeting />} /> {/* ✅ Corrected line */}
+        <Route path="/meeting" element={<Meeting />} />
+        <Route path="/scheduled-meeting" element={<ScheduleMeeting />} />
+        <Route path="/teacher-meeting" element={<TeacherMeeting />} />
+         <Route path="/create-meeting" element={<CreateMeeting />} />
+       <Route path="/host/:meetingLink" element={<Host />} />
+        <Route path="/test/:meetingLink" element={<Test />} />
+
 
         {/* Protected Routes */}
         <Route
@@ -144,7 +164,7 @@ function App() {
           }
         />
 
-        {/* Fallback */}
+        {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
