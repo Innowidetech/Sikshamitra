@@ -49,8 +49,9 @@ import bookReducer from './student/bookSlice';
 import parentProfileSliceReducer from './parent/parentProfileSlice'
 
 import staffDashboardReducer from './staff/staffDashboardSlice';
-
-
+import meetingReducer from './parent/meetingSlice';
+import teacherQueryReducer from './teacher/teacherQuerySlice';
+import createMeetingReducer from './teacher/createMeetingSlice'; // ✅ your slice
 const store = configureStore({
   reducer: {
     teachers: teachersReducer,
@@ -107,14 +108,16 @@ const store = configureStore({
      teacherDashboard: teacherDashboardReducer,
     //   students: myStudentsReducer,
        book: bookReducer,
+     
 
 
 
 //    AdminStaff Dashboard
 
  staffDashboard: staffDashboardReducer,
-
-
+ meeting: meetingReducer,
+  teacherQuery: teacherQueryReducer,
+    createmeeting: createMeetingReducer, 
    },
 });
 

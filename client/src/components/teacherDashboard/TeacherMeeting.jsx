@@ -24,7 +24,7 @@ const Meeting = () => {
   }, []);
 
   const handleScheduleMeeting = () => {
-    navigate('/scheduled-meeting');
+    navigate('/create-meeting');
   };
 
   return (

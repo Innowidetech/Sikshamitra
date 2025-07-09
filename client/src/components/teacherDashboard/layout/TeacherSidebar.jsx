@@ -24,6 +24,7 @@ const menuItems = [
   { id: 'studymaterial', icon: IoBookSharp, label: 'Study Material' },
   { id: 'createexam', icon: IoIosCreate, label: 'Create Exam' },
   { id: 'about', icon: TbMessageQuestion, label: 'About' },
+ { id: 'teacherquery', icon: SiGooglebigquery, label: 'Connect&Query' },
 ];
 
 const TeacherSidebar = ({ setActiveSection, activeTab }) => {

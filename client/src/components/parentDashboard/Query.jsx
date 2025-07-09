@@ -1,24 +1,122 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchQueries, fetchConnects } from '../../redux/parent/querySlice';
+import { fetchParentDetails } from '../../redux/parent/parentdashboardSlice';
 import Header from './layout/Header';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Query = ({ setActiveTab, setSelectedQueryId }) => {
   const dispatch = useDispatch();
-   const navigate = useNavigate();
-  const { queries, connects, loading, error } = useSelector((state) => state.query);
+  const navigate = useNavigate();
+  const { queries, connects } = useSelector((state) => state.query);
+  const { parent } = useSelector((state) => state.parent);
+
+  const [socket, setSocket] = useState(null);
+  const [joinResponses, setJoinResponses] = useState([]);
+
+  useEffect(() => {
+    dispatch(fetchParentDetails());
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchQueries());
     dispatch(fetchConnects());
+
+    const socketInstance = io('https://sikshamitra.onrender.com', {
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      auth: {
+        token: localStorage.getItem('token'),
+      },
+    });
+
+    socketInstance.on('connect', () => {
+      console.log('✅ Connected as socket.id:', socketInstance.id);
+    });
+
+    socketInstance.on('connect_error', (err) => {
+      console.error('Connection failed:', err.message);
+    });
+
+    socketInstance.on('joinAccepted', ({ meetingLink }) => {
+      alert(`🎉 Your request to join ${meetingLink} was accepted!`);
+      setJoinResponses((prev) => [...prev, { meetingLink, status: 'accepted' }]);
+    });
+
+    socketInstance.on('joinDenied', ({ meetingLink }) => {
+      alert(`❌ Your request to join ${meetingLink} was denied.`);
+      setJoinResponses((prev) => [...prev, { meetingLink, status: 'denied' }]);
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+    };
   }, [dispatch]);
+
+  const handleJoinMeeting = (connect) => {
+    if (connect.status === 'Not Started') {
+      toast.error('Meeting has not yet started.');
+      return;
+    } else if (connect.status === 'Expired') {
+      toast.error('Meeting has expired.');
+      return;
+    } else if (connect.status === 'Live') {
+      const meetingLink = connect.meetingLink;
+      const name =
+        parent?.parentData?.parentProfile?.fatherName ||
+        parent?.parentData?.parentProfile?.motherName ||
+        'Parent';
+
+      const loggedInId = parent?.parentData?._id || null;
+      const isHost = loggedInId === connect.createdBy;
+      const role = 'Parent'; // You can update role dynamically if needed
+
+      if (socket) {
+        // Emit requestJoin with fullname and role
+        socket.emit('requestJoin', {
+          meetingLink,
+          fullname: name,
+          role,
+        });
+
+        if (!isHost) {
+          toast.info(`Request to join meeting sent: ${meetingLink}`, {
+            autoClose: 4000,
+            pauseOnHover: true,
+            closeOnClick: true,
+          });
+        }
+      }
+
+      navigate(
+        isHost
+          ? `/host/${encodeURIComponent(meetingLink)}`
+          : `/test/${encodeURIComponent(meetingLink)}`,
+        {
+          state: {
+            meetingLink,
+            name,
+            role,
+          },
+        }
+      );
+    }
+  };
 
   const received = queries?.queriesReceived || [];
   const sent = queries?.queriesSent || [];
 
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="flex justify-between items-center mx-4 mt-20 md:ml-72 flex-wrap">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Connect & Queries</h1>
@@ -51,7 +149,6 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
           </div>
           <p className="text-sm text-gray-500 mb-6">We are here to help you! How can we help?</p>
 
-          {/* ✅ Connect Meetings Table */}
           <h3 className="font-semibold text-gray-700 mb-2">Ongoing / Upcoming Meetings</h3>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm border">
@@ -62,8 +159,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                   <th className="border px-3 py-2">Date</th>
                   <th className="border px-3 py-2">Time</th>
                   <th className="border px-3 py-2">Hosted By</th>
-                  <th className="border px-3 py-2">Link</th>
-                  <th className="border px-3 py-2">Status</th>
+                  <th className="border px-3 py-2">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -82,11 +178,13 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                         {connect.hostedByName} ({connect.hostedByRole})
                       </td>
                       <td className="border px-3 py-2 text-blue-600 underline cursor-pointer">
-                        <a href={connect.meetingLink} target="_blank" rel="noopener noreferrer">
-                          {connect.meetingLink}
-                        </a>
+                        <button
+                          onClick={() => handleJoinMeeting(connect)}
+                          className="text-blue-600 underline"
+                        >
+                          Join Meeting
+                        </button>
                       </td>
-                      <td className="border px-3 py-2">{connect.status}</td>
                     </tr>
                   ))
                 ) : (
@@ -100,7 +198,6 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
-          {/* ✅ Received Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Received Queries</h3>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm border">
@@ -136,7 +233,6 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
-          {/* ✅ Sent Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Queries Sent by Parent</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border">
