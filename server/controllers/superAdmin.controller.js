@@ -1137,12 +1137,14 @@ exports.getQueries = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
     };
 
-    let queriesSent, queriesReceived, queries;
+    let queriesSent, queriesReceived, queries, profileId;
 
     if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
 
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+
+      profileId = staff._id;
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1156,6 +1158,7 @@ exports.getQueries = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      profileId = loggedInId;
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1169,6 +1172,7 @@ exports.getQueries = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'admin') {
+      profileId = loggedInId
 
       queriesSent = await Query.find({ createdBy: loggedInId }).sort({ updatedAt: -1 });
 
@@ -1179,6 +1183,8 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
 
       const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if(!staff){return res.status(404).json({ message: "No staff member found with the logged-in id" })}
+      profileId = staff._id
 
       queriesSent = await Query.find({ createdBy: staff._id }).populate('sendTo').sort({ updatedAt: -1 });
 
@@ -1189,6 +1195,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
 
       const teacher = await Teacher.findOne({ userId: loggedInId });
+      profileId = teacher._id;
 
       queriesSent = await Query.find({ createdBy: teacher._id }).populate({ path: 'sendTo' }).sort({ updatedAt: -1 });
 
@@ -1199,6 +1206,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'student') {
 
       const student = await Student.findOne({ userId: loggedInId });
+      profileId = student._id;
 
       queriesSent = await Query.find({ createdBy: student._id }).sort({ updatedAt: -1 });
 
@@ -1209,6 +1217,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'parent') {
 
       const parent = await Parent.findOne({ userId: loggedInId });
+      profileId = parent._id;
 
       queriesSent = await Query.find({ createdBy: parent._id }).sort({ updatedAt: -1 });
 
@@ -1218,7 +1227,7 @@ exports.getQueries = async (req, res) => {
 
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
-    res.status(200).json({ queriesReceived, queriesSent })
+    res.status(200).json({ profileId, queriesReceived, queriesSent })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
