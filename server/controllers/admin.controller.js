@@ -40,6 +40,7 @@ const EntranceExamResults = require('../models/EntranceExamResults');
 const EntranceExamResultsTemplate = require('../utils/EntranceExamResultsTemplate');
 const Notifications = require('../models/Notifications');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
+const Vehicles = require('../models/Vehicles');
 
 
 //get profile
@@ -111,6 +112,11 @@ exports.editSchool = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     };
 
+    const adminUser = await User.findById(userId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins are allowed.' });
+    };
+
     const school = await School.findOne({ userId });
     if (!school) {
       return res.status(404).json({ message: "No school is associated with the admin." })
@@ -174,6 +180,11 @@ exports.createOrEditAuthorityAccess = async (req, res) => {
     const userId = req.user && req.user.id;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    };
+
+    const adminUser = await User.findById(userId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins are allowed.' });
     };
 
     const school = await School.findOne({ userId });
@@ -920,8 +931,8 @@ exports.getTeacherNames = async (req, res) => {
         return res.status(400).json({ message: 'Admin is not associated with any school.' });
       };
     }
-    else if(loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD'){
-      const staff = await SchoolStaff.findOne({userId:loggedInId});
+    else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
+      const staff = await SchoolStaff.findOne({ userId: loggedInId });
       associatedSchool = await School.findById(staff.schoolId);
       if (!associatedSchool) {
         return res.status(400).json({ message: 'You are not associated with any school.' });
@@ -4160,6 +4171,21 @@ exports.getAccounts = async (req, res) => {
       monthlyData[monthYear].totalAdmissionFees += Number(admission.studentDetails.admissionFees);
     }
 
+    const tFees1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Transportation' });
+    const tFees2 = await SchoolIncome.find({ schoolId, purpose: 'Transportation' });
+    const tFees = tFees1.concat(tFees2)
+    for (let fee of tFees) {
+      const feeDate = fee.data ? new Date(fee.date) : new Date(fee.createdAt);
+      if (isNaN(feeDate)) continue;
+      const monthName = months[feeDate.getMonth()];
+      const year = feeDate.getFullYear();
+      const monthYear = `${monthName} ${year}`;
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = { totalFees: 0, totalAdmissionFees: 0, totalTransportationFees: 0, otherIncome: 0, totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      }
+      monthlyData[monthYear].totalTransportationFees += fee.amount;
+    }
+
     const otherIncomes1 = await ParentExpenses.find({ schoolId, 'paymentDetails.status': 'success', purpose: 'Other' });
     const otherIncomes2 = await SchoolIncome.find({ schoolId, purpose: 'Other' });
     const otherIncomes = otherIncomes1.concat(otherIncomes2);
@@ -4196,13 +4222,13 @@ exports.getAccounts = async (req, res) => {
     const result = Object.keys(monthlyData).map(key => ({
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
+      totalTransportationFees : monthlyData[key].totalTransportationFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
       totalExpenses: monthlyData[key].totalExpenses,
       totalRevenue: monthlyData[key].totalRevenue,
     }));
-
     result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
 
     res.status(200).json({ accounts: result });
@@ -4295,14 +4321,14 @@ exports.addSchoolIncome = async (req, res) => {
       return res.status(403).json({ message: "Only admins and accountants can access." })
     }
 
-    const { amount, date, purpose, reason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
-    if (!amount || !date || !purpose || !source || !fullname) { return res.status(400).json({ message: "Please provide all the details to add income." }) }
+    const { amount, purpose, reason, source, fullname, organization, transactionId, registrationNumber, className, section } = req.body;
+    if (!amount || !purpose || !source || !fullname) { return res.status(400).json({ message: "Please provide all the details to add income." }) }
 
     if (purpose === 'Other') {
       if (!reason) { return res.status(400).json({ message: "Please provide the reason to add income." }) }
     }
 
-    let studentId, paidBy, pendingAmount;
+    let studentId, paidBy, pendingAmount, vehicle;
 
     if (source === 'student') {
       if (!registrationNumber || !className) { return res.status(400).json({ message: "Please provide student registration number and class." }) }
@@ -4334,13 +4360,47 @@ exports.addSchoolIncome = async (req, res) => {
         }
         pendingAmount = pending - amount
       }
+      else if (purpose === 'Transportation') {
+        vehicle = await Vehicles.findOne({ schoolId, 'studentDetails.studentId': student._id });
+
+        if (!vehicle) { return res.status(404).json({ message: "No transportation record found for this student." }) }
+
+        const studentTransport = vehicle.studentDetails.find(std =>
+          std.studentId.toString() === student._id.toString()
+        );
+        if (!studentTransport) { return res.status(404).json({ message: "Student transport details not found." }) }
+
+        const existingIncome = await SchoolIncome.findOne({ studentId, class: className, purpose: 'Transportation' }).sort({ date: -1 });
+
+        const parentExpense = await ParentExpenses.findOne({ studentId: student._id, class: className, 'paymentDetails.status': 'success', purpose: 'Transportation' }).sort({ createdAt: -1 });
+
+        let fee1 = existingIncome ? existingIncome.pendingAmount : 0;
+        let fee2 = parentExpense ? parentExpense.pendingAmount : 0;
+
+        let pending;
+        if (fee1 !== 0 && fee2 !== 0) {
+          pending = fee1 > fee2 ? fee2 : fee1;
+        } else if (fee1 !== 0) {
+          pending = fee1;
+        } else if (fee2 !== 0) {
+          pending = fee2;
+        } else {
+          pending = studentTransport.amountDue;
+        }
+        pendingAmount = pending - amount;
+
+        studentTransport.amountPaid += amount;
+        studentTransport.amountDue = Math.max(studentTransport.totalFee - studentTransport.amountPaid, 0);
+
+        await vehicle.save();
+      }
     }
 
     if (source === 'other') {
       if (!organization) { return res.status(400).json({ message: "Please provide the organization name." }) }
     }
 
-    const income = new SchoolIncome({ schoolId, amount, date, purpose, pendingAmount, reason, source, fullname, organization, transactionId, registrationNumber, class: className, section, studentId, paidBy })
+    const income = new SchoolIncome({ schoolId, amount, purpose, pendingAmount, reason, source, fullname, organization, transactionId, registrationNumber, class: className, section, studentId, paidBy })
     await income.save();
 
     res.status(201).json({ message: "Income added successfully.", income })
@@ -4856,11 +4916,6 @@ exports.getNotifications = async (req, res) => {
     if (loggedInUser.role === 'admin') {
       userRefId = loggedInId;
     }
-    else if (loggedInUser.role === 'student') {
-      const student = await Student.findOne({ userId: loggedInId });
-      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
-      userRefId = student._id;
-    }
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
       const teacher = await Teacher.findOne({ userId: loggedInId });
       if (!teacher) return res.status(404).json({ message: 'No teacher found with this ID.' });
@@ -4871,10 +4926,16 @@ exports.getNotifications = async (req, res) => {
       if (!staff) return res.status(404).json({ message: 'No staff member found with this ID.' });
       userRefId = staff._id;
     }
+    else if (loggedInUser.role === 'student') {
+      const student = await Student.findOne({ userId: loggedInId });
+      if (!student) return res.status(404).json({ message: 'No student found with this ID.' });
+      userRefId = student._id;
+    }
     else if (loggedInUser.role === 'parent') {
       const parent = await Parent.findOne({ userId: loggedInId });
       if (!parent) return res.status(404).json({ message: 'No parent found with this ID.' });
       userRefId = parent._id;
+      console.log(userRefId)
     }
     else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
       userRefId = loggedInId;
@@ -4976,3 +5037,407 @@ exports.markNotificationAsRead = async (req, res) => {
   }
 };
 
+
+exports.createVehicle = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const vehicleDetails = JSON.parse(req.body.vehicleDetails);
+    const routeDetails = JSON.parse(req.body.routeDetails);
+    let driverDetails = JSON.parse(req.body.driverDetails);
+    let attendantDetails = req.body.attendantDetails ? JSON.parse(req.body.attendantDetails) : null;
+    const { email, password } = req.body;
+    if (!vehicleDetails || !routeDetails.length || !email || !password || !driverDetails) {
+      return res.status(400).json({ message: "Please provide all the details to add vehicle." })
+    }
+
+    const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+    if (!driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
+      return res.status(400).json({ message: 'One or more required files are missing.' });
+    }
+
+    if (vehicleDetails.vehicleType === 'Bus') {
+      if (!attendantDetails || !attendantDetails.fullname || !attendantDetails.contact || !attendantDetails.address || !attendantDetails.licenseNumber || !attendantDetails.aadharCardNumber ||
+        !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
+        return res.status(400).json({ message: "Please provide the attendant details and documents." })
+      }
+    }
+
+    const existingUser = await User.findOne({ email, schoolId: school._id });
+    if (existingUser) {
+      return res.status(409).json({ message: "A user with this email already exist." })
+    }
+
+    let hpass = bcrypt.hashSync(password, 10);
+
+    const user = new User({ email, password: hpass, role: 'teacher', employeeType: 'driver', schoolId: school._id, createdBy: loggedInId })
+    await user.save();
+
+    driverDetails.userId = user._id;
+
+    const driverUploads = await uploadImage([driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
+    if (driverUploads.length !== 3) {
+      return res.status(400).json({ message: 'One or more driver files failed to upload.' });
+    }
+
+    driverDetails.license = driverUploads[0];
+    driverDetails.aadharCard = driverUploads[1];
+    driverDetails.panCard = driverUploads[2];
+
+    if (vehicleDetails.vehicleType === 'Bus') {
+      const attendantUploads = await uploadImage([attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
+      if (attendantUploads.length !== 3) {
+        return res.status(400).json({ message: 'One or more attendant files failed to upload.' });
+      }
+      attendantDetails.license = attendantUploads[0];
+      attendantDetails.aadharCard = attendantUploads[1];
+      attendantDetails.panCard = attendantUploads[2];
+    }
+
+    const vehicle = new Vehicles({ schoolId: school._id, vehicleDetails, routeDetails, driverDetails, attendantDetails: vehicleDetails.vehicleType === 'Bus' ? attendantDetails : undefined });
+    await vehicle.save();
+
+    res.status(201).json({ message: "Vehicle and Driver created successfully.", vehicle })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+
+exports.getTransportation = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const autos = await Vehicles.countDocuments({ schoolId: school._id, 'vehicleDetails.vehicleType': 'Auto' })
+    const buses = await Vehicles.countDocuments({ schoolId: school._id, 'vehicleDetails.vehicleType': 'Bus' })
+    const vans = await Vehicles.countDocuments({ schoolId: school._id, 'vehicleDetails.vehicleType': 'Van' })
+
+    const totalStudents = await Vehicles.find({ schoolId: school._id }).select('studentDetails.studentId').populate('studentDetails.studentId', 'studentProfile.gender')
+
+    let boys = 0;
+    let girls = 0;
+
+    totalStudents.forEach(vehicle => {
+      vehicle.studentDetails.forEach(studentEntry => {
+        const gender = studentEntry?.studentId?.studentProfile?.gender;
+        if (gender === 'male') { boys++; }
+        else if (gender === 'female') { girls++; }
+      });
+    });
+
+    const vehicles = await Vehicles.find({ schoolId: school._id }).select('vehicleDetails.currentLocation vehicleDetails.vehicleType vehicleDetails.licencedNumberPlate vehicleDetails.vehicleName routeDetails driverDetails.fullname driverDetails.contact attendantDetails.fullname attendantDetails.contact');
+    if (!vehicles.length) { return res.status(404).json({ message: 'No vehicles yet.' }) }
+
+    const formatted = vehicles.map(vehicle => ({
+      ...vehicle.toObject(),
+      routeDetails: vehicle.routeDetails[0].timing
+    }));
+
+    res.status(200).json({ autos, autoDrivers: autos, buses, busDrivers: buses, vans, vanDrivers: vans, boys, girls, vehicles: formatted })
+  }
+  catch (err) {
+    res.status(500).json({ message: "Internal server error.", error: err.message })
+  }
+};
+
+
+exports.getVehicleAndStudentById = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: "You are not associated with any school." });
+    }
+
+    const { vehicleId, id } = req.params;
+    if (!vehicleId) {
+      return res.status(400).json({ message: "Provide the vehicle id." });
+    }
+
+    let populatedVehicle, studentDetail;
+
+    if (!id) {
+      const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
+        .populate({
+          path: 'studentDetails.studentId',
+          select: 'studentProfile.fullname studentProfile.registrationNumber studentProfile.class studentProfile.section studentProfile.childOf',
+        });
+      if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }); }
+
+      populatedVehicle = vehicle.toObject();
+
+      for (let studentDetail of populatedVehicle.studentDetails) {
+        const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;
+        if (childOfUserId) {
+          const parent = await Parent.findOne({ userId: childOfUserId }).select('parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress');
+          studentDetail.parent = parent ? parent.parentProfile : null;
+        }
+      }
+
+      return res.status(200).json({ vehicle: populatedVehicle });
+    } else {
+      const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
+        .populate({
+          path: 'studentDetails.studentId',
+          select: 'studentProfile.fullname studentProfile.registrationNumber studentProfile.class studentProfile.section studentProfile.childOf',
+        }).lean();
+
+      if (!vehicle) { return res.status(404).json({ message: 'Vehicle not found' }); }
+
+      studentDetail = vehicle.studentDetails.find(detail => detail._id.toString() === id);
+      if (!studentDetail) {
+        return res.status(404).json({ message: 'StudentDetails not found in this vehicle' });
+      }
+
+      const childOfUserId = studentDetail.studentId?.studentProfile?.childOf;
+
+      if (childOfUserId) {
+        const parent = await Parent.findOne({ userId: childOfUserId }).select('parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress').lean();
+        studentDetail.parent = parent ? parent.parentProfile : null;
+      }
+      return res.status(200).json(studentDetail);
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error.", error: err.message });
+  }
+};
+
+
+exports.assignStudentToVehicle = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) { return res.status(404).json({ message: "You are not associated with any school." }) }
+
+    const { vehicleId } = req.params;
+    if (!vehicleId) { return res.status(400).json({ message: "Provide the vehicle id to add student." }) }
+
+    let { studentRegistrationNumber, pickUpLocation, totalFee, amountPaid, amountDue } = req.body;
+    if (!studentRegistrationNumber || !pickUpLocation || !totalFee) {
+      return res.status(400).json({ message: 'Please provide all the details to add student.' })
+    }
+    if (!amountPaid) { amountPaid = 0 }
+
+    const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId });
+    if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
+
+    const validPickup = vehicle.routeDetails.some(route => route.pickUpPoint === pickUpLocation);
+    if (!validPickup) {
+      return res.status(400).json({ message: "Invalid pick-up location. Must match one of the vehicle's route pickup points." });
+    }
+
+    const student = await Student.findOne({ schoolId: school._id, 'studentProfile.registrationNumber': studentRegistrationNumber });
+    if (!student) { return res.status(404).json({ message: "No student found with the registration number in this school." }) }
+
+    const alreadyAssigned = vehicle.studentDetails.find(s => s.studentId.toString() === student._id.toString());
+    if (alreadyAssigned) {
+      return res.status(409).json({ message: "Student is already assigned to this vehicle." });
+    }
+
+    let studentDetailsIs = { studentId: student._id, pickUpLocation, totalFee, amountPaid, amountDue }
+
+    vehicle.studentDetails.push(studentDetailsIs)
+    await vehicle.save();
+
+    res.status(201).json({ message: "Student added to vehicle successfully.", vehicle })
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
+
+exports.editTransportationData = async (req, res) => {
+  try {
+    const loggedInId = req.user?.id;
+    if (!loggedInId) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    const loggedInUser = await User.findById(loggedInId);
+    if (!loggedInUser || loggedInUser.role !== 'admin') {
+      return res.status(403).json({ message: 'No admin found with the logged-in id.' });
+    }
+
+    const school = await School.findOne({ userId: loggedInId });
+    if (!school) {
+      return res.status(404).json({ message: "You are not associated with any school." });
+    }
+
+    const { vehicleId, id } = req.params;
+    if (!vehicleId) {
+      return res.status(400).json({ message: "Provide the vehicle id." });
+    }
+
+    const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, vehicleDetails, driverDetails, attendantDetails } = req.body;
+
+    const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
+    if (!vehicle) { return res.status(404).json({ message: 'Vehicle not found' }) }
+
+    if (!id) {
+
+      if (vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && vehicle.attendantDetails == undefined)) {
+        return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
+      }
+
+      if (vehicleDetails) {
+        const parsedVehicleDetails = typeof vehicleDetails === 'string' ? JSON.parse(vehicleDetails) : vehicleDetails;
+        for (let key in parsedVehicleDetails) {
+          if (parsedVehicleDetails[key] !== undefined && parsedVehicleDetails[key] !== null) {
+            vehicle.vehicleDetails[key] = parsedVehicleDetails[key];
+          }
+        }
+      }
+
+      if (driverDetails) {
+        const parsedDriverDetails = typeof driverDetails === 'string' ? JSON.parse(driverDetails) : driverDetails;
+        for (let key in parsedDriverDetails) {
+          if (parsedDriverDetails[key] !== undefined && parsedDriverDetails[key] !== null) {
+            vehicle.driverDetails[key] = parsedDriverDetails[key];
+          }
+        }
+      }
+
+      if (vehicle.vehicleDetails.vehicleType === 'Bus' && attendantDetails) {
+        const parsedAttendantDetails = typeof attendantDetails === 'string' ? JSON.parse(attendantDetails) : attendantDetails;
+
+        if (!vehicle.attendantDetails) vehicle.attendantDetails = {};
+
+        for (let key in parsedAttendantDetails) {
+          if (parsedAttendantDetails[key] !== undefined && parsedAttendantDetails[key] !== null) {
+            vehicle.attendantDetails[key] = parsedAttendantDetails[key];
+          }
+        }
+      }
+
+      const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+
+      if (driverLicense?.[0]) {
+        await deleteImage(vehicle.driverDetails.license);
+        const uploaded = await uploadImage([driverLicense[0]]);
+        vehicle.driverDetails.license = uploaded[0];
+      }
+      if (driverAadharCard?.[0]) {
+        await deleteImage(vehicle.driverDetails.aadharCard);
+        const uploaded = await uploadImage([driverAadharCard[0]]);
+        vehicle.driverDetails.aadharCard = uploaded[0];
+      }
+      if (driverPanCard?.[0]) {
+        await deleteImage(vehicle.driverDetails.panCard);
+        const uploaded = await uploadImage([driverPanCard[0]]);
+        vehicle.driverDetails.panCard = uploaded[0];
+      }
+      if (attendantLicense?.[0]) {
+        await deleteImage(vehicle.attendantDetails.license);
+        const uploaded = await uploadImage([attendantLicense[0]]);
+        vehicle.attendantDetails.license = uploaded[0];
+      }
+      if (attendantAadharCard?.[0]) {
+        await deleteImage(vehicle.attendantDetails.aadharCard);
+        const uploaded = await uploadImage([attendantAadharCard[0]]);
+        vehicle.attendantDetails.aadharCard = uploaded[0];
+      }
+      if (attendantPanCard?.[0]) {
+        await deleteImage(vehicle.attendantDetails.panCard);
+        const uploaded = await uploadImage([attendantPanCard[0]]);
+        vehicle.attendantDetails.panCard = uploaded[0];
+      }
+      await vehicle.save();
+      return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
+
+    }
+    else {
+      let details = vehicle.studentDetails.id(id); //subdocument accessor
+      if (details) {
+        if (req.method === 'DELETE') {
+          vehicle.studentDetails.remove(id);
+          await vehicle.save();
+          return res.status(200).json({ message: "Student removed successfully." });
+        }
+
+        if (!totalFee && !amountPaid && !amountDue && !status) {
+          return res.status(400).json({ message: "Provide atlease one valid field to edit" })
+        }
+
+        if (totalFee) details.totalFee = totalFee;
+        if (amountPaid) details.amountPaid = amountPaid;
+        if (amountDue) details.amountDue = amountDue;
+        if (status) {
+          if (status != "true" && status != "false") {
+            return res.status(400).json({ message: "Invalid input for status" })
+          }
+          details.status = status
+        };
+
+        await vehicle.save()
+
+        return res.status(200).json({ message: "Student fees data updated successfully.", details });
+      }
+      else {
+        details = vehicle.routeDetails.id(id)
+
+        if (req.method === 'DELETE') {
+          vehicle.routeDetails.remove(id);
+          await vehicle.save();
+          return res.status(200).json({ message: "Route removed successfully." });
+        }
+
+        if (!details) {
+          if (!pickUpPoint || !timing) { return res.status(400).json({ message: "Please provide pick-up location and timing to add route" }) }
+          vehicle.routeDetails.push({ pickUpPoint, timing });
+          await vehicle.save()
+
+          return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
+        }
+
+        if (!pickUpPoint && !timing) { return res.status(400).json({ message: "Please provide atlease pick-up location or timing to update." }) }
+
+        if (pickUpPoint) details.pickUpPoint = pickUpPoint
+        if (timing) details.timing = timing
+        await vehicle.save()
+        return res.status(200).json({ message: "Route updated successfully." })
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error.", error: err.message });
+  }
+};

@@ -22,7 +22,7 @@ const ConnectSchema = new mongoose.Schema({
     }],
     membersModel: {
         type: String,
-        enum: ['User', 'School', 'Teacher', 'Student', 'Parent']
+        enum: ['User', 'Teacher', 'Student', 'Parent']
     },
     meetingLink: {
         type: String,

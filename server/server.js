@@ -21,7 +21,6 @@ const authorityRoute = require('./routes/authority.routes');
 const app = express();
 const server = http.createServer(app);
 
-initSocket(server);
 
 app.use(cors());
 app.use(express.json());
@@ -36,6 +35,8 @@ app.use('/api/student',studentRoute);
 app.use('/api/parent',parentRoute);
 app.use('/api/staff', staffRoute);
 app.use('/api/authority', authorityRoute);
+
+initSocket(server);
 
 setInterval(autoMarkHoliday, 3600000)
 

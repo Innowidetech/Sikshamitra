@@ -1,26 +1,12 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getAssignedTasks, getNotifications, markNotificationAsRead, getTeacherNames } = require('../controllers/admin.controller');
-const { editSchoolTaskStatus, editSATaskStatus } = require('../controllers/staff.controller');
+const { editSchoolTaskStatus, editSATaskStatus, editActionInTransportation, updateVehicleLocation } = require('../controllers/staff.controller');
 const { getSAAssignedTasks, editBlog, postBlog, deleteBlog, sendQuery, getQueries, replyToQuery, getQueryById } = require('../controllers/superAdmin.controller');
 const multer = require('multer');
+const { getTransportationDetails } = require('../controllers/student.controller');
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
-
-//admin
-router.get('/stasks', protect, authorize('teacher'), getAssignedTasks);
-router.patch('/stask/:id', protect, authorize('teacher'), editSchoolTaskStatus);
-
-router.get('/notifications', protect, authorize('teacher'), getNotifications);
-router.patch('/notification/:id', protect, authorize('teacher'), markNotificationAsRead);
-
-router.get('/teacherNames', protect, authorize('teacher'), getTeacherNames);
-
-router.post('/query', protect, authorize('teacher'), sendQuery);
-router.get('/query', protect, authorize('teacher'), getQueries);
-router.get('/query/:id', protect, authorize('teacher'), getQueryById);
-router.post('/query/:id', protect, authorize('teacher'), replyToQuery);
-
 
 
 //super admin
@@ -38,6 +24,27 @@ router.post('/saquery', protect, authorize('superadmin'), sendQuery);
 router.get('/saquery', protect, authorize('superadmin'), getQueries);
 router.get('/saquery/:id', protect, authorize('superadmin'), getQueryById);
 router.post('/saquery/:id', protect, authorize('superadmin'), replyToQuery);
+
+
+//admin
+router.get('/stasks', protect, authorize('teacher'), getAssignedTasks);
+router.patch('/stask/:id', protect, authorize('teacher'), editSchoolTaskStatus);
+
+router.get('/notifications', protect, authorize('teacher'), getNotifications);
+router.patch('/notification/:id', protect, authorize('teacher'), markNotificationAsRead);
+
+router.get('/teacherNames', protect, authorize('teacher'), getTeacherNames);
+
+router.post('/query', protect, authorize('teacher'), sendQuery);
+router.get('/query', protect, authorize('teacher'), getQueries);
+router.get('/query/:id', protect, authorize('teacher'), getQueryById);
+router.post('/query/:id', protect, authorize('teacher'), replyToQuery);
+
+
+//driver
+router.get('/transportation', protect, authorize('teacher'), getTransportationDetails);
+router.patch('/transportation/:id', protect, authorize('teacher'), editActionInTransportation);
+router.patch('/vehicle-location', protect, authorize('teacher'), updateVehicleLocation);
 
 
 module.exports = router;

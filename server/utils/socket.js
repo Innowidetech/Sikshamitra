@@ -41,8 +41,14 @@ function getUserSocketIds(userId) {
 }
 
 exports.initSocket = (server) => {
-  io = socketIo(server, { cors: { origin: '*' } });
-
+  io = socketIo(server, {
+    cors: {
+      origin: ['http://localhost:5173','https://shikshamitra-i.web.app'],
+      methods: ['GET', 'POST'],
+    },
+    transports: ['websocket', 'polling'],
+  });
+  
   function emitParticipants(meetingLink) {
     const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
     const participantIds = roomSockets.map(sid => io.sockets.sockets.get(sid)?.user?.id);
@@ -110,14 +116,11 @@ exports.initSocket = (server) => {
 
   // SOCKET CONNECTION HANDLING
   io.on('connection', (socket) => {
-
     addUserSocket(socket.user.id, socket.id);
-
     socket.on('error', (err) => {
       console.error('Socket error:', err);
     });
     socket.join(`user_${socket.user.id}`);
-
     socket.meetings = {};
 
     socket.on('requestJoin', async ({ meetingLink }) => {
@@ -217,11 +220,11 @@ exports.initSocket = (server) => {
       }
     });
 
-    socket.on('joinAccepted', ({ meetingLink }) => {
+    socket.on('join-meeting', (meetingLink) => {
       socket.join(`meeting_${meetingLink}`);
       socket.emit('joined', { meetingLink });
-
       emitParticipants(meetingLink);
+      console.log(`🔗 ${socket.user.name} joined meeting ${meetingLink} via join-meeting`);
     });
 
     socket.on('chatMessage', ({ meetingLink, message }) => {
@@ -264,7 +267,7 @@ exports.initSocket = (server) => {
           return socket.emit('error', { message: 'Unauthorized.' });
         }
 
-        await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
+        // await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
 
         // Notify all participants
         io.in(`meeting_${meetingLink}`).emit('meetingEnded', { meetingLink });

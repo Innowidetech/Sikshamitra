@@ -20,16 +20,28 @@ const Notifications = require('../models/Notifications');
 
 exports.getAllSchoolsName = async (req, res) => {
     try {
-        const schools = await School.find().select('schoolName applicationFee');
+        const schools = await School.find();
         if (!schools.length) {
-            return res.status(404).json({ message: 'No schools fould' })
-        };
-        res.status(200).json({ message: 'Schools data', schools })
-    }
-    catch (err) {
+            return res.status(404).json({ message: 'No schools found' });
+        }
+
+        const formattedSchools = schools.map(school => {
+            const rawAddress = school.address || '';
+            const addressParts = rawAddress.split(',');
+
+            const city = addressParts[addressParts.length - 2]?.trim();
+            const stateAndPin = addressParts[addressParts.length - 1]?.trim();
+
+            const cityStatePincode = city && stateAndPin ? `${city}, ${stateAndPin}` : rawAddress;
+
+            return { schoolName: school.schoolName, schoolCode: school.schoolCode, applicationFee: school.applicationFee, location: cityStatePincode };
+        });
+        res.status(200).json({ message: 'Schools data', schools: formattedSchools });
+    } catch (err) {
         res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
+
 
 
 exports.applyOffline = async (req, res) => {
