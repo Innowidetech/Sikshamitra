@@ -7,7 +7,6 @@ const Notifications = require('../models/Notifications');
 const Vehicles = require('../models/Vehicles');
 const Student = require('../models/Student');
 const moment = require('moment');
-const mongoose = require('mongoose');
 const Parent = require('../models/Parent');
 
 
