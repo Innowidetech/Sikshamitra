@@ -108,7 +108,7 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
-      role: selectedRole || 'teacher' // fallback to teacher
+      role: selectedRole || 'teacher' || ''
     };
 
     try {

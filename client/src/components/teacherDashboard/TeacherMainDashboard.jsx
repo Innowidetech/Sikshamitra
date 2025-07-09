@@ -23,36 +23,43 @@ import AddStudentResult from './AddStudentResult';
 import CreateDynamicCalendar from './CreateDynamicCalendar';
 import MarkAttendance from './MarkAttendance';
 import EditResult from './EditResult';
-
 import EditLectureTimetable from './EditLectureTimetable';
-import ScheduledLec from './ScheduledLec'; // ✅ Import ScheduledLec page
+import ScheduledLec from './ScheduledLec';
+import TeacherQuery from './TeacherQuery';
+import ReplyTeacherQuery from './ReplyTeacherQyery';
+import TeacherQueryForm from './TeacherQueryForm'; // ✅ Import added
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [selectedResult, setSelectedResult] = useState(null);
+  const [selectedQueryId, setSelectedQueryId] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Sync tab with URL path
   useEffect(() => {
-    const path = location.pathname.split('/teacher/')[1]; // Extract the tab name
-    const tab = path || 'dashboard'; // Fallback
+    const path = location.pathname.split('/teacher/')[1];
+    const tab = path || 'dashboard';
     setActiveTab(tab);
   }, [location.pathname]);
 
-  // Handle tab change and optionally pass data (like for assignmentdetails)
   const handleTabChange = (tabId, data = null) => {
     setActiveTab(tabId);
+
     if (tabId === 'assignmentdetails') {
       setSelectedAssignment(data);
-    }else if (tabId === 'editresult') {
+    } else if (tabId === 'editresult') {
       setSelectedResult(data);
     }
+
+    if (tabId === 'replyteacherquery') {
+      setSelectedQueryId(data);
+    }
+
     navigate(`/teacher/${tabId}`);
   };
 
-  // Render tab content based on active tab
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -69,18 +76,18 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
-        case 'editresult':
-       return <EditResult result={selectedResult} />;
-     case 'attendence':
-      return <Attendence handleTabChange={handleTabChange} />;
-    case 'markattendance':
-      return <MarkAttendance />;
+      case 'editresult':
+        return <EditResult result={selectedResult} />;
+      case 'attendence':
+        return <Attendence handleTabChange={handleTabChange} />;
+      case 'markattendance':
+        return <MarkAttendance />;
       case 'lectures':
         return <Lectures handleTabChange={handleTabChange} />;
       case 'editlectures':
         return <EditLectureTimetable />;
       case 'scheduledlec':
-        return <ScheduledLec />; // ✅ Added new tab for scheduled lectures
+        return <ScheduledLec />;
       case 'curriculam':
         return <Curriculum setActiveTab={handleTabChange} />;
       case 'studymaterial':
@@ -97,6 +104,24 @@ const MainDashboard = () => {
         return <Exams />;
       case 'about':
         return <About />;
+      case 'teacherquery':
+        return (
+          <TeacherQuery
+            setActiveTab={handleTabChange}
+            setSelectedQueryId={setSelectedQueryId}
+          />
+        );
+      case 'teacherqueryform':
+        return (
+          <TeacherQueryForm goBack={() => handleTabChange('teacherquery')} />
+        );
+      case 'replyteacherquery':
+        return (
+          <ReplyTeacherQuery
+            id={selectedQueryId}
+            goBack={() => handleTabChange('teacherquery')}
+          />
+        );
       case 'createdynamiccalendar':
         return <CreateDynamicCalendar />;
       default:
@@ -106,10 +131,11 @@ const MainDashboard = () => {
 
   return (
     <div className="flex min-h-screen">
-      <TeacherSidebar setActiveSection={handleTabChange} activeTab={activeTab} />
-      <main className="flex-1">
-        {renderContent()}
-      </main>
+      <TeacherSidebar
+        setActiveSection={handleTabChange}
+        activeTab={activeTab}
+      />
+      <main className="flex-1 overflow-y-auto">{renderContent()}</main>
     </div>
   );
 };

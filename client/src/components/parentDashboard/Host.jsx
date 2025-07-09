@@ -1,3 +1,4 @@
+
 // import React, { useEffect, useRef, useState } from 'react';
 // import { useLocation } from 'react-router-dom';
 // import { useSocket } from '../../../src/hooks/useSocket';
@@ -145,8 +146,6 @@
 // };
 
 // export default Host;
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../../src/hooks/useSocket';
@@ -173,7 +172,18 @@ const Host = () => {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isMeetingInfoOpen, setIsMeetingInfoOpen] = useState(false);
 
-  // Initialize media
+  useEffect(() => {
+    console.log('Meeting Link:', meetingLink);
+  }, [meetingLink]);
+
+  if (!meetingLink) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-600 text-xl">
+        ❌ Missing meeting link. Please start the meeting from the correct page.
+      </div>
+    );
+  }
+
   useEffect(() => {
     const initMedia = async () => {
       try {
@@ -191,14 +201,20 @@ const Host = () => {
     initMedia();
   }, []);
 
-  // Socket setup
   useEffect(() => {
     if (socket && isConnected && meetingLink) {
       socket.emit('join-meeting', meetingLink);
 
-      socket.on('requestJoin', ({ meetingLink: reqLink, userId, fullname }) => {
+      socket.on('joinRequest', ({ meetingLink: reqLink, userId, fullname, role }) => {
+        console.log('🔔 joinRequest received:', { reqLink, userId, fullname, role });
         if (reqLink === meetingLink) {
-          setJoinRequests((prev) => [...prev, { userId, fullname }]);
+          const message = `${fullname || 'A participant'} (${role}) is requesting to join the meeting.`;
+          toast.info(message, { autoClose: 3000 });
+
+          setJoinRequests((prev) => {
+            const alreadyRequested = prev.some((req) => req.userId === userId);
+            return alreadyRequested ? prev : [...prev, { userId, fullname, role }];
+          });
         }
       });
 
@@ -211,14 +227,13 @@ const Host = () => {
       });
 
       return () => {
-        socket.off('requestJoin');
+        socket.off('joinRequest');
         socket.off('chatMessage');
         socket.off('participantsUpdate');
       };
     }
   }, [socket, isConnected, meetingLink]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       socket?.disconnect();
@@ -228,6 +243,16 @@ const Host = () => {
 
   const respondToJoin = (userId, accept) => {
     socket.emit('respondToJoin', { meetingLink, userId, accept });
+
+    if (accept) {
+      const acceptedUser = joinRequests.find((req) => req.userId === userId);
+      if (acceptedUser && !participants.some((p) => p.userId === userId)) {
+        const updatedList = [...participants, acceptedUser];
+        setParticipants(updatedList);
+        socket.emit('participantsUpdate', updatedList);
+      }
+    }
+
     setJoinRequests((prev) => prev.filter((req) => req.userId !== userId));
   };
 
@@ -269,7 +294,7 @@ const Host = () => {
 
   const sendMessage = () => {
     if (!chatInput.trim()) return;
-    socket.emit('chatMessage', { meetingLink, text: chatInput });
+    socket.emit('chatMessage', { meetingLink, userId: name, text: chatInput });
     setMessages((prev) => [...prev, { from: name, text: chatInput }]);
     setChatInput('');
   };
@@ -294,7 +319,6 @@ const Host = () => {
 
   return (
     <div className="relative w-full h-screen bg-black text-white overflow-hidden">
-      {/* Video */}
       <div className="absolute top-0 left-0 w-full h-full border-4 border-blue-500">
         {localStream && isCameraOn ? (
           <video
@@ -323,7 +347,6 @@ const Host = () => {
         <button onClick={toggleMic} title="Toggle Mic" className="hover:text-blue-400">
           <i className={`fas ${isMicOn ? 'fa-microphone' : 'fa-microphone-slash'}`} />
         </button>
-       
         <button
           onClick={handleDisconnect}
           title="End Call"
@@ -346,9 +369,12 @@ const Host = () => {
       {joinRequests.length > 0 && (
         <div className="absolute top-4 right-4 bg-white text-black p-4 rounded shadow-md w-[320px] max-h-[70vh] overflow-auto z-20">
           <h3 className="font-bold mb-2">Join Requests</h3>
-          {joinRequests.map(({ userId, fullname }) => (
+          {joinRequests.map(({ userId, fullname, role }) => (
             <div key={userId} className="flex justify-between items-center mb-2">
-              <span>{fullname || userId}</span>
+              <div>
+                <span className="font-semibold">{fullname || userId}</span>
+                <div className="text-xs text-gray-600">({role || 'Guest'})</div>
+              </div>
               <div>
                 <button
                   onClick={() => respondToJoin(userId, true)}
@@ -451,19 +477,17 @@ const Host = () => {
           </div>
           <div className="flex-1 p-4 space-y-3">
             <p><strong>Joined as:</strong> {name}</p>
-          <p className="break-words">
-  <strong>Meeting Link:</strong>{' '}
-  <a
-    href={meetingLink}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 underline break-all"
-  >
-    {meetingLink}
-  </a>
-</p>
-
-            {/* <div className="break-words text-blue-700">{meetingLink}</div> */}
+            <p className="break-words">
+              <strong>Meeting Link:</strong>{' '}
+              <a
+                href={meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline break-all"
+              >
+                {meetingLink}
+              </a>
+            </p>
           </div>
         </div>
       )}

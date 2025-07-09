@@ -44,6 +44,12 @@ exports.registerSchool = async (req, res) => {
       return res.status(400).json({ message: "Please enter all the details to register." })
     };
 
+    if (!/.+,\s*[^,]+,\s*[^-]+-\s*\d{6}$/.test(address)) {
+      return res.status(400).json({
+        message: 'Invalid address format. It should end with "City, State - Pincode (6 digits only)" using commas and a hyphen.'
+      });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists.' });
@@ -337,7 +343,7 @@ exports.addSAStaffMember = async (req, res) => {
 
     const user = new User({ email, password: hpass, mobileNumber, role: 'superadmin', employeeType: 'groupD', createdBy: loggedInId });
     await user.save();
-    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary });
+    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary, createdBy:loggedInId });
     await staff.save();
 
     let schoolName = 'Shikshamitra'
@@ -875,7 +881,7 @@ exports.sendQuery = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all the details to create query' })
     }
 
-    let superAdmin = null, queriesToInsert = [], admin = null;
+    let superAdmin = null, queriesToInsert = [], admin = null, memberIds = [];
     if (sendTo.includes('Super Admin')) {
       superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
     }
@@ -896,6 +902,10 @@ exports.sendQuery = async (req, res) => {
           query: [{ message, createdBy: staff._id, sentAt: new Date() }]
         });
       });
+
+      memberIds.push(...schools.map(s => ({ memberId: s.userId._id })));
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the Super Admin Staff.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
@@ -911,6 +921,10 @@ exports.sendQuery = async (req, res) => {
           query: [{ message, createdBy: loggedInId, sentAt: new Date() }]
         });
       });
+
+      memberIds.push(...schools.map(s => ({ memberId: s.userId._id })));
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the Super Admin.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'admin') {
@@ -934,11 +948,27 @@ exports.sendQuery = async (req, res) => {
 
       if (superAdmin) {
         queriesToInsert.push(new Query(createQueryPayload(superAdmin._id, 'Super Admin', 'Super Admin')));
+        memberIds.push({ memberId: superAdmin._id })
       }
-      schoolStaffs.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.name, s.employeeRole))));
-      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
-      students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.studentProfile.fullname, 'Student'))));
-      parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id, p.parentProfile.fatherName ? p.parentProfile.fatherName : p.parentProfile.motherName, 'Parent'))));
+      if (schoolStaffs) {
+        schoolStaffs.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.name, s.employeeRole))));
+        memberIds.push(...schoolStaffs.map(s => ({ memberId: s._id })))
+      }
+      if (teachers) {
+        teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+        memberIds.push(...teachers.map(t => ({ memberId: t._id })))
+      }
+      if (students) {
+        students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.studentProfile.fullname, 'Student'))));
+        memberIds.push(...students.map(s => ({ memberId: s._id })))
+      }
+      if (parents) {
+        parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id, p.parentProfile.fatherName ? p.parentProfile.fatherName : p.parentProfile.motherName, 'Parent'))));
+        memberIds.push(...parents.map(p => ({ memberId: p._id })))
+      }
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from the School Admin.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
@@ -963,8 +993,15 @@ exports.sendQuery = async (req, res) => {
 
       if (admin) {
         queriesToInsert.push(new Query(createQueryPayload(admin._id, school.principalName, 'Admin')));
+        memberIds.push({ memberId: admin._id })
       }
-      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+      if (teachers) {
+        teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+        memberIds.push(...teachers.map(t => ({ memberId: t._id })))
+      }
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from ${staff.employeeRole} - ${staff.name}.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
@@ -980,7 +1017,6 @@ exports.sendQuery = async (req, res) => {
       const studentIds = studentsIs.map(student => student._id);
       const parents = await Parent.find({ schoolId: teacher.schoolId._id, 'parentProfile.parentOf': { $in: studentIds }, $or: [{ 'parentProfile.fatherName': { $in: sendTo } }, { 'parentProfile.motherName': { $in: sendTo } }] });
 
-
       if (!admin && !students.length && !parents.length) {
         return res.status(404).json({ message: 'No name is selected to send query.' });
       }
@@ -992,9 +1028,19 @@ exports.sendQuery = async (req, res) => {
 
       if (admin) {
         queriesToInsert.push(new Query(createQueryPayload(admin._id, teacher.schoolId.principalName, 'Admin')));
+        memberIds.push({ memberId: admin._id })
       }
-      students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.studentProfile.fullname, 'Student'))));
-      parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id, p.parentProfile.fatherName ? p.parentProfile.fatherName : p.parentProfile.motherName, 'Parent'))));
+      if (students) {
+        students.forEach(s => queriesToInsert.push(new Query(createQueryPayload(s._id, s.studentProfile.fullname, 'Student'))));
+        memberIds.push(...students.map(s => ({ memberId: s._id })))
+      }
+      if (parents) {
+        parents.forEach(p => queriesToInsert.push(new Query(createQueryPayload(p._id, p.parentProfile.fatherName ? p.parentProfile.fatherName : p.parentProfile.motherName, 'Parent'))));
+        memberIds.push(...parents.map(p => ({ memberId: p._id })))
+      }
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from teacher - ${teacher.profile.fullname}.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'student') {
@@ -1020,8 +1066,15 @@ exports.sendQuery = async (req, res) => {
 
       if (admin) {
         queriesToInsert.push(new Query(createQueryPayload(admin._id, student.schoolId.principalName, 'Admin')));
+        memberIds.push({ memberId: admin._id })
       }
-      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+      if (teachers) {
+        teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+        memberIds.push(...teachers.map(t => ({ memberId: t._id })))
+      }
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from student - ${student.studentProfile.fullname}.` });
+      await notification.save();
     }
 
     else if (loggedInUser.role === 'parent') {
@@ -1048,8 +1101,15 @@ exports.sendQuery = async (req, res) => {
 
       if (admin) {
         queriesToInsert.push(new Query(createQueryPayload(admin._id, parent.schoolId.principalName, 'Admin')));
+        memberIds.push({ memberId: admin._id })
       }
-      teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+      if (teachers) {
+        teachers.forEach(t => queriesToInsert.push(new Query(createQueryPayload(t._id, t.profile.fullname, 'Teacher'))));
+        memberIds.push(...teachers.map(t => ({ memberId: t._id })))
+      }
+
+      const notification = new Notifications({ section: 'query', memberIds, text: `You have received a new query message from parent - ${name}.` });
+      await notification.save();
     }
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
@@ -1077,7 +1137,7 @@ exports.getQueries = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in users can access.' });
     };
 
-    let queriesSent, queriesReceived, queries;
+    let queriesSent, queriesReceived, queries, creatorIds, profileId;
 
     if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
 
@@ -1087,7 +1147,7 @@ exports.getQueries = async (req, res) => {
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
 
-      const creatorIds = [staff.createdBy, ...staffIds];
+      creatorIds = [staff.createdBy, ...staffIds];
 
       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
 
@@ -1100,7 +1160,7 @@ exports.getQueries = async (req, res) => {
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
 
-      const creatorIds = [loggedInId, ...staffIds];
+      creatorIds = [loggedInId, ...staffIds];
 
       queriesSent = await Query.find({ createdBy: { $in: creatorIds } }).sort({ updatedAt: -1 });
 
@@ -1109,6 +1169,7 @@ exports.getQueries = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'admin') {
+      profileId = loggedInId
 
       queriesSent = await Query.find({ createdBy: loggedInId }).sort({ updatedAt: -1 });
 
@@ -1119,6 +1180,8 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType === 'groupD') {
 
       const staff = await SchoolStaff.findOne({ userId: loggedInId });
+      if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
+      profileId = staff._id
 
       queriesSent = await Query.find({ createdBy: staff._id }).populate('sendTo').sort({ updatedAt: -1 });
 
@@ -1129,6 +1192,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'teacher' && loggedInUser.employeeType !== 'groupD') {
 
       const teacher = await Teacher.findOne({ userId: loggedInId });
+      profileId = teacher._id
 
       queriesSent = await Query.find({ createdBy: teacher._id }).populate({ path: 'sendTo' }).sort({ updatedAt: -1 });
 
@@ -1139,6 +1203,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'student') {
 
       const student = await Student.findOne({ userId: loggedInId });
+      profileId = student._id
 
       queriesSent = await Query.find({ createdBy: student._id }).sort({ updatedAt: -1 });
 
@@ -1149,6 +1214,7 @@ exports.getQueries = async (req, res) => {
     else if (loggedInUser.role === 'parent') {
 
       const parent = await Parent.findOne({ userId: loggedInId });
+      profileId = parent._id
 
       queriesSent = await Query.find({ createdBy: parent._id }).sort({ updatedAt: -1 });
 
@@ -1158,7 +1224,7 @@ exports.getQueries = async (req, res) => {
 
     else { return res.status(403).json({ message: "Invalid role type." }) }
 
-    res.status(200).json({ queriesReceived, queriesSent })
+    res.status(200).json({ creatorIds, profileId, queriesReceived, queriesSent })
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -1393,9 +1459,10 @@ exports.createConnect = async (req, res) => {
     }
 
     let meetingLink = 'https://meet.shikshamitra.com/' + Math.random().toString(36).slice(2, 11);
-    let superAdmin = null, admin = null, connectArray = [], connectDoc;
+    let superAdmin = null, admin = null, connectArray = [], connectDoc, by;
 
     if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+      by = 'Super Admin'
       const schools = await School.find({ schoolName: { $in: attendants } });
       if (!schools.length) {
         return res.status(404).json({ message: 'No school is selected to send query.' });
@@ -1418,6 +1485,7 @@ exports.createConnect = async (req, res) => {
       if (!school) {
         return res.status(404).json({ message: 'You are not associated with any school.' });
       }
+      by = `Admin - ${school.principalName}`
 
       if (attendants.includes('Super Admin')) {
         superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
@@ -1449,6 +1517,7 @@ exports.createConnect = async (req, res) => {
       if (!teacher) {
         return res.status(404).json({ message: 'No teacher found with the logged-in id.' });
       }
+      by = `Teacher - ${teacher.profile.fullname}`
 
       if (attendants.includes('Admin')) {
         admin = await User.findById(teacher.schoolId.userId);
@@ -1478,6 +1547,7 @@ exports.createConnect = async (req, res) => {
 
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId }).populate('schoolId');
+      by = `Student - ${student.studentProfile.fullname}`
 
       const teacherNameSet = await getTeacherNamesOfStudent(loggedInId);
 
@@ -1506,7 +1576,7 @@ exports.createConnect = async (req, res) => {
     }
 
     else if (loggedInUser.role === 'parent') {
-      const parent = await Parent.findOne({ userId: loggedInId })
+      const parent = await Parent.findOne({ userId: loggedInId }).populate('schoolId')
 
       const teacherNameSet = await getTeacherNamesOfParent(loggedInId);
 
@@ -1538,6 +1608,7 @@ exports.createConnect = async (req, res) => {
       } else {
         hostedByName = parent.parentProfile.fatherName || parent.parentProfile.motherName;
       }
+      by = `Parent - ${hostedByName}`
 
       if (!startDate && !startTime && !endDate && !endTime) {
         connectDoc = await Connect.create({ title, connect: connectArray, meetingLink, hostedByName, hostedByRole: loggedInUser.role, createdBy: parent._id });
@@ -1559,6 +1630,16 @@ exports.createConnect = async (req, res) => {
         status: meetingStatus
       });
     });
+
+    const notification = new Notifications({
+      section: 'connect',
+      memberIds: connectArray.map(att => ({
+        memberId: att.attendant,
+        markAsRead: false
+      })),
+      text: `You have been scheduled to a new connect meeting by ${by}.`
+    });
+    await notification.save();
 
     res.status(201).json({ message: "Meeting scheduled successfully.", connectDoc });
   }
@@ -1598,7 +1679,6 @@ exports.getConnects = async (req, res) => {
 
       sent = await Connect.find({ createdBy: teacher._id }).select('-connect');
       received = await Connect.find({ "connect.attendant": teacher._id });
-
     }
     else if (loggedInUser.role === 'student') {
       const student = await Student.findOne({ userId: loggedInId });

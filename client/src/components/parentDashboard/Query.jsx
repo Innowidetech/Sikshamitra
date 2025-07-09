@@ -1,3 +1,4 @@
+
 // import React, { useEffect, useState } from 'react';
 // import { useDispatch, useSelector } from 'react-redux';
 // import { fetchQueries, fetchConnects } from '../../redux/parent/querySlice';
@@ -214,34 +215,28 @@
 
 // export default Query;
 
-
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchQueries, fetchConnects } from '../../redux/parent/querySlice';
-import { fetchParentDetails } from '../../redux/parent/parentDashboardSlice'; // import fetchParentDetails
+import { fetchParentDetails } from '../../redux/parent/parentdashboardSlice';
 import Header from './layout/Header';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const Query = ({ setActiveTab, setSelectedQueryId }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { queries, connects } = useSelector((state) => state.query);
-  const { parent } = useSelector((state) => state.parent); // Get parent from Redux slice
+  const { parent } = useSelector((state) => state.parent);
 
   const [socket, setSocket] = useState(null);
   const [joinResponses, setJoinResponses] = useState([]);
 
-  // Fetch parent details on component mount
   useEffect(() => {
     dispatch(fetchParentDetails());
   }, [dispatch]);
-
-  // Log parent data whenever it changes
-  useEffect(() => {
-    console.log('🧾 Parent data from Redux:', parent);
-  }, [parent]);
 
   useEffect(() => {
     dispatch(fetchQueries());
@@ -283,29 +278,32 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
   }, [dispatch]);
 
   const handleJoinMeeting = (connect) => {
- 
-
-if (connect.status === 'Not Started') {
-  toast.error('Meeting has not yet started.');
-  return;
-} else if (connect.status === 'Expired') {
-  toast.error('Meeting has expired.');
-  return;
-}
-
-    else if (connect.status === 'Live') {
+    if (connect.status === 'Not Started') {
+      toast.error('Meeting has not yet started.');
+      return;
+    } else if (connect.status === 'Expired') {
+      toast.error('Meeting has expired.');
+      return;
+    } else if (connect.status === 'Live') {
       const meetingLink = connect.meetingLink;
-      const name = parent?.parentData.parentProfile.fatherName || parent?.parentData.parentProfile.motherName;
+      const name =
+        parent?.parentData?.parentProfile?.fatherName ||
+        parent?.parentData?.parentProfile?.motherName ||
+        'Parent';
 
-      const loggedInId = parent?.parentData._id || null // fallback if nested inside parent.parent
+      const loggedInId = parent?.parentData?._id || null;
       const isHost = loggedInId === connect.createdBy;
-
-      const role = parent ? 'Parent' : 'User';
+      const role = 'Parent';
 
       if (socket) {
-        socket.emit('requestJoin', { meetingLink });
+        socket.emit('requestJoin', {
+          meetingLink,
+          fullname: name,
+          role,
+        });
+
         if (!isHost) {
-          alert(`Request to join meeting sent: ${meetingLink}`);
+          toast.info(`Request to join meeting sent: ${meetingLink}`);
         }
       }
 
@@ -315,14 +313,13 @@ if (connect.status === 'Not Started') {
           : `/test/${encodeURIComponent(meetingLink)}`,
         {
           state: {
-            meetingId: meetingLink,
+            meetingLink,
             name,
             role,
           },
         }
       );
     }
-
   };
 
   const received = queries?.queriesReceived || [];
@@ -330,18 +327,7 @@ if (connect.status === 'Not Started') {
 
   return (
     <>
-    <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="flex justify-between items-center mx-4 mt-20 md:ml-72 flex-wrap">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Connect & Queries</h1>
@@ -374,7 +360,7 @@ if (connect.status === 'Not Started') {
           </div>
           <p className="text-sm text-gray-500 mb-6">We are here to help you! How can we help?</p>
 
-          {/* Meetings Table */}
+          {/* Meetings */}
           <h3 className="font-semibold text-gray-700 mb-2">Ongoing / Upcoming Meetings</h3>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm border">
@@ -389,7 +375,7 @@ if (connect.status === 'Not Started') {
                 </tr>
               </thead>
               <tbody>
-                {connects && connects.length > 0 ? (
+                {connects?.length > 0 ? (
                   connects.map((connect, idx) => (
                     <tr key={connect._id} className="text-center">
                       <td className="border px-3 py-2">{idx + 1}</td>
@@ -403,7 +389,7 @@ if (connect.status === 'Not Started') {
                       <td className="border px-3 py-2 capitalize">
                         {connect.hostedByName} ({connect.hostedByRole})
                       </td>
-                      <td className="border px-3 py-2 text-blue-600 underline cursor-pointer">
+                      <td className="border px-3 py-2">
                         <button
                           onClick={() => handleJoinMeeting(connect)}
                           className="text-blue-600 underline"
@@ -415,7 +401,7 @@ if (connect.status === 'Not Started') {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="border px-3 py-2 text-center text-gray-500">
+                    <td colSpan="6" className="text-center py-4 text-gray-500">
                       No upcoming meetings found.
                     </td>
                   </tr>
@@ -497,6 +483,7 @@ if (connect.status === 'Not Started') {
               </tbody>
             </table>
           </div>
+
         </div>
       </div>
     </>

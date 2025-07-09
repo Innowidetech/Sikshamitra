@@ -1,11 +1,11 @@
 // src/hooks/useSocket.js
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'https://sikshamitra.onrender.com';
 
 export const useSocket = () => {
-  const socketRef = useRef(null);
+  const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export const useSocket = () => {
       return;
     }
 
-    const socket = io(SOCKET_URL, {
+    const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -23,25 +23,25 @@ export const useSocket = () => {
       auth: { token },
     });
 
-    socketRef.current = socket;
+    setSocket(newSocket);
 
-    socket.on('connect', () => {
-      console.log('✅ Socket connected:', socket.id);
+    newSocket.on('connect', () => {
+      console.log('✅ Socket connected:', newSocket.id);
       setIsConnected(true);
     });
 
-    socket.on('disconnect', () => {
+    newSocket.on('disconnect', () => {
       console.log('🔌 Socket disconnected');
       setIsConnected(false);
     });
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
   }, []);
 
   return {
-    socket: socketRef.current,
+    socket,
     isConnected,
   };
 };

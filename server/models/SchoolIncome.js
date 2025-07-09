@@ -12,7 +12,8 @@ const schoolIncomeSchema = new mongoose.Schema({
     },
     date: {
         type: Date,
-        required: true
+        required: true,
+        default:Date.now
     },
     purpose: {
         type: String,

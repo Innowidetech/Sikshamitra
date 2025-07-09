@@ -40,6 +40,4 @@ router.get('/connect', protect, authorize('superadmin'), getConnects)   ;
 router.patch('/connect/:id', protect, authorize('superadmin'), editConnectInviteStatus);
 
 
-
-
 module.exports = router;

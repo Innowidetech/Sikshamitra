@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
 const { getSyllabus, getExams, getResults, getResultById, getClassPlan } = require('../controllers/teacher.controller');
 const { editParentProfile,parentDashboard, getChildrenNames, payFees, verifyFeesPayment, getExpenses, getFeesReceipts, getTeacherNamesForQuery } = require('../controllers/parent.controller');
-const { getAdmitCard } = require('../controllers/student.controller');
+const { getAdmitCard, getTransportationDetails } = require('../controllers/student.controller');
 const { getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const router = express.Router();
 const multer = require('multer');
@@ -38,6 +38,7 @@ router.post('/query/:id', protect, authorize('parent'), replyToQuery);
 router.get('/connect', protect, authorize('parent'), getConnects);
 router.post('/connect', protect, authorize('parent'), createConnect);
 
+router.get('/transportation', protect, authorize('parent'), getTransportationDetails);
 
 
 module.exports = router;

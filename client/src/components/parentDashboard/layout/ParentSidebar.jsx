@@ -17,7 +17,8 @@ const menuItems = [
   { id: 'curriculam', icon: Library, label: 'Curriculam' },
   { id: 'exams', icon: HiMiniUserGroup, label: 'Exams' },
   { id: 'fees', icon: FiFileText, label: 'Fees' },
-  { id: 'query', icon: SiGooglebigquery, label: 'Query' },
+  { id: 'query', icon: SiGooglebigquery, label: 'Connect&Queries' },
+  
 ];
 
 const ParentSidebar = ({ setActiveSection, activeTab }) => {
