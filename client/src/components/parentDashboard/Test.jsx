@@ -56,7 +56,7 @@ const Test = () => {
     if (socket && isConnected && meetingLink) {
       const userId = socket.id;
 
-      console.log('📤 Sending requestJoin →', { meetingLink, fullname: name, role });
+      console.log('📤 Sending requestJoin  →', { meetingLink, fullname: name, role });
       socket.emit('requestJoin', { meetingLink, fullname: name, role, userId });
 
       socket.on('joinResponse', (res) => {
