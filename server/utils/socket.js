@@ -12,7 +12,6 @@ const Parent = require('../models/Parent');
 const School = require('../models/School');
 
 let io;
-
 const userSockets = new Map();
 
 function parseMeetingDateTime(dateObj, timeStr) {
@@ -29,7 +28,6 @@ function getMeetingStatus(doc) {
   return 'Live';
 }
 
-// Helper: add socketId to userSockets map
 function addUserSocket(userId, socketId) {
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
@@ -37,7 +35,6 @@ function addUserSocket(userId, socketId) {
   userSockets.get(userId).add(socketId);
 }
 
-// Helper: get all socketIds by userId
 function getUserSocketIds(userId) {
   return userSockets.has(userId) ? Array.from(userSockets.get(userId)) : [];
 }
@@ -57,25 +54,21 @@ exports.initSocket = (server) => {
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token || socket.handshake.query.token;
-      if (!token) {
-        return next(new Error('Authentication error'));
-      }
+      if (!token) return next(new Error('Authentication error'));
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId);
       if (!user) return next(new Error('User not found'));
 
       let fullUser = null;
-
       switch (user.role) {
-        case 'superadmin': {
+        case 'superadmin':
           fullUser = { id: user._id.toString(), name: 'Super Admin', role: user.role };
           break;
-        }
         case 'admin': {
-          const school = await School.findOne({ userId: user._id })
+          const school = await School.findOne({ userId: user._id });
           if (!school) return next(new Error('School Admin not found'));
-          fullUser = { id: user._id.toString(), name: school.principalName, role: user.role }
+          fullUser = { id: user._id.toString(), name: school.principalName, role: user.role };
           break;
         }
         case 'teacher': {
@@ -104,28 +97,19 @@ exports.initSocket = (server) => {
       socket.user = fullUser;
       next();
     } catch (err) {
-
       return next(new Error('Authentication error'));
     }
   });
 
-
-  // SOCKET CONNECTION HANDLING
   io.on('connection', (socket) => {
-
     addUserSocket(socket.user.id, socket.id);
-
-    socket.on('error', (err) => {
-      console.error('Socket error:', err);
-    });
     socket.join(`user_${socket.user.id}`);
-
     socket.meetings = {};
+
+    socket.on('error', (err) => console.error('Socket error:', err));
 
     socket.on('requestJoin', async ({ meetingLink }) => {
       try {
-        if (socket.user.name !== 'Super Admin') console.log(`[requestJoin] User ${socket.user?.name} requested to join meeting: ${meetingLink}`);
-
         if (!socket.user || !socket.user.id) {
           return socket.emit('joinResponse', { meetingLink, success: false, message: 'Unauthorized.' });
         }
@@ -146,12 +130,8 @@ exports.initSocket = (server) => {
         const isInvited = attendants.some(c => c.attendant.toString() === socket.user.id) || doc.createdBy.toString() === socket.user.id;
         if (!isInvited) {
           console.log(`[requestJoin] User ${socket.user.id} not invited to meeting ${meetingLink}`);
-
           return socket.emit('joinResponse', { meetingLink, success: false, message: 'Not invited.' });
         }
-
-        // Initialize meetings container if doesn't exist
-        if (!socket.meetings) socket.meetings = {};
 
         if (socket.user.id === doc.createdBy.toString()) {
           socket.join(`meeting_${meetingLink}`);
@@ -202,10 +182,14 @@ exports.initSocket = (server) => {
               const userSocket = io.sockets.sockets.get(socketId);
               if (userSocket) {
                 userSocket.join(`meeting_${meetingLink}`);
-                io.to(socketId).emit('joinAccepted', { meetingLink, by: socket.user.id });
+                userSocket.emit('joinAccepted', { meetingLink });
+                io.in(`meeting_${meetingLink}`).emit('userJoined', {
+                  userId,
+                  name: userSocket.user.name,
+                  role: userSocket.user.role
+                });
               }
             });
-
             emitParticipants(meetingLink);
             console.log(`✅ ${socket.user.name} approved and joined meeting ${meetingLink}`);
           } else {
@@ -226,6 +210,12 @@ exports.initSocket = (server) => {
       socket.join(`meeting_${meetingLink}`);
       socket.emit('joined', { meetingLink });
 
+      io.in(`meeting_${meetingLink}`).emit('userJoined', {
+        userId: socket.user.id,
+        name: socket.user.name,
+        role: socket.user.role
+      });
+
       emitParticipants(meetingLink);
     });
 
@@ -242,10 +232,48 @@ exports.initSocket = (server) => {
     });
 
 
-    socket.on('signal', ({ meetingLink, type, data }) => {
-      io.in(`meeting_${meetingLink}`).emit('signal', { from: socket.id, type, data });
+    // socket.on('signal', ({ meetingLink, type, data }) => {
+    //   io.in(`meeting_${meetingLink}`).emit('signal', { from: socket.id, type, data });
+    // });
+
+    socket.on('signal', ({ meetingLink, type, data, targetId }) => {
+      const targetSocketIds = getUserSocketIds(targetId);
+      targetSocketIds.forEach(socketId => {
+        io.to(socketId).emit('signal', {
+          from: socket.user.id,
+          type,
+          data
+        });
+      });
     });
 
+
+    socket.on('signal', ({ meetingLink, type, data, targetId }) => {
+      const targetSocketIds = getUserSocketIds(targetId);
+
+      targetSocketIds.forEach(socketId => {
+        const targetSocket = io.sockets.sockets.get(socketId);
+
+        const room = `meeting_${meetingLink}`;
+        if (
+          targetSocket?.rooms.has(room) &&
+          socket.rooms.has(room)
+        ) {
+          io.to(socketId).emit('signal', { from: socket.user.id, type, data });
+        } else {
+          console.warn(`⚠️ Invalid signal attempt between users not in the same room (${meetingLink})`);
+        }
+      });
+    });
+
+
+    socket.on('mediaStatus', ({ meetingLink, type, isEnabled }) => {
+      socket.to(`meeting_${meetingLink}`).emit('mediaStatus', {
+        userId: socket.user.id,
+        type,
+        isEnabled
+      });
+    });
 
     socket.on('leaveMeeting', ({ meetingLink }) => {
       socket.leave(`meeting_${meetingLink}`);
@@ -271,7 +299,6 @@ exports.initSocket = (server) => {
           return socket.emit('error', { message: 'Unauthorized.' });
         }
 
-        // Delete the meeting document from DB
         await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
 
         // Notify all participants in the meeting room that meeting ended
