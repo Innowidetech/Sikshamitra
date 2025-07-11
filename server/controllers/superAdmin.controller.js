@@ -32,12 +32,9 @@ exports.registerSchool = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only superadmin can register school.' });
     };
-    if (loggedInUser.employeeType == 'groupD') {
-      return res.status
-    }
 
     const { email, password, schoolCode, schoolName, contact, address, principalName, details } = req.body;
     if (!email || !password || !schoolCode || !schoolName || !contact || !address || !principalName || !details) {
@@ -84,7 +81,7 @@ exports.getAllSchools = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only superadmin can get all schools data.' });
     };
 
@@ -116,7 +113,7 @@ exports.changeSchoolStatus = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only superadmin can change the school status.' });
     };
 
@@ -161,7 +158,7 @@ exports.postBlog = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in users can post blog.' });
     }
 
-    if ((loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) || (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD')) {
+    if (loggedInUser && ((loggedInUser.role === 'superadmin') || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'blogsManager'))) {
       let uploadedBlog = [];
 
       if (req.files && req.files.length === blog.length) {
@@ -188,6 +185,9 @@ exports.postBlog = async (req, res) => {
       await newBlog.save();
 
       res.status(201).json({ message: "Blog posted successfully.", newBlog });
+
+    } else {
+      return res.status(403).json({ message: "You are not allowed to post blogs" });
     }
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
@@ -199,89 +199,97 @@ exports.editBlog = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
-      return res.status(401).json({ message: 'Unauthorized. Only logged-in user can access.' });
+      return res.status(401).json({ message: 'Unauthorized. Only logged-in users can access.' });
     }
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser) {
-      return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can edit blog.' });
+    if (!loggedInUser || !(loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'blogsManager'))) {
+      return res.status(403).json({ message: 'Access denied. Only superadmin or blogsManager staff can edit blogs.' });
     }
 
-    if ((loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) || (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD')) {
+    const { id } = req.params;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Please provide a valid blog ID.' });
+    }
 
-      const { id } = req.params;
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'Please provide a valid blog id to edit.' });
+    const existingBlog = await Blogs.findById(id);
+    if (!existingBlog) {
+      return res.status(404).json({ message: 'No blog found with the provided ID.' });
+    }
+
+    const { title, blog: updatedBlogArray } = req.body;
+
+    if (!title && (!Array.isArray(updatedBlogArray) || !updatedBlogArray.length)) {
+      return res.status(400).json({ message: 'Provide at least one valid field (title or blog data) to update.' });
+    }
+
+    if (title) {
+      existingBlog.title = title;
+    }
+
+    const oldBlogArray = existingBlog.blog || [];
+    let updatedBlog = [];
+    let imagesToDelete = [];
+
+    if (Array.isArray(updatedBlogArray) && updatedBlogArray.length > 0) {
+      const files = req.files || [];
+
+      if (files.length && files.length !== updatedBlogArray.length) {
+        return res.status(400).json({ message: 'Mismatch between blog entries and uploaded files.' });
       }
 
-      const existingBlog = await Blogs.findById(id);
-      if (!existingBlog) {
-        return res.status(404).json({ message: 'No blog found with the provided ID.' });
-      }
+      for (let i = 0; i < updatedBlogArray.length; i++) {
+        const { description } = updatedBlogArray[i];
+        if (!description) {
+          return res.status(400).json({ message: 'Each blog entry must have a description.' });
+        }
 
-      const updatedBlogArray = req.body.blog;
-      if (!Array.isArray(updatedBlogArray) || !updatedBlogArray.length) {
-        return res.status(400).json({ message: "Please provide valid blog data to update." });
-      }
+        let photoUrl = null;
 
-      const oldBlogArray = existingBlog.blog;
-      let updatedBlog = [];
-      let imagesToDelete = [];
-
-      if (req.files && req.files.length === updatedBlogArray.length) {
-        for (let i = 0; i < updatedBlogArray.length; i++) {
-          const { description } = updatedBlogArray[i];
-          const file = req.files[i];
-
-          if (!description || !file) {
-            return res.status(400).json({ message: 'Each blog entry must include a description and a photo.' });
+        if (files.length) {
+          const file = files[i];
+          if (!file) {
+            return res.status(400).json({ message: 'Each blog entry must include a photo if uploading new files.' });
           }
 
           try {
-            const [photoUrl] = await uploadImage(file);
-
-            if (oldBlogArray[i] && oldBlogArray[i].photo) {
+            [photoUrl] = await uploadImage(file);
+            if (oldBlogArray[i]?.photo) {
               imagesToDelete.push(oldBlogArray[i].photo);
             }
-
-            updatedBlog.push({ description, photo: photoUrl });
-          } catch (error) {
-            return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
+          } catch (uploadErr) {
+            return res.status(500).json({ message: 'Failed to upload photo.', error: uploadErr.message });
           }
-        }
-      } else if (!req.files || req.files.length === 0) {
-        for (let i = 0; i < updatedBlogArray.length; i++) {
-          const { description } = updatedBlogArray[i];
-          const oldEntry = oldBlogArray[i];
-
-          if (!description || !oldEntry || !oldEntry.photo) {
-            return res.status(400).json({ message: 'Each blog entry must include a description and existing photo.' });
+        } else {
+          if (!oldBlogArray[i]?.photo) {
+            return res.status(400).json({ message: 'Existing blog entry is missing photo. Please re-upload.' });
           }
-
-          updatedBlog.push({ description, photo: oldEntry.photo });
+          photoUrl = oldBlogArray[i].photo;
         }
-      } else {
-        return res.status(400).json({ message: 'Mismatch between blogs and uploaded photos.' });
+
+        updatedBlog.push({ description, photo: photoUrl });
       }
 
+      // Handle deletion of removed images
       if (oldBlogArray.length > updatedBlog.length) {
         const removedImages = oldBlogArray.slice(updatedBlog.length).map(entry => entry.photo);
         imagesToDelete.push(...removedImages);
       }
 
-      if (imagesToDelete.length > 0) {
+      existingBlog.blog = updatedBlog;
+
+      if (imagesToDelete.length) {
         try {
           await deleteImage(imagesToDelete);
-        } catch (error) {
-          console.warn("Failed to delete one or more old images:", error.message);
+        } catch (deleteErr) {
+          console.warn("Failed to delete old images:", deleteErr.message);
         }
       }
-
-      existingBlog.blog = updatedBlog;
-      const blog = await existingBlog.save();
-
-      res.status(200).json({ message: "Blog updated successfully.", blog });
     }
+
+    await existingBlog.save();
+    res.status(200).json({ message: 'Blog updated successfully.' });
+
   } catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message });
   }
@@ -296,25 +304,27 @@ exports.deleteBlog = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Access denied. Only superadmin or staff members can delete blog.' });
-    };
+    if (loggedInUser && ((loggedInUser.role === 'superadmin') || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'blogsManager'))) {
 
-    const { id } = req.params;
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
-    }
-    const blog = await Blogs.findById(id);
-    if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
+      const { id } = req.params;
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Please provide a valid blog id to delete.' })
+      }
+      const blog = await Blogs.findById(id);
+      if (!blog) { return res.status(404).json({ message: "No blog found with the id." }) }
 
-    const imagesToDelete = blog.blog.map(entry => entry.photo);
-    try {
-      await deleteImage(imagesToDelete);
-    } catch (error) {
-      res.warn("Some images may not have been deleted:", error.message);
+      const imagesToDelete = blog.blog.map(entry => entry.photo);
+      try {
+        await deleteImage(imagesToDelete);
+      } catch (error) {
+        res.warn("Some images may not have been deleted:", error.message);
+      }
+      await Blogs.findByIdAndDelete(id);
+      res.status(200).json({ message: "Blog deleted successfully." })
     }
-    await Blogs.findByIdAndDelete(id);
-    res.status(200).json({ message: "Blog deleted successfully." })
+    else {
+      return res.status(403).json({ message: "You are not allowed to delete blogs" });
+    }
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error.', error: err.message })
@@ -335,7 +345,7 @@ exports.addSAStaffMember = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only logged-in superadmin can access.' });
     };
 
@@ -343,7 +353,7 @@ exports.addSAStaffMember = async (req, res) => {
 
     const user = new User({ email, password: hpass, mobileNumber, role: 'superadmin', employeeType: 'groupD', createdBy: loggedInId });
     await user.save();
-    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary, createdBy:loggedInId });
+    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary, createdBy: loggedInId });
     await staff.save();
 
     let schoolName = 'Shikshamitra'
@@ -364,11 +374,11 @@ exports.getSAStaffMembers = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
     };
 
-    const staff = await SuperAdminStaff.find().populate({ path: 'userId', select: 'email mobileNumber isActive' }).sort({ createdAt: -1 })
+    const staff = await SuperAdminStaff.find().populate({ path: 'userId', select: 'email employeeType mobileNumber isActive' }).sort({ createdAt: -1 })
     if (!staff.length) {
       return res.status(404).json({ message: "No staff members found." })
     }
@@ -389,13 +399,11 @@ exports.getSAStaffMembers = async (req, res) => {
 exports.editSAStaffMember = async (req, res) => {
   try {
     const loggedInId = req.user && req.user.id;
-    if (!loggedInId) {
-      return res.status(401).json({ message: 'Unauthorized.' });
-    };
+    if (!loggedInId) { return res.status(401).json({ message: 'Unauthorized.' }) };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || (loggedInUser.employeeType && loggedInUser.employeeType == 'groupD')) {
-      return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
     };
 
     const { id } = req.params;
@@ -439,7 +447,7 @@ exports.assignTaskToSAStaff = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType == 'groupD') {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
@@ -448,7 +456,7 @@ exports.assignTaskToSAStaff = async (req, res) => {
       return res.status(400).json({ message: "Provide all the details to add task for staff member." })
     }
 
-    const staffMember = await SuperAdminStaff.findOne({ name, employeeRole }).populate('userId', 'mobileNumber');
+    const staffMember = await SuperAdminStaff.findOne({ name, employeeRole }).populate('userId', 'employeeType mobileNumber');
     if (!staffMember) { return res.status(404).json({ message: "No staff member found with the provided details." }) }
 
     const task = new SuperAdminStaffTasks({ staffId: staffMember._id, startDate, dueDate, title, description, createdBy: loggedInId });
@@ -480,21 +488,18 @@ exports.getSAAssignedTasks = async (req, res) => {
 
     let name, tasks, totalTasks, completedTasks, pendingTasks, dateOfJoining, role;
 
-    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    if (loggedInUser.role === 'superadmin') {
 
-      completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
-      pendingTasks = await SuperAdminStaffTasks.find({ status: { $ne: 'completed' } }).populate({ path: 'staffId', select: 'userId name employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
-
-      if (!pendingTasks.length && !completedTasks.length) { return res.status(404).json({ message: "No tasks found." }) }
-
+      completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeType employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
+      pendingTasks = await SuperAdminStaffTasks.find({ status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeType employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
     }
-    else if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    else if (loggedInUser.role === 'staff') {
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id." }) }
 
       name = staff.name;
       dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];
-      role = staff.employeeRole;
+      role = loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.employeeRole;
 
       tasks = await SuperAdminStaffTasks.find({ staffId: staff._id }).sort({ startDate: 1 });
 
@@ -503,10 +508,8 @@ exports.getSAAssignedTasks = async (req, res) => {
         completedTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'completed' });
         pendingTasks = await SuperAdminStaffTasks.countDocuments({ staffId: staff._id, status: 'pending' });
       }
-      if (!tasks || !tasks.length) { return res.status(404).json({ message: "No tasks found." }) }
-
     }
-    else { return res.status(403).json({ message: "Only logged-in admin and staff members have access." }) }
+    else { return res.status(403).json({ message: "Only logged-in super admin and staff members have access." }) }
 
     res.status(200).json({ message: `Tasks data fetched successfully.`, name, totalTasks, completedTasks, pendingTasks, dateOfJoining, role, tasks })
   } catch (err) {
@@ -523,7 +526,7 @@ exports.getDashboard = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
+    if (!loggedInUser || loggedInUser.role !== 'superadmin') {
       return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
     };
 
@@ -534,7 +537,6 @@ exports.getDashboard = async (req, res) => {
     const teachers = await Teacher.countDocuments();
     const students = await Student.countDocuments();
     const parents = await Parent.countDocuments();
-
 
     res.status(200).json({ schools, activeSchools, inActiveSchools, suspendedSchools, teachers, students, parents })
   } catch (err) {
@@ -551,21 +553,22 @@ exports.addIncome = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      var { schoolCode, schoolName, principalName, totalFees, paidAmount, dueAmount, paymentMethod, transactionId } = req.body;
+      if (!schoolCode || !schoolName || !principalName || !totalFees || !paidAmount || !dueAmount || !paymentMethod || (paymentMethod == 'Online' && !transactionId)) {
+        return res.status(400).json({ message: "Please provide all the details to add income." })
+      }
 
-    var { schoolCode, schoolName, principalName, totalFees, paidAmount, dueAmount, paymentMethod, transactionId } = req.body;
-    if (!schoolCode || !schoolName || !principalName || !totalFees || !paidAmount || !dueAmount || !paymentMethod || (paymentMethod == 'Online' && !transactionId)) {
-      return res.status(400).json({ message: "Please provide all the details to add income." })
+      if (paymentMethod === 'Cash') { transactionId = '-' }
+
+      const income = new SuperAdminIncome({ schoolCode, schoolName, principalName, totalFees, paidAmount, dueAmount, paymentMethod, transactionId });
+      await income.save()
+
+      res.status(201).json({ message: 'Income added successfully.', income })
     }
-
-    if (paymentMethod === 'Cash') { transactionId = '-' }
-
-    const income = new SuperAdminIncome({ schoolCode, schoolName, principalName, totalFees, paidAmount, dueAmount, paymentMethod, transactionId });
-    await income.save()
-
-    res.status(201).json({ message: 'Income added successfully.', income })
+    else {
+      return res.status(403).json({ message: "You are not allowed to add income" });
+    }
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -580,21 +583,22 @@ exports.addExpense = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      var { name, date, purpose, amount, modeOfPayment, transactionId } = req.body;
+      if (!name || !date || !purpose || !amount || !modeOfPayment || (modeOfPayment == 'Online' && !transactionId)) {
+        return res.status(400).json({ message: "Please provide all the details to add expense." })
+      }
 
-    var { name, date, purpose, amount, modeOfPayment, transactionId } = req.body;
-    if (!name || !date || !purpose || !amount || !modeOfPayment || (modeOfPayment == 'Online' && !transactionId)) {
-      return res.status(400).json({ message: "Please provide all the details to add expense." })
+      if (modeOfPayment === 'Cash') { transactionId = '-' }
+
+      const expense = new SuperAdminExpenses({ name, date, purpose, amount, modeOfPayment, transactionId });
+      await expense.save()
+
+      res.status(201).json({ message: 'Expense added successfully.', expense })
     }
-
-    if (modeOfPayment === 'Cash') { transactionId = '-' }
-
-    const expense = new SuperAdminExpenses({ name, date, purpose, amount, modeOfPayment, transactionId });
-    await expense.save()
-
-    res.status(201).json({ message: 'Expense added successfully.', expense })
+    else {
+      return res.status(403).json({ message: "You are not allowed to add expense" });
+    }
   } catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
   }
@@ -609,60 +613,61 @@ exports.getAccounts = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      let monthlyData = {};
 
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    let monthlyData = {};
-
-    const incomes = await SuperAdminIncome.find();
-    for (let income of incomes) {
-      const incomeDate = new Date(income.createdAt);
-      if (isNaN(incomeDate)) continue;
-      const monthName = months[incomeDate.getMonth()];
-      const year = incomeDate.getFullYear();
-      const monthYear = `${monthName} ${year}`;
-      if (!monthlyData[monthYear]) {
-        monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      const incomes = await SuperAdminIncome.find();
+      for (let income of incomes) {
+        const incomeDate = new Date(income.createdAt);
+        if (isNaN(incomeDate)) continue;
+        const monthName = months[incomeDate.getMonth()];
+        const year = incomeDate.getFullYear();
+        const monthYear = `${monthName} ${year}`;
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+        }
+        monthlyData[monthYear].totalIncome += income.paidAmount;
       }
-      monthlyData[monthYear].totalIncome += income.paidAmount;
-    }
 
-    const expenses = await SuperAdminExpenses.find();
-    for (let expense of expenses) {
-      const expenseDate = new Date(expense.date);
-      if (isNaN(expenseDate)) continue;
-      const monthName = months[expenseDate.getMonth()];
-      const year = expenseDate.getFullYear();
-      const monthYear = `${monthName} ${year}`;
-      if (!monthlyData[monthYear]) {
-        monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+      const expenses = await SuperAdminExpenses.find();
+      for (let expense of expenses) {
+        const expenseDate = new Date(expense.date);
+        if (isNaN(expenseDate)) continue;
+        const monthName = months[expenseDate.getMonth()];
+        const year = expenseDate.getFullYear();
+        const monthYear = `${monthName} ${year}`;
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = { totalIncome: 0, totalExpenses: 0, totalRevenue: 0 };
+        }
+        monthlyData[monthYear].totalExpenses += expense.amount;
       }
-      monthlyData[monthYear].totalExpenses += expense.amount;
+
+      for (let monthYear in monthlyData) {
+        const data = monthlyData[monthYear];
+        data.totalRevenue = data.totalIncome - data.totalExpenses;
+      }
+
+      const result = Object.keys(monthlyData).map(key => ({
+        monthYear: key,
+        totalIncome: monthlyData[key].totalIncome,
+        totalExpenses: monthlyData[key].totalExpenses,
+        totalRevenue: monthlyData[key].totalRevenue,
+      }));
+
+      result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
+
+      const income = await SuperAdminIncome.find().sort({ updatedAt: -1 })
+      const expense = await SuperAdminExpenses.find().sort({ createdAt: -1 })
+
+      res.status(200).json({ accounts: result, income, expense });
     }
-
-    for (let monthYear in monthlyData) {
-      const data = monthlyData[monthYear];
-      data.totalRevenue = data.totalIncome - data.totalExpenses;
+    else {
+      return res.status(403).json({ message: "You are not allowed to get accounts data" });
     }
-
-    const result = Object.keys(monthlyData).map(key => ({
-      monthYear: key,
-      totalIncome: monthlyData[key].totalIncome,
-      totalExpenses: monthlyData[key].totalExpenses,
-      totalRevenue: monthlyData[key].totalRevenue,
-    }));
-
-    result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
-
-    const income = await SuperAdminIncome.find().sort({ updatedAt: -1 })
-    const expense = await SuperAdminExpenses.find().sort({ createdAt: -1 })
-
-    res.status(200).json({ accounts: result, income, expense });
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -678,41 +683,42 @@ exports.editIncome = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      const { id } = req.params;
+      if (!id) { return res.status(400).json({ message: "Please provide income id to edit." }) }
 
-    const { id } = req.params;
-    if (!id) { return res.status(400).json({ message: "Please provide income id to edit." }) }
+      const newData = req.body;
 
-    const newData = req.body;
+      let income, previousData;
 
-    let income, previousData;
+      income = await SuperAdminIncome.findOne({ _id: id });
+      if (income) {
+        previousData = JSON.parse(JSON.stringify(income.toObject()));
 
-    income = await SuperAdminIncome.findOne({ _id: id });
-    if (income) {
-      previousData = JSON.parse(JSON.stringify(income.toObject()));
+        Object.keys(newData).forEach(key => {
+          if (income[key] !== undefined) {
+            income[key] = newData[key];
+          }
+        });
+        await income.save();
 
-      Object.keys(newData).forEach(key => {
-        if (income[key] !== undefined) {
-          income[key] = newData[key];
-        }
-      });
-      await income.save();
+        res.status(200).json({ message: 'Income updated successfully.', income })
+      }
+      else { return res.status(404).json({ message: "No income found with the id." }) }
 
-      res.status(200).json({ message: 'Income updated successfully.', income })
+      const newHistoryEntry = { previousData, updatedAt: Date.now() };
+
+      let incomeUpdate = await SuperAdminIncomeUpdateHistory.findOne({ incomeId: id });
+      if (incomeUpdate) {
+        incomeUpdate.incomeHistory.push(newHistoryEntry);
+        await incomeUpdate.save();
+      } else {
+        incomeUpdate = new SuperAdminIncomeUpdateHistory({ incomeId: id, incomeHistory: [newHistoryEntry] });
+        await incomeUpdate.save();
+      }
     }
-    else { return res.status(404).json({ message: "No income found with the id." }) }
-
-    const newHistoryEntry = { previousData, updatedAt: Date.now() };
-
-    let incomeUpdate = await SuperAdminIncomeUpdateHistory.findOne({ incomeId: id });
-    if (incomeUpdate) {
-      incomeUpdate.incomeHistory.push(newHistoryEntry);
-      await incomeUpdate.save();
-    } else {
-      incomeUpdate = new SuperAdminIncomeUpdateHistory({ incomeId: id, incomeHistory: [newHistoryEntry] });
-      await incomeUpdate.save();
+    else {
+      return res.status(403).json({ message: "You are not allowed to edit income" });
     }
   }
   catch (err) {
@@ -729,22 +735,21 @@ exports.getUpdatedIncomeHistory = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      const { id } = req.params;
+      if (!id) { return res.status({ message: "Please provide a valid id to get updated income history." }) }
 
-    const { id } = req.params;
-    if (!id) { return res.status({ message: "Please provide a valid id to get updated income history." }) }
-
-    const updatedData = await SuperAdminIncomeUpdateHistory.findOne({ incomeId: id });
-    if (updatedData) {
-      updatedData.incomeHistory.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      return res.status(200).json({
-        message: 'Data history retrieved successfully.',
-        incomeHistory: updatedData.incomeHistory,
-      });
-    } else {
-      return res.status(404).json({ message: 'No updated history found for this income.' });
+      const updatedData = await SuperAdminIncomeUpdateHistory.findOne({ incomeId: id });
+      if (updatedData) {
+        updatedData.incomeHistory.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+        return res.status(200).json({
+          message: 'Data history retrieved successfully.',
+          incomeHistory: updatedData.incomeHistory,
+        });
+      } else { return res.status(404).json({ message: 'No updated history found for this income.' }) }
+    }
+    else {
+      return res.status(403).json({ message: "You are not allowed to get updated income history" });
     }
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
@@ -760,27 +765,28 @@ exports.editExpense = async (req, res) => {
     };
 
     const loggedInUser = await User.findById(loggedInId);
-    if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType || loggedInUser.employeeType === 'groupD') {
-      return res.status(403).json({ message: 'Access denied. Only logged-in super admin can access.' });
-    };
+    if (loggedInUser && (loggedInUser.role === 'superadmin' || (loggedInUser.role === 'staff' && loggedInUser.employeeType === 'accountant'))) {
+      const { id } = req.params;
+      if (!id) { return res.status(400).json({ message: "Please provide expense id to edit." }) }
 
-    const { id } = req.params;
-    if (!id) { return res.status(400).json({ message: "Please provide expense id to edit." }) }
+      const newData = req.body;
 
-    const newData = req.body;
+      const expense = await SuperAdminExpenses.findOne({ _id: id });
+      if (expense) {
+        Object.keys(newData).forEach(key => {
+          if (expense[key] !== undefined) {
+            expense[key] = newData[key];
+          }
+        });
+        await expense.save();
 
-    const expense = await SuperAdminExpenses.findOne({ _id: id });
-    if (expense) {
-      Object.keys(newData).forEach(key => {
-        if (expense[key] !== undefined) {
-          expense[key] = newData[key];
-        }
-      });
-      await expense.save();
-
-      return res.status(200).json({ message: 'Expense data updated successfully.', expense })
+        return res.status(200).json({ message: 'Expense data updated successfully.', expense })
+      }
+      else { return res.status(404).json({ message: "No expense data found with the id." }) }
     }
-    else { return res.status(404).json({ message: "No expense data found with the id." }) }
+    else {
+      return res.status(403).json({ message: "You are not allowed to edit expense" });
+    }
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -883,11 +889,10 @@ exports.sendQuery = async (req, res) => {
 
     let superAdmin = null, queriesToInsert = [], admin = null, memberIds = [];
     if (sendTo.includes('Super Admin')) {
-      superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+      superAdmin = await User.findOne({ role: 'superadmin' });
     }
 
-
-    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    if (loggedInUser.role === 'staff') {
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
 
@@ -898,7 +903,7 @@ exports.sendQuery = async (req, res) => {
 
       queriesToInsert = schools.map((school) => {
         return new Query({
-          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: staff.employeeRole, createdBy: staff._id,
+          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.employeeRole, createdBy: staff._id,
           query: [{ message, createdBy: staff._id, sentAt: new Date() }]
         });
       });
@@ -908,7 +913,7 @@ exports.sendQuery = async (req, res) => {
       await notification.save();
     }
 
-    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    else if (loggedInUser.role === 'superadmin') {
 
       const schools = await School.find({ schoolName: { $in: sendTo } }).populate('userId');
       if (!schools.length) {
@@ -1139,7 +1144,7 @@ exports.getQueries = async (req, res) => {
 
     let queriesSent, queriesReceived, queries, creatorIds, profileId;
 
-    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    if (loggedInUser.role === 'staff') {
 
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
@@ -1155,7 +1160,7 @@ exports.getQueries = async (req, res) => {
       queriesReceived = queries.filter(q => q.query.length % 2 !== 0);
     }
 
-    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    else if (loggedInUser.role === 'superadmin') {
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1248,7 +1253,7 @@ exports.getQueryById = async (req, res) => {
 
     let query;
 
-    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    if (loggedInUser.role === 'staff') {
 
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
@@ -1261,7 +1266,7 @@ exports.getQueryById = async (req, res) => {
       query = await Query.findOne({ _id: id, createdBy: { $in: creatorIds } }) || await Query.findOne({ _id: id, sendTo: staff.createdBy });
     }
 
-    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    else if (loggedInUser.role === 'superadmin') {
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1325,7 +1330,7 @@ exports.replyToQuery = async (req, res) => {
 
     let query;
 
-    if (loggedInUser.role === 'superadmin' && loggedInUser.employeeType === 'groupD') {
+    if (loggedInUser.role === 'staff') {
 
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
       if (!staff) { return res.status(404).json({ message: "No staff member found with the logged-in id" }) }
@@ -1343,7 +1348,7 @@ exports.replyToQuery = async (req, res) => {
       await query.save();
     }
 
-    else if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    else if (loggedInUser.role === 'superadmin') {
 
       const staffs = await SuperAdminStaff.find();
       const staffIds = staffs.map(staff => staff._id)
@@ -1461,7 +1466,7 @@ exports.createConnect = async (req, res) => {
     let meetingLink = 'https://meet.shikshamitra.com/' + Math.random().toString(36).slice(2, 11);
     let superAdmin = null, admin = null, connectArray = [], connectDoc, by;
 
-    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    if (loggedInUser.role === 'superadmin') {
       by = 'Super Admin'
       const schools = await School.find({ schoolName: { $in: attendants } });
       if (!schools.length) {
@@ -1488,7 +1493,7 @@ exports.createConnect = async (req, res) => {
       by = `Admin - ${school.principalName}`
 
       if (attendants.includes('Super Admin')) {
-        superAdmin = await User.findOne({ role: 'superadmin', employeeType: { $exists: false } });
+        superAdmin = await User.findOne({ role: 'superadmin' });
         if (superAdmin) { connectArray.push({ attendant: superAdmin._id, status: 'Pending' }) }
       }
       const teachers = await Teacher.find({ schoolId: school._id, 'profile.fullname': { $in: attendants } });
@@ -1664,7 +1669,7 @@ exports.getConnects = async (req, res) => {
     let sent, received;
     let socketUserId = loggedInId;
 
-    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    if (loggedInUser.role === 'superadmin') {
       sent = await Connect.find({ createdBy: loggedInId }).select('-connect');
       received = await Connect.find({ "connect.attendant": loggedInId });
     }
@@ -1743,7 +1748,7 @@ exports.editConnectInviteStatus = async (req, res) => {
 
     let connect;
 
-    if (loggedInUser.role === 'superadmin' && !loggedInUser.employeeType) {
+    if (loggedInUser.role === 'superadmin') {
       connect = await Connect.findOneAndUpdate({ _id: id, "connect.attendant": loggedInId }, { $set: { "connect.$.status": status } }, { new: true });
       if (!connect) { return res.status(404).json({ message: 'No status found for the scheduled meeting to update.' }) }
     }

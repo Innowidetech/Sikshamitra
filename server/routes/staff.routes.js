@@ -10,20 +10,20 @@ const router = express.Router();
 
 
 //super admin
-router.get('/satasks', protect, authorize('superadmin'), getSAAssignedTasks);
-router.patch('/satask/:id', protect, authorize('superadmin'), editSATaskStatus);
+router.get('/satasks', protect, authorize('staff'), getSAAssignedTasks);
+router.patch('/satask/:id', protect, authorize('staff'), editSATaskStatus);
 
-router.post('/blog', protect, authorize('superadmin'), upload.array('photos'),  postBlog);
-router.put('/blog/:id', protect, authorize('superadmin'), upload.array('photos'), editBlog);
-router.delete('/blog/:id', protect, authorize('superadmin'), deleteBlog);
+router.post('/blog', protect, authorize('staff'), upload.array('photos'),  postBlog);
+router.put('/blog/:id', protect, authorize('staff'), upload.array('photos'), editBlog);
+router.delete('/blog/:id', protect, authorize('staff'), deleteBlog);
 
-router.get('/sanotifications', protect, authorize('superadmin'), getNotifications);
-router.patch('/sanotification/:id', protect, authorize('superadmin'), markNotificationAsRead);
+router.get('/sanotifications', protect, authorize('staff'), getNotifications);
+router.patch('/sanotification/:id', protect, authorize('staff'), markNotificationAsRead);
 
-router.post('/saquery', protect, authorize('superadmin'), sendQuery);
-router.get('/saquery', protect, authorize('superadmin'), getQueries);
-router.get('/saquery/:id', protect, authorize('superadmin'), getQueryById);
-router.post('/saquery/:id', protect, authorize('superadmin'), replyToQuery);
+router.post('/saquery', protect, authorize('staff'), sendQuery);
+router.get('/saquery', protect, authorize('staff'), getQueries);
+router.get('/saquery/:id', protect, authorize('staff'), getQueryById);
+router.post('/saquery/:id', protect, authorize('staff'), replyToQuery);
 
 
 //admin

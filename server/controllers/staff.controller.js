@@ -59,7 +59,7 @@ exports.editSATaskStatus = async (req, res) => {
         };
 
         const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType !== 'groupD') {
+        if (!loggedInUser || loggedInUser.role !== 'staff') {
             return res.status(403).json({ message: 'Access denied. Only logged-in staff members can access.' });
         };
 
