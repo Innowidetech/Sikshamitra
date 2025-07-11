@@ -66,7 +66,7 @@ exports.userLogin = async (req, res) => {
 
     let payload = { userId: user._id, role: user.role };
 
-    if (user.role === 'teacher' || (user.role === 'staff') || user.role === 'authority') {
+    if (user.role === 'teacher' || user.role === 'staff' || user.role === 'authority') {
       payload.employeeType = user.employeeType;
     }
 

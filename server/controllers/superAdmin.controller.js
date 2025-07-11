@@ -334,11 +334,6 @@ exports.deleteBlog = async (req, res) => {
 
 exports.addSAStaffMember = async (req, res) => {
   try {
-    const { email, password, mobileNumber, name, employeeRole, department, salary } = req.body;
-    if (!email || !password || !mobileNumber || !department || !name || !employeeRole || !salary) {
-      return res.status(400).json({ message: "Provide all the details to add staff member." })
-    }
-
     const loggedInId = req.user && req.user.id;
     if (!loggedInId) {
       return res.status(401).json({ message: 'Unauthorized.' });
@@ -349,9 +344,25 @@ exports.addSAStaffMember = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in superadmin can access.' });
     };
 
+    let { email, password, employeeType, mobileNumber, name, employeeRole, department, salary } = req.body;
+    if (!email || !password || !mobileNumber || !department || !name || !salary) {
+      return res.status(400).json({ message: "Provide all the details to add staff member." })
+    }
+
+    let existingUser;
+
+    if (!employeeType) { employeeType = "groupD" }
+
+    if (employeeType !== 'groupD') {
+      existingUser = await User.findOne({ role: 'staff', employeeType });
+      if (existingUser) {
+        return res.status(409).json({ message: `${employeeType} already exist, you are not allowed to add multiple` })
+      }
+    }
+
     let hpass = bcrypt.hashSync(password, 10);
 
-    const user = new User({ email, password: hpass, mobileNumber, role: 'superadmin', employeeType: 'groupD', createdBy: loggedInId });
+    const user = new User({ email, password: hpass, mobileNumber, role: 'staff', employeeType, createdBy: loggedInId });
     await user.save();
     const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary, createdBy: loggedInId });
     await staff.save();
@@ -388,7 +399,14 @@ exports.getSAStaffMembers = async (req, res) => {
       totalStaffSalary += employee.salary
     }
 
-    res.status(200).json({ message: `Staff details:`, totalStaffSalary, staff })
+    const sortedStaff = staff.sort((a, b) => {
+      const typeOrder = ['accountant', 'blogsManager', 'groupD'];
+      const aTypeIndex = typeOrder.indexOf(a.userId.employeeType);
+      const bTypeIndex = typeOrder.indexOf(b.userId.employeeType);
+      return aTypeIndex - bTypeIndex;
+    });
+
+    res.status(200).json({ message: `Staff details:`, totalStaffSalary, staff: sortedStaff })
   }
   catch (err) {
     res.status(500).json({ message: 'Internal server error', error: err.message })
@@ -410,9 +428,18 @@ exports.editSAStaffMember = async (req, res) => {
     if (!id) {
       return res.status(400).json({ message: "Provide the staff member id to edit." })
     }
-    const { email, mobileNumber, isActive, name, employeeRole, department, salary } = req.body;
-    if (!email && !mobileNumber && !isActive && !name && !employeeRole && !department && !salary) {
+    const { email, mobileNumber, employeeType, isActive, name, employeeRole, department, salary } = req.body;
+    if (!email && !mobileNumber && !employeeType && !isActive && !name && !department && !salary) {
       return res.status(400).json({ message: "Please provide atlease one new data to edit staff member details." })
+    }
+
+    let existingUser;
+
+    if (employeeType !== 'groupD') {
+      existingUser = await User.findOne({ role: 'staff', employeeType });
+      if (existingUser) {
+        return res.status(409).json({ message: `${employeeType} already exist, you are not allowed to add multiple` })
+      }
     }
 
     const employee = await SuperAdminStaff.findById(id).populate('userId');
@@ -422,6 +449,7 @@ exports.editSAStaffMember = async (req, res) => {
 
     if (email) { employee.userId.email = email }
     if (mobileNumber) { employee.userId.mobileNumber = mobileNumber }
+    if (employeeType) { employee.userId.employeeType = employeeType }
     if (isActive) { employee.userId.isActive = isActive }
     if (name) { employee.name = name }
     if (employeeRole) { employee.employeeRole = employeeRole }

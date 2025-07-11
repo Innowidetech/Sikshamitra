@@ -5063,14 +5063,14 @@ exports.createVehicle = async (req, res) => {
       return res.status(400).json({ message: "Please provide all the details to add vehicle." })
     }
 
-    const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
-    if (!driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
+    const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+    if (!driverPhoto?.[0] || !driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
       return res.status(400).json({ message: 'One or more required files are missing.' });
     }
 
     if (vehicleDetails.vehicleType === 'Bus') {
       if (!attendantDetails || !attendantDetails.fullname || !attendantDetails.contact || !attendantDetails.address || !attendantDetails.licenseNumber || !attendantDetails.aadharCardNumber ||
-        !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
+        !attendantPhoto?.[0] || !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
         return res.status(400).json({ message: "Please provide the attendant details and documents." })
       }
     }
@@ -5087,23 +5087,24 @@ exports.createVehicle = async (req, res) => {
 
     driverDetails.userId = user._id;
 
-    const driverUploads = await uploadImage([driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
-    if (driverUploads.length !== 3) {
+    const driverUploads = await uploadImage([driverPhoto[0], driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
+    if (driverUploads.length !== 4) {
       return res.status(400).json({ message: 'One or more driver files failed to upload.' });
     }
-
-    driverDetails.license = driverUploads[0];
-    driverDetails.aadharCard = driverUploads[1];
-    driverDetails.panCard = driverUploads[2];
+    driverDetails.photo = driverUploads[0];
+    driverDetails.license = driverUploads[1];
+    driverDetails.aadharCard = driverUploads[2];
+    driverDetails.panCard = driverUploads[3];
 
     if (vehicleDetails.vehicleType === 'Bus') {
-      const attendantUploads = await uploadImage([attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
-      if (attendantUploads.length !== 3) {
+      const attendantUploads = await uploadImage([attendantPhoto[0], attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
+      if (attendantUploads.length !== 4) {
         return res.status(400).json({ message: 'One or more attendant files failed to upload.' });
       }
-      attendantDetails.license = attendantUploads[0];
-      attendantDetails.aadharCard = attendantUploads[1];
-      attendantDetails.panCard = attendantUploads[2];
+      attendantDetails.photo = attendantUploads[0];
+      attendantDetails.license = attendantUploads[1];
+      attendantDetails.aadharCard = attendantUploads[2];
+      attendantDetails.panCard = attendantUploads[3];
     }
 
     const vehicle = new Vehicles({ schoolId: school._id, vehicleDetails, routeDetails, driverDetails, attendantDetails: vehicleDetails.vehicleType === 'Bus' ? attendantDetails : undefined });
@@ -5358,8 +5359,13 @@ exports.editTransportationData = async (req, res) => {
         }
       }
 
-      const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+      const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
 
+      if (driverPhoto?.[0]) {
+        await deleteImage(vehicle.driverDetails.photo);
+        const uploaded = await uploadImage([driverPhoto[0]]);
+        vehicle.driverDetails.photo = uploaded[0];
+      }
       if (driverLicense?.[0]) {
         await deleteImage(vehicle.driverDetails.license);
         const uploaded = await uploadImage([driverLicense[0]]);
@@ -5374,6 +5380,11 @@ exports.editTransportationData = async (req, res) => {
         await deleteImage(vehicle.driverDetails.panCard);
         const uploaded = await uploadImage([driverPanCard[0]]);
         vehicle.driverDetails.panCard = uploaded[0];
+      }
+      if (attendantPhoto?.[0]) {
+        await deleteImage(vehicle.attendantDetails.photo);
+        const uploaded = await uploadImage([attendantPhoto[0]]);
+        vehicle.attendantDetails.photo = uploaded[0];
       }
       if (attendantLicense?.[0]) {
         await deleteImage(vehicle.attendantDetails.license);

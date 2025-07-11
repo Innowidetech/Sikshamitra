@@ -10,10 +10,7 @@ const SuperAdminStaffSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    employeeRole: {
-        type: String,
-        required: true,
-    },
+    employeeRole: String,
     department: {
         type: String,
         required: true,
