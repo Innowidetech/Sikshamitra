@@ -4223,7 +4223,7 @@ exports.getAccounts = async (req, res) => {
     const result = Object.keys(monthlyData).map(key => ({
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
-      totalTransportationFees : monthlyData[key].totalTransportationFees,
+      totalTransportationFees: monthlyData[key].totalTransportationFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
@@ -5324,86 +5324,86 @@ exports.editTransportationData = async (req, res) => {
     if (!vehicle) { return res.status(404).json({ message: 'Vehicle not found' }) }
 
     if (!id) {
+      if (vehicleDetails || attendantDetails || driverDetails) {
 
-      if (vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && vehicle.attendantDetails == undefined)) {
-        return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
-      }
+        if (vehicleDetails && vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && !vehicle.attendantDetails)) {
+          return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
+        }
 
-      if (vehicleDetails) {
-        const parsedVehicleDetails = typeof vehicleDetails === 'string' ? JSON.parse(vehicleDetails) : vehicleDetails;
-        for (let key in parsedVehicleDetails) {
-          if (parsedVehicleDetails[key] !== undefined && parsedVehicleDetails[key] !== null) {
-            vehicle.vehicleDetails[key] = parsedVehicleDetails[key];
+        if (vehicleDetails) {
+          const parsedVehicleDetails = typeof vehicleDetails === 'string' ? JSON.parse(vehicleDetails) : vehicleDetails;
+          for (let key in parsedVehicleDetails) {
+            if (parsedVehicleDetails[key] != null) {
+              vehicle.vehicleDetails[key] = parsedVehicleDetails[key];
+            }
           }
         }
-      }
 
-      if (driverDetails) {
-        const parsedDriverDetails = typeof driverDetails === 'string' ? JSON.parse(driverDetails) : driverDetails;
-        for (let key in parsedDriverDetails) {
-          if (parsedDriverDetails[key] !== undefined && parsedDriverDetails[key] !== null) {
-            vehicle.driverDetails[key] = parsedDriverDetails[key];
+        if (driverDetails) {
+          const parsedDriverDetails = typeof driverDetails === 'string' ? JSON.parse(driverDetails) : driverDetails;
+          for (let key in parsedDriverDetails) {
+            if (parsedDriverDetails[key] != null) {
+              vehicle.driverDetails[key] = parsedDriverDetails[key];
+            }
           }
         }
-      }
 
-      if (vehicle.vehicleDetails.vehicleType === 'Bus' && attendantDetails) {
-        const parsedAttendantDetails = typeof attendantDetails === 'string' ? JSON.parse(attendantDetails) : attendantDetails;
-
-        if (!vehicle.attendantDetails) vehicle.attendantDetails = {};
-
-        for (let key in parsedAttendantDetails) {
-          if (parsedAttendantDetails[key] !== undefined && parsedAttendantDetails[key] !== null) {
-            vehicle.attendantDetails[key] = parsedAttendantDetails[key];
+        if (vehicle.vehicleDetails.vehicleType === 'Bus' && attendantDetails) {
+          const parsedAttendantDetails = typeof attendantDetails === 'string' ? JSON.parse(attendantDetails) : attendantDetails;
+          if (!vehicle.attendantDetails) vehicle.attendantDetails = {};
+          for (let key in parsedAttendantDetails) {
+            if (parsedAttendantDetails[key] !== null) {
+              vehicle.attendantDetails[key] = parsedAttendantDetails[key];
+            }
           }
         }
-      }
 
-      const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+        const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
 
-      if (driverPhoto?.[0]) {
-        await deleteImage(vehicle.driverDetails.photo);
-        const uploaded = await uploadImage([driverPhoto[0]]);
-        vehicle.driverDetails.photo = uploaded[0];
-      }
-      if (driverLicense?.[0]) {
-        await deleteImage(vehicle.driverDetails.license);
-        const uploaded = await uploadImage([driverLicense[0]]);
-        vehicle.driverDetails.license = uploaded[0];
-      }
-      if (driverAadharCard?.[0]) {
-        await deleteImage(vehicle.driverDetails.aadharCard);
-        const uploaded = await uploadImage([driverAadharCard[0]]);
-        vehicle.driverDetails.aadharCard = uploaded[0];
-      }
-      if (driverPanCard?.[0]) {
-        await deleteImage(vehicle.driverDetails.panCard);
-        const uploaded = await uploadImage([driverPanCard[0]]);
-        vehicle.driverDetails.panCard = uploaded[0];
-      }
-      if (attendantPhoto?.[0]) {
-        await deleteImage(vehicle.attendantDetails.photo);
-        const uploaded = await uploadImage([attendantPhoto[0]]);
-        vehicle.attendantDetails.photo = uploaded[0];
-      }
-      if (attendantLicense?.[0]) {
-        await deleteImage(vehicle.attendantDetails.license);
-        const uploaded = await uploadImage([attendantLicense[0]]);
-        vehicle.attendantDetails.license = uploaded[0];
-      }
-      if (attendantAadharCard?.[0]) {
-        await deleteImage(vehicle.attendantDetails.aadharCard);
-        const uploaded = await uploadImage([attendantAadharCard[0]]);
-        vehicle.attendantDetails.aadharCard = uploaded[0];
-      }
-      if (attendantPanCard?.[0]) {
-        await deleteImage(vehicle.attendantDetails.panCard);
-        const uploaded = await uploadImage([attendantPanCard[0]]);
-        vehicle.attendantDetails.panCard = uploaded[0];
-      }
-      await vehicle.save();
-      return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
+        if (driverPhoto?.[0]) {
+          await deleteImage(vehicle.driverDetails.photo);
+          vehicle.driverDetails.photo = (await uploadImage([driverPhoto[0]]))[0];
+        }
+        if (driverLicense?.[0]) {
+          await deleteImage(vehicle.driverDetails.license);
+          vehicle.driverDetails.license = (await uploadImage([driverLicense[0]]))[0];
+        }
+        if (driverAadharCard?.[0]) {
+          await deleteImage(vehicle.driverDetails.aadharCard);
+          vehicle.driverDetails.aadharCard = (await uploadImage([driverAadharCard[0]]))[0];
+        }
+        if (driverPanCard?.[0]) {
+          await deleteImage(vehicle.driverDetails.panCard);
+          vehicle.driverDetails.panCard = (await uploadImage([driverPanCard[0]]))[0];
+        }
+        if (attendantPhoto?.[0]) {
+          await deleteImage(vehicle.attendantDetails.photo);
+          vehicle.attendantDetails.photo = (await uploadImage([attendantPhoto[0]]))[0];
+        }
+        if (attendantLicense?.[0]) {
+          await deleteImage(vehicle.attendantDetails.license);
+          vehicle.attendantDetails.license = (await uploadImage([attendantLicense[0]]))[0];
+        }
+        if (attendantAadharCard?.[0]) {
+          await deleteImage(vehicle.attendantDetails.aadharCard);
+          vehicle.attendantDetails.aadharCard = (await uploadImage([attendantAadharCard[0]]))[0];
+        }
+        if (attendantPanCard?.[0]) {
+          await deleteImage(vehicle.attendantDetails.panCard);
+          vehicle.attendantDetails.panCard = (await uploadImage([attendantPanCard[0]]))[0];
+        }
+        await vehicle.save();
+        return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
 
+      }
+      else if (pickUpPoint && timing) {
+        vehicle.routeDetails.push({ pickUpPoint, timing });
+        await vehicle.save();
+        return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
+      }
+      else {
+        return res.status(400).json({ message: "Invalid request. Provide vehicle details or pickUpPoint and timing." });
+      }
     }
     else {
       let details = vehicle.studentDetails.id(id); //subdocument accessor
@@ -5439,14 +5439,6 @@ exports.editTransportationData = async (req, res) => {
           vehicle.routeDetails.remove(id);
           await vehicle.save();
           return res.status(200).json({ message: "Route removed successfully." });
-        }
-
-        if (!details) {
-          if (!pickUpPoint || !timing) { return res.status(400).json({ message: "Please provide pick-up location and timing to add route" }) }
-          vehicle.routeDetails.push({ pickUpPoint, timing });
-          await vehicle.save()
-
-          return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
         }
 
         if (!pickUpPoint && !timing) { return res.status(400).json({ message: "Please provide atlease pick-up location or timing to update." }) }
