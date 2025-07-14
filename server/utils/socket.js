@@ -13,6 +13,9 @@ const School = require('../models/School');
 
 let io;
 const userSockets = new Map();
+const meetingParticipants = new Map();
+const waitingRooms = new Map(); // meetingLink => { userId: { name, role } }
+const meetingLayouts = new Map(); // meetingLink => { layout: 'grid'|'spotlight', spotlightUserId }
 
 function parseMeetingDateTime(dateObj, timeStr) {
   const dateOnly = dayjs(dateObj).format('YYYY-MM-DD');
@@ -39,17 +42,24 @@ function getUserSocketIds(userId) {
   return userSockets.has(userId) ? Array.from(userSockets.get(userId)) : [];
 }
 
+function broadcastParticipantsInfo(meetingLink) {
+  const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
+  const participants = [];
+
+  roomSockets.forEach(socketId => {
+    const s = io.sockets.sockets.get(socketId);
+    if (s?.user) {
+      const { id, name, role } = s.user;
+      const status = meetingParticipants.get(meetingLink)?.[id] || { camera: false, mic: false, screen: false };
+      participants.push({ userId: id, name, role, ...status });
+    }
+  });
+
+  io.in(`meeting_${meetingLink}`).emit('participantsInfo', { meetingLink, participants });
+}
+
 exports.initSocket = (server) => {
   io = socketIo(server, { cors: { origin: '*' } });
-
-  function emitParticipants(meetingLink) {
-    const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
-    const participantIds = roomSockets.map(sid => io.sockets.sockets.get(sid)?.user?.id);
-    io.in(`meeting_${meetingLink}`).emit('participants', {
-      meetingLink,
-      participants: participantIds
-    });
-  }
 
   io.use(async (socket, next) => {
     try {
@@ -60,7 +70,7 @@ exports.initSocket = (server) => {
       const user = await User.findById(decoded.userId);
       if (!user) return next(new Error('User not found'));
 
-      let fullUser = null;
+      let fullUser;
       switch (user.role) {
         case 'superadmin':
           fullUser = { id: user._id.toString(), name: 'Super Admin', role: user.role };
@@ -110,43 +120,35 @@ exports.initSocket = (server) => {
 
     socket.on('requestJoin', async ({ meetingLink }) => {
       try {
-        if (!socket.user || !socket.user.id) {
-          return socket.emit('joinResponse', { meetingLink, success: false, message: 'Unauthorized.' });
-        }
-
         const doc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
-        if (!doc) {
-          return socket.emit('joinResponse', { meetingLink, success: false, message: 'Meeting not found.' });
-        }
+        if (!doc) return socket.emit('joinResponse', { meetingLink, success: false, message: 'Meeting not found.' });
 
         const status = getMeetingStatus(doc);
-        console.log(`[requestJoin] Meeting status: ${status}`);
+        if (status !== 'Live') return socket.emit('joinResponse', { meetingLink, success: false, message: status });
 
-        if (status !== 'Live') {
-          return socket.emit('joinResponse', { meetingLink, success: false, message: status });
-        }
+        const isCreator = socket.user.id === doc.createdBy.toString();
+        const isInvited = doc.connect?.some(c => c.attendant.toString() === socket.user.id) || isCreator;
 
-        const attendants = Array.isArray(doc.connect) ? doc.connect : [];
-        const isInvited = attendants.some(c => c.attendant.toString() === socket.user.id) || doc.createdBy.toString() === socket.user.id;
-        if (!isInvited) {
-          console.log(`[requestJoin] User ${socket.user.id} not invited to meeting ${meetingLink}`);
-          return socket.emit('joinResponse', { meetingLink, success: false, message: 'Not invited.' });
-        }
+        if (!isInvited) return socket.emit('joinResponse', { meetingLink, success: false, message: 'Not invited.' });
 
-        if (socket.user.id === doc.createdBy.toString()) {
+        if (isCreator) {
           socket.join(`meeting_${meetingLink}`);
-          socket.emit('joinResponse', { meetingLink, success: true, message: 'Joined successfully.' });
-
-          const roomSockets = io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || new Set();
-          const participantIds = Array.from(roomSockets).map(sid => io.sockets.sockets.get(sid)?.user?.id);
-          io.in(`meeting_${meetingLink}`).emit('participants', { meetingLink, participants: participantIds });
+          socket.emit('joinResponse', { meetingLink, success: true, message: 'Joined as host.' });
+          broadcastParticipantsInfo(meetingLink);
           return;
         }
 
-        // Notify the creator of join request
-        const creatorId = doc.createdBy.toString();
-        socket.meetings[meetingLink] = { creatorId };
-        io.to(`user_${creatorId}`).emit('joinRequest', {
+        socket.meetings[meetingLink] = { creatorId: doc.createdBy.toString() };
+
+        if (!waitingRooms.has(meetingLink)) waitingRooms.set(meetingLink, {});
+        waitingRooms.get(meetingLink)[socket.user.id] = {
+          name: socket.user.name,
+          role: socket.user.role
+        };
+
+        const waitingList = Object.entries(waitingRooms.get(meetingLink)).map(([id, u]) => ({ userId: id, ...u }));
+        io.to(`user_${doc.createdBy}`).emit('waitingRoomUpdate', { meetingLink, waitingList });
+        io.to(`user_${doc.createdBy}`).emit('joinRequest', {
           meetingLink,
           userId: socket.user.id,
           fullname: socket.user.name,
@@ -160,49 +162,45 @@ exports.initSocket = (server) => {
         });
       } catch (err) {
         console.log('Error in requestJoin:', err);
-        socket.emit('joinResponse', { meetingLink, success: false, message: 'Internal server error.' });
+        socket.emit('joinResponse', { meetingLink, success: false, message: 'Internal error.' });
       }
     });
 
-
     socket.on('respondToJoin', async ({ meetingLink, userId, accept }) => {
-      try {
-        // Verify host is actually the creator of the meeting
-        const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
-        if (!meetingDoc || meetingDoc.createdBy.toString() !== socket.user.id) {
-          console.warn(`Unauthorized respondToJoin attempt by ${socket.user.name}`);
-          return;
-        }
+      const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
+      if (!meetingDoc || meetingDoc.createdBy.toString() !== socket.user.id) return;
 
-        if (accept) {
-          const targetSocketIds = getUserSocketIds(userId);
-
-          if (targetSocketIds.length > 0) {
-            targetSocketIds.forEach(socketId => {
-              const userSocket = io.sockets.sockets.get(socketId);
-              if (userSocket) {
-                userSocket.join(`meeting_${meetingLink}`);
-                userSocket.emit('joinAccepted', { meetingLink });
-                io.in(`meeting_${meetingLink}`).emit('userJoined', {
-                  userId,
-                  name: userSocket.user.name,
-                  role: userSocket.user.role
-                });
-              }
+      const targetSocketIds = getUserSocketIds(userId);
+      if (accept) {
+        targetSocketIds.forEach(socketId => {
+          const userSocket = io.sockets.sockets.get(socketId);
+          if (userSocket) {
+            userSocket.join(`meeting_${meetingLink}`);
+            userSocket.emit('joinAccepted', { meetingLink });
+            io.in(`meeting_${meetingLink}`).emit('userJoined', {
+              userId,
+              name: userSocket.user.name,
+              role: userSocket.user.role
             });
-            emitParticipants(meetingLink);
-            console.log(`✅ ${socket.user.name} approved and joined meeting ${meetingLink}`);
-          } else {
-            console.log(`⚠️ No active sockets found for user ${userId} to approve join`);
           }
-        } else {
-          const targetSocketIds = getUserSocketIds(userId);
-          targetSocketIds.forEach(socketId => {
-            io.to(socketId).emit('joinDenied', { meetingLink, by: socket.user.id });
-          });
+        });
+
+        if (waitingRooms.has(meetingLink)) {
+          delete waitingRooms.get(meetingLink)[userId];
+          const updatedWaiting = Object.entries(waitingRooms.get(meetingLink)).map(([id, u]) => ({ userId: id, ...u }));
+          io.to(`user_${socket.user.id}`).emit('waitingRoomUpdate', { meetingLink, waitingList: updatedWaiting });
         }
-      } catch (err) {
-        console.error('❌ Error in respondToJoin:', err);
+        broadcastParticipantsInfo(meetingLink);
+      } else {
+        targetSocketIds.forEach(socketId => {
+          io.to(socketId).emit('joinDenied', { meetingLink });
+        });
+
+        if (waitingRooms.has(meetingLink)) {
+          delete waitingRooms.get(meetingLink)[userId];
+          const updatedWaiting = Object.entries(waitingRooms.get(meetingLink)).map(([id, u]) => ({ userId: id, ...u }));
+          io.to(`user_${socket.user.id}`).emit('waitingRoomUpdate', { meetingLink, waitingList: updatedWaiting });
+        }
       }
     });
 
@@ -215,11 +213,9 @@ exports.initSocket = (server) => {
         name: socket.user.name,
         role: socket.user.role
       });
-
-      emitParticipants(meetingLink);
+      broadcastParticipantsInfo(meetingLink);
     });
 
-    //chat
     socket.on('chatMessage', ({ meetingLink, message }) => {
       io.in(`meeting_${meetingLink}`).emit('chatMessage', {
         meetingLink,
@@ -231,108 +227,86 @@ exports.initSocket = (server) => {
       });
     });
 
-
-    // socket.on('signal', ({ meetingLink, type, data }) => {
-    //   io.in(`meeting_${meetingLink}`).emit('signal', { from: socket.id, type, data });
-    // });
-
     socket.on('signal', ({ meetingLink, type, data, targetId }) => {
       const targetSocketIds = getUserSocketIds(targetId);
-      targetSocketIds.forEach(socketId => {
-        io.to(socketId).emit('signal', {
-          from: socket.user.id,
-          type,
-          data
-        });
-      });
-    });
-
-
-    socket.on('signal', ({ meetingLink, type, data, targetId }) => {
-      const targetSocketIds = getUserSocketIds(targetId);
-
       targetSocketIds.forEach(socketId => {
         const targetSocket = io.sockets.sockets.get(socketId);
-
         const room = `meeting_${meetingLink}`;
-        if (
-          targetSocket?.rooms.has(room) &&
-          socket.rooms.has(room)
-        ) {
+        if (targetSocket?.rooms.has(room) && socket.rooms.has(room)) {
           io.to(socketId).emit('signal', { from: socket.user.id, type, data });
-        } else {
-          console.warn(`⚠️ Invalid signal attempt between users not in the same room (${meetingLink})`);
         }
       });
     });
 
-
     socket.on('mediaStatus', ({ meetingLink, type, isEnabled }) => {
+      if (!meetingParticipants.has(meetingLink)) meetingParticipants.set(meetingLink, {});
+      const participants = meetingParticipants.get(meetingLink);
+      if (!participants[socket.user.id]) participants[socket.user.id] = { camera: false, mic: false, screen: false };
+      participants[socket.user.id][type] = isEnabled;
+
       socket.to(`meeting_${meetingLink}`).emit('mediaStatus', {
         userId: socket.user.id,
         type,
         isEnabled
       });
+
+      broadcastParticipantsInfo(meetingLink);
+    });
+
+    socket.on('getParticipantsInfo', ({ meetingLink }) => {
+      broadcastParticipantsInfo(meetingLink);
     });
 
     socket.on('leaveMeeting', ({ meetingLink }) => {
       socket.leave(`meeting_${meetingLink}`);
-      const roomSockets = Array.from(io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || []);
-      const participantIds = roomSockets.map(sid => io.sockets.sockets.get(sid)?.user?.id);
-
-      io.in(`meeting_${meetingLink}`).emit('participants', {
-        meetingLink,
-        participants: participantIds
-      });
+      if (meetingParticipants.has(meetingLink)) {
+        delete meetingParticipants.get(meetingLink)[socket.user.id];
+      }
+      broadcastParticipantsInfo(meetingLink);
     });
 
     socket.on('endMeeting', async ({ meetingLink }) => {
-      try {
-        // Only allow the host/creator of the meeting to end it
-        const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
-        if (!meetingDoc) {
-          return socket.emit('error', { message: 'Meeting not found.' });
+      const meetingDoc = await Connect.findOne({ meetingLink }) || await OnlineLectures.findOne({ meetingLink });
+      if (!meetingDoc || meetingDoc.createdBy.toString() !== socket.user.id) return;
+
+      await Connect.deleteOne({ meetingLink });
+      await OnlineLectures.deleteOne({ meetingLink });
+
+      io.in(`meeting_${meetingLink}`).emit('meetingEnded', { meetingLink });
+
+      const roomSockets = io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || new Set();
+      roomSockets.forEach(socketId => {
+        const s = io.sockets.sockets.get(socketId);
+        if (s) {
+          s.leave(`meeting_${meetingLink}`);
+          s.emit('leftMeeting', { meetingLink, reason: 'Meeting ended by host.' });
         }
+      });
+    });
 
-        if (meetingDoc.createdBy.toString() !== socket.user.id) {
-          console.warn(`Unauthorized endMeeting attempt by ${socket.user.name}`);
-          return socket.emit('error', { message: 'Unauthorized.' });
-        }
+    socket.on('setLayout', ({ meetingLink, layout, spotlightUserId }) => {
+      if (!['grid', 'spotlight'].includes(layout)) return;
+      meetingLayouts.set(meetingLink, { layout, spotlightUserId: spotlightUserId || null });
+      io.in(`meeting_${meetingLink}`).emit('layoutChanged', {
+        meetingLink,
+        layout,
+        spotlightUserId: spotlightUserId || null
+      });
+    });
 
-        await Connect.deleteOne({ meetingLink }) || await OnlineLectures.deleteOne({ meetingLink });
-
-        // Notify all participants in the meeting room that meeting ended
-        io.in(`meeting_${meetingLink}`).emit('meetingEnded', { meetingLink });
-
-        // Disconnect all sockets in this meeting room gracefully
-        const roomSockets = io.sockets.adapter.rooms.get(`meeting_${meetingLink}`) || new Set();
-        roomSockets.forEach(socketId => {
-          const s = io.sockets.sockets.get(socketId);
-          if (s) {
-            s.leave(`meeting_${meetingLink}`);
-            s.emit('leftMeeting', { meetingLink, reason: 'Meeting ended by host.' });
-          }
-        });
-
-        console.log(`Meeting ${meetingLink} ended by host ${socket.user.name}`);
-
-      } catch (err) {
-        console.error('Error ending meeting:', err);
-        socket.emit('error', { message: 'Failed to end meeting.' });
-      }
+    socket.on('getLayout', ({ meetingLink }) => {
+      const layoutData = meetingLayouts.get(meetingLink) || { layout: 'grid', spotlightUserId: null };
+      socket.emit('layoutChanged', { meetingLink, ...layoutData });
     });
 
     socket.on('disconnecting', () => {
       const rooms = Array.from(socket.rooms).filter(r => r.startsWith('meeting_'));
       rooms.forEach(room => {
         const meetingLink = room.replace('meeting_', '');
-        const participantIds = Array.from(io.sockets.adapter.rooms.get(room) || []).map(sid =>
-          io.sockets.sockets.get(sid)?.user?.id
-        );
-        io.in(room).emit('participants', {
-          meetingLink,
-          participants: participantIds
-        });
+        if (meetingParticipants.has(meetingLink)) {
+          delete meetingParticipants.get(meetingLink)[socket.user.id];
+        }
+        broadcastParticipantsInfo(meetingLink);
       });
     });
 
@@ -345,7 +319,6 @@ exports.initSocket = (server) => {
       }
       console.log(`Socket disconnected.`);
     });
-
   });
 };
 
@@ -356,4 +329,3 @@ exports.io = () => {
   }
   return io;
 };
-
