@@ -5319,12 +5319,13 @@ exports.editTransportationData = async (req, res) => {
     }
 
     const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, vehicleDetails, driverDetails, attendantDetails } = req.body;
+    const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
 
     const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
     if (!vehicle) { return res.status(404).json({ message: 'Vehicle not found' }) }
 
     if (!id) {
-      if (vehicleDetails || attendantDetails || driverDetails) {
+      if (vehicleDetails || attendantDetails || driverDetails || driverPhoto || driverLicense || driverAadharCard || driverPanCard || attendantPhoto || attendantLicense || attendantAadharCard || attendantPanCard) {
 
         if (vehicleDetails && vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && !vehicle.attendantDetails)) {
           return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
@@ -5358,38 +5359,52 @@ exports.editTransportationData = async (req, res) => {
           }
         }
 
-        const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
-
         if (driverPhoto?.[0]) {
-          await deleteImage(vehicle.driverDetails.photo);
+          if (vehicle.driverDetails.photo) {
+            await deleteImage(vehicle.driverDetails.photo);
+          }
           vehicle.driverDetails.photo = (await uploadImage([driverPhoto[0]]))[0];
         }
         if (driverLicense?.[0]) {
-          await deleteImage(vehicle.driverDetails.license);
+          if (vehicle.driverDetails.license) {
+            await deleteImage(vehicle.driverDetails.license);
+          }
           vehicle.driverDetails.license = (await uploadImage([driverLicense[0]]))[0];
         }
         if (driverAadharCard?.[0]) {
-          await deleteImage(vehicle.driverDetails.aadharCard);
+          if (vehicle.driverDetails.aadharCard) {
+            await deleteImage(vehicle.driverDetails.aadharCard);
+          }
           vehicle.driverDetails.aadharCard = (await uploadImage([driverAadharCard[0]]))[0];
         }
         if (driverPanCard?.[0]) {
-          await deleteImage(vehicle.driverDetails.panCard);
+          if (vehicle.driverDetails.panCard) {
+            await deleteImage(vehicle.driverDetails.panCard);
+          }
           vehicle.driverDetails.panCard = (await uploadImage([driverPanCard[0]]))[0];
         }
         if (attendantPhoto?.[0]) {
-          await deleteImage(vehicle.attendantDetails.photo);
+          if (vehicle.attendantDetails.photo) {
+            await deleteImage(vehicle.attendantDetails.photo);
+          }
           vehicle.attendantDetails.photo = (await uploadImage([attendantPhoto[0]]))[0];
         }
         if (attendantLicense?.[0]) {
-          await deleteImage(vehicle.attendantDetails.license);
+          if (vehicle.attendantDetails.license) {
+            await deleteImage(vehicle.attendantDetails.license);
+          }
           vehicle.attendantDetails.license = (await uploadImage([attendantLicense[0]]))[0];
         }
         if (attendantAadharCard?.[0]) {
-          await deleteImage(vehicle.attendantDetails.aadharCard);
+          if (vehicle.attendantDetails.aadharCard) {
+            await deleteImage(vehicle.attendantDetails.aadharCard);
+          }
           vehicle.attendantDetails.aadharCard = (await uploadImage([attendantAadharCard[0]]))[0];
         }
         if (attendantPanCard?.[0]) {
-          await deleteImage(vehicle.attendantDetails.panCard);
+          if (vehicle.attendantDetails.panCard) {
+            await deleteImage(vehicle.attendantDetails.panCard);
+          }
           vehicle.attendantDetails.panCard = (await uploadImage([attendantPanCard[0]]))[0];
         }
         await vehicle.save();

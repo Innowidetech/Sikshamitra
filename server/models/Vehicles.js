@@ -44,7 +44,7 @@ const VehicleSchema = new mongoose.Schema({
             contact: { type: String, required: true },
             address: { type: String, required: true },
             highestQualification: { type: String, required: true },
-            photo: { type: String },
+            photo: { type: String, required: true },
             licenseNumber: { type: String, required: true },
             license: { type: String, required: true },
             aadharCardNumber: { type: String, required: true },
