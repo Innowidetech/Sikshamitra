@@ -14,8 +14,9 @@ const School = require('../models/School');
 let io;
 const userSockets = new Map();
 const meetingParticipants = new Map();
-const waitingRooms = new Map(); // meetingLink => { userId: { name, role } }
-const meetingLayouts = new Map(); // meetingLink => { layout: 'grid'|'spotlight', spotlightUserId }
+const waitingRooms = new Map();
+const meetingLayouts = new Map();
+const backgroundSettings = new Map();
 
 function parseMeetingDateTime(dateObj, timeStr) {
   const dateOnly = dayjs(dateObj).format('YYYY-MM-DD');
@@ -257,10 +258,29 @@ exports.initSocket = (server) => {
       broadcastParticipantsInfo(meetingLink);
     });
 
+    socket.on('backgroundChange', ({ meetingLink, background }) => {
+      if (!backgroundSettings.has(meetingLink)) backgroundSettings.set(meetingLink, {});
+      backgroundSettings.get(meetingLink)[socket.user.id] = background;
+
+      io.in(`meeting_${meetingLink}`).emit('backgroundChanged', {
+        meetingLink,
+        userId: socket.user.id,
+        background
+      });
+    });
+
+    socket.on('getBackgroundSettings', ({ meetingLink }) => {
+      const bgSettings = backgroundSettings.get(meetingLink) || {};
+      socket.emit('backgroundSettings', { meetingLink, settings: bgSettings });
+    });
+
     socket.on('leaveMeeting', ({ meetingLink }) => {
       socket.leave(`meeting_${meetingLink}`);
       if (meetingParticipants.has(meetingLink)) {
         delete meetingParticipants.get(meetingLink)[socket.user.id];
+      }
+      if (backgroundSettings.has(meetingLink)) {
+        delete backgroundSettings.get(meetingLink)[socket.user.id];
       }
       broadcastParticipantsInfo(meetingLink);
     });
@@ -305,6 +325,9 @@ exports.initSocket = (server) => {
         const meetingLink = room.replace('meeting_', '');
         if (meetingParticipants.has(meetingLink)) {
           delete meetingParticipants.get(meetingLink)[socket.user.id];
+        }
+        if (backgroundSettings.has(meetingLink)) {
+          delete backgroundSettings.get(meetingLink)[socket.user.id];
         }
         broadcastParticipantsInfo(meetingLink);
       });
