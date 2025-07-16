@@ -130,7 +130,7 @@ exports.editActionInTransportation = async (req, res) => {
             studentDetail.action.checkOutTime = currentTimeIST;
             studentDetail.action.checkIn = 'true';
             studentDetail.action.checkOut = 'false';
-        } else if (action === 'Absent' && studentDetail.action.Absent == true) {
+        } else if (action === 'Absent') {
             studentDetail.action.checkInTime = '-';
             studentDetail.action.checkOutTime = '-';
             studentDetail.action.checkIn = 'true';
