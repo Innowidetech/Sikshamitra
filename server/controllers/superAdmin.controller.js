@@ -587,6 +587,9 @@ exports.addIncome = async (req, res) => {
         return res.status(400).json({ message: "Please provide all the details to add income." })
       }
 
+      const school = await School.findOne({ schoolCode })
+      if (!school) { return res.status(404).json({ message: 'No school found with the schoolCode' }) }
+
       if (paymentMethod === 'Cash') { transactionId = '-' }
 
       const income = new SuperAdminIncome({ schoolCode, schoolName, principalName, totalFees, paidAmount, dueAmount, paymentMethod, transactionId });
@@ -693,10 +696,11 @@ exports.getAccounts = async (req, res) => {
 
       const income = await Promise.all(rawIncomes.map(async (entry) => {
         let schoolData = await School.findOne({ schoolCode: entry.schoolCode });
+        console.log(schoolData.contact.phone)
         return {
           ...entry._doc,
-          schoolContact: schoolData.contact.phone,
-          schoolStatus: schoolData.status
+          schoolContact: schoolData?.contact?.phone,
+          schoolStatus: schoolData?.status
         };
       }));
 
