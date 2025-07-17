@@ -688,7 +688,18 @@ exports.getAccounts = async (req, res) => {
 
       result.sort((a, b) => new Date(a.monthYear) - new Date(b.monthYear));
 
-      const income = await SuperAdminIncome.find().sort({ updatedAt: -1 })
+
+      const rawIncomes = await SuperAdminIncome.find().sort({ updatedAt: -1 });
+
+      const income = await Promise.all(rawIncomes.map(async (entry) => {
+        let schoolData = await School.findOne({ schoolCode: entry.schoolCode });
+        return {
+          ...entry._doc,
+          schoolContact: schoolData.contact.phone,
+          schoolStatus: schoolData.status
+        };
+      }));
+
       const expense = await SuperAdminExpenses.find().sort({ createdAt: -1 })
 
       res.status(200).json({ accounts: result, income, expense });

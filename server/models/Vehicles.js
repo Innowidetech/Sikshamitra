@@ -31,7 +31,9 @@ const VehicleSchema = new mongoose.Schema({
     },
     routeDetails: [{
         pickUpPoint: { type: String, required: true },
-        timing: { type: String, required: true }
+        timing: { type: String, required: true },
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
     }],
     driverDetails: {
         type: new mongoose.Schema({

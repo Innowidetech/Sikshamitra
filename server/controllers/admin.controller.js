@@ -5318,7 +5318,7 @@ exports.editTransportationData = async (req, res) => {
       return res.status(400).json({ message: "Provide the vehicle id." });
     }
 
-    const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, vehicleDetails, driverDetails, attendantDetails } = req.body;
+    const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, lat, lng, vehicleDetails, driverDetails, attendantDetails } = req.body;
     const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
 
     const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
@@ -5411,13 +5411,13 @@ exports.editTransportationData = async (req, res) => {
         return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
 
       }
-      else if (pickUpPoint && timing) {
-        vehicle.routeDetails.push({ pickUpPoint, timing });
+      else if (pickUpPoint && timing && lat && lng) {
+        vehicle.routeDetails.push({ pickUpPoint, timing, lat, lng });
         await vehicle.save();
         return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
       }
       else {
-        return res.status(400).json({ message: "Invalid request. Provide vehicle details or pickUpPoint and timing." });
+        return res.status(400).json({ message: "Invalid request. Provide vehicle details or pickUpPoint details and timing." });
       }
     }
     else {
@@ -5456,10 +5456,12 @@ exports.editTransportationData = async (req, res) => {
           return res.status(200).json({ message: "Route removed successfully." });
         }
 
-        if (!pickUpPoint && !timing) { return res.status(400).json({ message: "Please provide atlease pick-up location or timing to update." }) }
+        if (!pickUpPoint && !timing && !lat && !lng) { return res.status(400).json({ message: "Please provide atlease pick-up location details or timing to update." }) }
 
         if (pickUpPoint) details.pickUpPoint = pickUpPoint
         if (timing) details.timing = timing
+        if(lat) details.lat = lat
+        if(lng) details.lng = lng
         await vehicle.save()
         return res.status(200).json({ message: "Route updated successfully." })
       }
