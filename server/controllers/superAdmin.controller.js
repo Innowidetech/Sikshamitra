@@ -117,7 +117,7 @@ exports.changeSchoolStatus = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only superadmin can change the school status.' });
     };
 
-    const school = await School.findOneAndUpdate(id);
+    const school = await School.findById(id);
     if (!school) {
       return res.status(404).json({ message: "School doesn't exist" })
     };
