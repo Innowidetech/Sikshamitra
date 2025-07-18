@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
       return this.role === 'teacher' || this.role === 'staff';
     },
   },
-  mobileNumber: { // only for staff
+  mobileNumber: { // only for school staff
     type: String,
     required: function () {
       return this.employeeType === 'groupD'

@@ -1967,11 +1967,13 @@ exports.createInstantAccount = async (req, res) => {
     const student = new Student({ schoolId: school._id, userId: studentUser._id, 'studentProfile.fullname': `${request.studentDetails.firstName} ${request.studentDetails.lastName}`, 'studentProfile.gender': request.studentDetails.gender, 'studentProfile.dob': request.studentDetails.dob, 'studentProfile.photo': request.studentDetails.photo.url, 'studentProfile.address': request.studentDetails.address, 'studentProfile.registrationNumber': registrationNumber, 'studentProfile.class': request.studentDetails.classToJoin, 'studentProfile.classType': classTypeIs, 'studentProfile.childOf': parentUser._id, 'studentProfile.fees': feesIs.tutionFees, createdBy: loggedInId });
     await student.save();
 
-    const parentProfile = {
+    let parentProfile = {
       fatherName: request.parentDetails.fatherName,
       fatherPhoneNumber: request.parentDetails.fatherPhone,
       parentAddress: request.parentDetails.address,
       parentOf: [student._id],
+      motherName:undefined,
+      motherPhoneNumber:undefined
     };
     if (request.parentDetails.motherName) { parentProfile.motherName = request.parentDetails.motherName }
     if (request.parentDetails.motherPhone) { parentProfile.motherPhoneNumber = request.parentDetails.motherPhone }

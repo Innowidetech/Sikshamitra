@@ -344,17 +344,20 @@ exports.addSAStaffMember = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in superadmin can access.' });
     };
 
-    let { email, password, employeeType, mobileNumber, name, employeeRole, department, salary } = req.body;
-    if (!email || !password || !mobileNumber || !department || !name || !salary) {
+    let { email, password, employeeType, mobileNumber, name, address, highestEducation, designation, salary } = req.body;
+    if (!email || !password || !mobileNumber || !name || !address || !highestEducation || !designation || !salary || !req.file) {
       return res.status(400).json({ message: "Provide all the details to add staff member." })
     }
-
-    let existingUser;
+    if (!/.+,\s*[^,]+,\s*[^-]+-\s*\d{6}$/.test(address)) {
+      return res.status(400).json({
+        message: 'Invalid address format. It should end with "City, State - Pincode (6 digits only)" using commas and a hyphen.'
+      });
+    }
 
     if (!employeeType) { employeeType = "groupD" }
 
     if (employeeType !== 'groupD') {
-      existingUser = await User.findOne({ role: 'staff', employeeType });
+      const existingUser = await User.findOne({ role: 'staff', employeeType });
       if (existingUser) {
         return res.status(409).json({ message: `${employeeType} already exist, you are not allowed to add multiple` })
       }
@@ -362,9 +365,12 @@ exports.addSAStaffMember = async (req, res) => {
 
     let hpass = bcrypt.hashSync(password, 10);
 
+    const [photoUrl] = await uploadImage(req.file);
+    const uploadedPhotoUrl = photoUrl;
+
     const user = new User({ email, password: hpass, mobileNumber, role: 'staff', employeeType, createdBy: loggedInId });
     await user.save();
-    const staff = new SuperAdminStaff({ userId: user._id, name, employeeRole, department, salary, createdBy: loggedInId });
+    const staff = new SuperAdminStaff({ userId: user._id, name, address, highestEducation, idProof: uploadedPhotoUrl, designation, salary, createdBy: loggedInId });
     await staff.save();
 
     let schoolName = 'Shikshamitra'
@@ -428,8 +434,8 @@ exports.editSAStaffMember = async (req, res) => {
     if (!id) {
       return res.status(400).json({ message: "Provide the staff member id to edit." })
     }
-    const { email, mobileNumber, employeeType, isActive, name, employeeRole, department, salary } = req.body;
-    if (!email && !mobileNumber && !employeeType && !isActive && !name && !department && !salary) {
+    const { email, mobileNumber, employeeType, isActive, name, address, highestEducation, designation, salary } = req.body;
+    if (!email && !mobileNumber && !employeeType && !isActive && !name && !address && !highestEducation && !designation && !salary && !req.file) {
       return res.status(400).json({ message: "Please provide atlease one new data to edit staff member details." })
     }
 
@@ -452,8 +458,15 @@ exports.editSAStaffMember = async (req, res) => {
     if (employeeType) { employee.userId.employeeType = employeeType }
     if (isActive) { employee.userId.isActive = isActive }
     if (name) { employee.name = name }
-    if (employeeRole) { employee.employeeRole = employeeRole }
-    if (department) { employee.department = department }
+    if (address) { employee.address = address }
+    if (req.file) {
+      await deleteImage(employee.idProof)
+      const [photoUrl] = await uploadImage(req.file);
+      const uploadedPhotoUrl = photoUrl;
+      employee.idProof = uploadedPhotoUrl
+    }
+    if (highestEducation) { employee.highestEducation = highestEducation }
+    if (designation) { employee.designation = designation }
     if (salary) { employee.salary = salary }
 
     await employee.userId.save();
@@ -696,7 +709,6 @@ exports.getAccounts = async (req, res) => {
 
       const income = await Promise.all(rawIncomes.map(async (entry) => {
         let schoolData = await School.findOne({ schoolCode: entry.schoolCode });
-        console.log(schoolData.contact.phone)
         return {
           ...entry._doc,
           schoolContact: schoolData?.contact?.phone,
