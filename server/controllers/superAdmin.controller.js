@@ -492,12 +492,12 @@ exports.assignTaskToSAStaff = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Only logged-in admins can access.' });
     };
 
-    const { name, employeeRole, startDate, dueDate, title, description } = req.body;
-    if (!name || !employeeRole || !startDate || !dueDate || !title || !description) {
+    const { name, designation, startDate, dueDate, title, description } = req.body;
+    if (!name || !designation || !startDate || !dueDate || !title || !description) {
       return res.status(400).json({ message: "Provide all the details to add task for staff member." })
     }
 
-    const staffMember = await SuperAdminStaff.findOne({ name, employeeRole }).populate('userId', 'employeeType mobileNumber');
+    const staffMember = await SuperAdminStaff.findOne({ name, designation }).populate('userId', 'employeeType mobileNumber');
     if (!staffMember) { return res.status(404).json({ message: "No staff member found with the provided details." }) }
 
     const task = new SuperAdminStaffTasks({ staffId: staffMember._id, startDate, dueDate, title, description, createdBy: loggedInId });
@@ -531,8 +531,8 @@ exports.getSAAssignedTasks = async (req, res) => {
 
     if (loggedInUser.role === 'superadmin') {
 
-      completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeType employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
-      pendingTasks = await SuperAdminStaffTasks.find({ status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeType employeeRole', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
+      completedTasks = await SuperAdminStaffTasks.find({ status: 'completed' }).populate({ path: 'staffId', select: 'userId name employeeType designation', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: -1 });
+      pendingTasks = await SuperAdminStaffTasks.find({ status: 'pending' }).populate({ path: 'staffId', select: 'userId name employeeType designation', populate: ({ path: 'userId', select: 'mobileNumber' }) }).sort({ startDate: 1 });
     }
     else if (loggedInUser.role === 'staff') {
       const staff = await SuperAdminStaff.findOne({ userId: loggedInId });
@@ -540,7 +540,7 @@ exports.getSAAssignedTasks = async (req, res) => {
 
       name = staff.name;
       dateOfJoining = new Date(staff.createdAt).toISOString().split('T')[0];
-      role = loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.employeeRole;
+      role = loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.designation;
 
       tasks = await SuperAdminStaffTasks.find({ staffId: staff._id }).sort({ startDate: 1 });
 
@@ -958,7 +958,7 @@ exports.sendQuery = async (req, res) => {
 
       queriesToInsert = schools.map((school) => {
         return new Query({
-          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.employeeRole, createdBy: staff._id,
+          name, contact, email, sendTo: school.userId._id, schoolId: school._id, schoolName: school.schoolName, createdByRole: loggedInUser.employeeType !== 'groupD' ? loggedInUser.employeeType : staff.designation, createdBy: staff._id,
           query: [{ message, createdBy: staff._id, sentAt: new Date() }]
         });
       });
