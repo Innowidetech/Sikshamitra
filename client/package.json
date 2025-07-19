@@ -17,6 +17,7 @@
     "chart.js": "^4.4.9",
     "chartjs-plugin-zoom": "^2.2.0",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.1",
     "google-charts": "^2.0.0",
@@ -39,7 +40,8 @@
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
     "reselect": "^5.1.1",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

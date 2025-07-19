@@ -49,6 +49,21 @@ import bookReducer from './student/bookSlice';
 import parentProfileSliceReducer from './parent/parentProfileSlice'
 
 import staffDashboardReducer from './staff/staffDashboardSlice';
+import superAdminStaffDashboardSliceReducer from './superAdminStaff/superAdminStaffDashboardSlice';
+import superAdminStaffSendQueryReducer from './superAdminStaff/superAdminStaffQuerySlice';
+import superAdminQueryReplayReducer from './superAdminStaff/superAdminStaffQueryReplaySlice'
+import superAdminStaffBlogSliceReducer from './superAdminStaff/superAdminStaffBlogSlice'
+import superAdminStaffSendQueryIdReplayReducer from './superAdminStaff/superAdminStaffReplayIdSlice'
+import superAdminStaffPostReplyReducer from './superAdminStaff/superAdminStaffReplayIdPostSlice'
+import blogReducer from "./superAdminStaff/superAdminStaffCreateBlogSlice";
+
+import superAdminReducer from './superAdmin/superAdminDashboard';
+import superAdminSchoolReducer from "./superAdmin/superAdminSchoolSlice";
+import superAdminAccountsSliceReducer from './superAdmin/superAdminAccountsSlice';
+import superAdminStaffReducer from './superAdmin/superAdminStaffSlice';
+import superAdminTaskReducer from './superAdmin/superAdminTaskSlice';
+import superAdminUserBlogReducer from './superAdmin/SuperAdminBlogSclice';
+import superAdminConnectAndQueryReducer from './superAdmin/superAdminConnectSlice';
 
 
 const store = configureStore({
@@ -74,48 +89,72 @@ const store = configureStore({
     studentProfile: studentProfileReducer,
     exam: examSliceReducer,
     parent: parentdashboardReducer, // Add parentdashboardReducer here
-    fees : feesReducer,
+    fees: feesReducer,
     accounts: accountReducer,
-    expenses:expensesReducer,
+    expenses: expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
     timeTable: timeTableSliceReducer,
     studyMaterial: studyMaterialReducer,
-    admitCard : admitCardSliceReducer,
-    assignment : assignmentSliceReducer,
-    syllabus : syllabusSliceReducer,
-    syllabusView : syllabusViewSliceReducer,
-    classPlan : classPlanSliceReducer,
-    results : resultSliceReducer,
-    about : aboutSliceReducer,
-    createExam :createExamSliceReducer,
-    studyMaterial : studyMSliceReducer,
+    admitCard: admitCardSliceReducer,
+    assignment: assignmentSliceReducer,
+    syllabus: syllabusSliceReducer,
+    syllabusView: syllabusViewSliceReducer,
+    classPlan: classPlanSliceReducer,
+    results: resultSliceReducer,
+    about: aboutSliceReducer,
+    createExam: createExamSliceReducer,
+    studyMaterial: studyMSliceReducer,
     myStudents: myStudentsReducer,
-  parentProfile: parentProfileSliceReducer,
+    parentProfile: parentProfileSliceReducer,
 
 
     // myStudents: myStudentsReducer,
 
     assignments: assignmentsReducer,
-    tcurriculum: tcurriculumSliceReducer, 
+    tcurriculum: tcurriculumSliceReducer,
     lecture: lectureSlice,
     teacherResults: teacherResultsReducer,
 
     // teacherAttendance: teaAttendanceReducer,
 
     teaAttendance: teaAttendanceReducer,
-     teacherDashboard: teacherDashboardReducer,
+    teacherDashboard: teacherDashboardReducer,
     //   students: myStudentsReducer,
-       book: bookReducer,
+    book: bookReducer,
 
 
 
-//    AdminStaff Dashboard
+    //    AdminStaff Dashboard
 
- staffDashboard: staffDashboardReducer,
+    staffDashboard: staffDashboardReducer,
 
+    // Super Admin Staff Dashboard
+    superAdminStaffDashboard: superAdminStaffDashboardSliceReducer,
 
-   },
+    // Super Admin Staff Query
+    superAdminStaffSendQuery: superAdminStaffSendQueryReducer,
+    // Super Admin Staff Query
+    superAdminStaffSendQueryReplay: superAdminQueryReplayReducer,
+    // super Admin Staff Blog
+    superAdminStaffBlog: superAdminStaffBlogSliceReducer,
+    //  super Admin Staff for id replay
+    superAdminStaffSendQueryIdReplay: superAdminStaffSendQueryIdReplayReducer,
+    //  super Admin Staff for id replay
+    superAdminStaffPostReply: superAdminStaffPostReplyReducer,
+    blogData: blogReducer,
+
+    // Super Admin Dashboard
+    superAdminDashboard: superAdminReducer,
+    superAdminSchools: superAdminSchoolReducer,
+    superAdminAccounts: superAdminAccountsSliceReducer,
+    superAdminStaff: superAdminStaffReducer,
+    superAdminTasks: superAdminTaskReducer,
+    superAdminUserBlogs: superAdminUserBlogReducer,
+    connectAndQuery: superAdminConnectAndQueryReducer,
+    
+
+  },
 });
 
 export default store;  
