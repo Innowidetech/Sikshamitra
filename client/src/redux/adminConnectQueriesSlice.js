@@ -53,7 +53,7 @@ export const replyToQuery = createAsyncThunk(
   }
 );
 
-// ✅ CREATE a new query (new API you provided)
+// ✅ CREATE a new query
 export const createAdminQuery = createAsyncThunk(
   'adminConnectQueries/createAdminQuery',
   async (formData, { rejectWithValue }) => {
@@ -73,6 +73,7 @@ export const createAdminQuery = createAsyncThunk(
   }
 );
 
+// ✅ FETCH all meetings (connects)
 export const fetchAdminConnects = createAsyncThunk(
   'adminConnectQueries/fetchAdminConnects',
   async (_, { rejectWithValue }) => {
@@ -82,53 +83,32 @@ export const fetchAdminConnects = createAsyncThunk(
         'https://sikshamitra.onrender.com/api/admin/connect',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return res.data.connects; // adapt based on API response
+      return res.data.connects;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch connects');
     }
   }
 );
 
-// ✅ CREATE Scheduled Meeting (date + time)
-export const createAdminScheduleMeeting = createAsyncThunk(
-  'adminConnectQueries/createAdminScheduleMeeting',
-  async (formData, { rejectWithValue }) => {
+// ✅ CREATE Meeting (instant or scheduled in one API)
+export const createAdminMeeting = createAsyncThunk(
+  'adminConnectQueries/createAdminMeeting',
+  async (data, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
         'https://sikshamitra.onrender.com/api/admin/connect',
-        formData,
+        data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       return res.data.connect;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to schedule meeting.');
+      return rejectWithValue(err.response?.data?.message || 'Failed to create meeting');
     }
   }
 );
-
-// ✅ CREATE Instant Meeting
-export const createAdminInstantMeeting = createAsyncThunk(
-  'adminConnectQueries/createAdminInstantMeeting',
-  async (formData, { rejectWithValue }) => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post(
-        'https://sikshamitra.onrender.com/api/admin/connect',
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      return res.data.connect;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to start instant meeting.');
-    }
-  }
-);
-
 
 const adminConnectQueriesSlice = createSlice({
   name: 'adminConnectQueries',
@@ -138,11 +118,11 @@ const adminConnectQueriesSlice = createSlice({
     selectedQuery: null,
     loading: false,
     error: null,
-      connects: [],      
+    connects: [],
   },
   extraReducers: (builder) => {
     builder
-      // Fetch All
+      // Fetch All Queries
       .addCase(fetchAdminQueries.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -154,78 +134,67 @@ const adminConnectQueriesSlice = createSlice({
       })
       .addCase(fetchAdminQueries.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch queries';
+        state.error = action.payload;
       })
 
-      // Fetch by ID
+      // Fetch Single Query
       .addCase(fetchQueryById.pending, (state) => {
         state.loading = true;
-        state.error = null;
         state.selectedQuery = null;
+        state.error = null;
       })
       .addCase(fetchQueryById.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedQuery = action.payload || null;
+        state.selectedQuery = action.payload;
       })
       .addCase(fetchQueryById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch single query';
         state.selectedQuery = null;
+        state.error = action.payload;
       })
 
-      // Reply to Query
+      // Reply
       .addCase(replyToQuery.fulfilled, (state, action) => {
         state.selectedQuery = action.payload;
       })
 
-      // ✅ Create Query
+      // Create Query
       .addCase(createAdminQuery.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createAdminQuery.fulfilled, (state, action) => {
         state.loading = false;
-        state.sentQueries.unshift(action.payload); // Add to sent list
+        state.sentQueries.unshift(action.payload);
       })
       .addCase(createAdminQuery.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to create query';
+        state.error = action.payload;
       })
 
-         .addCase(fetchAdminConnects.pending, (state) => {
+      // Fetch Connects
+      .addCase(fetchAdminConnects.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAdminConnects.fulfilled, (state, action) => {
-        state.loading = false;
-        state.connects = action.payload;
-      })
+      state.connects = action.payload;  // <- ✅ this should update your meeting table
+    })
       .addCase(fetchAdminConnects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-       .addCase(createAdminScheduleMeeting.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(createAdminScheduleMeeting.fulfilled, (state, action) => {
-        state.loading = false;
-        state.connects.unshift(action.payload); // prepend to list
-      })
-      .addCase(createAdminScheduleMeeting.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
 
-      .addCase(createAdminInstantMeeting.pending, (state) => {
+      // ✅ Create Meeting (instant/schedule in same API)
+      .addCase(createAdminMeeting.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createAdminInstantMeeting.fulfilled, (state, action) => {
+      .addCase(createAdminMeeting.fulfilled, (state, action) => {
         state.loading = false;
         state.connects.unshift(action.payload);
       })
-      .addCase(createAdminInstantMeeting.rejected, (state, action) => {
+      .addCase(createAdminMeeting.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -30,6 +30,7 @@ import AdminQueryForm from './AdminQueryForm';
 import SyllabusPage from './SyllabusPage';
 import ExamPage from './ExamPage'; // Optional
 import AdminQueryChat from './AdminQueryChat';
+import AdminTrans from './AdminTrans';
 
 
 const MainDashboard = () => {
@@ -71,7 +72,9 @@ const MainDashboard = () => {
       setActiveTab('employee');
     } else if (location.pathname.startsWith('/admin/results')) {
       setActiveTab('results');
-        } else if (location.pathname.startsWith('/admin/connectqueries')) {
+        } else if (location.pathname.startsWith('/admin/transportation')) {
+  setActiveTab('transportation');
+}else if (location.pathname.startsWith('/admin/connectqueries')) {
       setActiveTab('connectqueries');
     }
     
@@ -170,9 +173,17 @@ const MainDashboard = () => {
       case 'results':
         navigate('/admin/results');
         break;
+         case 'transportation':
+  navigate('/admin/transportation');
+  break;
+
        case 'connectqueries':
   navigate('/admin/connectqueries');
   break;
+  // case 'transportation':
+  // navigate('/admin/transportation');
+  // break;
+
 
       default:
         navigate('/admin');
@@ -243,8 +254,13 @@ const MainDashboard = () => {
         return <Results />;
       case 'curriculum':
         return <Curriculam />;
+         case 'transportation':
+  return <AdminTrans />;
        case 'connectqueries':
   return <AdminConnectQuries setActiveQueryChat={setActiveQueryChat} />;
+  // case 'transportation':
+  // return <AdminTrans />;
+
 
       default:
         return <AdminDashboard />;

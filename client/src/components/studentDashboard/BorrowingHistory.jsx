@@ -46,19 +46,19 @@ console.log("Error:", requestedBooksError);
 
 
   return (
-    <div className="pt-20 px-4 md:px-8">
-      {/* Page Title & Header */}
-      <div className="flex justify-between items-center mx-4 md:mx-8 flex-wrap gap-y-4">
-        <div>
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Borrowing History</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {'>'}
-            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Borrowing History</span>
-          </h1>
-        </div>
-        <Header />
-      </div>
+    <div className=" px-4 ">
+     {/* Page Heading – Desktop & Tablet */}
+<div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+  <div>
+    <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Borrowing History</h1>
+    <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+    <h1 className="mt-1 text-sm sm:text-base">
+      <span>Home</span> {">"}{" "}
+      <span className="font-medium text-[#146192]">Borrowing History</span>
+    </h1>
+  </div>
+  <Header />
+</div>
 
       {/* Search Input */}
       <div className="flex flex-wrap justify-between items-center mt-6 gap-4 pt-10">
@@ -73,7 +73,7 @@ console.log("Error:", requestedBooksError);
           <button className="bg-[#146192] text-white px-4 py-2 rounded hover:bg-[#0f4e75]">
             Borrowing History
           </button>
-          <button className="border border-[#146192] text-[#146192] px-4 py-2 rounded hover:bg-[#f0f8ff]">
+          <button className="border border-[#146192] text-[#146192] px-4 py-2 rounded hover:bg-[#f0f8ff]" >
             Class Books
           </button>
         </div>

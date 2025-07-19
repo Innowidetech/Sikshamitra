@@ -192,12 +192,30 @@ function Results() {
   const studentProfile = selectedExam?.student?.studentProfile || {};
 
   return (
-    <div className="mx-4 md:mx-8 mt-8">
-      <Header />
-      <h1 className="text-2xl font-semibold text-[#146192] mb-2">Results</h1>
-      <p className="mb-4 text-gray-600">Home {'>'} Results</p>
+     <div className="mx-4 md:mx-8 mt-8">
+    {/* Page Heading – Visible only on md (tablet) and above */}
+    <div className="hidden md:flex justify-between items-start md:items-center -mt-12 mb-4">
+      {/* Left: Title + Breadcrumb */}
+      <div>
+        <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Results</h1>
+        <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+        <h1 className="mt-1 text-sm sm:text-base">
+          <span>Home</span> {">"}{" "}
+          <span className="font-medium text-[#146192]">Results</span>
+        </h1>
+      </div>
 
-      <div ref={resultCardRef} className="bg-white rounded-xl shadow-xl p-6">
+      {/* Right: Header Icons */}
+      <Header />
+    </div>
+
+    {/* Header only for mobile and tablet (below md) */}
+    <div className="md:hidden mb-4">
+      <Header />
+    </div>
+
+
+      <div ref={resultCardRef} className="bg-white rounded-xl shadow-xl p-6 mt-20">
         {/* Bar Chart */}
         <div className="w-full mb-8">
           <h2 className="text-lg font-semibold mb-4">Percentage of Exams</h2>

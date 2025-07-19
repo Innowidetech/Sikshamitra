@@ -8,6 +8,9 @@ import {
 import Header from './layout/Header';
 import AdminQueryChat from './AdminQueryChat';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client'; // ✅ NEW
+
+const socket = io(import.meta.env.VITE_BASE_URL); // ✅ NEW
 
 const AdminConnectQuries = () => {
   const dispatch = useDispatch();
@@ -25,9 +28,10 @@ const AdminConnectQuries = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [statusChanges, setStatusChanges] = useState({});
   const [activeQueryId, setActiveQueryId] = useState(null);
+  const [participants, setParticipants] = useState([]); // ✅ NEW
 
-  const adminData = JSON.parse(localStorage.getItem('admin')); // Or get from Redux
-   const loggedInId = adminData?.id || 'admin';
+  const adminData = JSON.parse(localStorage.getItem('admin'));
+  const loggedInId = adminData?.id || 'admin';
   const adminName = adminData?.name || 'Admin';
 
   console.log('🧑 LoggedIn Admin ID:', loggedInId);
@@ -38,10 +42,24 @@ const AdminConnectQuries = () => {
     dispatch(fetchAdminConnects());
   }, [dispatch]);
 
-   const handleJoinMeeting = (meeting) => {
+  useEffect(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    socket.on('participantsUpdate', (updatedList) => {
+      console.log('✅ Updated Participants:', updatedList);
+      setParticipants(updatedList);
+    });
+
+    return () => {
+      socket.off('participantsUpdate');
+    };
+  }, []);
+
+  const handleJoinMeeting = (meeting) => {
     const meetingLink = meeting.meetingLink;
     console.log('📎 Meeting Link:', meeting.meetingLink);
-
 
     const meetingCreatorId =
       typeof meeting.createdBy === 'string'
@@ -58,6 +76,17 @@ const AdminConnectQuries = () => {
     const role = isHost ? 'Host (Admin)' : 'Admin';
     const name = adminName;
 
+    if (isHost) {
+      socket.emit('join-meeting', meetingLink);
+      socket.emit('participantsUpdate', [
+        {
+          userId: loggedInId,
+          fullname: adminName,
+          role: 'Host',
+        },
+      ]);
+    }
+
     navigate(
       isHost
         ? `/host/${encodeURIComponent(meetingLink)}`
@@ -72,7 +101,6 @@ const AdminConnectQuries = () => {
       }
     );
   };
-
 
   const handleOpenChat = async (id) => {
     setChatLoading(true);
@@ -131,6 +159,23 @@ const AdminConnectQuries = () => {
           </div>
         </div>
 
+        {/* ✅ Participants Block */}
+        {participants.length > 0 && (
+          <div className="mt-6 mb-4 p-4 border rounded bg-gray-50">
+            <h3 className="text-md font-bold text-[#146192] mb-2">Participants In Call</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {participants.map((p, i) => (
+                <div
+                  key={i}
+                  className="bg-black text-white w-24 h-24 flex items-center justify-center rounded border-2 border-white text-xl"
+                >
+                  {p.fullname?.[0] || '?'}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Meetings Table */}
         <div className="bg-white rounded-md shadow border mt-6">
           <h2 className="text-lg font-semibold px-4 pt-4 text-[#1f4f82]">Ongoing / Upcoming Meetings</h2>
@@ -139,8 +184,8 @@ const AdminConnectQuries = () => {
               <tr className="bg-[#1f4f82] text-white text-left">
                 <th className="px-4 py-2 border">S.NO</th>
                 <th className="px-4 py-2 border">Meeting Title</th>
-                <th className="px-4 py-2 border">Date</th>
-                <th className="px-4 py-2 border">Time</th>
+                <td className="px-4 py-2 border">Date</td>
+                <td className="px-4 py-2 border">Time</td>
                 <th className="px-4 py-2 border">Hosted by</th>
                 <th className="px-4 py-2 border">Link</th>
                 <th className="px-4 py-2 border">Status</th>
@@ -149,12 +194,20 @@ const AdminConnectQuries = () => {
             <tbody>
               {connects?.length > 0 ? (
                 connects.map((meeting, index) => {
-                  const dateObj = new Date(meeting.createdAt);
-                  const date = dateObj.toLocaleDateString();
-                  const time = dateObj.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
+                  const meetingDate = meeting?.startDate ? new Date(meeting.startDate) : null;
+                  const formattedDate =
+                    meetingDate &&
+                    `${String(meetingDate.getDate()).padStart(2, '0')}-${String(
+                      meetingDate.getMonth() + 1
+                    ).padStart(2, '0')}-${meetingDate.getFullYear()}`;
+
+                  const formattedTime = meeting.startTime
+                    ? new Date(`1970-01-01T${meeting.startTime}`).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                      })
+                    : '-';
 
                   const allStatuses = meeting.connect?.map((c) => c.status).filter(Boolean);
                   const uniqueStatuses = [...new Set(allStatuses)];
@@ -174,7 +227,6 @@ const AdminConnectQuries = () => {
                             ...prev,
                             [meetingId]: e.target.value,
                           }));
-                          // Optional dispatch to update backend
                           // dispatch(updateMeetingStatus({ meetingId, newStatus: e.target.value }));
                         }}
                       >
@@ -189,8 +241,8 @@ const AdminConnectQuries = () => {
                     <tr key={meeting._id} className="hover:bg-gray-50">
                       <td className="px-4 py-2 border">{index + 1}</td>
                       <td className="px-4 py-2 border">{meeting.title}</td>
-                      <td className="px-4 py-2 border">{date}</td>
-                      <td className="px-4 py-2 border">{time}</td>
+                      <td className="px-4 py-2 border">{formattedDate || '-'}</td>
+                      <td className="px-4 py-2 border">{formattedTime}</td>
                       <td className="px-4 py-2 border">{meeting.hostedByName}</td>
                       <td className="px-4 py-2 border">
                         <button
@@ -222,7 +274,7 @@ const AdminConnectQuries = () => {
           <p className="text-center text-red-500">{error}</p>
         ) : (
           <>
-            <div className="mb-8">
+            <div className="mb-8 mt-6">
               <h3 className="text-md font-semibold text-[#333] mb-2">Received Queries</h3>
               <table className="w-full text-sm border-collapse">
                 <thead className="bg-[#146192] text-white">

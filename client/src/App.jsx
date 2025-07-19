@@ -148,7 +148,7 @@ function App() {
         <Route path="/create-meeting" element={<CreateMeeting />} />
 
         {/* Student Meeting */}
-        <Route path="/connect" element={<ConnectPage />} />
+        <Route path="/connect" element={<ConnectPage />} /> 
         <Route path="/schedulepage" element={<SchedulePage />} />
         <Route path="/instantmeeting" element={<InstantMeetingPage />} />
 

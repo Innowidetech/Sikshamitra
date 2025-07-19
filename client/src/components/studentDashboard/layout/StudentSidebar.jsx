@@ -92,10 +92,8 @@
 
 
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, BookOpen, Users, 
-  Users2, Calculator, Package, Library, FileSpreadsheet,
-  UserCog, Award, BookCopy, Menu, X
+import {
+  LayoutDashboard, Library, FileText, BookOpen, Menu, X, BusFront
 } from 'lucide-react';
 import { FaClipboardList } from "react-icons/fa";
 import { GoChecklist } from "react-icons/go";
@@ -117,6 +115,7 @@ const menuItems = [
   { id: 'exams', icon: FiFileText, label: 'Exams' },
   { id: 'admitcard', icon: MdOutlineAssignmentReturned, label: 'Admit Card' },
   { id: 'bookrequest', icon: MdBook ,label: 'Book Request' },
+    { id: 'transportation', icon: BusFront, label: 'Transportation' }, 
    { id: 'connectqueries', icon:  BsFillPersonLinesFill ,label: 'Connect&Queries' },
 ];
 

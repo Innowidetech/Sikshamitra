@@ -18,17 +18,27 @@ function Syllabus() {
   return (
     <>
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 md:mx-8">
-        <div className="mb-4 md:mb-0">
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Syllabus</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {">"}{" "}
-            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Syllabus</span>
-          </h1>
-        </div>
-        <Header />
-      </div>
+       {/* Page Heading – Visible only on md (tablet) and above */}
+<div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+  {/* Left: Title + Breadcrumb */}
+  <div>
+    <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Curriculum</h1>
+    <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+    <h1 className="mt-1 text-sm sm:text-base">
+      <span>Home</span> {">"}{" "}
+      <span className="font-medium text-[#146192]">Curriculum</span>
+      
+    </h1>
+  </div>
+
+  {/* Right: Header Icons (also visible in mobile) */}
+  <Header />
+</div>
+
+{/* Header only for mobile and tablet (below md) */}
+<div className="md:hidden">
+  <Header />
+</div>
 
       {/* Main Container */}
       <div className="my-10 mx-4 md:mx-10">
