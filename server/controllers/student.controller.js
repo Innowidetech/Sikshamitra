@@ -433,10 +433,13 @@ exports.getTransportationDetails = async (req, res) => {
                 vehicleQuery['driverDetails.userId'] = loggedInId;
             }
 
-            const vehicle = await Vehicles.findOne(vehicleQuery).populate({
-                path: 'studentDetails.studentId',
-                select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf',
-            });
+            const vehicle = await Vehicles.findOne(vehicleQuery)
+                .populate({
+                    path: 'studentDetails.studentId',
+                    select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf',
+                })
+                .populate({ path: 'driverDetails.userId', select: 'email', });
+
             if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
 
             populatedVehicle = vehicle.toObject();

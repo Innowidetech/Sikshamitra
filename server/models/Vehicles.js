@@ -31,7 +31,9 @@ const VehicleSchema = new mongoose.Schema({
     },
     routeDetails: [{
         pickUpPoint: { type: String, required: true },
-        timing: { type: String, required: true }
+        timing: { type: String, required: true },
+        lat: { type: Number, required: true },
+        lng: { type: Number, required: true }
     }],
     driverDetails: {
         type: new mongoose.Schema({
@@ -44,6 +46,7 @@ const VehicleSchema = new mongoose.Schema({
             contact: { type: String, required: true },
             address: { type: String, required: true },
             highestQualification: { type: String, required: true },
+            photo: { type: String, required: true },
             licenseNumber: { type: String, required: true },
             license: { type: String, required: true },
             aadharCardNumber: { type: String, required: true },
@@ -57,6 +60,7 @@ const VehicleSchema = new mongoose.Schema({
             fullname: { type: String },
             contact: { type: String },
             address: { type: String },
+            photo: { type: String },
             licenseNumber: { type: String },
             license: { type: String },
             aadharCardNumber: { type: String },
@@ -73,7 +77,7 @@ const VehicleSchema = new mongoose.Schema({
         },
         pickUpLocation: { type: String, required: true },
         totalFee: { type: Number, required: true },
-        amountPaid: { type: Number, required: true, default:0 },
+        amountPaid: { type: Number, required: true, default: 0 },
         amountDue: { type: Number, required: true },
         status: { type: Boolean, required: true, default: true },
         action: {
