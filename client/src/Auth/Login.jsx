@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserCircle, GraduationCap, Users2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isLoading, error, token, userRole, employeeType } = useSelector((state) => state.auth);
+  const { isLoading, error, token, userId, userRole, employeeType, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     useremail: '',
@@ -20,10 +19,11 @@ const Login = () => {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
+    const storedUserId = localStorage.getItem('userId');
     const storedRole = localStorage.getItem('userRole');
     const storedEmpType = localStorage.getItem('employeeType');
 
-    if (storedToken && storedRole) {
+    if (storedToken && storedRole && storedUserId) {
       redirectToDashboard(storedRole, storedEmpType);
     }
   }, []);
@@ -31,6 +31,7 @@ const Login = () => {
   useEffect(() => {
     if (token && userRole) {
       localStorage.setItem('token', token);
+      localStorage.setItem('userId', userId);
       localStorage.setItem('userRole', userRole);
 
       if (employeeType) {
@@ -39,11 +40,15 @@ const Login = () => {
         localStorage.removeItem('employeeType');
       }
 
-      toast.success('Login successful!');
+      // ✅ Store full user info if admin or superadmin (required for meeting host check)
+      if ((userRole === 'admin' || userRole === 'superadmin') && user) {
+        localStorage.setItem('admin', JSON.stringify(user));
+      }
 
+      toast.success('Login successful!');
       redirectToDashboard(userRole, employeeType);
     }
-  }, [token, userRole, employeeType]);
+  }, [token, userId, userRole, employeeType, user]);
 
   const redirectToDashboard = (role, empType = '') => {
     empType = empType?.toLowerCase();
@@ -59,7 +64,11 @@ const Login = () => {
     } else if (role === 'teacher') {
       if (empType === 'groupd') {
         navigate('/adminstaff/maindashboard');
-      } else {
+      }
+      else if (empType === 'driver') {
+        navigate('/driver/maindashboard')
+      }
+      else {
         navigate('/teacher/maindashboard');
       }
     } else if (role === 'admin') {
@@ -103,7 +112,7 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
-      role: selectedRole || 'teacher' || '' // fallback to teacher
+      role: selectedRole || 'teacher' || ''
     };
 
     try {
@@ -162,6 +171,7 @@ const Login = () => {
                     {isLoading ? 'Logging in...' : 'LOGIN'}
                   </button>
                 </form>
+
                 <div className="flex items-center justify-end">
                   <label className="ml-2 mt-4 text-sm md:text-lg text-white hover:underline cursor-pointer">
                     Forgot password?

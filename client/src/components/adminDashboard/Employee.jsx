@@ -19,7 +19,7 @@ import html2canvas from 'html2canvas';
 const Employee = () => {
   const dispatch = useDispatch();
   const { staffList, loading } = useSelector((state) => state.adminEmployee);
-  const employees = staffList?.staff || [];
+  const employees = staffList;
   const pdfRef = useRef();
 
   const [filters, setFilters] = useState({

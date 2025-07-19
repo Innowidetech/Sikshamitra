@@ -22,6 +22,7 @@ import AssignmentDetails from './AssignmentDetails';
 import AddStudentResult from './AddStudentResult';
 import CreateDynamicCalendar from './CreateDynamicCalendar';
 import MarkAttendance from './MarkAttendance';
+import EditResult from './EditResult';
 import EditLectureTimetable from './EditLectureTimetable';
 import ScheduledLec from './ScheduledLec';
 import TeacherQuery from './TeacherQuery';
@@ -31,6 +32,7 @@ import TeacherQueryForm from './TeacherQueryForm'; // ✅ Import added
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
+  const [selectedResult, setSelectedResult] = useState(null);
   const [selectedQueryId, setSelectedQueryId] = useState(null);
 
   const location = useLocation();
@@ -47,6 +49,8 @@ const MainDashboard = () => {
 
     if (tabId === 'assignmentdetails') {
       setSelectedAssignment(data);
+    } else if (tabId === 'editresult') {
+      setSelectedResult(data);
     }
 
     if (tabId === 'replyteacherquery') {
@@ -72,6 +76,8 @@ const MainDashboard = () => {
         return <Results handleTabChange={handleTabChange} />;
       case 'addstudentresult':
         return <AddStudentResult />;
+      case 'editresult':
+        return <EditResult result={selectedResult} />;
       case 'attendence':
         return <Attendence handleTabChange={handleTabChange} />;
       case 'markattendance':
@@ -105,7 +111,7 @@ const MainDashboard = () => {
             setSelectedQueryId={setSelectedQueryId}
           />
         );
-      case 'teacherqueryform': // ✅ New tab case added
+      case 'teacherqueryform':
         return (
           <TeacherQueryForm goBack={() => handleTabChange('teacherquery')} />
         );

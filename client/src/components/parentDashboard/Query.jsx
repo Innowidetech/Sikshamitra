@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchQueries, fetchConnects } from '../../redux/parent/querySlice';
@@ -77,10 +78,9 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
 
       const loggedInId = parent?.parentData?._id || null;
       const isHost = loggedInId === connect.createdBy;
-      const role = 'Parent'; // You can update role dynamically if needed
+      const role = 'Parent';
 
       if (socket) {
-        // Emit requestJoin with fullname and role
         socket.emit('requestJoin', {
           meetingLink,
           fullname: name,
@@ -88,11 +88,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
         });
 
         if (!isHost) {
-          toast.info(`Request to join meeting sent: ${meetingLink}`, {
-            autoClose: 4000,
-            pauseOnHover: true,
-            closeOnClick: true,
-          });
+          toast.info(`Request to join meeting sent: ${meetingLink}`);
         }
       }
 
@@ -149,6 +145,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
           </div>
           <p className="text-sm text-gray-500 mb-6">We are here to help you! How can we help?</p>
 
+          {/* Meetings */}
           <h3 className="font-semibold text-gray-700 mb-2">Ongoing / Upcoming Meetings</h3>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm border">
@@ -163,7 +160,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                 </tr>
               </thead>
               <tbody>
-                {connects && connects.length > 0 ? (
+                {connects?.length > 0 ? (
                   connects.map((connect, idx) => (
                     <tr key={connect._id} className="text-center">
                       <td className="border px-3 py-2">{idx + 1}</td>
@@ -177,7 +174,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                       <td className="border px-3 py-2 capitalize">
                         {connect.hostedByName} ({connect.hostedByRole})
                       </td>
-                      <td className="border px-3 py-2 text-blue-600 underline cursor-pointer">
+                      <td className="border px-3 py-2">
                         <button
                           onClick={() => handleJoinMeeting(connect)}
                           className="text-blue-600 underline"
@@ -189,7 +186,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="border px-3 py-2 text-center text-gray-500">
+                    <td colSpan="6" className="text-center py-4 text-gray-500">
                       No upcoming meetings found.
                     </td>
                   </tr>
@@ -198,6 +195,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
+          {/* Received Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Received Queries</h3>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-sm border">
@@ -233,6 +231,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
+          {/* Sent Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Queries Sent by Parent</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border">
@@ -269,6 +268,7 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
               </tbody>
             </table>
           </div>
+
         </div>
       </div>
     </>

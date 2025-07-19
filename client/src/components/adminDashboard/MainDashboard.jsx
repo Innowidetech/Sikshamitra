@@ -17,17 +17,27 @@ import Results from './Results';
 import Curriculam from './Curriculam';
 import Header from './layout/Header';
 import AdminProfile from './AdminProfile';
+import Application from './admissionpage/Application';
+import ResolvePage from './ResolvePage';
+import Allbook from './Allbook';
 import StudentHistory from './StudentHistory';
 import AccountHistory from './AccountHistory';
+import AdminConnectQuries from './AdminConnectQuries';
+import AdminQueryForm from './AdminQueryForm';
+
 
 // 🆕 Import the new pages
 import SyllabusPage from './SyllabusPage';
 import ExamPage from './ExamPage'; // Optional
+import AdminQueryChat from './AdminQueryChat';
+
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [studentsSubTab, setStudentsSubTab] = useState('default');
   const [accountSubTab, setAccountSubTab] = useState('default');
+  const [activeQueryChat, setActiveQueryChat] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -61,7 +71,10 @@ const MainDashboard = () => {
       setActiveTab('employee');
     } else if (location.pathname.startsWith('/admin/results')) {
       setActiveTab('results');
+        } else if (location.pathname.startsWith('/admin/connectqueries')) {
+      setActiveTab('connectqueries');
     }
+    
     // Add more routes as needed
   }, [location.pathname]);
 
@@ -70,6 +83,52 @@ const MainDashboard = () => {
     setStudentsSubTab('default');
     setAccountSubTab('default');
 
+  //   const renderContent = () => {
+  //       if (location.pathname === '/admin/profile') {
+  //           return <AdminProfile />;
+  //       }
+        
+  //       switch (activeTab) {
+  //           case 'dashboard':
+  //               return <AdminDashboard />;
+  //           case 'fees':
+  //               return <Fees />;
+  //           case 'teachers':
+  //               return <Teachers />;
+  //           case 'students':
+  //               return <Students />;
+  //           case 'parents':
+  //               return <Parents />;
+  //           case 'accounts':
+  //               return <Accounts />;
+  //           case 'inventory':
+  //               return <Inventory />;
+  //          case 'library':
+  // return <Library setActiveTab={setActiveTab} />;
+
+  //               case 'resolve':
+  // return <ResolvePage  setActiveTab={setActiveTab}  />;
+
+  //   case 'allbook':
+  // return <Allbook setActiveTab={setActiveTab} />;
+
+  //           case 'admission':
+  //     return <Admission setActiveTab={setActiveTab} />;  // ⬅️ Pass setter so button can change tab
+  // case 'admission-application':                      // ✅ NEW CASE
+  //   return <Application />;
+  //           case 'classes':
+  //               return <Classes />;
+  //           case 'employee':
+  //               return <Employee />;
+  //           case 'results':
+  //               return <Results />;
+  //           case 'curriculum':
+  //               return <Curriculam />;
+             
+  //           default:
+  //               return <AdminDashboard />;
+  //       }
+  //   };
     // Navigate to the base route of the tab
     switch (tabId) {
       case 'dashboard':
@@ -111,12 +170,27 @@ const MainDashboard = () => {
       case 'results':
         navigate('/admin/results');
         break;
+       case 'connectqueries':
+  navigate('/admin/connectqueries');
+  break;
+
       default:
         navigate('/admin');
     }
   };
 
   const renderContent = () => {
+   
+
+    if (activeQueryChat) {
+    return (
+      <AdminQueryChat
+        query={activeQueryChat}
+        onBack={() => setActiveQueryChat(null)}
+      />
+    );
+  }
+
     // Handle custom pages by exact pathname first
     if (location.pathname === '/admin/profile') {
       return <AdminProfile />;
@@ -127,6 +201,11 @@ const MainDashboard = () => {
     if (location.pathname === '/admin/curriculum/exams') {
       return <ExamPage />;
     }
+
+    if (location.pathname === '/admin/connectqueries/queries') {
+  return <AdminQueryForm />;
+}
+
 
     // Default tab-based rendering
     switch (activeTab) {
@@ -160,6 +239,9 @@ const MainDashboard = () => {
         return <Results />;
       case 'curriculum':
         return <Curriculam />;
+       case 'connectqueries':
+  return <AdminConnectQuries setActiveQueryChat={setActiveQueryChat} />;
+
       default:
         return <AdminDashboard />;
     }

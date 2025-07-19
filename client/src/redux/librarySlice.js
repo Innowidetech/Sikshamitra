@@ -1,150 +1,466 @@
-// src/redux/librarySlice.js
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// Fetching all book requests
-export const fetchLibraryRequests = createAsyncThunk(
-  "library/fetchLibraryRequests",
+// Fetch library data with book requests and fine info
+export const fetchLibrary = createAsyncThunk(
+  'library/fetchLibrary',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return rejectWithValue("No authentication token found");
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
 
-      const config = {
+      const response = await axios.get('https://sikshamitra.onrender.com/api/admin/library', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+      });
+
+      // Return both parts of the data
+      return {
+        fineAmount: response.data.libraryFineAmount,
+        requests: response.data.bookRequestsWithParents,
       };
-
-      const response = await axios.get(
-        "https://sikshamitra.onrender.com/api/admin/library",
-        config
-      );
-
-      return response.data.bookRequestsWithParents;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to fetch"
-      );
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
 
-// Updating a book request
-export const updateBookRequest = createAsyncThunk(
-  "library/updateBookRequest",
-  async ({ requestId, status, dueOn, returnedOn, fine }, { rejectWithValue }) => {
+// Fetch all books
+export const fetchAllBooks = createAsyncThunk(
+  'library/fetchAllBooks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.get('https://sikshamitra.onrender.com/api/admin/books', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data.books;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Add new book
+export const addBook = createAsyncThunk(
+  'library/addBook',
+  async (bookData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const formData = new FormData();
+
+      // ✅ Append fields matching API requirements exactly
+      formData.append("bookName", bookData.bookName);
+      formData.append("author", bookData.author);
+      formData.append("subject", bookData.subject);
+      formData.append("noOfBooks", bookData.noOfBooks);  // ✅ correct field name
+      formData.append("edition", bookData.edition);
+      formData.append("price", bookData.price);
+      formData.append("pages", bookData.pages);
+      formData.append("photo", bookData.photo); // ✅ must be a File object
+
+      // ✅ Debug: Log FormData entries
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
+
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/admin/createBook',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("❌ Add book thunk error:", error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Issue book
+export const issueBook = createAsyncThunk(
+  'library/issueBook',
+  async (issueData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/admin/issueBook',
+        issueData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Delete book
+export const deleteBook = createAsyncThunk(
+  'library/deleteBook',
+  async (bookId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No token found.');
+      }
+
+      const response = await axios.delete(
+        `https://sikshamitra.onrender.com/api/admin/book/${bookId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return { bookId, ...response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Update Fine Amount
+export const updateFineAmount = createAsyncThunk(
+  'library/updateFineAmount',
+  async (newFineAmount, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return rejectWithValue('No token found.');
+
+      const response = await axios.patch(
+        'https://sikshamitra.onrender.com/api/admin/fineAmount',
+        { fineAmount: newFineAmount },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data.fineAmount;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Update Book Request Status
+export const updateBookRequestStatus = createAsyncThunk(
+  'library/updateBookRequestStatus',
+  async ({ requestId, status, dueOn }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const payload = status === 'issued' ? { status, dueOn } : { status };
+
+      console.log("📦 Payload being sent:", payload);
+
+      const response = await axios.patch(
+        `https://sikshamitra.onrender.com/api/admin/bookRequest/${requestId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return { requestId, updatedRequest: response.data.updatedRequest };
+    } catch (error) {
+      console.error("❌ PATCH Error:", error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+export const editBook = createAsyncThunk(
+  "library/editBook",
+  async ({ bookId, updatedData }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return rejectWithValue("No authentication token found");
+      if (!token) return rejectWithValue("No token found.");
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      const body = { status };
-
-      // Handle 'issued' status
-      if (status === "issued") {
-        if (!dueOn) return rejectWithValue("Due date is required for issued status");
-        body.dueOn = dueOn;
-      }
-
-      // Handle 'returned' status
-      if (status === "returned") {
-        if (!returnedOn) return rejectWithValue("Returned date is required");
-        if (!dueOn) return rejectWithValue("Due date is required for return status");
-
-        const dueDate = new Date(dueOn);
-        const returnDate = new Date(returnedOn);
-
-        body.returnedOn = returnedOn;
-        body.dueOn = dueOn;
-
-        if (returnDate > dueDate) {
-          if (!fine && fine !== 0) {
-            return rejectWithValue("Fine is required if return is late");
-          }
-          body.fine = fine;
-        } else {
-          body.fine = 0;
+      const formData = new FormData();
+      Object.entries(updatedData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
-      }
+      });
 
-      await axios.patch(
-        `https://sikshamitra.onrender.com/api/admin/bookRequest/${requestId}`,
-        body,
-        config
+      const response = await axios.patch(
+        `https://sikshamitra.onrender.com/api/admin/book/${bookId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      return { requestId, status, dueOn, returnedOn, fine };
+   console.log("✅ Updated book from API:", response.data);
+
+      return response.data.updatedBook;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || error.message || "Failed to update"
-      );
+      console.error("❌ Edit book thunk error:", error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
 
-// Redux slice
+export const resolveBookRequest = createAsyncThunk(
+  'library/resolveBookRequest',
+  async (requestId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return rejectWithValue('No token found.');
+
+      const response = await axios.patch(
+        `https://sikshamitra.onrender.com/api/admin/resolveBookRequest/${requestId}`, // ✅ CORRECT endpoint
+        {
+          status: "returned",
+          resolved: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return {
+        requestId,
+        resolvedRequest: response.data, // or response.data.updatedRequest if that's how your backend returns it
+      };
+    } catch (error) {
+      console.error('❌ Resolve book request error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+
+
 const librarySlice = createSlice({
-  name: "library",
+  name: 'library',
   initialState: {
+    books: [],
+    allBooks: [],
+    filteredBooks: [],
+     fineAmount: 0,
     requests: [],
+    selectedBook: null,
     loading: false,
     error: null,
-    updateStatus: "idle",
-    updateError: null,
+    searchQuery: '',
+    addBookStatus: 'idle',
+    issueBookStatus: 'idle',
+    deleteBookStatus: 'idle',
+    updateFineStatus: 'idle',
+    editBookStatus: 'idle',
+
+
   },
   reducers: {
-    clearUpdateStatus: (state) => {
-      state.updateStatus = "idle";
-      state.updateError = null;
+    setSearchQuery: (state, action) => {
+      state.searchQuery = action.payload;
+      state.filteredBooks = state.books.filter(book => {
+        const searchTerm = action.payload.toLowerCase();
+        return (
+          book.bookName?.toLowerCase().includes(searchTerm) ||
+          book.issuedBy?.toLowerCase().includes(searchTerm) ||
+          book.issuedTo?.studentProfile?.fullname?.toLowerCase().includes(searchTerm) ||
+          book.issuedTo?.studentProfile?.class?.toString().toLowerCase().includes(searchTerm) ||
+          book.issuedTo?.studentProfile?.section?.toLowerCase().includes(searchTerm)
+        );
+      });
+    },
+    setSelectedBook: (state, action) => {
+      state.selectedBook = action.payload;
+    },
+    resetStatus: (state) => {
+      state.addBookStatus = 'idle';
+      state.issueBookStatus = 'idle';
+      state.deleteBookStatus = 'idle';
+       state.updateFineStatus = 'idle';
+        state.editBookStatus = 'idle';
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchLibraryRequests.pending, (state) => {
+      // Fetch Library
+      .addCase(fetchLibrary.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchLibraryRequests.fulfilled, (state, action) => {
+      .addCase(fetchLibrary.fulfilled, (state, action) => {
         state.loading = false;
-        state.requests = action.payload;
+        state.fineAmount = action.payload.fineAmount;
+        state.requests = action.payload.requests;
       })
-      .addCase(fetchLibraryRequests.rejected, (state, action) => {
+      .addCase(fetchLibrary.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      // Fetch All Books
+      .addCase(fetchAllBooks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllBooks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.allBooks = action.payload;
+      })
+      .addCase(fetchAllBooks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Add Book
+      // Add Book
+.addCase(addBook.pending, (state) => {
+  state.addBookStatus = 'loading';
+  state.error = null;
+})
+.addCase(addBook.fulfilled, (state, action) => {
+  state.addBookStatus = 'succeeded';
+  state.books.push(action.payload);  // Add newly added book
+})
+.addCase(addBook.rejected, (state, action) => {
+  state.addBookStatus = 'failed';
+  state.error = action.payload;
+})
 
-      .addCase(updateBookRequest.pending, (state) => {
-        state.updateStatus = "loading";
-        state.updateError = null;
+
+      // Issue Book
+      .addCase(issueBook.pending, (state) => {
+        state.issueBookStatus = 'loading';
+        state.error = null;
       })
-      .addCase(updateBookRequest.fulfilled, (state, action) => {
-        state.updateStatus = "succeeded";
-        const index = state.requests.findIndex(
-          (r) => r._id === action.payload.requestId
-        );
-        if (index !== -1) {
-          const updated = state.requests[index];
-          state.requests[index] = {
-            ...updated,
-            status: action.payload.status,
-            dueOn: action.payload.dueOn ?? updated.dueOn,
-            returnedOn: action.payload.returnedOn ?? updated.returnedOn,
-            fine: action.payload.fine ?? updated.fine,
-          };
-        }
+      .addCase(issueBook.fulfilled, (state) => {
+        state.issueBookStatus = 'succeeded';
       })
-      .addCase(updateBookRequest.rejected, (state, action) => {
-        state.updateStatus = "failed";
-        state.updateError = action.payload;
-      });
+      .addCase(issueBook.rejected, (state, action) => {
+        state.issueBookStatus = 'failed';
+        state.error = action.payload;
+      })
+      // Delete Book
+      .addCase(deleteBook.pending, (state) => {
+        state.deleteBookStatus = 'loading';
+        state.error = null;
+      })
+      .addCase(deleteBook.fulfilled, (state, action) => {
+        state.deleteBookStatus = 'succeeded';
+        state.allBooks = state.allBooks.filter(book => book._id !== action.payload.bookId);
+      })
+      .addCase(deleteBook.rejected, (state, action) => {
+        state.deleteBookStatus = 'failed';
+        state.error = action.payload;
+      })
+
+            // Update Fine Amount
+    .addCase(updateFineAmount.pending, (state) => {
+        state.updateFineStatus = 'loading';
+        state.error = null;
+      })
+      .addCase(updateFineAmount.fulfilled, (state, action) => {
+        state.updateFineStatus = 'succeeded';
+        state.fineAmount = action.payload;
+      })
+      .addCase(updateFineAmount.rejected, (state, action) => {
+        state.updateFineStatus = 'failed';
+        state.error = action.payload;
+      })
+
+      // Update Book Request Status
+// Update Book Request Status
+.addCase(updateBookRequestStatus.fulfilled, (state, action) => {
+  if (!action.payload?.requestId) return state; // Avoid undefined errors
+
+  const idx = state.requests.findIndex(r => r._id === action.payload.requestId);
+  if (idx === -1) return state; // If not found, do not crash
+
+  // ✅ Safely update just the modified fields
+  state.requests[idx] = {
+    ...state.requests[idx],
+    ...action.payload.updatedRequest,
+  };
+})
+
+
+.addCase(updateBookRequestStatus.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+
+
+// Edit Book
+    .addCase(editBook.pending, (state) => {
+        state.editBookStatus = "loading";
+      })
+     .addCase(editBook.fulfilled, (state, action) => {
+  const updatedBook = action.payload;
+
+  if (!updatedBook || !updatedBook._id) return;
+
+  const index = state.allBooks.findIndex(book => book._id === updatedBook._id);
+  if (index !== -1) {
+    state.allBooks[index] = updatedBook;
+  }
+})
+
+      .addCase(editBook.rejected, (state, action) => {
+        state.editBookStatus = "failed";
+        state.error = action.payload;
+      })
+
+      // Resolve Book Request
+.addCase(resolveBookRequest.fulfilled, (state, action) => {
+  const { requestId, resolvedRequest } = action.payload;
+  const index = state.requests.findIndex(req => req._id === requestId);
+  if (index !== -1) {
+    state.requests[index] = resolvedRequest;
+  }
+})
+.addCase(resolveBookRequest.rejected, (state, action) => {
+  state.error = action.payload;
+});
+
+
   },
 });
 
-export const { clearUpdateStatus } = librarySlice.actions;
+export const { setSearchQuery, setSelectedBook, resetStatus } = librarySlice.actions;
 export default librarySlice.reducer;
