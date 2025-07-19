@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 
 const initialState = {
   user: null,
+  userId: localStorage.getItem('userId'),
   token: localStorage.getItem('token'),
   userRole: localStorage.getItem('userRole'),
   employeeType: localStorage.getItem('employeeType'),
@@ -35,10 +36,13 @@ export const loginUser = createAsyncThunk(
 
       if (token) {
         const decoded = decodeToken(token);
-        const employeeType = decoded.employeeType || null;
+        const role = decoded.role || user?.role || credentials.role;
+        const employeeType = decoded.employeeType || user?.employeeType || null;
 
         localStorage.setItem('token', token);
-        localStorage.setItem('userRole', credentials.role);
+        localStorage.setItem('userId', user._id);
+        localStorage.setItem('userRole', role);
+
         if (employeeType) {
           localStorage.setItem('employeeType', employeeType);
         } else {
@@ -52,8 +56,9 @@ export const loginUser = createAsyncThunk(
 
         return {
           token,
-          role: credentials.role,
+          role,
           user,
+          userId: user._id,
           employeeType,
         };
       }
@@ -110,6 +115,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.userRole = action.payload.role;
+        state.userId = action.payload.userId;
         state.employeeType = action.payload.employeeType;
         state.error = null;
       })

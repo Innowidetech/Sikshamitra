@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const schoolSchema = new mongoose.Schema({
-  userId:{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:'User',
-    required:true
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   schoolCode: {
     type: String,
@@ -33,7 +33,7 @@ const schoolSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  libraryFineAmount:Number,
+  libraryFineAmount: Number,
   details: {
     boardType: { //ssc, cbse, icse
       type: String,
@@ -57,7 +57,7 @@ const schoolSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive', 'suspended'],
     default: 'active',
-    required:true
+    required: true
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

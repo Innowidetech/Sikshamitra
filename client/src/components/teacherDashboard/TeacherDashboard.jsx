@@ -1,7 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '../adminDashboard/layout/Header';
-import { FaGraduationCap, FaClipboardList, FaEdit, FaTrash, FaCalendarAlt, FaArrowDown } from 'react-icons/fa';
+import {
+  FaGraduationCap,
+  FaClipboardList,
+  FaEdit,
+  FaTrash,
+  FaCalendarAlt,
+} from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchTeacherDashboard,
@@ -12,24 +18,49 @@ import {
   updateTeacherNotice,
   deleteTeacherNotice,
   editTeacherCalendarEvent,
-  deleteTeacherCalendarEvent ,
+  deleteTeacherCalendarEvent,
   fetchTeacherClassAccounts,
   fetchTeacherRequests,
   createTeacherRequest,
+  editTeacherExpenseRequest,
 } from '../../redux/teacher/teacherDashboardSlice';
+
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+
 import { useNavigate } from 'react-router-dom';
-// Importing Chart.js and react-chartjs-2
-import { Line, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
 
+// ✅ Chart.js and react-chartjs-2
+import { Bar, Line, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  PointElement,
+  LineElement,
+  ArcElement,
+} from 'chart.js';
 
-// Registering required components in ChartJS
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// ✅ Register chart components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
 
 function TeacherDashboard() {
   const [showModal, setShowModal] = useState(false);
@@ -76,6 +107,11 @@ const formatDate = (date) => {
   } = useSelector((state) => state.teacherDashboard);
 
     const { classAccounts, teacherRequests } = useSelector((state) => state.teacherDashboard);
+    const expenseRequests = teacherRequests?.teacherRequests || [];
+    const [selectedItemFilter, setSelectedItemFilter] = useState('');
+    const [editData, setEditData] = useState({ id: '', item: '', purpose: '' });
+
+
 
     
   const token = localStorage.getItem('token');
@@ -324,46 +360,93 @@ useEffect(() => {
 const [isModalOpen, setIsModalOpen] = useState(false);
 const [itemName, setItemName] = useState('');
 const [purpose, setPurpose] = useState('');
+const [requestData, setRequestData] = useState([]); // stores submitted requests
+const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+
+
 
 const closeModal = () => {
   setIsModalOpen(false);
-  setItemName('');
-  setPurpose('');
 };
 
-const handleRequestSubmit = async () => {
-  console.log("Item name:", itemName);
-  console.log("Purpose:", purpose);
 
-  if (!itemName || !purpose) {
-    toast.error("Item name and purpose are required.");
+ const handleRequestSubmit = async () => {
+  if (!itemName.trim() || !purpose.trim()) {
+    alert('Please fill in all fields');
     return;
   }
 
+  console.log('➡️ Submitting request with:', { token, item: itemName, purpose });
+
   try {
-    const response = await dispatch(
+    const res = await dispatch(
       createTeacherRequest({
         token,
-        requestData: { item: itemName, purpose },
+        item: itemName,
+        purpose,
       })
     ).unwrap();
 
-    console.log("Request successful:", response);
-    toast.success("Request submitted successfully!");
+    console.log('✅ Request submitted successfully:', res);
 
-    dispatch(fetchTeacherRequests(token));
-    dispatch(fetchTeacherClassAccounts(token));
-
-    closeModal();
+    toast.success("Request submitted successfully.");
+    dispatch(fetchTeacherRequests(token)); // reload the list
+    setItemName('');
+    setPurpose('');
+    setIsRequestModalOpen(false);
   } catch (error) {
-    console.error("Error submitting request:", error);
+    console.error('❌ Error submitting request:', error);
     toast.error("Failed to submit request.");
   }
 };
 
+const handleEditClickExpense = (item) => {
+  if (item.status.toLowerCase() !== 'pending') {
+    toast.error("Only pending requests can be edited.");
+    return;
+  }
+
+  setEditData({
+    id: item._id || item.id,  // your unique identifier
+    item: item.item,
+    purpose: item.purpose,
+  });
+  setIsEditModalOpen(true);
+};
 
 
- 
+
+const handleEditSubmit = async () => {
+  if (!editData.item || !editData.purpose) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  try {
+    console.log("Submitting edit request with data:", editData); // debug
+    await dispatch(
+      editTeacherExpenseRequest({
+        token,
+        id: editData.id,
+        updateData: {
+          item: editData.item,
+          purpose: editData.purpose,
+        },
+      })
+    ).unwrap();
+
+    toast.success("Request updated successfully.");
+    setIsEditModalOpen(false);
+    dispatch(fetchTeacherRequests(token));
+  } catch (err) {
+    console.error("Edit request failed:", err); // debug
+    toast.error("Failed to update request.");
+  }
+};
+
+
 
   return (
     <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56 mt-10">
@@ -468,8 +551,8 @@ const handleRequestSubmit = async () => {
 <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 mt-6">
   <div className="flex justify-between items-center mb-4">
     <h3 className="text-lg font-semibold text-[#146192] ">Expenses</h3>
-   <button
-  onClick={() => setIsModalOpen(true)}
+  <button
+  onClick={() => setIsRequestModalOpen(true)}
   className="bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-blue-600"
 >
   Request Item
@@ -548,49 +631,184 @@ const handleRequestSubmit = async () => {
     </div>
   </div>
 
-  {/* Request Item Modal */}
-{isModalOpen && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-      <h2 className="text-lg font-semibold text-[#146192] mb-4">Request Item</h2>
+   {/* Request Modal */}
+      {isRequestModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+            <h2 className="text-lg font-semibold text-[#146192] mb-4">Request Item</h2>
 
-      <label className="block text-sm mb-1">Item Name</label>
-      <input
-        type="text"
-        value={itemName}
-        onChange={(e) => setItemName(e.target.value)}
-        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-        placeholder="Enter item name"
-      />
+            <label className="block text-sm mb-1">Item Name</label>
+            <input
+              type="text"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+              className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+              placeholder="Enter item name"
+            />
 
-      <label className="block text-sm mb-1">Purpose</label>
-      <input
-        type="text"
-        value={purpose}
-        onChange={(e) => setPurpose(e.target.value)}
-        className="w-full p-2 mb-4 border border-gray-300 rounded-md"
-        placeholder="Enter purpose"
-      />
+            <label className="block text-sm mb-1">Purpose</label>
+            <input
+              type="text"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              className="w-full p-2 mb-4 border border-gray-300 rounded-md"
+              placeholder="Enter purpose"
+            />
 
-      <div className="flex justify-between mt-4">
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={handleRequestSubmit}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              >
+                Request
+              </button>
+              <button
+                onClick={() => setIsRequestModalOpen(false)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+</div>
+
+{/* Expense Requests Table */}
+<div className="mt-8">
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-lg font-semibold text-[#146192]">Expense Requests</h3>
+    <select
+  className="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700 shadow-sm"
+  value={selectedItemFilter}
+  onChange={(e) => setSelectedItemFilter(e.target.value)}
+>
+  <option value="">Items Name</option>
+  {[
+    ...new Set(expenseRequests.map((req) => req.item))  // get unique item names
+  ].map((itemName, index) => (
+    <option key={index} value={itemName}>
+      {itemName}
+    </option>
+  ))}
+</select>
+
+  </div>
+
+  {/* 🔽 ADD FILTER LOGIC HERE */}
+  {(() => {
+    const filteredRequests = selectedItemFilter
+      ? expenseRequests.filter((req) => req.item === selectedItemFilter)
+      : expenseRequests;
+
+    return (
+      <div className="overflow-x-auto shadow-md rounded-lg">
+        <table className="min-w-full bg-white border border-gray-200 text-sm text-left text-gray-700">
+          <thead className="bg-[#F9FAFB] border-b text-[#146192]">
+            <tr>
+              <th className="px-4 py-3 border-r">ITEM NAME</th>
+              <th className="px-4 py-3 border-r">PURPOSE</th>
+              <th className="px-4 py-3 border-r">AMOUNT</th>
+              <th className="px-4 py-3 border-r">STATUS</th>
+              <th className="px-4 py-3">EDIT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRequests.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center py-4 text-gray-500">
+                  No matching requests found.
+                </td>
+              </tr>
+            ) : (
+              filteredRequests.map((item, index) => (
+                <tr key={index} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 border-r">{item.item}</td>
+                  <td className="px-4 py-3 border-r">{item.purpose}</td>
+                 <td className="px-4 py-3 border-r">
+  {item.amount ? `₹ ${item.amount}` : '-'}
+</td>
+
+                <td className="px-4 py-3 border-r">
+  <span
+    className={`${
+      item.status?.toLowerCase() === 'success'
+        ? 'text-green-600'
+        : item.status?.toLowerCase() === 'failed'
+        ? 'text-red-600'
+        : 'text-yellow-600'
+    } font-medium`}
+  >
+    {item.status?.charAt(0).toUpperCase() + item.status?.slice(1)}
+  </span>
+  {item.status?.toLowerCase() === 'failed' && item.remark && (
+    <div className="text-xs text-red-500 mt-1 italic">
+      Remark: {item.remark}
+    </div>
+  )}
+</td>
+
+          <td
+  className={`cursor-pointer ${item.status.toLowerCase() !== 'pending' ? 'opacity-50 pointer-events-none' : ''}`}
+  onClick={() => handleEditClickExpense(item)}
+>
+  <FaEdit />
+</td>
+
+
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  })()}
+
+</div>
+
+{isEditModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 className="text-lg font-semibold mb-4 text-[#146192]">Edit Expense Request</h2>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+        <input
+          type="text"
+          value={editData.item}
+          onChange={(e) => setEditData({ ...editData, item: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+        <textarea
+          value={editData.purpose}
+          onChange={(e) => setEditData({ ...editData, purpose: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+        />
+      </div>
+      <div className="flex justify-end space-x-2">
         <button
-          onClick={handleRequestSubmit}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-        >
-          Request
-        </button>
-        <button
-          onClick={closeModal}
-          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+          onClick={() => setIsEditModalOpen(false)}
+          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-800"
         >
           Cancel
+        </button>
+        <button
+          onClick={handleEditSubmit}
+          className="px-4 py-2 bg-[#146192] text-white rounded hover:bg-[#0e4a72]"
+        >
+          Save
         </button>
       </div>
     </div>
   </div>
 )}
-</div>
-</div>
+
+
+
 
 <div className="w-full max-w-full overflow-hidden">
   <div className="flex flex-wrap -mx-2">

@@ -32,33 +32,41 @@ function StudyMaterial() {
   return (
     <>
       {/* Header */}
-      <hr className="border-[#146192] border-[1px] w-full my-4" />
-      <div className="flex justify-between items-center mx-4 md:mx-8">
-        <div>
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Study Material</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {" > "}
-            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Study Material</span>
-          </h1>
-        </div>
-        <Header />
-      </div>
+       {/* Page Heading – Visible only on md (tablet) and above */}
+<div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+  {/* Left: Title + Breadcrumb */}
+  <div>
+    <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Study Material</h1>
+    <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+    <h1 className="mt-1 text-sm sm:text-base">
+      <span>Home</span> {">"}{" "}
+      <span className="font-medium text-[#146192]">Study Materisl</span>
+    </h1>
+  </div>
+
+  {/* Right: Header Icons (also visible in mobile) */}
+  <Header />
+</div>
+
+{/* Header only for mobile and tablet (below md) */}
+<div className="md:hidden">
+  <Header />
+</div>
 
       {/* Content Heading */}
-      <div className="flex justify-between items-center mx-4 md:mx-8 mt-8 p-4">
+      <div className="flex justify-between items-center mx-4 md:mx-8 mt-20 p-4">
         <div className="flex items-center">
-          <FaBookOpen className="text-black text-4xl mr-4" />
-          <h2 className="text-xl font-medium text-black">Teachers' Syllabus Uploaded Information</h2>
+          {/* <FaBookOpen className="text-black text-4xl mr-4" /> */}
+          <h2 className="text-xl font-medium text-[#146192]">Updated Study Material</h2>
         </div>
         <div
           className="flex items-center cursor-pointer text-blue-600"
           onClick={() => navigate("/student/syllabus")}
         >
-          <span className="mr-2 text-lg">View Syllabus</span>
+          {/* <span className="mr-2 text-lg">View Syllabus</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-          </svg>
+          </svg> */}
         </div>
       </div>
 
@@ -73,7 +81,7 @@ function StudyMaterial() {
         <>
           {/* Table View for Desktop */}
           <div className="hidden md:block overflow-x-auto px-8 mt-8">
-            <table className="min-w-full border border-gray-200 text-sm">
+            <table className="min-w-full text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-2 text-left">Teacher Name ⇅</th>
@@ -82,6 +90,7 @@ function StudyMaterial() {
                   <th className="px-4 py-2 text-left">Section</th>
                   <th className="px-4 py-2 text-left">Subject Name ⇅</th>
                   <th className="px-4 py-2 text-left">Date ⇅</th>
+                   <th className="px-4 py-2 text-left">Time ⇅</th>
                   <th className="px-4 py-2 text-left">Download ⇅</th>
                 </tr>
               </thead>
@@ -107,6 +116,13 @@ function StudyMaterial() {
                             year: "numeric",
                           })}
                         </td>
+                           <td className="px-4 py-2">
+                {date.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </td>
                         <td className="px-4 py-2">
                           <button
                             onClick={() => handleDownload(item.material, `${item.subject}_${item.chapter}_Material`)}
@@ -123,54 +139,73 @@ function StudyMaterial() {
             </table>
           </div>
 
-          {/* Card View for Mobile & Tablet */}
-          <div className="block md:hidden px-4 mt-8 space-y-4">
-            {classMaterial.length === 0 ? (
-              <p className="text-center">No study materials found.</p>
-            ) : (
-              classMaterial.map((item, idx) => {
-                const date = new Date(item.createdAt);
-                return (
-                  <div
-                    key={item._id || idx}
-                    className="border border-gray-300 rounded-lg p-4 shadow-sm bg-white"
-                  >
-                    <div className="mb-2">
-                      <strong>Teacher Name:</strong> {item.teacherName}
-                    </div>
-                    <div className="mb-2">
-                      <strong>Chapter:</strong> {item.chapter?.padStart(2, "0")}
-                    </div>
-                    <div className="mb-2">
-                      <strong>Class:</strong> {item.class?.padStart(2, "0")}
-                    </div>
-                    <div className="mb-2">
-                      <strong>Section:</strong> {item.section}
-                    </div>
-                    <div className="mb-2">
-                      <strong>Subject Name:</strong> {item.subject}
-                    </div>
-                    <div className="mb-2">
-                      <strong>Date:</strong>{" "}
-                      {date.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </div>
-                    <div className="mt-3">
-                      <button
-                        onClick={() => handleDownload(item.material, `${item.subject}_${item.chapter}_Material`)}
-                        className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
-                      >
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+         {/* Card View for Mobile & Tablet */}
+<div className="block md:hidden px-4 mt-8 space-y-4">
+  {classMaterial.length === 0 ? (
+    <p className="text-center">No study materials found.</p>
+  ) : (
+    classMaterial.map((item, idx) => {
+      const date = new Date(item.createdAt);
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      });
+
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      return (
+        <div
+          key={item._id || idx}
+          className="border border-gray-300 rounded-md shadow-md bg-white"
+        >
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            {/* Labels */}
+            <div className="py-4 px-3 flex flex-col gap-3 text-[#146192] font-semibold">
+              <div>Teacher Name ⬍</div>
+              <div>Chapter </div>
+              <div>Class </div>
+              <div>Section </div>
+              <div>Subject Name ⬍</div>
+              <div>Date ⬍</div>
+              <div>Time ⬍</div>
+              <div>Download ⬍</div>
+            </div>
+
+            {/* Values */}
+            <div className="py-4 px-3 flex flex-col gap-3 text-black text-[15px]">
+              <div>{item.teacherName}</div>
+              <div>{item.chapter?.padStart(2, "0")}</div>
+              <div>{item.class?.padStart(2, "0")}</div>
+              <div>{item.section}</div>
+              <div>{item.subject}</div>
+              <div>{formattedDate}</div>
+              <div>{formattedTime}</div>
+              <div>
+                <button
+                  onClick={() =>
+                    handleDownload(
+                      item.material,
+                      `${item.subject}_${item.chapter}_Material`
+                    )
+                  }
+                  className="bg-[#CBF0D3] text-[#61A249] px-3 py-1 rounded-sm text-sm font-medium"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+      );
+    })
+  )}
+</div>
+
         </>
       )}
     </>

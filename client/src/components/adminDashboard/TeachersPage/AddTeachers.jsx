@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch } from 'react-redux';
-import { addTeacherAsync } from '../../../redux/teachersSlice';
+import { addTeacherAsync , fetchTeachers } from '../../../redux/teachersSlice';
 
 function AddTeacherModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -88,55 +88,65 @@ function AddTeacherModal({ isOpen, onClose }) {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      // Validate required fields based on employeeType
-      if (formData.employeeType === 'teaching') {
-        if (!formData.profile.class || !formData.profile.section || formData.profile.subjects.length === 0) {
-          toast.error('Class, section, and subjects are required for teaching staff!');
-          return;
-        }
-      }
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-      const resultAction = await dispatch(addTeacherAsync(formData)).unwrap();
-      toast.success('Teacher added successfully!');
-      setFormData({
-        email: '',
-        password: '',
-        employeeType: '',
-        profile: {
-          fullname: '',
-          phoneNumber: '',
-          gender: '',
-          class: '',
-          section: '',
-          subjects: [],
-          photo: null,
-          address: '',
-          dob: '',
-          pob: '',
-          employeeId: '',
-          salary: '',
-          bankName: '',
-          accountNumber: '',
-          ifscCode: '',
-          accountHolderName: ''
-        },
-        education: [{
-          university: '',
-          degree: '',
-          startDate: '',
-          endDate: '',
-          city: ''
-        }]
-      });
-      onClose();
-    } catch (error) {
-      toast.error('Failed to add teacher!');
+  try {
+    if (formData.employeeType === 'teaching') {
+      if (!formData.profile.class || !formData.profile.section || formData.profile.subjects.length === 0) {
+        toast.error('Class, section, and subjects are required for teaching staff!');
+        return;
+      }
     }
-  };
+
+    // ✅ Add teacher
+    const resultAction = await dispatch(addTeacherAsync(formData)).unwrap();
+    toast.success('Teacher added successfully!');
+
+    // ✅ Immediately fetch updated list of teachers for the table
+    await dispatch(fetchTeachers());
+
+    // ✅ Reset form and close modal
+    setFormData({
+      email: '',
+      password: '',
+      employeeType: '',
+      profile: {
+        fullname: '',
+        phoneNumber: '',
+        gender: '',
+        class: '',
+        section: '',
+        subjects: [],
+        photo: null,
+        address: '',
+        dob: '',
+        pob: '',
+        employeeId: '',
+        salary: '',
+        bankName: '',
+        accountNumber: '',
+        ifscCode: '',
+        accountHolderName: ''
+      },
+      education: [{
+        university: '',
+        degree: '',
+        startDate: '',
+        endDate: '',
+        city: ''
+      }]
+    });
+
+    onClose();
+  } catch (error) {
+    const errorMessage =
+      typeof error === 'string'
+        ? error
+        : error?.message || 'Failed to add teacher!';
+    toast.error(errorMessage);
+  }
+};
 
   if (!isOpen) return null;
 
@@ -181,18 +191,21 @@ function AddTeacherModal({ isOpen, onClose }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#303972]">Employee Type</label>
-                    <select
-                      required
-                      name="employeeType"
-                      className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"
-                      value={formData.employeeType}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select Employee Type</option>
-                      <option value="teaching">Teaching</option>
-                      <option value="accountant">Accountant</option>
-                      <option value="librarian">Librarian</option>
-                    </select>
+                  <select
+  required
+  name="employeeType"
+  className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"
+  value={formData.employeeType}
+  onChange={handleChange}
+>
+  <option value="">Select Employee Type</option>
+  <option value="teaching">Teaching</option>
+  <option value="accountant">Accountant</option>
+  <option value="librarian">Librarian</option>
+  <option value="inventoryClerk">Inventory Clerk</option>
+  <option value="admissionManager">Admission Manager</option>
+</select>
+
                   </div>
                 </div>
               </div>
@@ -324,15 +337,16 @@ function AddTeacherModal({ isOpen, onClose }) {
                       <label className="block text-sm font-medium text-[#303972]">
                         Subjects (comma-separated)
                       </label>
-                      <input
-                        type="text"
-                        name="profile.subjects"
-                        required
-                        placeholder="Math, Science, English"
-                        className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"
-                        value={formData.profile.subjects.join(', ')}
-                        onChange={handleSubjectsChange}
-                      />
+                     <input
+  type="text"
+  name="profile.subjects"
+  required
+  placeholder="Math, Science, English"
+  className="mt-1 p-2 block w-full rounded-md border border-[#C1BBEB]"
+  value={formData.profile.subjects.join(', ')}
+  onChange={handleSubjectsChange}
+/>
+
                     </div>
                   </div>
                 </div>

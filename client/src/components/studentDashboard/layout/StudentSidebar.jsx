@@ -92,10 +92,8 @@
 
 
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, BookOpen, Users, 
-  Users2, Calculator, Package, Library, FileSpreadsheet,
-  UserCog, Award, BookCopy, Menu, X
+import {
+  LayoutDashboard, Library, FileText, BookOpen, Menu, X, BusFront
 } from 'lucide-react';
 import { FaClipboardList } from "react-icons/fa";
 import { GoChecklist } from "react-icons/go";
@@ -105,6 +103,7 @@ import { MdAssignmentAdd } from "react-icons/md";
 import { MdOutlineAssignmentReturned  } from "react-icons/md";
 import {  MdBook } from "react-icons/md";
 import { AiOutlineMenu } from "react-icons/ai"; // Toggle button icon
+import { BsFillPersonLinesFill } from "react-icons/bs";
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -116,6 +115,8 @@ const menuItems = [
   { id: 'exams', icon: FiFileText, label: 'Exams' },
   { id: 'admitcard', icon: MdOutlineAssignmentReturned, label: 'Admit Card' },
   { id: 'bookrequest', icon: MdBook ,label: 'Book Request' },
+    { id: 'transportation', icon: BusFront, label: 'Transportation' }, 
+   { id: 'connectqueries', icon:  BsFillPersonLinesFill ,label: 'Connect&Queries' },
 ];
 
 const StudentSidebar = ({ setActiveSection, activeTab }) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserCircle, GraduationCap, Users, CreditCard, Download } from 'lucide-react';
+import { UserCircle, GraduationCap, Users, CreditCard, Download,FileText } from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
 
 
@@ -10,6 +10,7 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
     { id: 'education', icon: GraduationCap, label: 'Education Details' },
     { id: 'parent', icon: Users, label: 'Parent Details' },
     { id: 'payment', icon: CreditCard, label: 'Payment' },
+    { id: 'entranceexam', icon: FileText, label: 'Apply For entrance exam' },
     { id: 'download', icon: Download, label: 'Download' },
   ];
 

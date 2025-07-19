@@ -27,7 +27,7 @@ exports.userLogin = async (req, res) => {
     }
 
     let user
-    let allowedRoles = ['superadmin', 'teacher', 'authority'];
+    let allowedRoles = ['staff', 'teacher', 'authority'];
 
     if (role) {
       user = await User.findOne({ role, email });
@@ -44,14 +44,14 @@ exports.userLogin = async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password!' });
     };
 
-    if (user.role == 'superadmin' && user.employeeType == 'groupD') {
+    if (user.role == 'staff') {
       if (!user.isActive) {
         return res.status(409).json({ message: "Please contact the super admin to know details." })
       }
     }
 
-    if (user.role !== 'superadmin' && user.role !== 'authority') {
-      const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId')
+    if (user.role !== 'superadmin' && user.role !=='staff' && user.role !== 'authority') {
+      const school = await School.findOne({ userId: user._id }) || await Student.findOne({ userId: user._id }).populate('schoolId') || await Teacher.findOne({ userId: user._id }).populate('schoolId') || await Parent.findOne({ userId: user._id }).populate('schoolId') || await SchoolStaff.findOne({ userId: user._id }).populate('schoolId') || await User.findOne({_id:user._id})
       if (user.role !== 'admin') {
         if (school.schoolId.status !== 'active' && !user.isActive) {
           return res.status(409).json({ message: 'You cannot login right now, please contact your school admin.' })
@@ -66,7 +66,7 @@ exports.userLogin = async (req, res) => {
 
     let payload = { userId: user._id, role: user.role };
 
-    if (user.role === 'teacher' || (user.role === 'superadmin' && user.employeeType === 'groupD') || user.role === 'authority') {
+    if (user.role === 'teacher' || user.role === 'staff' || user.role === 'authority') {
       payload.employeeType = user.employeeType;
     }
 

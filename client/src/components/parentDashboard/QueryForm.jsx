@@ -9,10 +9,12 @@ import {
 import { toast } from 'react-toastify';
 import contactImage from '../../assets/contact1.png';
 import Header from './layout/Header';
+import { useNavigate } from 'react-router-dom';
+
 const QueryForm = ({ goBack }) => {
   const dispatch = useDispatch();
   const { teacherNames, loading, error, successMessage } = useSelector((state) => state.query);
-
+    const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -216,9 +218,12 @@ const QueryForm = ({ goBack }) => {
             >
               Queries
             </button>
-            <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50">
-              Connect
-            </button>
+             <button
+                className="px-4 py-2 border border-blue-600 text-blue-600 rounded"
+                onClick={() => navigate('/meeting')}
+              >
+                Connect
+              </button>
           </div>
           <img
             src={contactImage}

@@ -7,8 +7,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.post('/register', protect, authorize('superadmin'), registerSchool);
-router.get('/schools',protect,authorize('superadmin'),getAllSchools);
-router.put('/school/:id/:status', protect,authorize('superadmin'), changeSchoolStatus);
+router.get('/schools', protect, authorize('superadmin'), getAllSchools);
+router.put('/school/:id/:status', protect, authorize('superadmin'), changeSchoolStatus);
 router.get('/dashboard', protect, authorize('superadmin'), getDashboard);
 router.post('/income', protect, authorize('superadmin'), addIncome);
 router.post('/expense', protect, authorize('superadmin'), addExpense);
@@ -17,13 +17,13 @@ router.post('/editIncome/:id', protect, authorize('superadmin'), editIncome);
 router.get('/incomeHistory/:id', protect, authorize('superadmin'), getUpdatedIncomeHistory);
 router.patch('/editExpense/:id', protect, authorize('superadmin'), editExpense);
 
-router.post('/blog', protect, authorize('superadmin'), upload.array('photos'),  postBlog);
+router.post('/blog', protect, authorize('superadmin'), upload.array('photos'), postBlog);
 router.put('/blog/:id', protect, authorize('superadmin'), upload.array('photos'), editBlog);
 router.delete('/blog/:id', protect, authorize('superadmin'), deleteBlog);
 
-router.post('/staff', protect, authorize('superadmin'), addSAStaffMember);
+router.post('/staff', protect, authorize('superadmin'), upload.single('photo'), addSAStaffMember);
 router.get('/staff', protect, authorize('superadmin'), getSAStaffMembers);
-router.patch('/staff/:id', protect, authorize('superadmin'), editSAStaffMember);
+router.patch('/staff/:id', protect, authorize('superadmin'), upload.single('photo'), editSAStaffMember);
 router.post('/task', protect, authorize('superadmin'), assignTaskToSAStaff);
 router.get('/tasks', protect, authorize('superadmin'), getSAAssignedTasks);
 
@@ -36,10 +36,8 @@ router.get('/query/:id', protect, authorize('superadmin'), getQueryById);
 router.post('/query/:id', protect, authorize('superadmin'), replyToQuery);
 
 router.post('/connect', protect, authorize('superadmin'), createConnect);
-router.get('/connect', protect, authorize('superadmin'), getConnects)   ;
+router.get('/connect', protect, authorize('superadmin'), getConnects);
 router.patch('/connect/:id', protect, authorize('superadmin'), editConnectInviteStatus);
-
-
 
 
 module.exports = router;

@@ -29,7 +29,6 @@ export const fetchTeachers = createAsyncThunk(
   }
 );
 
-// Add a new teacher
 export const addTeacherAsync = createAsyncThunk(
   'teachers/addTeacher',
   async (formData, { rejectWithValue }) => {
@@ -40,36 +39,34 @@ export const addTeacherAsync = createAsyncThunk(
       }
 
       const formDataToSend = new FormData();
-      formDataToSend.append('username', formData.username);
+
+      // Top-level fields
       formDataToSend.append('email', formData.email);
       formDataToSend.append('password', formData.password);
       formDataToSend.append('employeeType', formData.employeeType);
-      formDataToSend.append('profile[firstName]', formData.firstName);
-      formDataToSend.append('profile[lastName]', formData.lastName);
-      formDataToSend.append('profile[phoneNumber]', formData.phoneNumber);
-      formDataToSend.append('profile[gender]', formData.gender);
-      formDataToSend.append('profile[address]', formData.address);
-      formDataToSend.append('profile[dob]', formData.dob);
-      formDataToSend.append('profile[pob]', formData.pob);
-      formDataToSend.append('profile[employeeId]', formData.employeeId);
-      formDataToSend.append('profile[class]', formData.class);
-      formDataToSend.append('profile[section]', formData.section);
-      formDataToSend.append('profile[salary]', formData.salary);
 
-      if (Array.isArray(formData.subjects)) {
-        formData.subjects.forEach((subject, index) => {
-          formDataToSend.append(`profile[subjects][${index}]`, subject);
-        });
-      }
+      // Profile fields using bracket notation
+      Object.entries(formData.profile).forEach(([key, value]) => {
+        if (key === 'subjects') {
+          value.forEach((subject, index) => {
+            formDataToSend.append(`profile[subjects][${index}]`, subject);
+          });
+        } else if (key === 'photo' && value) {
+          formDataToSend.append('photo', value);
+        } else {
+          formDataToSend.append(`profile[${key}]`, value);
+        }
+      });
 
-      formDataToSend.append('education[university]', formData.university);
-      formDataToSend.append('education[degree]', formData.degree);
-      formDataToSend.append('education[startDate]', formData.startDate);
-      formDataToSend.append('education[endDate]', formData.endDate);
-      formDataToSend.append('education[city]', formData.city);
+      // Education fields (only one entry assumed)
+      const education = formData.education[0];
+      Object.entries(education).forEach(([key, value]) => {
+        formDataToSend.append(`education[0][${key}]`, value);
+      });
 
-      if (formData.photo) {
-        formDataToSend.append('photo', formData.photo);
+      // 🔍 Debug: Log keys and values
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0], ':', pair[1]);
       }
 
       const response = await axios.post(
@@ -77,32 +74,15 @@ export const addTeacherAsync = createAsyncThunk(
         formDataToSend,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      return {
-        _id: response.data._id,
-        userId: {
-          email: formData.email,
-          isActive: true,
-          employeeType: formData.employeeType,
-        },
-        profile: {
-          // firstName: formData.firstName,
-          fullname: formData.fullName,
-          photo: response.data.profile?.photo || '',
-          subjects: formData.subjects,
-          class: formData.class,
-          gender: formData.gender,
-          salary: formData.salary,
-          employeeId: formData.employeeId,
-        }
-      };
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return response.data;
+    }catch (error) {
+  console.error("❌ Server response error:", error.response?.data); // Add this line
+  return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );

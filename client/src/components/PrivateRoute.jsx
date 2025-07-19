@@ -9,7 +9,7 @@ const PrivateRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && userRole !== requiredRole) {
-    // Redirect to appropriate dashboard based on role
+    // Redirect to appropriate dashboard based on actual userRole
     switch (userRole) {
       case "admin":
         return <Navigate to="/admin/maindashboard" replace />;
@@ -23,6 +23,8 @@ const PrivateRoute = ({ children, requiredRole }) => {
         return <Navigate to="/staff/maindashboard" replace />;
       case "superadmin":
         return <Navigate to="/superadmin/maindashboard" replace />;
+      case 'driver': // ✅ NEW: Handle driver role redirection
+        return <Navigate to="/driver/maindashboard" replace />;
       default:
         return <Navigate to="/login" replace />;
     }

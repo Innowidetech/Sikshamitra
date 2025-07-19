@@ -9,9 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isLoading, error, token, userRole, employeeType } = useSelector(
-    (state) => state.auth
-  );
+  const { isLoading, error, token, userId, userRole, employeeType, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     useremail: "",
@@ -20,19 +18,21 @@ const Login = () => {
   });
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedRole = localStorage.getItem("userRole");
-    const storedEmpType = localStorage.getItem("employeeType");
+    const storedToken = localStorage.getItem('token');
+    const storedUserId = localStorage.getItem('userId');
+    const storedRole = localStorage.getItem('userRole');
+    const storedEmpType = localStorage.getItem('employeeType');
 
-    if (storedToken && storedRole) {
+    if (storedToken && storedRole && storedUserId) {
       redirectToDashboard(storedRole, storedEmpType);
     }
   }, []);
 
   useEffect(() => {
     if (token && userRole) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("userRole", userRole);
+      localStorage.setItem('token', token);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('userRole', userRole);
 
       if (employeeType) {
         localStorage.setItem("employeeType", employeeType);
@@ -40,14 +40,15 @@ const Login = () => {
         localStorage.removeItem("employeeType");
       }
 
-      toast.success("Login successful!");
+      // ✅ Store full user info if admin or superadmin (required for meeting host check)
+      if ((userRole === 'admin' || userRole === 'superadmin') && user) {
+        localStorage.setItem('admin', JSON.stringify(user));
+      }
 
-      //   // ✅ Console added for debugging
-      //   console.log('Redirecting with:', { userRole, employeeType });
-
+      toast.success('Login successful!');
       redirectToDashboard(userRole, employeeType);
     }
-  }, [token, userRole, employeeType]);
+  }, [token, userId, userRole, employeeType, user]);
 
   const redirectToDashboard = (role, empType = "") => {
     empType = empType?.toLowerCase();
@@ -56,18 +57,22 @@ const Login = () => {
       navigate("/superadmin/maindashboard");
     } else if (role === "staff") {
       navigate("/superadminstaff/maindashboard");
-    } else if (role === "teacher") {
-      if (empType === "groupd") {
-        navigate("/adminstaff/maindashboard");
-      } else {
-        navigate("/teacher/maindashboard");
+    }else if (role === 'teacher') {
+      if (empType === 'groupd') {
+        navigate('/adminstaff/maindashboard');
       }
-    } else if (role === "admin") {
-      navigate("/admin/maindashboard");
-    } else if (role === "parent") {
-      navigate("/parents/maindashboard");
-    } else if (role === "student") {
-      navigate("/student/maindashboard");
+      else if (empType === 'driver') {
+        navigate('/driver/maindashboard')
+      }
+      else {
+        navigate('/teacher/maindashboard');
+      }
+    } else if (role === 'admin') {
+      navigate('/admin/maindashboard');
+    } else if (role === 'parent') {
+      navigate('/parents/maindashboard');
+    } else if (role === 'student') {
+      navigate('/student/maindashboard');
     }
   };
 
@@ -166,6 +171,7 @@ const Login = () => {
                     {isLoading ? "Logging in..." : "LOGIN"}
                   </button>
                 </form>
+
                 <div className="flex items-center justify-end">
                   <label className="ml-2 mt-4 text-sm md:text-lg text-white hover:underline cursor-pointer">
                     Forgot password?

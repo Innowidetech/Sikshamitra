@@ -6,14 +6,15 @@ import axios from "axios";
 
 function AddStudent({ isOpen, onClose, onAdd }) {
   const [formData, setFormData] = useState({
-    username: "",
+    // username: "",
     email: "",
     password: "",
-    parentUsername: "",
+    // parentUsername: "",
     parentEmail: "",
     parentPassword: "",
-    firstName: "",
-    lastName: "",
+    // firstName: "",
+    // lastName: "",
+    fullname: "",
     gender: "",
     dob: "",
     photo: null,
@@ -21,15 +22,16 @@ function AddStudent({ isOpen, onClose, onAdd }) {
     registrationNumber: "",
     class: "",
     section: "",
-    fees: "",
+    classType: "",
+    // fees: "",
+
     fatherName: "",
     motherName: "",
     fatherPhoneNumber: "",
     motherPhoneNumber: "",
     fatherOccupation: "",
     motherOccupation: "",
-    fatherAddress: "",
-    classType: "",
+    parentAddress: "",
   });
 
   const handleSubmit = async (e) => {

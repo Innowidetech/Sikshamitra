@@ -111,9 +111,10 @@ const adminEmployeeSlice = createSlice({
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.loading = false;
-        state.staffList = action.payload;
+        state.staffList = action.payload.staff; // ✅ just store the array
         state.error = null;
       })
+
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

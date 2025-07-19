@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchQueryById,
   postReply,
-  clearSuccessMessage,
-  clearErrorMessage,
 } from '../../redux/parent/querySlice';
 import { fetchParentDashboard } from '../../redux/parent/parentProfileSlice';
 import Header from './layout/Header';

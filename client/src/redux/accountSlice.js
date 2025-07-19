@@ -5,7 +5,8 @@ const initialState = {
   accounts: [],
   revenueAndExpenses: {},
   teacherRequests: [],
-  updatedIncomeHistory: [],
+   updatedIncomeHistoryById: {}, // ✅ Individual income history
+  loadingIncomeHistoryById: {}, // ✅ Per-income loading status
   status: 'idle',
   error: null,
   errorAccounts: null,
@@ -13,6 +14,7 @@ const initialState = {
   errorTeacherRequests: null,
   errorIncomeHistory: null,
 };
+
 
 // Get token
 const getToken = () => localStorage.getItem('token');
@@ -235,10 +237,39 @@ export const editIncome = createAsyncThunk(
   }
 );
 
+// Fetch updated income history by ID
+export const fetchUpdatedIncomeHistoryById = createAsyncThunk(
+  'accounts/fetchUpdatedIncomeHistoryById',
+  async (incomeId, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`https://sikshamitra.onrender.com/api/admin/updatedIncomeHistory/${incomeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData.message || 'Failed to fetch income history by ID');
+      }
+
+      const data = await response.json();
+      return data.incomeHistory || []; // Ensure it's always an array
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Slice
 const accountSlice = createSlice({
   name: 'accounts',
   initialState,
+
+
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -355,6 +386,24 @@ const accountSlice = createSlice({
       .addCase(editIncome.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error.message;
+      })
+
+
+// Updated Income History by ID
+      .addCase(fetchUpdatedIncomeHistoryById.pending, (state, action) => {
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = true;
+      })
+      .addCase(fetchUpdatedIncomeHistoryById.fulfilled, (state, action) => {
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = false;
+        state.updatedIncomeHistoryById[incomeId] = action.payload;
+      })
+      .addCase(fetchUpdatedIncomeHistoryById.rejected, (state, action) => {
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = false;
+        state.updatedIncomeHistoryById[incomeId] = [];
+        state.errorIncomeHistory = action.payload || action.error.message;
       });
   },
 });

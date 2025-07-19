@@ -75,18 +75,27 @@ function Assignments() {
 
   return (
     <>
-      {/* Header & Breadcrumb */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center px-4 md:px-8 mt-[100px] gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl xl:text-[38px] font-light text-black">Assignments</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] md:w-[150px]" />
-          <p className="mt-2 text-sm md:text-base xl:text-[17px]">
-            <span>Home</span> {'>'}
-            <span className="font-medium text-[#146192] ml-1">Assignments</span>
-          </p>
-        </div>
-        <Header />
-      </div>
+      {/* Page Heading – Visible only on md (tablet) and above */}
+<div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+  {/* Left: Title + Breadcrumb */}
+  <div>
+    <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Assignment</h1>
+    <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+    <h1 className="mt-1 text-sm sm:text-base">
+      <span>Home</span> {">"}{" "}
+      <span className="font-medium text-[#146192]">Assignment</span>
+    </h1>
+  </div>
+
+  {/* Right: Header Icons (also visible in mobile) */}
+  <Header />
+</div>
+
+{/* Header only for mobile and tablet (below md) */}
+<div className="md:hidden">
+  <Header />
+</div>
+
 
       {/* Upload Status */}
       <div className="px-4 md:px-10">
@@ -110,7 +119,15 @@ function Assignments() {
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto rounded-lg shadow-md">
+            {/* Heading and Description for Assignment Table */}
+<div className="mt-4 md:mt-16 text-left  px-4">
+  <h2 className="text-xl md:text-2xl font-bold text-[#285A87]">Assignments</h2>
+  <p className="text-gray-600 mt-2 text-sm md:text-base">
+    View and manage your assignments assigned by teachers.
+  </p>
+</div>
+
+            <div className="hidden md:block overflow-x-auto rounded-lg shadow-md mt-10">
               <table className="min-w-[900px] w-full border border-gray-300 text-sm md:text-base bg-white">
                 <thead className="bg-[#f0f8ff] text-[#146192] font-semibold">
                   <tr>
@@ -122,14 +139,14 @@ function Assignments() {
                     <th className="border px-4 py-3 text-center">Chapter</th>
                     <th className="border px-4 py-3 text-center">Start Date</th>
                     <th className="border px-4 py-3 text-center">End Date</th>
-                    <th className="border px-4 py-3 text-center">Download</th>
+                    <th className="border px-4 py-3 text-center">Action</th>
                     <th className="border px-4 py-3 text-center">Submit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {classAssignments.map((assignment, index) => (
                     <tr key={assignment._id} className={index % 2 === 0 ? 'bg-white' : 'bg-[#f9fcff]'}>
-                      <td className="border px-4 py-3 text-center text-[#146192]">{assignment.assignmentName}</td>
+                      <td className="border px-4 py-3 text-center text-[#146192]">{assignment.chapterName}</td>
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.teacherName}</td>
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.class}</td>
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.section}</td>
@@ -137,14 +154,17 @@ function Assignments() {
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.chapter}</td>
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.startDate.slice(0, 10)}</td>
                       <td className="border px-4 py-3 text-center text-[#146192]">{assignment.endDate.slice(0, 10)}</td>
-                      <td className="border px-4 py-3 text-center">
-                        <button
-                          onClick={() => downloadFile(assignment.assignment)}
-                          className="bg-[#285A87] text-white px-3 py-1 rounded-md text-sm hover:bg-[#1e4a6d]"
-                        >
-                          Download
-                        </button>
-                      </td>
+                     <td className="border px-4 py-3 text-center">
+  <button
+    onClick={() => downloadFile(assignment.assignment)}
+    className="text-[#285A87] hover:text-[#1e4a6d] text-xl"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+    </svg>
+  </button>
+</td>
+
                       <td className="border px-4 py-3 text-center">
                         <button
                           onClick={() => handleUploadClick(assignment._id)}
@@ -167,47 +187,72 @@ function Assignments() {
             </div>
 
             {/* Mobile/Tablet Card View */}
-            <div className="md:hidden flex flex-col gap-6 mt-6">
-              {classAssignments.map((assignment) => (
-                <div key={assignment._id} className="border rounded-lg shadow-md bg-white p-4">
-                  {[['Assignment Name', assignment.assignmentName],
-                  ['Teacher Name', assignment.teacherName],
-                  ['Class', assignment.class],
-                  ['Section', assignment.section],
-                  ['Subject Name', assignment.subject],
-                  ['Chapter Name', assignment.chapter],
-                  ['Start Date', assignment.startDate.slice(0, 10)],
-                  ['End Date', assignment.endDate.slice(0, 10)],
-                  ].map(([label, value]) => (
-                    <div className="flex justify-between py-1 border-b last:border-none" key={label}>
-                      <span className="text-[#146192] font-semibold">{label}</span>
-                      <span className="text-right">{value}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between gap-2 mt-4">
-                    <button
-                      onClick={() => downloadFile(assignment.assignment)}
-                      className="flex-1 bg-[#285A87] text-white px-3 py-2 rounded-md text-sm hover:bg-[#1e4a6d]"
-                    >
-                      Download
-                    </button>
-                    <button
-                      onClick={() => handleUploadClick(assignment._id)}
-                      className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md text-sm hover:bg-green-700"
-                    >
-                      Submit
-                    </button>
-                    <input
-                      type="file"
-                      id={`fileInput-${assignment._id}`}
-                      accept=".pdf,.doc,.docx,.jpg,.png"
-                      className="hidden"
-                      onChange={(e) => handleFileChange(e, assignment._id)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="md:hidden flex flex-col gap-4 mt-6">
+  {classAssignments.map((assignment) => (
+    <div key={assignment._id} className="border rounded-lg shadow bg-white p-0 overflow-hidden">
+
+      {/* Top Right Buttons (in bordered header box) */}
+      <div className="flex justify-end items-center p-2 border-b">
+        <div className="flex gap-2">
+          {/* Download Icon Button */}
+          <button
+            onClick={() => downloadFile(assignment.assignment)}
+            className="bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
+            title="Download"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 text-[#285A87]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+            </svg>
+          </button>
+
+          {/* Submit Button */}
+          <button
+            onClick={() => handleUploadClick(assignment._id)}
+            className="bg-[#285A87] text-white px-4 py-[6px] rounded-md text-sm hover:bg-[#1e4a6d]"
+          >
+            Submit
+          </button>
+
+          <input
+            type="file"
+            id={`fileInput-${assignment._id}`}
+            accept=".pdf,.doc,.docx,.jpg,.png"
+            className="hidden"
+            onChange={(e) => handleFileChange(e, assignment._id)}
+          />
+        </div>
+      </div>
+
+      {/* Two-Column Data Grid */}
+ <div className="divide-y border rounded-lg overflow-hidden">
+  {[
+    ['Assignment Name', assignment.chapterName],
+    ['Teacher Name', assignment.teacherName],
+    ['Class', assignment.class],
+    ['Section', assignment.section],
+    ['Subject Name', assignment.subject],
+    ['Chapter', assignment.chapter],
+    ['Start Date', assignment.startDate.slice(0, 10)],
+    ['End Date', assignment.endDate.slice(0, 10)],
+  ].map(([label, value]) => (
+    <div key={label} className="grid grid-cols-2 divide-x">
+      <div className="px-4 py-2 text-[#146192] font-semibold bg-white">{label}</div>
+      <div className="px-4 py-2 text-black bg-white">{value}</div>
+    </div>
+  ))}
+</div>
+
+</div>
+  ))}
+</div>
+
           </>
         )}
       </div>

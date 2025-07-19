@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth.middleware');
-const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, requestBook, getBookRequests } = require('../controllers/student.controller');
+const { editStudentProfile, attendanceReport, getAdmitCard, submitAssignment, requestBook, getBookRequests, getTransportationDetails } = require('../controllers/student.controller');
 const { getOnlineLecturesAndTimetable, getSyllabus, getStudyMaterial, getExams, getResults, getAssignment, getClassPlan, getSubmittedAssignments, getResultById } = require('../controllers/teacher.controller');
 const { getProfile, getNotice, getDynamicCalendar, getDynamicCalendarByDate, getAimObjective, getBooks, getNotifications, markNotificationAsRead } = require('../controllers/admin.controller');
 const multer = require('multer');
@@ -41,6 +41,8 @@ router.post('/query/:id', protect, authorize('student'), replyToQuery);
 
 router.get('/connect', protect, authorize('student'), getConnects);
 router.post('/connect', protect, authorize('student'), createConnect);
+
+router.get('/transportation', protect, authorize('student'), getTransportationDetails);
 
 
 module.exports = router;

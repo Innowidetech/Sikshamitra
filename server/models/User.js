@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: { // for role as authority, consider email as loginId
+  email: { // for role as authority, consider loginId for email input
     type: String,
     required: true,
     unique: true,
@@ -12,17 +12,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['superadmin', 'admin', 'teacher', 'student', 'parent', 'authority'],
+    enum: ['superadmin', 'staff', 'admin', 'teacher', 'student', 'parent', 'authority'],
     required: true
   },
   employeeType: {
     type: String,
-    enum: ['teaching', 'librarian', 'accountant', 'admissionsManager', 'inventoryClerk', '-', 'groupD'],
+    enum: ['teaching', 'librarian', 'accountant', 'admissionsManager', 'inventoryClerk', '-', 'driver', 'groupD', 'blogsManager'],
     required: function () {
-      return this.role === 'teacher';
+      return this.role === 'teacher' || this.role === 'staff';
     },
   },
-  mobileNumber: { // only for staff
+  mobileNumber: { // only for school staff
     type: String,
     required: function () {
       return this.employeeType === 'groupD'

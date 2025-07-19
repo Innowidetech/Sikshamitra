@@ -257,31 +257,44 @@ function Inventory() {
             </table>
           </div>
         ) : (
-          <div className="bg-white rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y border-2">
-              <thead className="bg-[#FF9F43] text-white">
-                <tr>
-                  <th className="px-6 py-3 text-left">Sno</th>
-                  <th className="px-6 py-3 text-left">Item Name</th>
-                  <th className="px-6 py-3 text-left">Count</th>
-                  <th className="px-6 py-3 text-left">Sold To</th>
-                  <th className="px-6 py-3 text-left">Total Price</th>
-                </tr>
-              </thead>
-              <tbody className="bg-[#EDF4FF]">
-                {filteredSales.map((sale, index) => (
-                  <tr key={sale._id} className="border-b border-gray-200">
-                    <td className="px-6 py-4">
-                      {String(index + 1).padStart(2, "0")}
-                    </td>
-                    <td className="px-6 py-4">{sale.itemName}</td>
-                    <td className="px-6 py-4">{sale.count}</td>
-                    <td className="px-6 py-4">{sale.soldTo}</td>
-                    <td className="px-6 py-4">
-                      ₹{sale.price?.toLocaleString() || 0}
-                    </td>
-                  </tr>
-                ))}
+         <div className="bg-white rounded-lg overflow-hidden">
+  <table className="min-w-full divide-y border-2">
+    <thead className="bg-[#FF9F43] text-white">
+      <tr>
+        <th className="px-6 py-3 text-left">Sno</th>
+        <th className="px-6 py-3 text-left">Item Name</th>
+        <th className="px-6 py-3 text-left">Count</th>
+        <th className="px-6 py-3 text-left">Sold To</th>
+        <th className="px-6 py-3 text-left">Name</th> {/* ✅ NEW column */}
+        <th className="px-6 py-3 text-left">Total Price</th>
+      </tr>
+    </thead>
+    <tbody className="bg-[#EDF4FF]">
+      {filteredSales.map((sale, index) => (
+        <tr key={sale._id} className="border-b border-gray-200">
+          <td className="px-6 py-4">
+            {String(index + 1).padStart(2, "0")}
+          </td>
+          <td className="px-6 py-4">{sale.itemName}</td>
+          <td className="px-6 py-4">{sale.count}</td>
+          <td className="px-6 py-4 capitalize">{sale.soldTo}</td>
+
+          {/* ✅ NEW cell with Name + ID */}
+          <td className="px-6 py-4">
+            <div className="font-medium">{sale.soldToname}</div>
+            <div className="text-sm text-gray-600">
+              {sale.soldTo === "teacher"
+                ? `(Emp Id. ${sale.soldToId})`
+                : `(Reg No. ${sale.soldToId})`}
+            </div>
+          </td>
+
+          <td className="px-6 py-4">
+            ₹{sale.price?.toLocaleString() || 0}
+          </td>
+        </tr>
+      ))}
+
               </tbody>
             </table>
           </div>
@@ -330,31 +343,39 @@ function Inventory() {
                   className="flex bg-white rounded-lg overflow-hidden shadow-lg"
                 >
                   {/* Left Panel - Orange */}
-                  <div className="w-1/2 bg-[#FF9F43] p-4 text-white">
-                    <div className="space-y-6">
-                      <div className="font-medium">Sno</div>
-                      <div className="font-medium">Item Name</div>
-                      <div className="font-medium">Count</div>
-                      <div className="font-medium">Sold To</div>
-                      <div className="font-medium">Total Price</div>
-                    </div>
-                  </div>
+    <div className="w-1/2 bg-[#FF9F43] p-4 text-white">
+      <div className="space-y-6">
+        <div className="font-medium">S.No</div>
+        <div className="font-medium">Item Name</div>
+        <div className="font-medium">Count</div>
+        <div className="font-medium">Sold To</div>
+        <div className="font-medium">Name</div> {/* NEW */}
+        <div className="font-medium">Total Price</div>
+      </div>
+    </div>
 
-                  {/* Right Panel - Light Blue */}
-                  <div className="w-2/3 bg-[#EDF4FF] p-4">
-                    <div className="space-y-6">
-                      <div className="text-right">
-                        {String(index + 1).padStart(2, "0")}
-                      </div>
-                      <div className="text-right">{sale.itemName}</div>
-                      <div className="text-right">{sale.count}</div>
-                      <div className="text-right">{sale.soldTo}</div>
-                      <div className="text-right">
-                        ₹{sale.price?.toLocaleString() || 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Right Panel - Light Blue */}
+    <div className="w-2/3 bg-[#EDF4FF] p-4">
+      <div className="space-y-6 text-right">
+        <div>{String(index + 1).padStart(2, "0")}</div>
+        <div>{sale.itemName}</div>
+        <div>{sale.count}</div>
+        <div className="capitalize">{sale.soldTo}</div>
+        
+        {/* NEW: Name + ID below it */}
+        <div>
+          <div className="font-semibold">{sale.soldToname}</div>
+          <div className="text-xs text-gray-600">
+            {sale.soldTo === "teacher"
+              ? `(Emp Id. ${sale.soldToId})`
+              : `(Reg No. ${sale.soldToId})`}
+          </div>
+        </div>
+
+        <div>₹{sale.price?.toLocaleString() || 0}</div>
+      </div>
+    </div>
+  </div>
               ))}
         </div>
       </div>
@@ -442,132 +463,128 @@ function Inventory() {
         </div>
       )}
 
-      {/* Sale Modal */}
       {isSaleModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-md mx-4">
-            <h2 className="text-md md:text-2xl font-semibold mb-4 border-b border-[#000000]">
-              Sale Stock
-            </h2>
-            <form onSubmit={handleSaleSubmit}>
-              <div className="grid grid-cols-2 gap-6 ">
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Item Name
-                  </label>
-                  <select
-                    name="itemName"
-                    value={saleData.itemName}
-                    onChange={handleSaleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                    required
-                  >
-                    <option value="">Select an item</option>
-                    {items.map((item) => (
-                      <option key={item._id} value={item.itemName}>
-                        {item.itemName} (Available: {item.count})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Count
-                  </label>
-                  <input
-                    type="number"
-                    name="count"
-                    value={saleData.count}
-                    onChange={handleSaleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                    required
-                    min="1"
-                    max={
-                      items.find((item) => item.itemName === saleData.itemName)
-                        ?.count || 1
-                    }
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Total Price
-                  </label>
-                  <input
-                    type="text"
-                    value={`₹${calculateTotalPrice().toLocaleString()}/-`}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-gray-50"
-                    disabled
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Sold To
-                  </label>
-                  <select
-                    name="soldTo"
-                    value={saleData.soldTo}
-                    onChange={handleSaleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                    required
-                  >
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {saleData.soldTo === "student"
-                      ? "Student Name"
-                      : "Teacher Name"}
-                  </label>
-                  <input
-                    type="text"
-                    name="soldToname"
-                    value={saleData.soldToname}
-                    onChange={handleSaleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {saleData.soldTo === "student"
-                      ? "Registration No"
-                      : "Employee ID"}
-                  </label>
-                  <input
-                    type="text"
-                    name="soldToId"
-                    value={saleData.soldToId}
-                    onChange={handleSaleInputChange}
-                    className="mt-1 p-2 block w-full border rounded-md border-gray-300"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSaleModalOpen(false);
-                    resetSaleForm();
-                  }}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-[#146192] text-white px-4 py-2 rounded-full hover:bg-[#0f4c7a] transition-colors"
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Submit"}
-                </button>
-              </div>
-            </form>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-8 rounded-lg w-full max-w-md mx-4">
+      <h2 className="text-md md:text-2xl font-semibold mb-4 border-b border-[#000000]">
+        Sale Stock
+      </h2>
+      <form onSubmit={handleSaleSubmit}>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Item Name
+            </label>
+            <select
+              name="itemName"
+              value={saleData.itemName}
+              onChange={handleSaleInputChange}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+              required
+            >
+              <option value="">Select an item</option>
+              {items.map((item) => (
+                <option key={item._id} value={item.itemName}>
+                  {item.itemName} (Available: {item.count})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Count
+            </label>
+            <input
+              type="number"
+              name="count"
+              value={saleData.count}
+              onChange={handleSaleInputChange}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+              required
+              min="1"
+              max={
+                items.find((item) => item.itemName === saleData.itemName)
+                  ?.count || 1
+              }
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Total Price
+            </label>
+            <input
+              type="text"
+              value={`₹${calculateTotalPrice().toLocaleString()}/-`}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300 bg-gray-50"
+              disabled
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Sold To
+            </label>
+            <select
+              name="soldTo"
+              value={saleData.soldTo}
+              onChange={handleSaleInputChange}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+              required
+            >
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              {saleData.soldTo === "student" ? "Student Name" : "Teacher Name"}
+            </label>
+            <input
+              type="text"
+              name="soldToname"
+              value={saleData.soldToname}
+              onChange={handleSaleInputChange}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              {saleData.soldTo === "student" ? "Registration No" : "Employee ID"}
+            </label>
+            <input
+              type="text"
+              name="soldToId"
+              value={saleData.soldToId}
+              onChange={handleSaleInputChange}
+              className="mt-1 p-2 block w-full border rounded-md border-gray-300"
+              required
+            />
           </div>
         </div>
-      )}
+        <div className="flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setIsSaleModalOpen(false);
+              resetSaleForm();
+            }}
+            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full hover:bg-gray-300 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-[#146192] text-white px-4 py-2 rounded-full hover:bg-[#0f4c7a] transition-colors"
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Submit"}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
     </>
   );
 }

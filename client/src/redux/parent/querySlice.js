@@ -2,8 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // Auth header using token
+
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
+  if (!token) {
+    window.location.href = '/login';
+    throw new Error('No token found');
+  }
   return {
     headers: {
       Authorization: `Bearer ${token}`,

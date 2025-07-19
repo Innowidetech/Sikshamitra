@@ -1,5 +1,9 @@
 import React, { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+
+import { useDispatch } from 'react-redux';
+import { logoutUser } from './redux/authSlice';
+
 import Home from "./Home";
 import About from "./About";
 import Navbar from "./Navbar";
@@ -13,25 +17,45 @@ import MainDashboard from "./components/adminDashboard/MainDashboard";
 import ParentMainDashboard from "./components/parentDashboard/ParentMainDashboard";
 import TeacherMainDashboard from "./components/teacherDashboard/TeacherMaindashboard";
 import StudentMainDashboard from "./components/studentDashboard/StudentMainDashboard";
-import PrivateRoute from "./components/PrivateRoute";
-import { useDispatch } from "react-redux";
-import { logoutUser } from "./redux/authSlice";
-import Meeting from "./components/parentDashboard/Meeting";
 import AdminStaffDashboard from "./components/adminStaffDashboard/StaffMainDashboard";
 import SuperAdminStaffDashboard from "./components/superAdminStaffDashboard/SuperAdminStaffMainDashboard";
 import SuperAdminMainDashboard from "./components/superAdminDashboard/SuperAdminMainDashbord";
 import SuperAdminMetting from "./components/superAdminDashboard/SuperAdminMetting";
 import SuperAdminScheduleMeeting from "./components/superAdminDashboard/Connect/SuperAdminScheduleMetting";
-import Host from "./components/parentDashboard/Host";
-import Test from "./components/parentDashboard/Test";
+import DriverDashboard from './components/driverDashboard/driverMainDashboard';
+
+// Parent Meeting
+import Meeting from './components/parentDashboard/Meeting';
+import Host from './components/parentDashboard/Host';
+import Test from './components/parentDashboard/Test';
+
+// Student Meeting
+import ConnectPage from './components/studentDashboard/ConnectPage';
+import SchedulePage from './components/studentDashboard/SchedulePage';
+import InstantMeetingPage from './components/studentDashboard/InstantMeetingPage';
+
+// Admin Meeting
+import AdminConnectPage from './components/adminDashboard/AdminConnectPage';
+import AdminSchedulePage from './components/adminDashboard/AdminSchedulePage';
+import AdminInstantPage from './components/adminDashboard/AdminInstantPage';
+
+// Teacher Meeting
+import ScheduleMeeting from './components/parentDashboard/ScheduleMeeting';
+import TeacherMeeting from './components/teacherDashboard/TeacherMeeting';
+import CreateMeeting from './components/teacherDashboard/CreateMeeting';
+
+// Auth Guard
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   const location = useLocation();
-  const token = localStorage.getItem("token");
-  const userRole = localStorage.getItem("userRole");
-  const employeeType = localStorage.getItem("employeeType")?.toLowerCase();
   const dispatch = useDispatch();
 
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  const employeeType = localStorage.getItem('employeeType')?.toLowerCase();
+
+  // Handle logout on tab close
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("token");
@@ -43,6 +67,7 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dispatch]);
 
+  // Prevent back navigation
   useEffect(() => {
     if (token) {
       window.history.pushState(null, "", window.location.href);
@@ -83,6 +108,7 @@ function App() {
     }
   }
 
+  // Routes without navbar/footer
   const noNavbarFooterPaths = [
     "/login",
     "/applyonline",
@@ -94,8 +120,18 @@ function App() {
     "/meeting",
     "/superadminstaff",
     "/superadmin",
+    '/connect',
+    '/schedulepage',
+    '/instantmeeting',
+    '/adminconnectpage',
+    '/adminschedulepage',
+    '/admininstantpage',
+    '/scheduled-meeting',
+    '/teacher-meeting',
+    '/create-meeting',
+    '/driver',
     '/host',
-    '/test'
+    '/test',
   ];
 
   const isNoNavbarFooter = noNavbarFooterPaths.some((path) =>
@@ -115,12 +151,28 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
-        <Route path="/meeting" element={<Meeting />} />{" "}
 
+        {/* Parent Meeting */}
+        <Route path="/meeting" element={<Meeting />} />
         <Route path="/host/:meetingLink" element={<Host />} />
         <Route path="/test/:meetingLink" element={<Test />} />
-        {/* ✅ Corrected line */}
-        {/* Protected Routes */}
+        <Route path="/scheduled-meeting" element={<ScheduleMeeting />} />
+
+        {/* Teacher Meeting */}
+        <Route path="/teacher-meeting" element={<TeacherMeeting />} />
+        <Route path="/create-meeting" element={<CreateMeeting />} />
+
+        {/* Student Meeting */}
+        <Route path="/connect" element={<ConnectPage />} /> 
+        <Route path="/schedulepage" element={<SchedulePage />} />
+        <Route path="/instantmeeting" element={<InstantMeetingPage />} />
+
+        {/* Admin Meeting */}
+        <Route path="/adminconnectpage" element={<AdminConnectPage />} />
+        <Route path="/adminschedulepage" element={<AdminSchedulePage />} />
+        <Route path="/admininstantpage" element={<AdminInstantPage />} />
+
+        {/* Protected Dashboards */}
         <Route
           path="/admin/*"
           element={
@@ -193,6 +245,15 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/driver/*"
+          element={
+            <PrivateRoute requiredRole="teacher">
+              <DriverDashboard />
+            </PrivateRoute>
+          }
+        />
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
