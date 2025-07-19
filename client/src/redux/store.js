@@ -56,6 +56,8 @@ import adminConnectQueriesReducer from './adminConnectQueriesSlice';
 import meetingReducer from './parent/meetingSlice';
 import teacherQueryReducer from './teacher/teacherQuerySlice';
 import createMeetingReducer from './teacher/createMeetingSlice';
+import transReducer from './transSlice';
+import stransportationReducer from './student/stransportationSlice';
 
 import transportationReducer from './driver/transportationSlice';
 
@@ -113,8 +115,8 @@ const store = configureStore({
     meeting: meetingReducer,
     teacherQuery: teacherQueryReducer,
     createmeeting: createMeetingReducer,
-    transportation: transportationReducer,
-    ptransportation: ptransportationReducer,
+    transportation: transReducer,
+    stransportation: stransportationReducer,
   },
 });
 

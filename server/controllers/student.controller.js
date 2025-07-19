@@ -12,6 +12,8 @@ const Teacher = require('../models/Teacher');
 const Notifications = require('../models/Notifications');
 const Vehicles = require('../models/Vehicles');
 const Parent = require('../models/Parent');
+const moment = require('moment');
+
 
 //edit student profile
 exports.editStudentProfile = async (req, res) => {
@@ -431,13 +433,22 @@ exports.getTransportationDetails = async (req, res) => {
                 vehicleQuery['driverDetails.userId'] = loggedInId;
             }
 
-            const vehicle = await Vehicles.findOne(vehicleQuery).populate({
-                path: 'studentDetails.studentId',
-                select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf',
-            });
+            const vehicle = await Vehicles.findOne(vehicleQuery)
+                .populate({
+                    path: 'studentDetails.studentId',
+                    select: 'studentProfile.fullname studentProfile.class studentProfile.section studentProfile.childOf',
+                })
+                .populate({ path: 'driverDetails.userId', select: 'email', });
+
             if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }) }
 
             populatedVehicle = vehicle.toObject();
+
+            populatedVehicle.routeDetails.sort((a, b) => {
+                const timeA = moment(a.timing, 'hh:mm A').toDate();
+                const timeB = moment(b.timing, 'hh:mm A').toDate();
+                return timeA - timeB;
+            });
 
             for (let studentDetail of populatedVehicle.studentDetails) {
                 const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;

@@ -19,6 +19,7 @@ import BorrowingHistory from './BorrowingHistory';
 import ConnectQueries from './ConnectQueries';
 import QueryChatPage from './QueryChatPage';
 import QueriesPage from './QueriesPage'; // ✅ New Component
+// import StudentTrans from './StudentTrans';
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -102,6 +103,8 @@ const MainDashboard = () => {
         );
       case 'borrowingHistory':
         return <BorrowingHistory />;
+         case 'transportation':
+        return <StudentTrans/>;
       case 'connectqueries':
         return (
           <ConnectQueries

@@ -109,9 +109,11 @@ router.post('/connect', protect, authorize('admin'), createConnect);
 router.patch('/connect/:id', protect, authorize('admin'), editConnectInviteStatus);
 
 router.post('/createVehicle', protect, authorize('admin'), upload.fields([
+    { name: 'driverPhoto', maxCount: 1 },
     { name: 'driverLicense', maxCount: 1 },
     { name: 'driverAadharCard', maxCount: 1 },
     { name: 'driverPanCard', maxCount: 1 },
+    { name: 'attendantPhoto', maxCount: 1 },
     { name: 'attendantLicense', maxCount: 1 },
     { name: 'attendantAadharCard', maxCount: 1 },
     { name: 'attendantPanCard', maxCount: 1 },
@@ -121,9 +123,11 @@ router.get('/vehicle/:vehicleId/:id?', protect, authorize('admin'), getVehicleAn
 router.post('/vehicle/addStudent/:vehicleId', protect, authorize('admin'), assignStudentToVehicle);
 
 router.put('/vehicle/:vehicleId/:id?', protect, authorize('admin'), upload.fields([
+    { name: 'driverPhoto', maxCount: 1 },
     { name: 'driverLicense', maxCount: 1 },
     { name: 'driverAadharCard', maxCount: 1 },
     { name: 'driverPanCard', maxCount: 1 },
+    { name: 'attendantPhoto', maxCount: 1 },
     { name: 'attendantLicense', maxCount: 1 },
     { name: 'attendantAadharCard', maxCount: 1 },
     { name: 'attendantPanCard', maxCount: 1 },

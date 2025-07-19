@@ -1,251 +1,270 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
+
 import { fetchTeachers } from '../../redux/teachersSlice';
 import { fetchParents } from '../../redux/parentSlice';
 import { fetchStudents } from '../../redux/studentsSlice';
 import { fetchEmployees } from '../../redux/adminEmployee';
-import { createAdminInstantMeeting } from '../../redux/adminConnectQueriesSlice';
-import { toast } from 'react-toastify';
+import { createAdminMeeting } from '../../redux/adminConnectQueriesSlice';
 
 const AdminInstantPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [currentTime, setCurrentTime] = useState('');
   const [title, setTitle] = useState('');
   const [sendToSuperAdmin, setSendToSuperAdmin] = useState(false);
-  const [selectedMembers, setSelectedMembers] = useState({
+  const [selected, setSelected] = useState({
     teacher: [],
     parents: [],
     students: [],
     staff: [],
   });
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [currentTime, setCurrentTime] = useState('');
+  const [generated, setGenerated] = useState(null);
 
-  const teachers = useSelector((state) => state.teachers.teachers || []);
-  const parents = useSelector((state) => state.parents.parents || []);
-  const students = useSelector((state) => state.students.students || []);
-  const staffList = useSelector((state) => state.adminEmployee.staffList || []);
+  const teachers = useSelector((s) => s.teachers.teachers || []);
+  const parents = useSelector((s) => s.parents.parents || []);
+  const students = useSelector((s) => s.students.students || []);
+  const staff = useSelector((s) => s.adminEmployee.staffList || []);
+  const loading = useSelector((s) => s.adminConnectQueries.loading);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      dispatch(fetchTeachers());
-      dispatch(fetchParents());
-      dispatch(fetchStudents());
-      dispatch(fetchEmployees());
-    } else {
-      toast.error('Unauthorized: Please log in again.');
-      navigate('/login');
-    }
-  }, [dispatch, navigate]);
+    dispatch(fetchTeachers());
+    dispatch(fetchParents());
+    dispatch(fetchStudents());
+    dispatch(fetchEmployees());
+  }, [dispatch]);
 
-  const handleCheckboxChange = (role, id) => {
-    setSelectedMembers((prev) => {
-      const alreadySelected = prev[role].includes(id);
-      return {
-        ...prev,
-        [role]: alreadySelected
-          ? prev[role].filter((n) => n !== id)
-          : [...prev[role], id],
-      };
-    });
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      const weekday = now.toLocaleDateString([], { weekday: 'long' });
+      const date = now.toLocaleDateString([], { month: 'long', day: 'numeric' });
+      setCurrentTime(`${time}, ${weekday}, ${date}`);
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getId = (role, item) => {
+    try {
+      switch (role) {
+        case 'teacher':
+        case 'parents':
+        case 'staff':
+          return item?._id?.toString();
+        case 'students':
+          return item?.parent?.parentProfile?.parentOf?.[0]?.student?._id?.toString();
+        default:
+          return '';
+      }
+    } catch {
+      return '';
+    }
   };
 
-  const getUserLabel = (role, item) => {
+  const getLabel = (role, item) => {
     switch (role) {
       case 'teacher':
-        return `${item?.profile?.fullname || item?.name || 'Unnamed'} (${(item?.profile?.subjects || []).join(', ')})`;
+        return item?.profile?.fullname || item?.name || 'Unnamed';
       case 'parents':
         return item?.parentProfile?.fatherName || 'Unnamed';
-      case 'students': {
+      case 'students':
         const student = item?.parent?.parentProfile?.parentOf?.[0]?.student?.studentProfile;
-        return student
-          ? `${student.fullname || 'Unnamed'} (Class ${student.class || '-'}${student.section || ''})`
-          : 'Unnamed';
-      }
+        return student?.fullname || 'Unnamed';
       case 'staff':
-        return `${item?.name || 'Unnamed'} (${item?.employeeRole || 'Role N/A'})`;
+        return item?.name || 'Unnamed';
       default:
         return 'Unknown';
     }
   };
 
-  const getId = (role, item) => {
-    switch (role) {
-      case 'teacher':
-      case 'parents':
-        return item._id;
-      case 'students':
-        return item?.parent?.parentProfile?.parentOf?.[0]?.student?._id;
-      case 'staff':
-        return item._id;
-      default:
-        return '';
+  const handleCheck = (role, id) => {
+    setSelected((prev) => {
+      const already = prev[role].includes(id);
+      return {
+        ...prev,
+        [role]: already ? prev[role].filter((x) => x !== id) : [...prev[role], id],
+      };
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!title.trim()) {
+      toast.warn('Please enter a title.');
+      return;
+    }
+
+    const attendants = [];
+
+    const pushNames = (list, roleKey) => {
+      list.forEach((item) => {
+        const id = getId(roleKey, item);
+        if (selected[roleKey].includes(id)) {
+          const name = getLabel(roleKey, item);
+          if (name && name !== 'Unnamed') {
+            attendants.push(name); // ✅ Only pushing names as string
+          }
+        }
+      });
+    };
+
+    pushNames(teachers, 'teacher');
+    pushNames(parents, 'parents');
+    pushNames(students, 'students');
+    pushNames(staff, 'staff');
+
+    if (sendToSuperAdmin) {
+      attendants.push('Super Admin');
+    }
+
+    if (attendants.length === 0) {
+      toast.warn('Please select at least one member.');
+      return;
+    }
+
+    const meetingLink = `https://meet.jit.si/${title.trim().replace(/\s+/g, '-')}-${Date.now()}`;
+
+    const payload = {
+      title: title.trim(),
+      attendants, // ✅ Only names, not objects
+      meetingLink,
+    };
+
+    try {
+      const res = await dispatch(createAdminMeeting(payload)).unwrap();
+      toast.success('✅ Instant meeting created!');
+      setGenerated(res);
+      setTitle('');
+      setSelected({ teacher: [], parents: [], students: [], staff: [] });
+      setSendToSuperAdmin(false);
+    } catch (err) {
+      toast.error(err?.message || '❌ Failed to create meeting');
     }
   };
 
-  const renderUserGroup = (role, label, list) => {
-    const isOpen = openDropdown === role;
-
+  const renderDropdown = (role, label, list) => {
+    const isOpen = dropdownOpen === role;
     return (
-      <div key={role} className="relative">
+      <div className="relative w-[220px] text-sm font-medium">
         <label className="block text-sm mb-1">{label}</label>
-        <div
-          className="border rounded bg-gray-100 shadow text-sm px-2 py-2 cursor-pointer"
-          onClick={() => setOpenDropdown((prev) => (prev === role ? null : role))}
+        <button
+          type="button"
+          onClick={() => setDropdownOpen((prev) => (prev === role ? null : role))}
+          className="w-full border rounded px-2 py-1 bg-white flex justify-between items-center"
         >
-          {selectedMembers[role].length > 0
-            ? `${selectedMembers[role].length} selected`
-            : 'Select'}
-        </div>
+          {selected[role].length === 0 ? 'Select' : `${selected[role].length} selected`}
+          <span className="ml-2">&#9662;</span>
+        </button>
         {isOpen && (
-          <div className="absolute z-10 mt-1 w-full max-h-40 overflow-y-auto bg-white border rounded-md shadow-md">
-            {list.length > 0 ? (
-              list.map((item) => {
-                const id = getId(role, item);
-                if (!id) return null;
-                const isChecked = selectedMembers[role].includes(id);
-                return (
-                  <label
-                    key={id}
-                    className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100"
-                  >
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4"
-                      checked={isChecked}
-                      onChange={() => handleCheckboxChange(role, id)}
-                    />
-                    <span>{getUserLabel(role, item)}</span>
-                  </label>
-                );
-              })
-            ) : (
-              <div className="px-2 py-2 text-gray-500 text-sm">No records found</div>
-            )}
+          <div className="absolute z-10 mt-1 w-full border rounded bg-white shadow-md max-h-40 overflow-y-auto">
+            {list.map((item, i) => {
+              const id = getId(role, item);
+              if (!id) return null;
+              return (
+                <label key={id || i} className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected[role].includes(id)}
+                    onChange={() => handleCheck(role, id)}
+                    className="mr-2"
+                  />
+                  {getLabel(role, item)}
+                </label>
+              );
+            })}
           </div>
         )}
       </div>
     );
   };
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const weekday = now.toLocaleDateString([], { weekday: 'long' });
-      const date = now.toLocaleDateString([], {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      setCurrentTime(`${time}, ${weekday}, ${date}`);
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleGenerate = async () => {
-    const totalSelected =
-      selectedMembers.teacher.length +
-      selectedMembers.parents.length +
-      selectedMembers.students.length +
-      selectedMembers.staff.length +
-      (sendToSuperAdmin ? 1 : 0);
-
-    if (!title || totalSelected === 0) {
-      toast.error('Please enter a title and select at least one member.');
-      return;
-    }
-
-    const attendants = [];
-
-    const pushAttendants = (list, roleKey, roleLabel) => {
-      list.forEach((item) => {
-        const id = getId(roleKey, item);
-        if (selectedMembers[roleKey].includes(id)) {
-          attendants.push({ role: roleLabel, id });
-        }
-      });
-    };
-
-    pushAttendants(teachers, 'teacher', 'Teacher');
-    pushAttendants(parents, 'parents', 'Parent');
-    pushAttendants(students, 'students', 'Student');
-    pushAttendants(staffList, 'staff', 'Staff');
-
-    if (sendToSuperAdmin) {
-      attendants.push({ role: 'Admin', id: 'superadmin-fixed-id' });
-    }
-
-    try {
-      await dispatch(createAdminInstantMeeting({ title, attendants })).unwrap();
-      toast.success('Instant meeting created successfully!');
-      navigate('/adminconnectpage');
-    } catch (err) {
-      toast.error(err?.message || 'Failed to create instant meeting');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white text-gray-800 px-4 pt-12 relative font-sans">
-      {/* Top Bar */}
-      <div className="w-full bg-white flex justify-between items-center px-4 py-2 text-sm fixed top-0 left-0 shadow z-10">
-        <span className="font-medium cursor-pointer" onClick={() => navigate(-1)}>
+    <div className="min-h-screen w-full bg-white text-gray-800 font-sans">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div
+          className="text-sm text-blue-600 cursor-pointer font-medium"
+          onClick={() => navigate(-1)}
+        >
           &larr; Meet
-        </span>
-        <span>{currentTime}</span>
-      </div>
-
-      {/* Main Card */}
-      <div className="max-w-5xl mx-auto mt-16 border rounded-lg p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-blue-600 mb-4">Instant Meeting</h2>
-
-        {/* Title Input */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <input
-            type="text"
-            className="w-full border rounded px-3 py-2 text-sm bg-gray-100 focus:outline-none"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
         </div>
 
-        {/* Members */}
-        <h3 className="text-sm font-medium mb-2">Members</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          {/* Super Admin */}
-          <div>
-            <label className="block text-sm mb-1">Super Admin</label>
+      <div className="flex justify-center items-start pt-20">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-4xl border border-blue-400 bg-white p-6 rounded-md shadow-md"
+        >
+          <h2 className="text-blue-600 font-semibold text-lg mb-4">Generate Admin Meeting Link</h2>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Meeting Title</label>
             <input
-              type="checkbox"
-              className="w-4 h-4"
-              checked={sendToSuperAdmin}
-              onChange={() => setSendToSuperAdmin((prev) => !prev)}
+              type="text"
+              className="w-full border border-gray-300 rounded px-3 py-2 bg-blue-50"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </div>
 
-          {/* Dropdowns */}
-          {renderUserGroup('teacher', 'Teachers', teachers)}
-          {renderUserGroup('parents', 'Parents', parents)}
-          {renderUserGroup('students', 'Students', students)}
-          {renderUserGroup('staff', 'Staff', staffList)}
-        </div>
+          <h3 className="text-blue-600 font-semibold mb-2">Members</h3>
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                type="checkbox"
+                id="superAdminCheck"
+                checked={sendToSuperAdmin}
+                onChange={() => setSendToSuperAdmin((prev) => !prev)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="superAdminCheck" className="text-sm font-medium">
+                Super Admin
+              </label>
+            </div>
 
-        {/* Generate Button */}
-        <div className="text-center">
-          <button
-            className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700"
-            onClick={handleGenerate}
-          >
-            Generate Meet Link
-          </button>
-        </div>
+            {renderDropdown('teacher', 'Teachers', teachers)}
+            {renderDropdown('parents', 'Parents', parents)}
+            {renderDropdown('students', 'Students', students)}
+            {renderDropdown('staff', 'Staff', staff)}
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Generating...' : 'Generate Meet Link'}
+            </button>
+          </div>
+
+          {generated && (
+            <div className="mt-6 bg-green-50 border border-green-400 text-green-800 px-4 py-3 rounded">
+              <p className="font-semibold">Meeting Created!</p>
+              <p><strong>Title:</strong> {generated.title}</p>
+              <p>
+                <strong>Link:</strong>{' '}
+                <a
+                  href={generated.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  {generated.meetingLink}
+                </a>
+              </p>
+              <p><strong>Created:</strong> {new Date(generated.createdAt).toLocaleString()}</p>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );

@@ -127,11 +127,17 @@ const handleSubmit = async (e) => {
       {/* Toast container for notifications */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
-      {/* Top bar */}
-      <div className="w-full bg-white text-black flex justify-between items-center px-4 py-2 text-sm absolute top-0 left-0 shadow">
-        <span className="font-medium">&larr; Meet</span>
-        <span>{currentTime}</span>
-      </div>
+     {/* Top bar */}
+<div className="w-full bg-white text-black flex justify-between items-center px-4 py-2 text-sm absolute top-0 left-0 shadow">
+  <span
+    onClick={() => navigate(-1)} // Go back to previous page
+    className="font-medium cursor-pointer hover:underline"
+  >
+    &larr; Meet
+  </span>
+  <span>{currentTime}</span>
+</div>
+
 
       {/* Form content */}
       <div className="flex justify-center items-center h-full pt-10">

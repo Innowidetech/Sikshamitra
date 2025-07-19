@@ -7,7 +7,6 @@ const Notifications = require('../models/Notifications');
 const Vehicles = require('../models/Vehicles');
 const Student = require('../models/Student');
 const moment = require('moment');
-const mongoose = require('mongoose');
 const Parent = require('../models/Parent');
 
 
@@ -60,7 +59,7 @@ exports.editSATaskStatus = async (req, res) => {
         };
 
         const loggedInUser = await User.findById(loggedInId);
-        if (!loggedInUser || loggedInUser.role !== 'superadmin' || loggedInUser.employeeType !== 'groupD') {
+        if (!loggedInUser || loggedInUser.role !== 'staff') {
             return res.status(403).json({ message: 'Access denied. Only logged-in staff members can access.' });
         };
 
@@ -127,13 +126,11 @@ exports.editActionInTransportation = async (req, res) => {
             studentDetail.action.checkOutTime = '-';
             studentDetail.action.checkOut = 'true';
             studentDetail.action.checkIn = 'false';
-            studentDetail.action.Absent = 'false'
         } else if (action === 'checkOut' && studentDetail.action.checkOut == true) {
             studentDetail.action.checkOutTime = currentTimeIST;
             studentDetail.action.checkIn = 'true';
             studentDetail.action.checkOut = 'false';
-            studentDetail.action.Absent = 'true';
-        } else if (action === 'Absent' && studentDetail.action.Absent == true) {
+        } else if (action === 'Absent') {
             studentDetail.action.checkInTime = '-';
             studentDetail.action.checkOutTime = '-';
             studentDetail.action.checkIn = 'true';

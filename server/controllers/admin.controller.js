@@ -41,6 +41,7 @@ const EntranceExamResultsTemplate = require('../utils/EntranceExamResultsTemplat
 const Notifications = require('../models/Notifications');
 const SuperAdminStaff = require('../models/SuperAdminStaff');
 const Vehicles = require('../models/Vehicles');
+const moment = require('moment');
 
 
 //get profile
@@ -1966,11 +1967,13 @@ exports.createInstantAccount = async (req, res) => {
     const student = new Student({ schoolId: school._id, userId: studentUser._id, 'studentProfile.fullname': `${request.studentDetails.firstName} ${request.studentDetails.lastName}`, 'studentProfile.gender': request.studentDetails.gender, 'studentProfile.dob': request.studentDetails.dob, 'studentProfile.photo': request.studentDetails.photo.url, 'studentProfile.address': request.studentDetails.address, 'studentProfile.registrationNumber': registrationNumber, 'studentProfile.class': request.studentDetails.classToJoin, 'studentProfile.classType': classTypeIs, 'studentProfile.childOf': parentUser._id, 'studentProfile.fees': feesIs.tutionFees, createdBy: loggedInId });
     await student.save();
 
-    const parentProfile = {
+    let parentProfile = {
       fatherName: request.parentDetails.fatherName,
       fatherPhoneNumber: request.parentDetails.fatherPhone,
       parentAddress: request.parentDetails.address,
       parentOf: [student._id],
+      motherName:undefined,
+      motherPhoneNumber:undefined
     };
     if (request.parentDetails.motherName) { parentProfile.motherName = request.parentDetails.motherName }
     if (request.parentDetails.motherPhone) { parentProfile.motherPhoneNumber = request.parentDetails.motherPhone }
@@ -4222,7 +4225,7 @@ exports.getAccounts = async (req, res) => {
     const result = Object.keys(monthlyData).map(key => ({
       monthYear: key,
       totalFeesCollected: monthlyData[key].totalFees,
-      totalTransportationFees : monthlyData[key].totalTransportationFees,
+      totalTransportationFees: monthlyData[key].totalTransportationFees,
       totalAdmissionFees: monthlyData[key].totalAdmissionFees,
       otherIncome: monthlyData[key].otherIncome,
       totalIncome: monthlyData[key].totalIncome,
@@ -5062,14 +5065,14 @@ exports.createVehicle = async (req, res) => {
       return res.status(400).json({ message: "Please provide all the details to add vehicle." })
     }
 
-    const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
-    if (!driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
+    const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+    if (!driverPhoto?.[0] || !driverLicense?.[0] || !driverAadharCard?.[0] || !driverPanCard?.[0]) {
       return res.status(400).json({ message: 'One or more required files are missing.' });
     }
 
     if (vehicleDetails.vehicleType === 'Bus') {
       if (!attendantDetails || !attendantDetails.fullname || !attendantDetails.contact || !attendantDetails.address || !attendantDetails.licenseNumber || !attendantDetails.aadharCardNumber ||
-        !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
+        !attendantPhoto?.[0] || !attendantLicense?.[0] || !attendantAadharCard?.[0] || !attendantPanCard?.[0]) {
         return res.status(400).json({ message: "Please provide the attendant details and documents." })
       }
     }
@@ -5086,23 +5089,24 @@ exports.createVehicle = async (req, res) => {
 
     driverDetails.userId = user._id;
 
-    const driverUploads = await uploadImage([driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
-    if (driverUploads.length !== 3) {
+    const driverUploads = await uploadImage([driverPhoto[0], driverLicense[0], driverAadharCard[0], driverPanCard[0]]);
+    if (driverUploads.length !== 4) {
       return res.status(400).json({ message: 'One or more driver files failed to upload.' });
     }
-
-    driverDetails.license = driverUploads[0];
-    driverDetails.aadharCard = driverUploads[1];
-    driverDetails.panCard = driverUploads[2];
+    driverDetails.photo = driverUploads[0];
+    driverDetails.license = driverUploads[1];
+    driverDetails.aadharCard = driverUploads[2];
+    driverDetails.panCard = driverUploads[3];
 
     if (vehicleDetails.vehicleType === 'Bus') {
-      const attendantUploads = await uploadImage([attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
-      if (attendantUploads.length !== 3) {
+      const attendantUploads = await uploadImage([attendantPhoto[0], attendantLicense[0], attendantAadharCard[0], attendantPanCard[0]]);
+      if (attendantUploads.length !== 4) {
         return res.status(400).json({ message: 'One or more attendant files failed to upload.' });
       }
-      attendantDetails.license = attendantUploads[0];
-      attendantDetails.aadharCard = attendantUploads[1];
-      attendantDetails.panCard = attendantUploads[2];
+      attendantDetails.photo = attendantUploads[0];
+      attendantDetails.license = attendantUploads[1];
+      attendantDetails.aadharCard = attendantUploads[2];
+      attendantDetails.panCard = attendantUploads[3];
     }
 
     const vehicle = new Vehicles({ schoolId: school._id, vehicleDetails, routeDetails, driverDetails, attendantDetails: vehicleDetails.vehicleType === 'Bus' ? attendantDetails : undefined });
@@ -5193,9 +5197,16 @@ exports.getVehicleAndStudentById = async (req, res) => {
           path: 'studentDetails.studentId',
           select: 'studentProfile.fullname studentProfile.registrationNumber studentProfile.class studentProfile.section studentProfile.childOf',
         });
+
       if (!vehicle) { return res.status(404).json({ message: 'No vehicle found.' }); }
 
       populatedVehicle = vehicle.toObject();
+
+      populatedVehicle.routeDetails.sort((a, b) => {
+        const timeA = moment(a.timing, 'hh:mm A').toDate();
+        const timeB = moment(b.timing, 'hh:mm A').toDate();
+        return timeA - timeB;
+      });
 
       for (let studentDetail of populatedVehicle.studentDetails) {
         const childOfUserId = studentDetail?.studentId?.studentProfile?.childOf;
@@ -5221,17 +5232,18 @@ exports.getVehicleAndStudentById = async (req, res) => {
       }
 
       const childOfUserId = studentDetail.studentId?.studentProfile?.childOf;
-
       if (childOfUserId) {
         const parent = await Parent.findOne({ userId: childOfUserId }).select('parentProfile.fatherName parentProfile.motherName parentProfile.fatherPhoneNumber parentProfile.motherPhoneNumber parentProfile.parentAddress').lean();
         studentDetail.parent = parent ? parent.parentProfile : null;
       }
+
       return res.status(200).json(studentDetail);
     }
   } catch (err) {
     res.status(500).json({ message: "Internal server error.", error: err.message });
   }
 };
+
 
 
 exports.assignStudentToVehicle = async (req, res) => {
@@ -5308,82 +5320,107 @@ exports.editTransportationData = async (req, res) => {
       return res.status(400).json({ message: "Provide the vehicle id." });
     }
 
-    const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, vehicleDetails, driverDetails, attendantDetails } = req.body;
+    const { totalFee, amountPaid, amountDue, status, pickUpPoint, timing, lat, lng, vehicleDetails, driverDetails, attendantDetails } = req.body;
+    const { driverPhoto, driverLicense, driverAadharCard, driverPanCard, attendantPhoto, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
 
     const vehicle = await Vehicles.findOne({ schoolId: school._id, _id: vehicleId })
     if (!vehicle) { return res.status(404).json({ message: 'Vehicle not found' }) }
 
     if (!id) {
+      if (vehicleDetails || attendantDetails || driverDetails || driverPhoto || driverLicense || driverAadharCard || driverPanCard || attendantPhoto || attendantLicense || attendantAadharCard || attendantPanCard) {
 
-      if (vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && vehicle.attendantDetails == undefined)) {
-        return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
-      }
+        if (vehicleDetails && vehicle.vehicleDetails.vehicleType === 'Bus' && (!attendantDetails && !vehicle.attendantDetails)) {
+          return res.status(400).json({ message: "For vehicle type = Bus, attendant details are also required" })
+        }
 
-      if (vehicleDetails) {
-        const parsedVehicleDetails = typeof vehicleDetails === 'string' ? JSON.parse(vehicleDetails) : vehicleDetails;
-        for (let key in parsedVehicleDetails) {
-          if (parsedVehicleDetails[key] !== undefined && parsedVehicleDetails[key] !== null) {
-            vehicle.vehicleDetails[key] = parsedVehicleDetails[key];
+        if (vehicleDetails) {
+          const parsedVehicleDetails = typeof vehicleDetails === 'string' ? JSON.parse(vehicleDetails) : vehicleDetails;
+          for (let key in parsedVehicleDetails) {
+            if (parsedVehicleDetails[key] != null) {
+              vehicle.vehicleDetails[key] = parsedVehicleDetails[key];
+            }
           }
         }
-      }
 
-      if (driverDetails) {
-        const parsedDriverDetails = typeof driverDetails === 'string' ? JSON.parse(driverDetails) : driverDetails;
-        for (let key in parsedDriverDetails) {
-          if (parsedDriverDetails[key] !== undefined && parsedDriverDetails[key] !== null) {
-            vehicle.driverDetails[key] = parsedDriverDetails[key];
+        if (driverDetails) {
+          const parsedDriverDetails = typeof driverDetails === 'string' ? JSON.parse(driverDetails) : driverDetails;
+          for (let key in parsedDriverDetails) {
+            if (parsedDriverDetails[key] != null) {
+              vehicle.driverDetails[key] = parsedDriverDetails[key];
+            }
           }
         }
-      }
 
-      if (vehicle.vehicleDetails.vehicleType === 'Bus' && attendantDetails) {
-        const parsedAttendantDetails = typeof attendantDetails === 'string' ? JSON.parse(attendantDetails) : attendantDetails;
-
-        if (!vehicle.attendantDetails) vehicle.attendantDetails = {};
-
-        for (let key in parsedAttendantDetails) {
-          if (parsedAttendantDetails[key] !== undefined && parsedAttendantDetails[key] !== null) {
-            vehicle.attendantDetails[key] = parsedAttendantDetails[key];
+        if (vehicle.vehicleDetails.vehicleType === 'Bus' && attendantDetails) {
+          const parsedAttendantDetails = typeof attendantDetails === 'string' ? JSON.parse(attendantDetails) : attendantDetails;
+          if (!vehicle.attendantDetails) vehicle.attendantDetails = {};
+          for (let key in parsedAttendantDetails) {
+            if (parsedAttendantDetails[key] !== null) {
+              vehicle.attendantDetails[key] = parsedAttendantDetails[key];
+            }
           }
         }
-      }
 
-      const { driverLicense, driverAadharCard, driverPanCard, attendantLicense, attendantAadharCard, attendantPanCard } = req.files;
+        if (driverPhoto?.[0]) {
+          if (vehicle.driverDetails.photo) {
+            await deleteImage(vehicle.driverDetails.photo);
+          }
+          vehicle.driverDetails.photo = (await uploadImage([driverPhoto[0]]))[0];
+        }
+        if (driverLicense?.[0]) {
+          if (vehicle.driverDetails.license) {
+            await deleteImage(vehicle.driverDetails.license);
+          }
+          vehicle.driverDetails.license = (await uploadImage([driverLicense[0]]))[0];
+        }
+        if (driverAadharCard?.[0]) {
+          if (vehicle.driverDetails.aadharCard) {
+            await deleteImage(vehicle.driverDetails.aadharCard);
+          }
+          vehicle.driverDetails.aadharCard = (await uploadImage([driverAadharCard[0]]))[0];
+        }
+        if (driverPanCard?.[0]) {
+          if (vehicle.driverDetails.panCard) {
+            await deleteImage(vehicle.driverDetails.panCard);
+          }
+          vehicle.driverDetails.panCard = (await uploadImage([driverPanCard[0]]))[0];
+        }
+        if (attendantPhoto?.[0]) {
+          if (vehicle.attendantDetails.photo) {
+            await deleteImage(vehicle.attendantDetails.photo);
+          }
+          vehicle.attendantDetails.photo = (await uploadImage([attendantPhoto[0]]))[0];
+        }
+        if (attendantLicense?.[0]) {
+          if (vehicle.attendantDetails.license) {
+            await deleteImage(vehicle.attendantDetails.license);
+          }
+          vehicle.attendantDetails.license = (await uploadImage([attendantLicense[0]]))[0];
+        }
+        if (attendantAadharCard?.[0]) {
+          if (vehicle.attendantDetails.aadharCard) {
+            await deleteImage(vehicle.attendantDetails.aadharCard);
+          }
+          vehicle.attendantDetails.aadharCard = (await uploadImage([attendantAadharCard[0]]))[0];
+        }
+        if (attendantPanCard?.[0]) {
+          if (vehicle.attendantDetails.panCard) {
+            await deleteImage(vehicle.attendantDetails.panCard);
+          }
+          vehicle.attendantDetails.panCard = (await uploadImage([attendantPanCard[0]]))[0];
+        }
+        await vehicle.save();
+        return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
 
-      if (driverLicense?.[0]) {
-        await deleteImage(vehicle.driverDetails.license);
-        const uploaded = await uploadImage([driverLicense[0]]);
-        vehicle.driverDetails.license = uploaded[0];
       }
-      if (driverAadharCard?.[0]) {
-        await deleteImage(vehicle.driverDetails.aadharCard);
-        const uploaded = await uploadImage([driverAadharCard[0]]);
-        vehicle.driverDetails.aadharCard = uploaded[0];
+      else if (pickUpPoint && timing && lat && lng) {
+        vehicle.routeDetails.push({ pickUpPoint, timing, lat, lng });
+        await vehicle.save();
+        return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
       }
-      if (driverPanCard?.[0]) {
-        await deleteImage(vehicle.driverDetails.panCard);
-        const uploaded = await uploadImage([driverPanCard[0]]);
-        vehicle.driverDetails.panCard = uploaded[0];
+      else {
+        return res.status(400).json({ message: "Invalid request. Provide vehicle details or pickUpPoint details and timing." });
       }
-      if (attendantLicense?.[0]) {
-        await deleteImage(vehicle.attendantDetails.license);
-        const uploaded = await uploadImage([attendantLicense[0]]);
-        vehicle.attendantDetails.license = uploaded[0];
-      }
-      if (attendantAadharCard?.[0]) {
-        await deleteImage(vehicle.attendantDetails.aadharCard);
-        const uploaded = await uploadImage([attendantAadharCard[0]]);
-        vehicle.attendantDetails.aadharCard = uploaded[0];
-      }
-      if (attendantPanCard?.[0]) {
-        await deleteImage(vehicle.attendantDetails.panCard);
-        const uploaded = await uploadImage([attendantPanCard[0]]);
-        vehicle.attendantDetails.panCard = uploaded[0];
-      }
-      await vehicle.save();
-      return res.status(200).json({ message: "Vehicle details updated successfully.", vehicle });
-
     }
     else {
       let details = vehicle.studentDetails.id(id); //subdocument accessor
@@ -5421,18 +5458,12 @@ exports.editTransportationData = async (req, res) => {
           return res.status(200).json({ message: "Route removed successfully." });
         }
 
-        if (!details) {
-          if (!pickUpPoint || !timing) { return res.status(400).json({ message: "Please provide pick-up location and timing to add route" }) }
-          vehicle.routeDetails.push({ pickUpPoint, timing });
-          await vehicle.save()
-
-          return res.status(200).json({ message: "Route added successfully.", routes: vehicle.routeDetails });
-        }
-
-        if (!pickUpPoint && !timing) { return res.status(400).json({ message: "Please provide atlease pick-up location or timing to update." }) }
+        if (!pickUpPoint && !timing && !lat && !lng) { return res.status(400).json({ message: "Please provide atlease pick-up location details or timing to update." }) }
 
         if (pickUpPoint) details.pickUpPoint = pickUpPoint
         if (timing) details.timing = timing
+        if(lat) details.lat = lat
+        if(lng) details.lng = lng
         await vehicle.save()
         return res.status(200).json({ message: "Route updated successfully." })
       }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
+import Header from './layout/Header';
 import { fetchBooks, requestBook, clearRequestStatus } from '../../redux/student/bookSlice'; // Adjust path
 import { useNavigate } from 'react-router-dom';
 
@@ -71,21 +72,27 @@ const BookRequest = ({ onNavigateBorrowingHistory }) => {
   };
 
   return (
-    <div className="pt-20 px-4 md:px-8 relative">
+    <div className=" px-4  relative">
       {/* Header & Breadcrumb */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl xl:text-[38px] font-light text-black">Book Request</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[100px] md:w-[150px]" />
-          <p className="mt-2 text-sm md:text-base xl:text-[17px]">
-            <span>Home</span> {'>'}
-            <span className="font-medium text-[#146192] ml-1">Book Request</span>
-          </p>
-        </div>
-      </div>
+      {/* Page Heading – Desktop & Tablet (md and above) */}
+<div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+  {/* Left: Title + Breadcrumb */}
+  <div>
+    <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Book Request</h1>
+    <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+    <h1 className="mt-1 text-sm sm:text-base">
+      <span>Home</span> {">"}{" "}
+      <span className="font-medium text-[#146192]">Book Request</span>
+    </h1>
+  </div>
+
+  {/* Right: Header Icons (or anything else) */}
+  <Header />
+</div>
+
 
       {/* Search and Buttons */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-10">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-20">
         <div className="flex items-center w-full md:w-[400px] border border-gray-300 rounded-md overflow-hidden">
           <input
             type="text"

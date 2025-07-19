@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   LayoutDashboard, BookOpen, Users, 
   Users2, Calculator, Package, Library, FileSpreadsheet,
-  UserCog, Award, BookCopy, Menu, X
+  UserCog, Award, BookCopy, Menu, X, BusFront
 } from 'lucide-react';
 import { LuGraduationCap } from "react-icons/lu";
 import { FaGraduationCap } from "react-icons/fa6";
@@ -22,6 +22,7 @@ const menuItems = [
   { id: 'employee', icon: UserCog, label: 'Staff'},
   { id: 'results', icon: Award, label: 'Results'},
   { id: 'curriculum', icon: BookCopy, label: 'Curriculum'},
+  { id: 'transportation', icon: BusFront, label: 'Transportation' },
   { id: 'connectqueries', icon:  BsFillPersonLinesFill ,label: 'Connect&Queries' },
 ];
 

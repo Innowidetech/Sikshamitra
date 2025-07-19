@@ -5,8 +5,8 @@ const initialState = {
   accounts: [],
   revenueAndExpenses: {},
   teacherRequests: [],
-  updatedIncomeHistory: [],
-  updatedIncomeHistoryById: {}, // ✅ ADDED for individual income history
+   updatedIncomeHistoryById: {}, // ✅ Individual income history
+  loadingIncomeHistoryById: {}, // ✅ Per-income loading status
   status: 'idle',
   error: null,
   errorAccounts: null,
@@ -389,13 +389,20 @@ const accountSlice = createSlice({
       })
 
 
-.addCase(fetchUpdatedIncomeHistoryById.fulfilled, (state, action) => {
-  const incomeId = action.meta.arg;
-  state.updatedIncomeHistoryById[incomeId] = action.payload || [];
-})
-
+// Updated Income History by ID
+      .addCase(fetchUpdatedIncomeHistoryById.pending, (state, action) => {
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = true;
+      })
+      .addCase(fetchUpdatedIncomeHistoryById.fulfilled, (state, action) => {
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = false;
+        state.updatedIncomeHistoryById[incomeId] = action.payload;
+      })
       .addCase(fetchUpdatedIncomeHistoryById.rejected, (state, action) => {
-        state.status = 'failed';
+        const incomeId = action.meta.arg;
+        state.loadingIncomeHistoryById[incomeId] = false;
+        state.updatedIncomeHistoryById[incomeId] = [];
         state.errorIncomeHistory = action.payload || action.error.message;
       });
   },

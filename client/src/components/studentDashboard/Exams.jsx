@@ -70,22 +70,32 @@ function Exams() {
 };
 
   return (
-    <div className="px-4 md:px-12 py-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-light text-black xl:text-[38px]">Exams</h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {'>'}
-            <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Exams</span>
-          </h1>
-        </div>
-        <Header />
-      </div>
+   <div className="px-4 ">
+  {/* Page Heading – Only for md and above */}
+  <div className="hidden md:flex justify-between items-start md:items-center mx-4 md:mx-8 -mt-12">
+    {/* Left: Title + Breadcrumb */}
+    <div>
+      <h1 className="text-xl sm:text-2xl xl:text-[32px] font-normal text-black">Exams</h1>
+      <hr className="mt-1 border-[#146192] border-[1px] w-[120px] sm:w-[150px]" />
+      <h1 className="mt-1 text-sm sm:text-base">
+        <span>Home</span> {">"}{" "}
+        <span className="font-medium text-[#146192]">Exams</span>
+      </h1>
+    </div>
+
+    {/* Right: Header component */}
+    <Header />
+  </div>
+
+  {/* Only Header visible on mobile and tablet */}
+  <div className="md:hidden flex justify-end">
+    <Header />
+  </div>
+         
 
       {/* --- Exam Cards --- */}
-      <div className="mt-6 border border-[#0E66A4] rounded-xl p-4">
-        <h2 className="text-lg font-semibold mb-4">Upcoming Exams</h2>
+      <div className="mt-20 border border-[#0E66A4] rounded-xl p-4">
+        <h2 className="text-lg font-semibold mb-4 text-[#146192]">Upcoming Exams</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {examList.map((exam, index) => (
             <div
@@ -114,10 +124,35 @@ function Exams() {
           </span>
         </h2>
 
+        {/* Download Button Container */}
+<div className="mt-8 relative">
+  {/* Desktop & Laptop view – button on top right */}
+  <div className="hidden md:flex justify-end mb-4">
+    <button
+      onClick={toggleDropdown}
+      className="px-8 py-2 border-2 border-[#146192] text-white font-semibold rounded-2xl hover:bg-[#4b6f85] hover:text-white transition bg-[#146192]"
+    >
+      Download
+    </button>
+    {isDropdownOpen && (
+      <div className="absolute mt-12 right-0 border-2 border-[#00000045] bg-white rounded-lg shadow-lg z-10">
+        <ul className="list-none p-2">
+          <li
+            className="py-2 px-4 cursor-pointer hover:bg-[#D8E7F5] rounded-2xl text-[#285A87]"
+            onClick={downloadPDF}
+          >
+            PDF
+          </li>
+        </ul>
+      </div>
+    )}
+</div>
+</div>
+
         <div className="mt-6 overflow-x-auto hidden md:block">
           <table className="min-w-full border text-center">
             <thead>
-              <tr className="bg-[#146192] text-white">
+              <tr className="bg-[#ECECECCC] text-[#252525]">
                 <th className="py-3 px-6 border">Date</th>
                 <th className="py-3 px-6 border">Subject</th>
                 <th className="py-3 px-6 border">Timing</th>
@@ -151,7 +186,7 @@ function Exams() {
       </div>
 
       {/* Download Button */}
-      <div className="flex justify-center mt-8 relative">
+      {/* <div className="flex justify-center mt-8 relative">
         <button
           onClick={toggleDropdown}
           className="px-8 py-2 border-2 border-[#FF0303] text-[#FF0303] font-semibold rounded-2xl hover:bg-[#FF0303] hover:text-white transition"
@@ -170,7 +205,7 @@ function Exams() {
             </ul>
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

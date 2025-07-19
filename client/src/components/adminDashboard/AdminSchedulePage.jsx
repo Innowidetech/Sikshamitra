@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { createAdminScheduleMeeting , fetchAdminConnects } from '../../redux/adminConnectQueriesSlice';
+import { createAdminMeeting, fetchAdminConnects } from '../../redux/adminConnectQueriesSlice';
 import { fetchTeachers } from '../../redux/teachersSlice';
 import { fetchParents } from '../../redux/parentSlice';
 import { fetchStudents } from '../../redux/studentsSlice';
@@ -25,9 +25,10 @@ const AdminSchedulePage = () => {
   const parents = useSelector((state) => state.parents.parents || []);
   const students = useSelector((state) => state.students.students || []);
   const staffList = useSelector((state) => state.adminEmployee.staffList || []);
-  const connects = useSelector((state) => state.adminConnectQueries.connects); // ✅ Correct
+  const connects = useSelector((state) => state.adminConnectQueries.connects);
 
-
+  const adminData = JSON.parse(localStorage.getItem('admin'));
+  const adminName = adminData?.name || 'Admin';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -80,11 +81,11 @@ const AdminSchedulePage = () => {
   const renderDropdown = (label, type, list, getLabel, getId) => (
     <div className="relative w-full">
       <label className="block text-sm mb-1">{label}</label>
-     <div
-      className="border p-2 rounded-md cursor-pointer"
-      style={{ backgroundColor: '#1461921A' }}
-      onClick={() => setOpenDropdown((prev) => (prev === type ? null : type))}
-    >
+      <div
+        className="border p-2 rounded-md cursor-pointer"
+        style={{ backgroundColor: '#1461921A' }}
+        onClick={() => setOpenDropdown((prev) => (prev === type ? null : type))}
+      >
         {recipients.filter((r) => r.type === type).length > 0
           ? `${recipients.filter((r) => r.type === type).length} selected`
           : 'Enter Name'}
@@ -115,45 +116,53 @@ const AdminSchedulePage = () => {
     </div>
   );
 
-const handleSubmit = async () => {
-  if (!title || (recipients.length === 0 && !sendToSuperAdmin)) {
-    toast.error('Please fill all fields and select at least one recipient');
-    return;
-  }
-
-  const attendants = [];
-
-  recipients.forEach((r) => {
-    const name = resolveNameByTypeAndId(r.type, r.id);
-    if (name !== 'N/A') {
-      attendants.push(name);
+  const handleSubmit = async () => {
+    if (!title || (recipients.length === 0 && !sendToSuperAdmin)) {
+      toast.error('Please fill all fields and select at least one recipient');
+      return;
     }
-  });
 
-  if (sendToSuperAdmin) {
-    attendants.push('Super Admin');
-  }
+    const attendants = [];
 
-  const payload = {
-    title,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    attendants,
+    recipients.forEach((r) => {
+      const name = resolveNameByTypeAndId(r.type, r.id);
+      if (name !== 'N/A') {
+        attendants.push(name);
+      }
+    });
+
+    if (sendToSuperAdmin) {
+      attendants.push('Super Admin');
+    }
+
+    const meetingLink = `https://meet.jit.si/${title.replace(/\s+/g, '-')}-${Date.now()}`;
+
+    const payload = {
+      title,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      attendants,
+      meetingLink,
+      hostedByName: adminName,
+    };
+
+    console.log('✅ Final payload to be sent:', payload);
+
+    try {
+      await dispatch(createAdminMeeting(payload)).unwrap();
+      toast.success('🎉 Meeting scheduled successfully!');
+      dispatch(fetchAdminConnects());
+      // Clear the form
+      setTitle('');
+      setRecipients([]);
+      setSendToSuperAdmin(false);
+    } catch (err) {
+      console.error('❌ Error creating meeting:', err);
+      toast.error('❌ Failed to schedule meeting.');
+    }
   };
-
-  console.log("✅ Final payload to be sent:", payload);
-
-  try {
-    await dispatch(createAdminScheduleMeeting(payload)).unwrap();  // <-- fixed here
-    toast.success('🎉 Meeting scheduled successfully!');
-    dispatch(fetchAdminConnects()); // Refresh meetings list after successful creation
-  } catch (err) {
-    toast.error('❌ Failed to schedule meeting.');
-  }
-};
-
 
   const formattedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const formattedDate = new Date().toLocaleDateString(undefined, {
@@ -231,7 +240,6 @@ const handleSubmit = async () => {
         <div className="mb-6">
           <h3 className="text-sm font-semibold mb-2">Members</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Super Admin */}
             <div className="flex flex-col">
               <label className="text-sm mb-1">Super Admin</label>
               <input
@@ -242,7 +250,6 @@ const handleSubmit = async () => {
               />
             </div>
 
-            {/* Teachers */}
             {renderDropdown(
               'Teacher',
               'Teacher',
@@ -250,8 +257,6 @@ const handleSubmit = async () => {
               (t) => `${t?.profile?.fullname || t?.name || 'Unnamed'}`,
               (t) => t._id
             )}
-
-            {/* Parents */}
             {renderDropdown(
               'Parents',
               'Parent',
@@ -259,8 +264,6 @@ const handleSubmit = async () => {
               (p) => `${p?.parentProfile?.fatherName || 'Unnamed'}`,
               (p) => p._id
             )}
-
-            {/* Students */}
             {renderDropdown(
               'Students',
               'Student',
@@ -274,8 +277,6 @@ const handleSubmit = async () => {
               },
               (s) => s?.parent?.parentProfile?.parentOf?.[0]?.student?._id
             )}
-
-            {/* Staff */}
             {renderDropdown(
               'Staff',
               'Staff',
