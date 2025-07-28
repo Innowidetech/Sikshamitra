@@ -58,6 +58,8 @@ import teacherQueryReducer from './teacher/teacherQuerySlice';
 import createMeetingReducer from './teacher/createMeetingSlice';
 import transReducer from './transSlice';
 import stransportationReducer from './student/stransportationSlice';
+import forgotPasswordReducer from './forgotPasswordSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -113,8 +115,9 @@ const store = configureStore({
     meeting: meetingReducer,
     teacherQuery: teacherQueryReducer,
     createmeeting: createMeetingReducer,
-       transportation: transReducer,
-         stransportation: stransportationReducer,
+    transportation: transReducer,
+    stransportation: stransportationReducer,
+      forgotPassword: forgotPasswordReducer,
   },
 });
 

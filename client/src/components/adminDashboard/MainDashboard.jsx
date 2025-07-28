@@ -26,11 +26,15 @@ import AdminConnectQuries from './AdminConnectQuries';
 import AdminQueryForm from './AdminQueryForm';
 
 
+
 // 🆕 Import the new pages
 import SyllabusPage from './SyllabusPage';
 import ExamPage from './ExamPage'; // Optional
 import AdminQueryChat from './AdminQueryChat';
 import AdminTrans from './AdminTrans';
+import Track from './Track';
+import VehicleView from './VehicleView';
+import AddVehicle from './AddVehicle';
 
 
 const MainDashboard = () => {
@@ -202,6 +206,32 @@ const MainDashboard = () => {
     );
   }
 
+    if (location.pathname.startsWith('/admin/transportation/track/')) {
+  const parts = location.pathname.split('/');
+  const vehicleId = parts[4];
+
+  if (!vehicleId || vehicleId === 'undefined') {
+    return <div className="text-red-500 text-center mt-8">Invalid URL. Vehicle ID missing.</div>;
+  }
+
+  return <Track vehicleId={vehicleId} />;
+}
+
+
+  // If user visits /admin/transportation/view/:id
+if (location.pathname.startsWith('/admin/transportation/view')) {
+  const parts = location.pathname.split('/');
+  const vehicleId = parts[4];
+
+  if (!vehicleId || vehicleId === 'undefined') {
+    return <div className="text-red-500 text-center mt-8">Invalid URL. Vehicle ID missing.</div>;
+  }
+
+  return <VehicleView vehicleId={vehicleId} />;
+}
+
+
+
     // Handle custom pages by exact pathname first
     if (location.pathname === '/admin/profile') {
       return <AdminProfile />;
@@ -212,6 +242,11 @@ const MainDashboard = () => {
     if (location.pathname === '/admin/curriculum/exams') {
       return <ExamPage />;
     }
+
+    // AddVehicle route handler
+if (location.pathname === '/admin/transportation/add') {
+  return <AddVehicle />;
+}
 
     if (location.pathname === '/admin/connectqueries/queries') {
   return <AdminQueryForm />;
@@ -244,8 +279,10 @@ const MainDashboard = () => {
         return <ResolvePage setActiveTab={setActiveTab} />;
       case 'allbook':
         return <Allbook setActiveTab={setActiveTab} />;
-      case 'admission':
-        return <Admission />;
+        case 'admission':
+     return <Admission setActiveTab={setActiveTab} />;  // ⬅️ Pass setter so button can change tab
+   case 'admission-application':                      // ✅ NEW CASE
+    return <Application />;
       case 'classes':
         return <Classes />;
       case 'employee':

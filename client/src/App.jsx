@@ -12,6 +12,7 @@ import Admission from './Admission';
 import Contact from './Contact';
 import StudentOnlinePortal from './studentdashboard/StudentOnlinePortal';
 import Login from './Auth/Login';
+import ForgotPassword from './Auth/ForgotPassword';
 
 // Dashboards
 import MainDashboard from './components/adminDashboard/MainDashboard';
@@ -117,6 +118,7 @@ function App() {
     '/create-meeting',
     '/host',
     '/test',
+    '/forgot-password'
   ];
 
   const isNoNavbarFooter = noNavbarFooterPaths.some(path =>
@@ -136,6 +138,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
 
         {/* Parent Meeting */}
         <Route path="/meeting" element={<Meeting />} />
@@ -156,6 +160,7 @@ function App() {
         <Route path="/adminconnectpage" element={<AdminConnectPage />} />
         <Route path="/adminschedulepage" element={<AdminSchedulePage />} />
         <Route path="/admininstantpage" element={<AdminInstantPage />} />
+        
 
         {/* Protected Dashboards */}
         <Route
