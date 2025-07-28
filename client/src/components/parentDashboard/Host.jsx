@@ -4,10 +4,6 @@ import { useSocket } from '../../../src/hooks/useSocket';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-
-
-
 const presetBackgrounds = [
   '/images/bg1.jpg',
   '/images/bg-2.jpg',

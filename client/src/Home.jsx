@@ -1,292 +1,805 @@
-import React from 'react'
-import HomeImg from './assets/homeimg1.png';
-import HomeImg2 from './assets/homeimg2.png';
-import ApplyImg from './assets/apply.png';
-import RequestImg from './assets/request.png';
-import SubmitImg from './assets/submit.png';
-import School from './assets/school.png';
-import Communication from './assets/communication.png';
-import Data from './assets/datadriven.png';
-import Education from './assets/education.png';
-import HomeBlogimg2 from './assets/homeblog2.png';
-import HomeBlogimg1 from './assets/homeblog1.png';
-import { IoArrowForwardCircleOutline, IoArrowBackCircleOutline } from "react-icons/io5";
-import Testimonial1 from './assets/testimonial1.png';
-import Testimonial2 from './assets/testimonial2.png';
-import Testimonial3 from './assets/testimonial3.png';
+import Testimonial1 from "./assets/testimonial1.png";
+import Testimonial2 from "./assets/testimonial2.png";
+import Testimonial3 from "./assets/testimonial3.png";
+// home page
+import smallTeddy from "./assets/teddysmall.png";
+import sectionimg1 from "./assets/sectionimg1.png";
+import sectionimg2 from "./assets/sectionimg2.png";
+import sectionimg3 from "./assets/sectionimg3.png";
+import sectionimg4 from "./assets/sectionimg4.png";
 
-
+import trophyImg from "./assets/introsection1.png";
+import dashboardImg from "./assets/introsection3.png";
+import popupMenu from "./assets/introsection2.png";
+import mobile1 from "./assets/introsection4.png";
+import dollImg from "./assets/introsection5.png";
+import cloud from "./assets/cloudimg1.png";
+import studygirl from "./assets/dashboardimg1.png";
+import rainbow from "./assets/dashboardimg2.png";
+import planet from "./assets/blogsimg1.png";
+import pencil from "./assets/blogsimg2.png";
+import student from "./assets/blogsimg4.png";
+import teacher from "./assets/blogsimg3.png";
+import starGroup from "./assets/starsgroup.png";
+import bag from "./assets/bag.png";
+import kidplay from "./assets/kidplay.png";
+import card1 from "./assets/card1.png";
+import card11 from "./assets/card11.png";
+import card2 from "./assets/card2.png";
+import card21 from "./assets/card21.png";
+import card31 from "./assets/card31.png";
+import card3 from "./assets/card3.png";
+import value1 from "./assets/value1.png";
+import value2 from "./assets/value2.png";
+import value3 from "./assets/value3.png";
+import value4 from "./assets/value4.png";
+import rocket from "./assets/rocketimg.png";
+import star1 from "./assets/star1.png";
+import clip1 from "./assets/clip1.png";
+import stbg from "./assets/stbg.png";
+import admission1 from "./assets/admission1.png";
+import admission2 from "./assets/admisson2.png";
+import admission3 from "./assets/admisson3.png";
+import arrowDown from "./assets/admisson4.png";
+import admission5 from "./assets/admisson5.png";
+import Vector from "./assets/Vector5.png";
+import admission6 from "./assets/admisson6.png";
+import vector111 from "./assets/vector111.png";
+import {
+  FaBus,
+  FaBook,
+  FaUsers,
+  FaMoneyBill,
+  FaChalkboardTeacher,
+  FaClipboardList,
+} from "react-icons/fa";
 
 function Home() {
+  return (
+    <>
+      <div className="bg-[#FF9F1C] -mt-28  pb-12">
+        <section className="h-[500px] w-full border  shadow-[0px_2px_rgba(0,0,0,0.2)] pt-24   ">
+          <div className="bg-[#FF9F1C] p-6 md:p-12 relative overflow-hidden ">
+            {/* Teddy Bear - Top Left */}
+            <img
+              src={smallTeddy}
+              alt="Teddy Bear"
+              className="absolute top-6 left-6 w-16 h-16 md:w-20 md:h-20"
+            />
 
-    const blogs = [
-        {
-            img: HomeBlogimg1,
-            alt: 'Blog 1',
-            heading: 'The Importance of Effective Communication in Schools',
-            description: 'Learn how communication between teachers, students, and parents fosters a strong learning environment.',
-            link: '#'
-        },
-        {
-            img: HomeBlogimg2,
-            alt: 'Blog 2',
-            heading: 'Personalized Learning Strategies',
-            description: 'Discover strategies for tailoring learning to each student\'s individual needs.',
-            link: '#'
-        }
-    ];
+            {/* Content Wrapper */}
+            <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+              {/* Text Section */}
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl md:text-5xl font-bold text-white">
+                  Welcome to <br />
+                  <span className="text-white font-extrabold">
+                    ESikshamitra!
+                  </span>
+                </h1>
+                <p className="mt-4 text-[#2C2C2C] md:text-lg max-w-md">
+                  Our platform streamlines communication between teachers,
+                  students, and parents, ensuring that everyone stays informed
+                  and engaged in the learning process.
+                </p>
+              </div>
 
-    return (
-        <>
-            <section className="mt-[25px] lg:h-[737px] w-full overflow-hidden border rounded-2xl shadow-[0px_2px_rgba(0,0,0,0.2)]">
-                <div className='lg:mt-[111px] lg:ml-[73px] lg:mb-[182px] lg:min-h-[444px] lg:min-w-[615px] md:flex'>
-                    <div style={{ fontFamily: 'Poppins' }} className='flex flex-col ml-[24px] mt-[30px]'>
-                        <h1 className='text-[#1982C4] grid'>
-                            <span className='font-medium lg:text-[51.79px] text-[22px]'>Welcome to </span>
-                            <span className='text-[#FF9F1C] lg:text-[66.96px] text-[29px] font-medium'>Sikshamitra!</span>
-                        </h1>
-                        <h2 className='text-[#2C2C2C] font-extralight lg:text-[25.18px] lg:w-[611px] lg:mt-[4px] text-[15px] w-[286px] '>
-                            Our platform streamlines communication between teachers, students, and parents, ensuring that everyone stays informed and engaged in the learning process.
-                        </h2>
-                        <button className='bg-[#FF9F1C] text-white rounded-br-full rounded-tl-full  lg:w-[266px] lg:h-[72px] lg:mt-[14px] w-[152px] h-[41px] mt-[20px]'>
-                            Learn More
-                        </button>
-                    </div>
-                    <div className=''>
-                        <img src={HomeImg} alt="HomeImg" className='lg:w-[631px] lg:h-[506px] lg:ml-[160px] lg:mt-[-50px] overflow-hidden object-fill mt-[40px] mb-[100px]'/>
-                    </div>
-                </div>
-            </section>
-
-                <div className='flex justify-center items-center lg:w-[1025px] lg:h-[282px] lg:ml-[193px] lg:mr-[222px] lg:mt-[-30px] mt-[40px]'>
-                    <div className='text-center border bg-[#FF9F1C] rounded-md -translate-y-24 md:transform lg:translate-x-14 md:-translate-y-16 p-4 mx-4 lg:w-full max-w-5xl shadow-[4px_4px_4px_4px_rgba(0,0,0,0.1)]'>
-                        <div>
-                            <h1 className='text-white lg:text-[28.07px] font-extralight lg:w-full lg:ml-0 md:text-xl'>What makes us special ?</h1>
-                            <hr className='bg-white flex text-center justify-center mx-auto md:w-[100px] mt-[15px] mb-[15px] w-[110px]' />
-                            <h2 className='text-lg font-thin mb-[10px] text-white lg:text-[13.72px] lg:font-medium lg:mt-[11px] md:text-xl'>Here you can review some statistics about our School</h2>
-                        </div>
-                        <div className='grid md:grid-cols-4 text-white lg:mt-[60px] gap-4 lg:gap-0 md:mt-[40px]'>
-                            <label className='grid'>
-                                <span className='text-xl font-light md:text-3xl'>112</span>
-                                <span className='text-xs font-light md:mt-[10px] lg:mt-0'>Certified Teachers</span>
-                            </label>
-                            <label className='grid'>
-                                <span className='text-xl font-light md:text-3xl'>282,673</span>
-                                <span className='text-xs font-light md:mt-[10px] lg:mt-0'>Students Enrolled</span>
-                            </label>
-                            <label className='grid'>
-                                <span className='text-xl font-light md:text-3xl '>97%</span>
-                                <span className='text-xs font-light md:mt-[10px] lg:mt-0'>Passing to Universities</span>
-                            </label>
-                            <label className='grid'>
-                                <span className='text-xl font-light md:text-3xl'>100%</span>
-                                <span className='text-xs font-light md:mt-[10px] lg:mt-0'>Satisfied Parents</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div className='lg:mt-[10px] grid lg:flex items-center lg:w-[1259px] lg:h-[593.48px] lg:ml-[96px] lg:mr-[84.32px] mx-4 lg:mx-0 -translate-y-10 md:translate-y-0 md:ml-[40px]'>
-                    <div className=''>
-                        <img src={HomeImg2} alt="HomeImg2" className='lg:w-[678px] lg:h-[593.48px] md:h-full md:w-full' />
-                    </div>
-                    <div className='lg:w-[523px] lg:ml-[58px]' style={{ fontFamily: 'Poppins' }}>
-                        <h1 className='text-center text-2xl mb-4 md:mb-0 text-[#157ABA] lg:mr-[84.56px] lg:ml-[-50px] font-medium lg:text-[53.8px] lg:mb-[30px]'>OVERVIEW</h1>
-                        <label className='text-[#2C2C2C] text-sm text-wrap lg:font-light lg:text-[19.93px] lg:mr-[84.56px]'>
-                            Shikshamitra is a comprehensive school management platform that enhances the educational experience for all stakeholders. It streamlines administrative tasks and promotes seamless communication among teachers, students, and parents, ensuring everyone stays informed and engaged. By supporting personalized learning journeys, Shikshamitra empowers educators to cater to individual student needs effectively.
-                        </label>
-                    </div>
-                </div>
-
-                <div className=' py-6 md:mt-16 md:py-10 bg-[#FF9F1C] lg:-[1440px] lg:h-[613px] mt-[20px]' style={{ fontFamily: 'Poppins' }}>
-                <h1 className='text-2xl text-center text-white font-medium lg:text-[42.29px]'>ADMISSION PROCESS</h1>
-                <hr className='bg-white flex text-center justify-center mx-auto mt-2 md:w-[200px] lg:w-[110px] lg:mt-[30px] w-[120px]' />
-                <div className='md:mx-8 lg:flex justify-between gap-4 mx-auto py-6 lg:py-16 lg:ml-[122px] lg:mr-[122px] lg:w-[1270px] lg:h-[272.77px] lg:mt-[50px]'>
-                    <div className='bg-white p-4 mx-4 mt-4 lg:h-[272.77px] lg:w-[402.93px]'>
-                        <div className='flex justify-center items-center'>
-                            <img src={RequestImg} alt="Request Info" className='h-8 w-8 lg:h-[59px] lg:w-[59px]' />
-                            <label className='text-[#FF9F1C] text-lg flex justify-center items-center pl-4 lg:text-[26px] pt-2 lg:pt-3'>Request Info</label>
-                        </div>
-                        <div>
-                            <label className='text-[#507169] max-w-md md:max-w-xl block py-4 lg:text-[19px] font-extralight lg:mt-4'>Easily request detailed information about our programs, facilities, and admission requirements to help you make an informed decision.</label>
-                        </div>
-                    </div>
-                    <div className='bg-white p-4 mx-4 mt-4 lg:h-[272.77px] lg:w-[402.93px]'>
-                        <div className='flex justify-center items-center lg:mt-1'>
-                            <img src={ApplyImg} alt="Request Info" className='h-8 w-8 lg:h-[43px] lg:w-[45px]' />
-                            <label className='text-[#FF9F1C] text-lg pl-4  lg:text-[26px] pt-2 lg:pt-3'>Apply</label>
-                        </div>
-                        <div>
-                            <label className='text-[#507169] max-w-md md:max-w-xl block py-4 lg:text-[19px] font-extralight lg:mt-8'>Complete the online application form to initiate your journey towards joining our vibrant school community.</label>
-                        </div>
-                    </div>
-                    <div className='bg-white p-4 mx-4 mt-4 lg:h-[272.77px] lg:w-[402.93px]'>
-                        <div className='flex justify-center items-center lg:mt-4'>
-                            <img src={SubmitImg} alt="Request Info" className='h-8 w-8 lg:h-[34px] lg:w-[31.76px]' />
-                            <label className='text-[#FF9F1C] text-lg pl-4 lg:text-[26px]'>Submit</label>
-                        </div>
-                        <div>
-                            <label className='text-[#507169] max-w-md md:max-w-xl block py-4 lg:text-[19px] font-extralight lg:mt-5'>Review your application and submit it for processing, ensuring all required documents are included for a smooth admission experience.</label>
-                        </div>
-                    </div>
-                </div>
+              {/* Image Section */}
+              <div className="flex-1 grid grid-cols-2 gap-4">
+                <img
+                  src={sectionimg1}
+                  alt="Kid 1"
+                  className="rounded-xl object-cover w-full h-auto"
+                />
+                <img
+                  src={sectionimg2}
+                  alt="Kid 2"
+                  className="rounded-xl object-cover w-full h-auto"
+                />
+                <img
+                  src={sectionimg3}
+                  alt="Teddy Bear"
+                  className="rounded-xl object-cover w-34 ml-24 mb-6 h-auto"
+                />
+                <img
+                  src={sectionimg4}
+                  alt="Kid 3"
+                  className="rounded-xl object-cover w-full h-auto"
+                />
+              </div>
             </div>
 
-            <section className='mx-auto px-4 mt-[20px] py-4 md:mt-[30px] lg:py-16 lg:flex lg:mb-6 lg:min-w-[1195px] lg:min-h-[701px]'>
-                {/* Left side */}
-                <div className='lg:ml-[131px]'>
-                    <h1 className='text-[#1982C4] lg:text-[50px] text-3xl text-center lg:text-start'>OUR CORE VALUES</h1>
-                    <label className='block py-6 lg:w-[498px] lg:text-[21.83px] lg:mt-[41px] md:mx-6 lg:mx-0'>
-                        Shikshamitra provides a comprehensive school management solution that enhances the educational experience for everyone involved. Our platform simplifies administrative tasks, making school operations more efficient and reducing the workload for educators. It promotes seamless communication among teachers, students, and parents, ensuring all parties stay informed and connected. Additionally, Shikshamitra supports personalized learning journeys by offering tools tailored to individual student needs and tracking their progress effectively.
-                    </label>
-                    <button className='bg-[#1982C4] text-white font-semibold text-md rounded-br-full rounded-tl-full p-2 w-[150px] flex justify-center items-center mx-auto lg:w-[248px] lg:h-[67px] lg:mx-0 mb-[10px]'>
-                            Learn More
-                    </button>
-                </div>
-                {/* Right side */}
-                <div className='grid grid-cols-2 gap-8 md:grid-cols-2 lg:translate-x-6 py-4 lg:min-h-[701px] lg:min-w-[595px] lg:ml-[101px] md:mx-6 md:mt-[30px] lg:mx-0 lg:mt-0'>
-                    <div className='border rounded-xl shadow-[10px_10px_10px_rgba(0.1,0.1,0.1,0.1)] p-4 flex flex-col items-center lg:w-[280px] lg:h-[331px]'>
-                        <img src={School} alt="School" className='h-14 w-14 md:h-20 md:w-20 lg:h-[112px] lg:w-[110px] lg:mt-[31px]' />
-                        <label className='text-center lg:text-[23.96px] lg:mt-[43px]'>
-                            Comprehensive School Management
-                        </label>
-                    </div>
-                    <div className='border rounded-xl shadow-[10px_10px_10px_rgba(0.1,0.1,0.1,0.1)] p-4 flex flex-col items-center lg:w-[280px] lg:h-[331px]'>
-                        <img src={Communication} alt="Communication" className='h-14 w-14 md:h-20 md:w-20 lg:w-[167px] lg:h-[72px] lg:mt-[74px]' />
-                        <label className='text-center lg:text-[23.96px] lg:mt-[43px]'>
-                            Seamless Communication
-                        </label>
-                    </div>
-                    <div className='border rounded-md shadow-[10px_10px_10px_rgba(0.1,0.1,0.1,0.1)] p-4 flex flex-col items-center lg:w-[280px] lg:h-[331px]'>
-                        <img src={Data} alt="Data" className='h-14 w-14 md:h-20 md:w-20 lg:w-[99px] lg:h-[102px] lg:mt-[45px]' />
-                        <label className='text-center lg:text-[23.96px] lg:mt-[43px]'>
-                            Data-Driven Insights
-                        </label>
-                    </div>
-                    <div className='border rounded-md shadow-[10px_10px_10px_rgba(0.1,0.1,0.1,0.1)] p-4 flex flex-col items-center lg:w-[280px] lg:h-[331px]'>
-                        <img src={Education} alt="Education" className='h-14 w-14 md:h-20 md:w-20 lg:w-[99px] lg:h-[102px] lg:mt-[45px]' />
-                        <label className='text-center lg:text-[23.96px] lg:mt-[43px]'>
-                            Enhanced Learning Experience
-                        </label>
-                    </div>
-                </div>
-            </section>
+            {/* Teddy Bear - Bottom Right */}
+          </div>
+        </section>
+      </div>
 
-            <section className='lg:w-[1271px] lg:h-[440px] mx-auto px-4 py-12 mt-[20px] lg:mt-0 border bg-[#FF9F1C] rounded-xl'>
-                <div className='flex justify-center items-center'>
-                    <div className='text-center md:transform -translate-y-10 p-4 w-full'>
-                        <div className='lg:ml-[385px] lg:mr-[359px]'>
-                            <h1 className='text-white text-2xl md:text-2xl lg:w-[527px] lg:h-[157px] lg:text-[27.39px] lg:font-semibold py-2'>
-                                ARE YOU READY TO GIVE YOUR CHILD THE BEST EDUCATION EXPERIENCE ?
-                            </h1>
-                            <hr className='bg-white flex justify-center mx-auto md:w-[100px] lg:w-[175px] lg:mt-[-30px] w-[110px] border-2' />
-                        </div>
-                        <div className='mt-4 lg:w-[937px] lg:h-[108px] lg:ml-[180px] lg:mr-[154px] p-4 lg:p-0'>
-                            <label className='gap-6 text-white py-6 text-md lg:text-[18.86px] '>Contact us today to schedule a tour, meet our dedicated staff, and discover our engaging curriculum and nurturing environment. See firsthand why our parents are so happy and let’s work together to create a bright future for your child!</label>
-                        </div>
-                    </div>
-                </div>
-                <div className='flex items-center justify-center lg:pb-4'>
-                    <button className=" rounded-lg border px-4 py-1 bg-[#FFFFFF] shadow-[10px_10px_10px_rgba(0.1,0.1,0.1,0.1)] lg:w-[238px] lg:h-[55px] text-[#425E57] lg:text-[17px] ">
-                        CONTACT US
-                    </button>
-                </div>
-            </section>
+      {/*  End of Section */}
+      <div className="bg-[#FDF4EA] w-full overflow-hidden">
+        {/* Combined Container */}
+        <div className="relative w-full p-4 flex justify-center items-center min-h-screen">
+          {/* Trophy Icon */}
+          <img
+            src={trophyImg}
+            alt="Trophy"
+            className="absolute top-2 left-14 w-[230px] h-[230px] object-contain"
+          />
 
-            <section className="py-14 mt-[20px] lg:mt-0 mx-4 lg:mx-0">
-                <div className="md:flex shadow-[0px_2px_rgba(0,0,0,0.2)] rounded-lg border bg-[#1982C421] lg:w-[1261px] lg:h-[634px] mx-auto ">
-                    <div
-                        style={{ fontFamily: "Poppins" }}
-                        className="flex flex-col  md:p-6 lg:w-[415px] lg:h-[268px] lg:ml-[71px] lg:mt-[110px]"
-                    >
-                        <h1 className="text-3xl md:text-3xl lg:text-[36.89px] font-medium p-3">
-                            OUR LATEST <span className="text-[#1982C4]">BLOGS</span>
-                        </h1>
-                        <h2 className="text-md text-[#2C2C2C] md:max-w-lg lg:text-[16px] lg:font-light lg:w-[415px] p-3">
-                            Welcome to our blog section, where knowledge meets inspiration. Explore insightful articles, expert tips, and the latest trends in our field
-                        </h2>
-                        <button className="bg-[#194FC4] text-white text-md rounded-br-full rounded-tl-full p-2 w-[110px] ml-4 md:mx-0 lg:mt-[42px] lg:w-[156px] lg:h-[61px]">
-                            VIEW All
-                        </button>
-                        {/* Arrows for scrolling */}
-                        <div className="flex ml-4 lg:ml-0 md:mx-0 mt-4 lg:mt-[121px]">
-                            <button className="text-[#1982C4] text-3xl">
-                                <IoArrowBackCircleOutline />
-                            </button>
-                            <button className="text-[#1982C4] text-3xl">
-                                <IoArrowForwardCircleOutline />
-                            </button>
-                        </div>
-                    </div>
-                    {/* Right Side - Grid of Blog Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full overflow-x-hidden justify-center lg:w-[653px] lg:h-[433px] lg:mt-[121px] lg:ml-[42px]">
-                        {blogs.map((blog, index) => (
-                            <div key={index} className="p-6 w-[300px] flex flex-col justify-between h-full mx-auto md:mx-0">
-                                <img src={blog.img} alt={blog.alt} className="w-full h-40 object-cover rounded-md " />
-                                <h3 className="text-lg font-semibold mt-4">{blog.heading}</h3>
-                                <p className="text-[#000000] mt-2 text-sm flex-grow">{blog.description}</p>
-                                <button className="bg-[#194FC4BF] text-white text-md text-center rounded-br-full rounded-tl-full p-1 w-[110px] lg:w-[146px] lg:h-[46px] mt-[20px]">
-                                    VIEW All
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+          {/* Dashboard Panel */}
+          <img
+            src={dashboardImg}
+            alt="Dashboard UI"
+            className="absolute w-[730px] top-10 h-[650px] object-contain"
+          />
 
-            <section className="max-w-7xl mx-auto py-14 -translate-y-10 lg:translate-y-0">
-                <div>
-                    <h1 className="text-xl md:text-3xl text-center" style={{ fontFamily: 'Poppins' }}>
-                        <span className="text-[#000000]">OUR HAPPY</span> <span className="text-[#194FC4]">PARENTS</span>
-                    </h1>
-                    <hr className="border-[#507169] mx-auto w-[100px] mt-4 font-bold border" />
-                </div>
-                <div className="py-4">
-                    <p className="md:text-xl mx-4">
-                        "Discover how our dedicated community and nurturing environment have transformed the educational journey for our families. Hear firsthand from parents about the positive impact our school has had on their children's growth and development."
-                    </p>
-                </div>
-                <div className="grid  md:grid-cols-3 lg:grid-cols-3 md:justify-between gap-4 px-4 md:px-0 py-6 md:py-12 mx-auto justify-center items-center md:items-start md:mx-6">
-                    {/* First Testimonial */}
-                    <div className="relative flex-1 max-w-[280px] py-4 md:py-0">
-                        <div className="h-[250px] w-[220px] bg-[#FF3935] absolute transform rotate-12  rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
-                        <div className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl  lg:w-[260px] lg:h-[272px]"style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}>
-                            <h2 className="text-black text-center py-12 lg:py-16">
-                                "We are grateful for the nurturing environment where our daughter has flourished academically and socially!"
-                                <h3 className='text-start pl-4 py-4'>--Anitha Verma</h3>
+          {/* Menu Popup */}
+          <img
+            src={popupMenu}
+            alt="Popup Menu"
+            className="absolute left-[250px] top-[250px] w-[240px] h-[220px] object-contain"
+          />
 
-                            </h2>
-                            <img src={Testimonial1} alt="Testimonial1" className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]" />
-                        </div>
-                    </div>
+          {/* Mobile Preview Left */}
+          <img
+            src={mobile1}
+            alt="Mobile UI 1"
+            className="absolute right-[200px] top-[60px] w-[440px] h-[600px] object-contain"
+          />
 
-                    {/* Second Testimonial */}
-                    <div className="relative flex-1 max-w-[280px] py-4 md:py-0 mt-[30px] md:mt-0">
-                        <div className="h-[250px] w-[220px] bg-[#43665E] absolute transform rotate-12 rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
-                        <div className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl lg:w-[260px] lg:h-[272px]" style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}>
-                            <h2 className="text-black text-center py-12 lg:py-16">
-                                "We are grateful for the nurturing environment where our daughter has flourished academically and socially!"
-                                <h3 className='text-start pl-4 py-4'>--Anitha Verma</h3>
-                            </h2>
-                            <img src={Testimonial2} alt="Testimonial2" className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]" />
-                        </div>
-                    </div>
+          {/* Doll Bottom Right */}
+          <img
+            src={dollImg}
+            alt="Girl Character"
+            className="absolute bottom-0 top-[320px] right-[170px]   w-[280px] h-auto object-contain"
+          />
+        </div>
 
-                    {/* Third Testimonial */}
-                    <div className="relative flex-1 max-w-[280px] py-4 md:py-0 mt-[30px] md:mt-0">
-                        <div className="h-[250px] w-[220px] bg-[#C2089A] absolute transform rotate-12 rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
-                        <div className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl lg:w-[260px] lg:h-[272px]" style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}>
-                            <h2 className="text-black text-center py-12 lg:py-16">
-                                "We are grateful for the nurturing environment where our daughter has flourished academically and socially!"
-                                <h3 className='text-start pl-4 py-4'>--Anitha Verma</h3>
-                            </h2>
-                            <img src={Testimonial3} alt="Testimonial3" className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]" />
-                        </div>
-                    </div>
+        {/* Quote Section Below with no gap */}
+        <div className="w-full  flex flex-col md:flex-row justify-center items-center gap-6">
+          <img
+            src={studygirl}
+            alt="Girl Character"
+            className="w-[280px] md:w-[400px] ml-14"
+          />
+          <h2 className="text-[#146192] text-3xl font-bold font-['Roboto Slab'] max-w-2xl text-center md:text-left">
+            “Together on ESikshamitra, parents guide the way and children embark
+            on their journey—one click can unlock a world of opportunities.”
+          </h2>
+          <img
+            src={rainbow}
+            alt="Rainbow"
+            className="w-[100px] pt-[80px] mt-auto md:w-[120px] "
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-center items-start  p-4 pt-32 space-y-6 md:space-y-0">
+        {/* Left Card */}
+        <div className="relative w-full max-w-[700px] mx-auto bg-[#f7931e] text-white rounded-tr-[30px] rounded-bl-[0px] rounded-br-[0px] rounded-tl-[0px] px-10 py-12">
+          {/* Text Content */}
+          <div className="w-[60%] sm:w-[65%] z-10 relative">
+            <h2 className="text-xl sm:text-2xl font-semibold leading-snug">
+              Confidence that
+              <br />
+              builds a brighter
+              <br />
+              future
+            </h2>
+            <button className="mt-6 bg-white text-[#1d588e] font-medium px-4 py-2 rounded-md text-sm">
+              Learn More
+            </button>
+          </div>
+
+          {/* Background Image Behind Kid */}
+          <img
+            src={stbg} // your new background image
+            alt="Background Shape"
+            className="absolute -right-10 bottom-[-50px] w-[48%] z-0"
+          />
+
+          {/* Kid Image Overlapping */}
+          <img
+            src={kidplay}
+            alt="Kid"
+            className="absolute -right-1 bottom-0 w-[45%] sm:w-[42%] z-10"
+          />
+
+          {/* Optional Decorations */}
+          <div className="absolute top-[-60px] left-[-20px] text-white text-3xl z-0">
+            <img src={clip1} alt="Clip" className="w-[90px] h-[90px]" />
+          </div>
+          <div className="absolute bottom-6 left-1/3 text-white text-4xl z-0">
+            <img src={star1} alt="Star" className="w-[80px] h-[80px]" />
+          </div>
+        </div>
+
+        {/* Right Card */}
+        <div className=" relative w-full max-w-md mx-auto">
+          {/* Blue Container */}
+          <div className="bg-[#1d588e] text-white rounded-tr-[30px] rounded-bl-[0px] rounded-br-[0px] rounded-tl-[0px] p-6 pt-10 relative">
+            <h2 className="text-3xl md:text-4xl font-bold leading-snug  underline-offset-4">
+              Helping kids
+              <br />
+              to shoot their
+              <br />
+              dreams.
+            </h2>
+            <button className="mt-6 bg-white text-[#1d588e] font-semibold px-5 py-2 rounded-full">
+              Learn More
+            </button>
+
+            {/* Background elements (optional stars & rocket) */}
+            <div className="absolute top-[50px] right-[40px] opacity-20">
+              <img src={rocket} alt="Star" className="w-[150px] h-[150px]" />
+            </div>
+          </div>
+
+          {/* Bag Image Positioned Above */}
+          <img
+            src={bag}
+            alt="Bag"
+            className="absolute -bottom-[150px] right-[-80px] w-[100px] md:w-[250px] lg:w-[300px] z-10"
+          />
+        </div>
+      </div>
+
+      <div className="p-8 md:p-20  flex flex-col md:flex-row justify-evenly items-center gap-6  ">
+        <div>
+          <h1 className="text-[#146192] text-[50px] font-bold font-['Roboto Slab'] max-w-2xl text-center md:text-left">
+            Smart and clever kids <br /> ready to{" "}
+            <span className="text-[#f7931e]">fly high!</span>
+          </h1>
+        </div>
+        <div>
+          <p className="text-[#494949] text-[18px]  font-['Roboto Slab'] max-w-xl text-center md:text-left">
+            Through engaging play and challenges, children build sharper
+            thinking, smarter choices, and soaring confidence.
+          </p>
+        </div>
+      </div>
+
+      {/* Three Cards */}
+      <div className="flex flex-col md:flex-row gap-4 justify-center items-center p-6">
+        <div className="relative bg-[#1d588e] text-white rounded-tr-[30px] rounded-bl-[8px] rounded-br-[0px] rounded-tl-[0px] w-[318px] h-[318px] p-4 overflow-hidden">
+          <h2 className="text-[28px] font-semibold z-10 relative">
+            Life skills
+            <br />
+            for kids
+          </h2>
+
+          {/* Optional Decorative Icon (Paper Plane) */}
+          <img
+            src={card11}
+            alt="plane icon"
+            className="absolute bottom-[-20px] left-[-10px] w-[90px] opacity-30"
+          />
+
+          {/* Child Image (Overlapping from bottom) */}
+          <img
+            src={card1}
+            alt="Child"
+            className="absolute bottom-0 right-0 w-[260px] object-contain"
+          />
+        </div>
+        <div className="relative bg-[#B5C837] text-white rounded-tr-[30px] rounded-bl-[8px] rounded-br-[0px] rounded-tl-[0px] w-[318px] h-[318px] p-4 overflow-hidden">
+          <h2 className="text-[28px] font-semibold z-10 relative">
+            Imagination
+            <br />
+            is power
+          </h2>
+          <img
+            src={card21}
+            alt="plane icon"
+            className="absolute bottom-4 left-4 w-[70px] opacity-30"
+          />
+          {/* Child Image (Overlapping from bottom) */}
+          <img
+            src={card2}
+            alt="Child"
+            className="absolute bottom-0 right-0 w-[320px] object-contain"
+          />
+        </div>
+        <div className="relative bg-[#FF9F1C] text-white rounded-tr-[30px] w-[318px] h-[318px]  overflow-hidden">
+          {/* Text on the right */}
+          <h2 className="text-[28px] font-semibold z-10 absolute top-4 right-4 text-right">
+            Grow your
+            <br /> own wings
+          </h2>
+
+          {/* Child image on the left */}
+          <img
+            src={card3}
+            alt="Child"
+            className="absolute bottom-0  left-0 w-[220px] object-contain"
+          />
+
+          {/* Paper plane icon on the right-bottom */}
+          <img
+            src={card31}
+            alt="Plane Icon"
+            className="absolute bottom-[-50px] right-[-20px] w-[160px] opacity-30"
+          />
+        </div>
+      </div>
+      {/* Three Cards */}
+
+      {/* info of the student  */}
+      <img
+        src={cloud}
+        alt="Cloud"
+        className="md:width-[1400px] mb-[-80px] ml-6"
+      />
+      <div className="bg-[#1c4875] text-white  md:px-10 md:pt-10 ">
+        {/* Heading */}
+        <h2 className="text-2xl md:text-[40px] font-semibold leading-snug text-center md:text-left md:pb-8">
+          “Here’s our streamlined admission process to <br /> make things easier
+          for you.”
+        </h2>
+
+        {/* Horizontal Layout: Steps | Admission Button | Character */}
+
+        <div className="mt-10 flex flex-col lg:flex-row items-center justify-between ">
+          {/* Left: Step Buttons */}
+          <div className="flex flex-col space-y-6 md:ml-32">
+            {/* Step 1 */}
+            <div className="relative w-fit">
+              <div
+                className="h-14 w-20 rounded-l-full rounded-r-[8px] flex items-center justify-center pr-10 z-10"
+                style={{ backgroundColor: "#fca5a5" }}
+              >
+                <img src={admission1} alt="Step 1" className="h-6 w-6" />
+              </div>
+              <button
+                className="absolute top-1 left-10 pl-10 pr-6 py-3 rounded-full text-white font-medium shadow-md whitespace-nowrap"
+                style={{ backgroundColor: "#f95f62" }}
+              >
+                Click on ADMISSION
+              </button>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative w-fit">
+              <div
+                className="h-14 w-20 rounded-l-full rounded-r-[8px] flex items-center justify-center pr-10 z-10"
+                style={{ backgroundColor: "#F4D0A1" }}
+              >
+                <img src={admission2} alt="Step 2" className="h-6 w-6" />
+              </div>
+              <button
+                className="absolute top-1 left-10 pl-8 pr-6 py-3 rounded-full text-white font-medium shadow-md whitespace-nowrap"
+                style={{ backgroundColor: "#E8A349" }}
+              >
+                Choose online / offline
+              </button>
+            </div>
+
+            {/* Step 3 */}
+            <div className="relative w-fit">
+              <div
+                className="h-14 w-20 rounded-l-full rounded-r-[8px] flex items-center justify-center pr-10 z-10"
+                style={{ backgroundColor: "#FF90B6" }}
+              >
+                <img src={admission3} alt="Step 3" className="h-6 w-6" />
+              </div>
+              <button
+                className="absolute top-1 left-10 pl-8 pr-6 py-3 rounded-full text-white font-medium shadow-md whitespace-nowrap"
+                style={{ backgroundColor: "#E84980" }}
+              >
+                Enter details
+              </button>
+            </div>
+          </div>
+
+          {/* Center: ADMISSION Button */}
+          <div className="mt-6 lg:mt-0 flex flex-col items-center space-y-4">
+            <button className="bg-white text-[#1c4875] font-bold px-10 py-3 rounded-full shadow-md border-2 border-white hover:scale-105 transition-transform whitespace-nowrap md:mt-10">
+              ADMISSION
+            </button>
+
+            {/* Arrow image below button */}
+            <img
+              src={arrowDown}
+              alt="Arrow"
+              className="w-12 h-16 mt-12 ml-16 mt-auto"
+            />
+          </div>
+
+          {/* Right: Character Image */}
+          <div className="w-full lg:w-1/3 flex justify-center">
+            <img
+              src={admission5}
+              alt="Student Character"
+              className="max-w-[450px] md:max-w-[360px] h-auto"
+            />
+            <img
+              src={admission6}
+              alt="Arrow"
+              className="md:w-[110px] md:h-[130px] mt-auto"
+            />
+          </div>
+        </div>
+      </div>
+      <img src={cloud} alt="Cloud" className="width-full mt-[-50px]" />
+      <img
+        src={vector111}
+        alt="Cloud"
+        className="width-full mt-[-10px] ml-[40px]"
+      />
+      {/* info of the student  */}
+      <div className="relative">
+        <img
+          src={Vector}
+          alt="Cloud"
+          className="absolute width-full m-auto ml-[1200px] mt-[-190px] "
+        />
+      </div>
+      <h1 className=" flex justify-center text-2xl md:text-3xl font-semibold text-[#292929] mb-6 ">
+        OUR CORE VALUES
+      </h1>
+
+      {/* four Cards */}
+      <div></div>
+
+      <div className="flex flex-col font-roboto md:flex-row gap-4 justify-center items-center p-6 m-12 pb-20">
+        <div className="relative bg-[#f8f1e8] w-[240px] h-[240px] rounded-[40px] flex flex-col items-center justify-center shadow-md">
+          <img src={value1} alt="icon" className="w-14 h-14 mb-2" />
+
+          <p className="text-center text-[20px] font-medium text-black leading-tight">
+            Seamless <br /> Communication
+          </p>
+
+          <div className="absolute bottom-[-12px] w-12 h-8 bg-[#f7931e] rounded-full"></div>
+        </div>
+        <div className="relative bg-[#f8f1e8] w-[240px] h-[240px] rounded-[40px] flex flex-col items-center justify-center shadow-md">
+          <img src={value2} alt="icon" className="w-14 h-14 mb-2" />
+
+          <p className="text-center text-[20px] font-medium text-black leading-tight">
+            Seamless <br />
+            Communication
+          </p>
+
+          <div className="absolute bottom-[-12px] w-12 h-8 bg-[#f7931e] rounded-full"></div>
+        </div>
+        <div className="relative bg-[#f8f1e8] w-[240px] h-[240px] rounded-[40px] flex flex-col items-center justify-center shadow-md">
+          <img src={value3} alt="icon" className="w-14 h-14 mb-2" />
+
+          <p className="text-center text-[20px] font-medium text-black leading-tight">
+            Data-Driven <br /> Insights
+          </p>
+
+          <div className="absolute bottom-[-12px] w-12 h-8 bg-[#f7931e] rounded-full"></div>
+        </div>
+        <div className="relative bg-[#f8f1e8] w-[240px] h-[240px] rounded-[40px] flex flex-col items-center justify-center shadow-md">
+          <img src={value4} alt="icon" className="w-14 h-14 mb-2" />
+
+          <p className="text-center text-[20px] font-medium text-black leading-tight">
+            Enhanced <br /> Learning Experience
+          </p>
+
+          <div className="absolute bottom-[-12px] w-12 h-8 bg-[#f7931e] rounded-full"></div>
+        </div>
+      </div>
+      {/* four Cards */}
+
+      {/*  End of 2 */}
+      <h1 className="flex justify-center text-3xl font-bold text-[#146192]">
+        FEATURES
+      </h1>
+      <section className="bg-[#fdf5ef] min-h-screen flex items-center justify-center px-4 py-16">
+        <div className="relative w-full max-w-6xl h-[650px]">
+          {/* Center Orange Circle - Lower z-index */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
+            <div className="bg-[#FF9F1C] text-white rounded-full w-[420px] h-[420px] flex flex-col items-center justify-center text-center shadow-xl border-8 border-white">
+              <h1 className="text-[46px] font-bold leading-tight">
+                ESikshamitra
+              </h1>
+              <p className="text-[12px] mt-3 max-w-[280px] px-4 font-medium">
+                One Platform for All Educational Needs
+              </p>
+            </div>
+          </div>
+
+          {/* Top Row Cards - Higher z-index to appear above circle */}
+          <div className="absolute top-4 left-[30%]   -translate-x-[180px] z-20 ">
+            <div className="bg-white shadow-lg rounded-lg   p-5 text-center space-y-3 md:w-[360px] md:h-[160px] border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaBook size={28} className="text-[#1d588e]" />
                 </div>
-            </section>
-        </>
-    );
+                <h2 className="font-semibold text-xl text-[#1d588e] pl-4">
+                  Library
+                </h2>
+              </div>
+              <p className="text-gray-600 text-md leading-relaxed">
+                A complete digital library system with easy book issuing,
+                returning, and real-time inventory tracking.
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute top-4 left-[40%] translate-x-[180px]  z-20">
+            <div className="bg-white shadow-lg rounded-lg w-64 p-5 md:w-[360px] md:h-[160px] text-center space-y-3 border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaBus size={28} className="text-[#1d588e]" />
+                </div>
+                <h2 className="font-semibold text-xl text-[#1d588e] pl-2">
+                  Transportation
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Seamless transport updates for parents with real-time driver
+                details and live tracking.
+              </p>
+            </div>
+          </div>
+
+          {/* Middle Row Left/Right - Same level as circle */}
+          <div className="absolute top-1/2 left-4 -translate-y-1/2 z-5">
+            <div className="bg-white shadow-lg rounded-lg md:w-[360px] md:h-[160px] p-5 text-center space-y-3 border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaChalkboardTeacher size={28} className="text-[#1d588e]" />
+                </div>
+                <h2 className="font-semibold text-xl text-[#1d588e] pl-3">
+                  Meeting & Feedback System
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Unified system for queries, feedback, and meetings—ensuring
+                seamless communication and connection.
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 z-5">
+            <div className="bg-white shadow-lg rounded-lg md:w-[360px] md:h-[160px] p-5 text-center space-y-3 border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaMoneyBill size={28} className="text-[#1d588e]" />
+                </div>
+                <h2 className="font-semibold text-xl text-[#1d588e] pl-2">
+                  Accounts
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Comprehensive account management system with monthly and yearly
+                reports of income and expenditure.
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Row Cards - Higher z-index to appear above circle */}
+          <div className="absolute bottom-4 left-[30%] -translate-x-[180px] z-20">
+            <div className="bg-white shadow-lg rounded-lg md:w-[360px] md:h-[160px] p-5 text-center space-y-3 border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaUsers size={28} className="text-[#1d588e]" />
+                </div>
+                <h2 className="font-semibold text-xl text-[#1d588e]">
+                  Admissions
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                From entrance exams to admissions, manage the entire process
+                online with ease and efficiency.
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute bottom-4 left-[40%] translate-x-[180px] -translate-x-64 z-20">
+            <div className="bg-white shadow-lg md:w-[360px] md:h-[160px] rounded-lg w-64 p-5 text-center space-y-3 border border-gray-100">
+              <div className="flex justify-start">
+                <div className="flex justify-center">
+                  <FaClipboardList size={28} className="text-[#1d588e]" />
+                </div>
+                <h2 className="font-semibold text-xl text-[#1d588e] pl-2">
+                  Role-Based Management
+                </h2>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Role-based access for admins, teachers, parents, and students
+                with online classes, meetings, and attendance – all in one
+                platform.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/*  End of 2 */}
+
+      {/* Blog section */}
+      <div className="bg-gradient-to-b from-white to-[#FDF4EA] py-10 px-4 md:px-12 text-center">
+        <div className="flex justify-center items-center p-12">
+          <img src={planet} alt="Planet" className="w-40 h-30 mt-auto" />
+          <div>
+            <h2 className="text-xl md:text-2xl font-semibold text-[#146192] mb-2">
+              “Find the Right School for a brighter Future”.
+            </h2>
+            <p className="text-sm md:text-base text-[#146192] mb-6">
+              Discover top schools for classes 1 to 12 near you. Compare,
+              explore & make informed decision.
+            </p>
+            <h3 className="text-2xl md:text-3xl font-semibold text-[#146192] mb-6">
+              OUR LATEST BLOGS
+            </h3>
+          </div>
+          <img src={pencil} alt="Pencil" className="w-40 h-30 mb-10" />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-6 justify-center items-center ">
+          <div className="bg-[#FFFFFF] rounded-xl p-10 flex items-center gap-6 w-full max-w-3xl shadow-sm">
+            {/* Image with Blob Shape */}
+            <div className="w-[150px] h-[150px]">
+              <img
+                src={student}
+                alt="Kids"
+                className="w-full h-full object-cover"
+                style={{
+                  clipPath: "ellipse(46% 40% at 45% 43%)",
+                }}
+              />
+            </div>
+
+            {/* Text Content */}
+            <div className="max-w-md">
+              <h3 className="text-[#1d588e] font-semibold text-md md:text-lg mb-1">
+                Tips for Personalized Learning Strategies
+              </h3>
+              <p className="text-sm text-gray-600 leading-snug">
+                Discover practical strategies that educators can implement to
+                tailor learning experiences to meet the unique needs of each
+                student.
+              </p>
+            </div>
+          </div>
+          <div className="bg-[#FFFFFF] rounded-xl flex items-center gap-6 w-full max-w-3xl shadow-sm p-10">
+            {/* Image with Blob Shape */}
+            <div className="w-[150px] h-[150px]">
+              <img
+                src={teacher}
+                alt="Kids"
+                className="w-full h-full object-cover"
+                style={{
+                  clipPath: "ellipse(46% 40% at 45% 43%)",
+                }}
+              />
+            </div>
+
+            {/* Text Content */}
+            <div className="max-w-md">
+              <h3 className="text-[#1d588e] font-semibold text-md md:text-lg mb-1">
+                Tips for Personalized Learning Strategies
+              </h3>
+              <p className="text-sm text-gray-600 leading-snug">
+                Discover practical strategies that educators can implement to
+                tailor learning experiences to meet the unique needs of each
+                student.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button className="mt-8 bg-[#FFA500] hover:bg-[#e69500] text-white font-semibold py-2 px-6 rounded-md transition-colors duration-300 pl-5 pr-6">
+          View
+        </button>
+      </div>
+      {/* Blog section */}
+
+      <section className="max-w-7xl mx-auto py-14 -translate-y-10 lg:translate-y-0">
+        <div>
+          <h1
+            className="text-xl md:text-3xl text-center"
+            style={{ fontFamily: "Poppins" }}
+          >
+            <span className="text-[#000000]">OUR HAPPY</span>{" "}
+            <span className="text-[#194FC4]">PARENTS</span>
+          </h1>
+          <hr className="border-[#507169] mx-auto w-[100px] mt-4 font-bold border" />
+        </div>
+        <div className="py-4">
+          <p className="md:text-xl mx-4">
+            "Discover how our dedicated community and nurturing environment have
+            transformed the educational journey for our families. Hear firsthand
+            from parents about the positive impact our school has had on their
+            children's growth and development."
+          </p>
+        </div>
+        <div className="grid  md:grid-cols-3 lg:grid-cols-3 md:justify-between gap-4 px-4 md:px-0 py-6 md:py-12 mx-auto justify-center items-center md:items-start md:mx-6">
+          {/* First Testimonial */}
+          <div className="relative flex-1 max-w-[280px] py-4 md:py-0">
+            <div className="h-[250px] w-[220px] bg-[#FF3935] absolute transform rotate-12  rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
+            <div
+              className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl  lg:w-[260px] lg:h-[272px]"
+              style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}
+            >
+              <h2 className="text-black text-center py-12 lg:py-16">
+                "We are grateful for the nurturing environment where our
+                daughter has flourished academically and socially!"
+                <h3 className="text-start pl-4 py-4">--Anitha Verma</h3>
+              </h2>
+              <img
+                src={Testimonial1}
+                alt="Testimonial1"
+                className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]"
+              />
+            </div>
+          </div>
+
+          {/* Second Testimonial */}
+          <div className="relative flex-1 max-w-[280px] py-4 md:py-0 mt-[30px] md:mt-0">
+            <div className="h-[250px] w-[220px] bg-[#43665E] absolute transform rotate-12 rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
+            <div
+              className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl lg:w-[260px] lg:h-[272px]"
+              style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}
+            >
+              <h2 className="text-black text-center py-12 lg:py-16">
+                "We are grateful for the nurturing environment where our
+                daughter has flourished academically and socially!"
+                <h3 className="text-start pl-4 py-4">--Anitha Verma</h3>
+              </h2>
+              <img
+                src={Testimonial2}
+                alt="Testimonial2"
+                className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]"
+              />
+            </div>
+          </div>
+
+          {/* Third Testimonial */}
+          <div className="relative flex-1 max-w-[280px] py-4 md:py-0 mt-[30px] md:mt-0">
+            <div className="h-[250px] w-[220px] bg-[#C2089A] absolute transform rotate-12 rounded-3xl lg:w-[272px] lg:h-[268px]"></div>
+            <div
+              className="h-[250px] w-[220px] bg-white relative rounded-3xl shadow-xl lg:w-[260px] lg:h-[272px]"
+              style={{ boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.55)" }}
+            >
+              <h2 className="text-black text-center py-12 lg:py-16">
+                "We are grateful for the nurturing environment where our
+                daughter has flourished academically and socially!"
+                <h3 className="text-start pl-4 py-4">--Anitha Verma</h3>
+              </h2>
+              <img
+                src={Testimonial3}
+                alt="Testimonial3"
+                className="absolute -top-8 lg:-top-10 left-1/2 transform -translate-x-1/2 rounded-full h-16 w-16 lg:w-[86px] lg:h-[88px]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div className="relative bg-[#24588e] text-white text-center py-20  overflow-hidden rounded-md ">
+          {/* Top Left Stars */}
+          <img
+            src={starGroup}
+            alt="stars"
+            className="absolute top-10 left-10 w-10 md:w-12"
+          />
+
+          {/* Bottom Right Stars */}
+          <img
+            src={starGroup}
+            alt="stars"
+            className="absolute bottom-4 right-4 w-10 md:w-12"
+          />
+
+          <h2 className="text-xl md:text-3xl font-semibold mb-4">
+            Have Questions About School Applications or Support?
+          </h2>
+          <p className="max-w-xl mx-auto text-sm md:text-base mb-6">
+            If you're a parent or student looking for help applying to a school,
+            understanding your options, or learning how ShikshaMitra can support
+            your education — we’re here to help. Reach out to us with your
+            queries, and our team will guide you through the next steps.
+          </p>
+          <button className="bg-[#f7931e] text-white px-5 py-2 rounded text-sm font-medium hover:bg-[#e4820f] transition">
+            CONTACT
+          </button>
+        </div>
+      </section>
+    </>
+  );
 }
 
 export default Home;

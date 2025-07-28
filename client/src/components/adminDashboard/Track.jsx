@@ -17,10 +17,12 @@ const Track = ({ vehicleId }) => {
   const dispatch = useDispatch();
   const { vehicleDetails, loading, error } = useSelector(state => state.transportation);
 
-  useEffect(() => {
-    if (vehicleId) dispatch(fetchVehicleDetailsById({ vehicleId }));
+   useEffect(() => {
+    if (vehicleId) {
+      dispatch(fetchVehicleDetailsById(vehicleId)); // ✅ Pass plain string, not object
+    }
   }, [dispatch, vehicleId]);
-
+  
   if (!vehicleId) return <div className="text-red-500">Vehicle ID is missing!</div>;
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">Error: {error}</div>;

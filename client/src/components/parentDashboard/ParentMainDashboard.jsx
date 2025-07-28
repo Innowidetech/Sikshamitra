@@ -15,6 +15,7 @@ import ClassPlanPage from './ClassPlanPage';
 import ParentProfile from './ParentProfile';
 import ReplyPage from './ReplyPage';
 import QueryForm from './QueryForm'; // ✅ Imported
+import Ptransportation from './Ptransportation';
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -66,6 +67,8 @@ const MainDashboard = () => {
         return <SyllabusPage />;
       case 'classplans':
         return <ClassPlanPage />;
+      case 'ptransportation':
+        return <Ptransportation/>;  
       case 'queryform':
         return <QueryForm goBack={() => handleTabChange('query')} />; // ✅ New case
       default:

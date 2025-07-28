@@ -14,7 +14,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     useremail: '',
     password: '',
-    selectedRole: ''
+    selectedRole: '',
   });
 
   useEffect(() => {
@@ -53,16 +53,14 @@ const Login = () => {
     empType = empType?.toLowerCase();
 
     if (role === 'superadmin') {
-      if (empType === 'groupd') {
-        navigate('/adminstaff/maindashboard');
-      } else if (empType) {
-        navigate('/superadminstaff/maindashboard');
-      } else {
-        navigate('/superadmin/maindashboard');
-      }
+      navigate('/superadmin/maindashboard');
+    } else if (role === 'staff') {
+      navigate('/superadminstaff/maindashboard');
     } else if (role === 'teacher') {
       if (empType === 'groupd') {
         navigate('/adminstaff/maindashboard');
+      } else if (empType === 'driver') {
+        navigate('/driver/maindashboard');
       } else {
         navigate('/teacher/maindashboard');
       }
@@ -79,14 +77,15 @@ const Login = () => {
     { id: 'admin', icon: UserCircle, label: 'Admin' },
     { id: 'teacher', icon: GraduationCap, label: 'Employee' },
     { id: 'student', icon: Users, label: 'Student' },
-    { id: 'parent', icon: Users2, label: 'Parent' }
+    { id: 'parent', icon: Users2, label: 'Parent' },
+    { id: 'superadmin', icon: UserCircle, label: 'Super Admin' },
   ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     if (error) dispatch(clearError());
   };
@@ -94,7 +93,7 @@ const Login = () => {
   const handleRoleSelect = (roleId) => {
     setFormData((prev) => ({
       ...prev,
-      selectedRole: roleId
+      selectedRole: roleId,
     }));
     if (error) dispatch(clearError());
   };
@@ -106,7 +105,7 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
-      role: selectedRole || 'teacher'
+      role: selectedRole || 'teacher',
     };
 
     try {
@@ -129,16 +128,12 @@ const Login = () => {
                 key={userType.id}
                 onClick={() => handleRoleSelect(userType.id)}
                 className={`flex flex-col items-center justify-center space-y-1 cursor-pointer transition-all duration-200 ${
-                  formData.selectedRole === userType.id
-                    ? 'text-[#146192]'
-                    : 'text-gray-500'
+                  formData.selectedRole === userType.id ? 'text-[#146192]' : 'text-gray-500'
                 }`}
               >
                 <div
                   className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
-                    formData.selectedRole === userType.id
-                      ? 'bg-[#f7931e] text-white'
-                      : 'border-[#f7931e]'
+                    formData.selectedRole === userType.id ? 'bg-[#f7931e] text-white' : 'border-[#f7931e]'
                   }`}
                 >
                   <userType.icon size={20} />

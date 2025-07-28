@@ -1,26 +1,30 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
 const PrivateRoute = ({ children, requiredRole }) => {
-  const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole');
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("userRole");
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
   if (requiredRole && userRole !== requiredRole) {
-    // Redirect to appropriate dashboard based on role
+    // Redirect to appropriate dashboard based on actual userRole
     switch (userRole) {
-      case 'admin':
+      case "admin":
         return <Navigate to="/admin/maindashboard" replace />;
-      case 'teacher':
+      case "teacher":
         return <Navigate to="/teacher/maindashboard" replace />;
-      case 'student':
+      case "student":
         return <Navigate to="/student/maindashboard" replace />;
-      case 'parent':
+      case "parent":
         return <Navigate to="/parents/maindashboard" replace />;
-      case 'adminStaff':
-        return <Navigate to="/staff/maindashboard" replace />;  
+      case "adminStaff":
+        return <Navigate to="/staff/maindashboard" replace />;
+      case "superadmin":
+        return <Navigate to="/superadmin/maindashboard" replace />;
+      case 'driver': // ✅ NEW: Handle driver role redirection
+        return <Navigate to="/driver/maindashboard" replace />;
       default:
         return <Navigate to="/login" replace />;
     }
@@ -30,7 +34,3 @@ const PrivateRoute = ({ children, requiredRole }) => {
 };
 
 export default PrivateRoute;
-
-
-
-

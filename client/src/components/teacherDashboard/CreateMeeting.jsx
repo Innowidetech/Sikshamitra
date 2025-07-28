@@ -51,7 +51,7 @@ const CreateMeeting = () => {
 
       data.parents.forEach((parent) => {
         const { fatherName, motherName } = parent.parentProfile || {};
-        const parentDisplay = `${fatherName} / ${motherName}`;
+        const parentDisplay = fatherName?`${fatherName}`:`${motherName}`;
         parents.push(parentDisplay);
 
         parent.parentProfile?.parentOf?.forEach((child) => {

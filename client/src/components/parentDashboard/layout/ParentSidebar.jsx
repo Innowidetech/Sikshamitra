@@ -8,6 +8,8 @@ import { GoChecklist } from "react-icons/go";
 import { HiMiniUserGroup } from "react-icons/hi2";
 import { FiFileText } from "react-icons/fi";
 import { SiGooglebigquery } from "react-icons/si";
+import { FaBusAlt } from 'react-icons/fa';
+
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -17,6 +19,7 @@ const menuItems = [
   { id: 'curriculam', icon: Library, label: 'Curriculam' },
   { id: 'exams', icon: HiMiniUserGroup, label: 'Exams' },
   { id: 'fees', icon: FiFileText, label: 'Fees' },
+  { id: 'ptransportation', icon: FaBusAlt, label: 'Transportation' },
   { id: 'query', icon: SiGooglebigquery, label: 'Connect&Queries' },
   
 ];

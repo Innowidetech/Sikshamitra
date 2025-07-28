@@ -29,15 +29,12 @@ export const fetchVehicleDetailsById = createAsyncThunk(
   async (vehicleId, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem('token');
-
       const url = `https://sikshamitra.onrender.com/api/admin/vehicle/${vehicleId}`;
-
       const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       return response.data;
     } catch (error) {
       console.error('❌ Vehicle fetch failed:', error);
@@ -45,8 +42,6 @@ export const fetchVehicleDetailsById = createAsyncThunk(
     }
   }
 );
-
-
 
 const transSlice = createSlice({
   name: 'transportation',
@@ -75,7 +70,7 @@ const transSlice = createSlice({
       })
 
       // Fetch by ID
-     .addCase(fetchVehicleDetailsById.pending, (state) => {
+      .addCase(fetchVehicleDetailsById.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
