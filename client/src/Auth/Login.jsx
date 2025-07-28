@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { UserCircle, GraduationCap, Users2, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearError } from '../redux/authSlice';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState, useEffect } from "react";
+import { UserCircle, GraduationCap, Users2, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, clearError } from "../redux/authSlice";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,9 +12,9 @@ const Login = () => {
   const { isLoading, error, token, userId, userRole, employeeType, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    useremail: '',
-    password: '',
-    selectedRole: ''
+    useremail: "",
+    password: "",
+    selectedRole: "",
   });
 
   useEffect(() => {
@@ -35,9 +35,9 @@ const Login = () => {
       localStorage.setItem('userRole', userRole);
 
       if (employeeType) {
-        localStorage.setItem('employeeType', employeeType);
+        localStorage.setItem("employeeType", employeeType);
       } else {
-        localStorage.removeItem('employeeType');
+        localStorage.removeItem("employeeType");
       }
 
       // ✅ Store full user info if admin or superadmin (required for meeting host check)
@@ -50,18 +50,14 @@ const Login = () => {
     }
   }, [token, userId, userRole, employeeType, user]);
 
-  const redirectToDashboard = (role, empType = '') => {
+  const redirectToDashboard = (role, empType = "") => {
     empType = empType?.toLowerCase();
 
-    if (role === 'superadmin') {
-      if (empType === 'groupd') {
-        navigate('/adminstaff/maindashboard');
-      } else if (empType) {
-        navigate('/superadminstaff/maindashboard');
-      } else {
-        navigate('/superadmin/maindashboard');
-      }
-    } else if (role === 'teacher') {
+    if (role === "superadmin") {
+      navigate("/superadmin/maindashboard");
+    } else if (role === "staff") {
+      navigate("/superadminstaff/maindashboard");
+    }else if (role === 'teacher') {
       if (empType === 'groupd') {
         navigate('/adminstaff/maindashboard');
       }
@@ -81,18 +77,18 @@ const Login = () => {
   };
 
   const userTypes = [
-    { id: 'admin', icon: UserCircle, label: 'Admin' },
-    { id: 'teacher', icon: GraduationCap, label: 'Teacher' },
-    { id: 'student', icon: Users, label: 'Student' },
-    { id: 'parent', icon: Users2, label: 'Parent' },
-    { id: 'superadmin', icon: UserCircle, label: 'Super Admin' }
+    { id: "admin", icon: UserCircle, label: "Admin" },
+    { id: "teacher", icon: GraduationCap, label: "Teacher" },
+    { id: "student", icon: Users, label: "Student" },
+    { id: "parent", icon: Users2, label: "Parent" },
+    { id: "superadmin", icon: UserCircle, label: "Super Admin" },
   ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     if (error) dispatch(clearError());
   };
@@ -100,7 +96,7 @@ const Login = () => {
   const handleRoleSelect = (roleId) => {
     setFormData((prev) => ({
       ...prev,
-      selectedRole: roleId
+      selectedRole: roleId,
     }));
     if (error) dispatch(clearError());
   };
@@ -112,13 +108,13 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
-      role: selectedRole || 'teacher' || ''
+      role: selectedRole || "staff" || "teacher" || "authority", // default roles
     };
 
     try {
       await dispatch(loginUser(loginPayload)).unwrap();
     } catch (err) {
-      toast.error(error || 'Login failed');
+      toast.error(error || "Login failed");
     }
   };
 
@@ -138,7 +134,9 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                   <div>
-                    <label className="block text-white text-sm mb-2">Email / Mobile Number</label>
+                    <label className="block text-white text-sm mb-2">
+                      Email / Mobile Number
+                    </label>
                     <input
                       type="text"
                       name="useremail"
@@ -151,7 +149,9 @@ const Login = () => {
                   </div>
 
                   <div>
-                    <label className="block text-white text-sm mb-2">Password</label>
+                    <label className="block text-white text-sm mb-2">
+                      Password
+                    </label>
                     <input
                       type="password"
                       name="password"
@@ -168,7 +168,7 @@ const Login = () => {
                     disabled={isLoading}
                     className="w-full bg-white text-[#1982C4] py-3 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
                   >
-                    {isLoading ? 'Logging in...' : 'LOGIN'}
+                    {isLoading ? "Logging in..." : "LOGIN"}
                   </button>
                 </form>
 
@@ -189,9 +189,11 @@ const Login = () => {
                     key={userType.id}
                     onClick={() => handleRoleSelect(userType.id)}
                     className={`flex flex-col items-center justify-center p-4 rounded-lg space-y-2 cursor-pointer transition-colors
-                      ${formData.selectedRole === userType.id
-                        ? 'bg-[#1982C4] text-white'
-                        : 'hover:bg-[#1982C4] hover:text-white'}`}
+                      ${
+                        formData.selectedRole === userType.id
+                          ? "bg-[#1982C4] text-white"
+                          : "hover:bg-[#1982C4] hover:text-white"
+                      }`}
                   >
                     <userType.icon className="w-14 h-14 border rounded-full p-2 bg-[#1982C46E]" />
                     <span className="text-lg">{userType.label}</span>

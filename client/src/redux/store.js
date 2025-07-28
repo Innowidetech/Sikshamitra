@@ -44,77 +44,135 @@ import studentDashboardReducer from './student/studashboardSlice';
 import studentProfileReducer from './student/studentProfileSlice';
 import studentsReducer from './studentsSlice';
 import studyMaterialReducer from './student/studyMaterialSlice';
-import studyMSliceReducer from './teacher/studyMSlice'; // Renamed for clarity
+import studyMSliceReducer from './teacher/studyMSlice';
 import syllabusSliceReducer from './student/syllabusSlice';
 import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import tcurriculumSliceReducer from './teacher/tcurriculumSlice';
 import teaAttendanceReducer from './teacher/teaAttendanceSlice';
 import teacherDashboardReducer from './teacher/teacherDashboardSlice';
+
+import superAdminStaffDashboardSliceReducer from './superAdminStaff/superAdminStaffDashboardSlice';
+import superAdminStaffSendQueryReducer from './superAdminStaff/superAdminStaffQuerySlice';
+import superAdminQueryReplayReducer from './superAdminStaff/superAdminStaffQueryReplaySlice';
+import superAdminStaffBlogSliceReducer from './superAdminStaff/superAdminStaffBlogSlice';
+import superAdminStaffSendQueryIdReplayReducer from './superAdminStaff/superAdminStaffReplayIdSlice';
+import superAdminStaffPostReplyReducer from './superAdminStaff/superAdminStaffReplayIdPostSlice';
+import blogReducer from "./superAdminStaff/superAdminStaffCreateBlogSlice";
+
+import superAdminReducer from './superAdmin/superAdminDashboard';
+import superAdminSchoolReducer from "./superAdmin/superAdminSchoolSlice";
+import superAdminAccountsSliceReducer from './superAdmin/superAdminAccountsSlice';
+import superAdminStaffReducer from './superAdmin/superAdminStaffSlice';
+import superAdminTaskReducer from './superAdmin/superAdminTaskSlice';
+import superAdminUserBlogReducer from './superAdmin/SuperAdminBlogSclice';
+import superAdminConnectAndQueryReducer from './superAdmin/superAdminConnectSlice';
+
 import teacherQueryReducer from './teacher/teacherQuerySlice';
 import teacherResultsReducer from './teacher/teacherResultSlice';
 import teachersReducer from './teachersSlice';
 import timeTableSliceReducer from './student/timeTableSlice';
 import transReducer from './transSlice';
 import transportationReducer from './driver/transportationSlice';
-import entranceReducer from './users/entranceSlice'; // ✅ Update this path if needed
+import entranceReducer from './users/entranceSlice';
 import adminEntranceReducer from './adminEntranceSlice';
-
 
 const store = configureStore({
   reducer: {
     about: aboutSliceReducer,
+    teachers: teachersReducer,
+    students: studentsReducer,
+    parents: parentsReducer,
+    admissions: admissionsReducer,
+    pkids: pkidsReducer,
+    ParentResults: resultsReducer,
+    exams: examReducer,
+    studentDashboard: studentDashboardReducer,
+    dashboard: dashboardReducer,
+    adminProfile: adminProfileReducer,
+    auth: authReducer,
+    adminFees: adminFeesReducer,
+    inventory: inventoryReducer,
+    library: libraryReducer,
+    adminClasses: adminClassesReducer,
+    adminEmployee: adminEmployeeReducer,
+    adminResults: adminResultsReducer,
+    adminCurriculum: adminCurriculumReducer,
+    studentProfile: studentProfileReducer,
+    exam: examSliceReducer,
+    fees: feesReducer,
     accounts: accountReducer,
     admitCard: admitCardSliceReducer,
-    adminClasses: adminClassesReducer,
-    adminConnectQueries: adminConnectQueriesReducer,
-    adminCurriculum: adminCurriculumReducer,
-    adminEmployee: adminEmployeeReducer,
-    adminFees: adminFeesReducer,
-    adminProfile: adminProfileReducer,
-    adminResults: adminResultsReducer,
-    admissions: admissionsReducer,
+    // adminClasses: adminClassesReducer, // Duplicate
+    // adminConnectQueries: adminConnectQueriesReducer, // Duplicate
+    // adminCurriculum: adminCurriculumReducer, // Duplicate
+    // adminEmployee: adminEmployeeReducer, // Duplicate
+    // adminFees: adminFeesReducer, // Duplicate
+    // adminProfile: adminProfileReducer, // Duplicate
+    // adminResults: adminResultsReducer, // Duplicate
+    // admissions: admissionsReducer, // Duplicate
     assignment: assignmentSliceReducer,
     assignments: assignmentsReducer,
-    auth: authReducer,
+    // auth: authReducer, // Duplicate
     book: bookReducer,
     classPlan: classPlanSliceReducer,
     connectQueries: connectQueriesReducer,
     createExam: createExamSliceReducer,
     createmeeting: createMeetingReducer,
     curriculum: curriculumReducer,
-    dashboard: dashboardReducer,
-    exam: examSliceReducer,
-    exams: examReducer,
+    // dashboard: dashboardReducer, // Duplicate
+    // exam: examSliceReducer, // Duplicate
+    // exams: examReducer, // Duplicate
     expenses: expensesReducer,
-    fees: feesReducer,
-    inventory: inventoryReducer,
+    // fees: feesReducer, // Duplicate
+    // inventory: inventoryReducer, // Duplicate
     lecture: lectureSlice,
-    library: libraryReducer,
+    // library: libraryReducer, // Duplicate
     meeting: meetingReducer,
     myStudents: myStudentsReducer,
     parent: parentDashboardReducer,
     parentProfile: parentProfileSliceReducer,
-    parents: parentsReducer,
-    pkids: pkidsReducer,
+    // parents: parentsReducer, // Duplicate
+    // pkids: pkidsReducer, // Duplicate
     ptransportation: ptransportationReducer,
     query: queryReducer,
     results: resultSliceReducer,
-    ParentResults: resultsReducer,
+    // ParentResults: resultsReducer, // Duplicate
     staffDashboard: staffDashboardReducer,
     stransportation: stransportationReducer,
-    studentDashboard: studentDashboardReducer,
-    studentProfile: studentProfileReducer,
-    students: studentsReducer,
+    // studentDashboard: studentDashboardReducer, // Duplicate
+    // studentProfile: studentProfileReducer, // Duplicate
+    // students: studentsReducer, // Duplicate
     studyMaterial: studyMaterialReducer,
     studyMaterialTeacher: studyMSliceReducer,
     syllabus: syllabusSliceReducer,
     syllabusView: syllabusViewSliceReducer,
+    // classPlan: classPlanSliceReducer, // Duplicate
+    // results: resultSliceReducer, // Duplicate
+    // about: aboutSliceReducer, // Duplicate
+    // createExam: createExamSliceReducer, // Duplicate
+    // studyMaterial: studyMSliceReducer, // Duplicate
+    // myStudents: myStudentsReducer, // Duplicate
+    // assignments: assignmentsReducer, // Duplicate
     tcurriculum: tcurriculumSliceReducer,
     teaAttendance: teaAttendanceReducer,
     teacherDashboard: teacherDashboardReducer,
+    // staffDashboard: staffDashboardReducer, // Duplicate
+    superAdminStaffDashboard: superAdminStaffDashboardSliceReducer,
+    superAdminStaffSendQuery: superAdminStaffSendQueryReducer,
+    superAdminStaffSendQueryReplay: superAdminQueryReplayReducer,
+    superAdminStaffBlog: superAdminStaffBlogSliceReducer,
+    superAdminStaffSendQueryIdReplay: superAdminStaffSendQueryIdReplayReducer,
+    superAdminStaffPostReply: superAdminStaffPostReplyReducer,
+    blogData: blogReducer,
+    superAdminDashboard: superAdminReducer,
+    superAdminSchools: superAdminSchoolReducer,
+    superAdminAccounts: superAdminAccountsSliceReducer,
+    superAdminStaff: superAdminStaffReducer,
+    superAdminTasks: superAdminTaskReducer,
+    superAdminUserBlogs: superAdminUserBlogReducer,
+    connectAndQuery: superAdminConnectAndQueryReducer,
     teacherQuery: teacherQueryReducer,
     teacherResults: teacherResultsReducer,
-    teachers: teachersReducer,
     timeTable: timeTableSliceReducer,
     trans: transReducer,
     transportation: transportationReducer,
