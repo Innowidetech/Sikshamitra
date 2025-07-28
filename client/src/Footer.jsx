@@ -6,17 +6,38 @@ import Footerimg3 from './assets/footerimg3.png';
 import Footerimg4 from './assets/footerimg4.png';
 import Footerimg5 from './assets/footerimg5.png';
 import Footerimg6 from './assets/footerimg6.png';
+import logo from './assets/logo.png';
+import { FaFacebookF, FaTwitter, FaYoutube, FaInstagram } from 'react-icons/fa';
 
 const Footer = () => {
   return (
     <footer className="bg-[#FF9F1C] text-white py-8 pl-6 md:pl-0 grid md:grid-cols-2 md: justify-evenly lg:grid-cols-4">
       <div className="mb-6 md:mb-0 xl:h-[262px] xl:w-[281px] xl:ml-[80px] md:mx-4 xl:mx-0">
-        <div className="mb-6">
-          <img src="logo.png" alt="Logo" className="max-w-xs" />
+        <div>
+          <img
+            src={logo}
+            alt="Logo"
+            className="w-[110px] h-[100px] xl:w-[160px] xl:h-[120px] object-contain -mt-5"
+          />
         </div>
         <p className="text-sm max-w-sm">
           Our platform streamlines communication between teachers, students, and parents, ensuring that everyone stays informed and engaged in the learning process.
         </p>
+        <div className="flex gap-3 mt-4">
+          <a href="#" aria-label="Facebook" className="bg-[#1877F2] p-2 rounded-md">
+            <FaFacebookF className="text-white text-xl" />
+          </a>
+          <a href="#" aria-label="Twitter" className="bg-[#1DA1F2] p-2 rounded-md">
+            <FaTwitter className="text-white text-xl" />
+          </a>
+          <a href="#" aria-label="YouTube" className="bg-[#FF0000] p-2 rounded-md">
+            <FaYoutube className="text-white text-xl" />
+          </a>
+          <a href="#" aria-label="Instagram" className="bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600 p-2 rounded-md">
+            <FaInstagram className="text-white text-xl" />
+          </a>
+        </div>
+
       </div>
 
       <div className="mb-6 xl:ml-[80px] md:mx-4 xl:mx-0">

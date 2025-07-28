@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from './Sidebar';
 import StudentForm from './StudentForm';
@@ -7,17 +7,19 @@ import ParentForm from './ParentForm';
 import PaymentForm from './PaymentForm';
 import DownloadSection from './DownloadSection';
 
-function StudentOnlinePortal() {
-  const [activeTab, setActiveTab] = useState('student');
+
+function StudentOnlinePortal({ initialTab = 'student' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [formData, setFormData] = useState({
     student: {},
     education: [],
     parent: {},
-    payment: {}
+    payment: {},
   });
 
+  const tabs = ['student', 'education', 'parent', 'payment', 'download', ];
+
   const handleNext = () => {
-    const tabs = ['student', 'education', 'parent', 'payment', 'download'];
     const currentIndex = tabs.indexOf(activeTab);
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1]);
@@ -25,7 +27,6 @@ function StudentOnlinePortal() {
   };
 
   const handleBack = () => {
-    const tabs = ['student', 'education', 'parent', 'payment', 'download'];
     const currentIndex = tabs.indexOf(activeTab);
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1]);
@@ -33,58 +34,64 @@ function StudentOnlinePortal() {
   };
 
   const updateFormData = (section, data) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [section]: data
+      [section]: data,
     }));
   };
 
   const handlePaymentSubmission = async (paymentData) => {
     try {
-      // Create FormData object
       const formDataToSubmit = new FormData();
 
-      // Append student photo
       if (formData.student.studentPhoto) {
         formDataToSubmit.append('studentPhoto', formData.student.studentPhoto);
       }
 
-      // Create student details object without the photo
       const studentDetailsWithoutPhoto = { ...formData.student };
       delete studentDetailsWithoutPhoto.studentPhoto;
       formDataToSubmit.append('studentDetails', JSON.stringify(studentDetailsWithoutPhoto));
 
-      // Append education documents and details
-      formData.education.forEach((edu, index) => {
+      formData.education.forEach((edu) => {
         if (edu.educationDocuments) {
           formDataToSubmit.append('educationDocuments', edu.educationDocuments);
         }
       });
-      formDataToSubmit.append('educationDetails', JSON.stringify(formData.education.map(edu => {
-        const eduWithoutFile = { ...edu };
-        delete eduWithoutFile.educationDocuments;
-        return eduWithoutFile;
-      })));
 
-      // Append parent details
+      formDataToSubmit.append(
+        'educationDetails',
+        JSON.stringify(
+          formData.education.map((edu) => {
+            const eduWithoutFile = { ...edu };
+            delete eduWithoutFile.educationDocuments;
+            return eduWithoutFile;
+          })
+        )
+      );
+
       formDataToSubmit.append('parentDetails', JSON.stringify(formData.parent));
 
-      // Submit form data
-      const response = await axios.post('https://sikshamitra.onrender.com/api/user/applyOnline', formDataToSubmit, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/user/applyOnline',
+        formDataToSubmit,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
-      });
+      );
 
       if (response.data && response.data.order && response.data.applicationId) {
         const { order, applicationId } = response.data;
 
-        // Proceed to payment verification
-        const verifyResponse = await axios.post('https://sikshamitra.onrender.com/api/user/verifyOnlinePayment', {
-          paymentId: paymentData.paymentId,
-          orderId: order.id,
-          signature: paymentData.signature,
-        });
+        const verifyResponse = await axios.post(
+          'https://sikshamitra.onrender.com/api/user/verifyOnlinePayment',
+          {
+            paymentId: paymentData.paymentId,
+            orderId: order.id,
+            signature: paymentData.signature,
+          }
+        );
 
         if (verifyResponse.data.message === 'Payment successfully verified and processed') {
           handleNext();
@@ -101,33 +108,43 @@ function StudentOnlinePortal() {
   const renderContent = () => {
     switch (activeTab) {
       case 'student':
-        return <StudentForm 
-          onNext={handleNext} 
-          formData={formData.student}
-          updateFormData={(data) => updateFormData('student', data)}
-        />;
+        return (
+          <StudentForm
+            onNext={handleNext}
+            formData={formData.student}
+            updateFormData={(data) => updateFormData('student', data)}
+            goToEntranceExam={() => setActiveTab('entranceexam')} // pass if needed
+          />
+        );
       case 'education':
-        return <EducationForm 
-          onNext={handleNext} 
-          onBack={handleBack}
-          formData={formData.education}
-          updateFormData={(data) => updateFormData('education', data)}
-        />;
+        return (
+          <EducationForm
+            onNext={handleNext}
+            onBack={handleBack}
+            formData={formData.education}
+            updateFormData={(data) => updateFormData('education', data)}
+          />
+        );
       case 'parent':
-        return <ParentForm 
-          onNext={handleNext} 
-          onBack={handleBack}
-          formData={formData.parent}
-          updateFormData={(data) => updateFormData('parent', data)}
-        />;
+        return (
+          <ParentForm
+            onNext={handleNext}
+            onBack={handleBack}
+            formData={formData.parent}
+            updateFormData={(data) => updateFormData('parent', data)}
+          />
+        );
       case 'payment':
-        return <PaymentForm 
-          onNext={handleNext} 
-          onBack={handleBack}
-          onSubmit={handlePaymentSubmission}
-        />;
+        return (
+          <PaymentForm
+            onNext={handleNext}
+            onBack={handleBack}
+            onSubmit={handlePaymentSubmission}
+          />
+        );
       case 'download':
-        return <DownloadSection />;
+        return <DownloadSection onBack={handleBack} onNext={handleNext} />;
+      
       default:
         return null;
     }
@@ -136,9 +153,7 @@ function StudentOnlinePortal() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="flex-1">
-        {renderContent()}
-      </main>
+      <main className="flex-1">{renderContent()}</main>
     </div>
   );
 }

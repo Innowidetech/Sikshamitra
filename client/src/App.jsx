@@ -12,6 +12,7 @@ import Admission from './Admission';
 import Contact from './Contact';
 import StudentOnlinePortal from './studentdashboard/StudentOnlinePortal';
 import Login from './Auth/Login';
+import EntranceExam from './studentdashboard/EntranceExam';
 
 // Dashboards
 import MainDashboard from './components/adminDashboard/MainDashboard';
@@ -138,6 +139,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
+        <Route path="/entranceexam" element={<EntranceExam />} />
 
         {/* Parent Meeting */}
         <Route path="/meeting" element={<Meeting />} />

@@ -24,6 +24,8 @@ import StudentHistory from './StudentHistory';
 import AccountHistory from './AccountHistory';
 import AdminConnectQuries from './AdminConnectQuries';
 import AdminQueryForm from './AdminQueryForm';
+import AdminEntrance from './AdminEntrance';
+import EditPaper from './EditPaper';
 
 
 // 🆕 Import the new pages
@@ -31,7 +33,7 @@ import SyllabusPage from './SyllabusPage';
 import ExamPage from './ExamPage'; // Optional
 import AdminQueryChat from './AdminQueryChat';
 import AdminTrans from './AdminTrans';
-
+import QuestionPaperView from './QuestionPaperView';
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -48,6 +50,8 @@ const MainDashboard = () => {
       setActiveTab('dashboard');
     } else if (location.pathname.startsWith('/admin/curriculum')) {
       setActiveTab('curriculum');
+      } else if (location.pathname.startsWith('/admin/adminentrance')) {
+      setActiveTab('adminentrance');
     } else if (location.pathname === '/admin/profile') {
       setActiveTab('profile');
     } else if (location.pathname.startsWith('/admin/fees')) {
@@ -76,6 +80,10 @@ const MainDashboard = () => {
   setActiveTab('transportation');
 }else if (location.pathname.startsWith('/admin/connectqueries')) {
       setActiveTab('connectqueries');
+      } else if (location.pathname === '/admin/questionpaperview') {
+  setActiveTab('questionpaperview');
+    } else if (location.pathname.startsWith('/admin/editpaper')) {
+      setActiveTab('editpaper'); // ✅ Add for edit paper route
     }
     
     // Add more routes as needed
@@ -170,12 +178,21 @@ const MainDashboard = () => {
       case 'employee':
         navigate('/admin/employee');
         break;
+         case 'adminentrance':
+        navigate('/admin/adminentrance');
+        break;
       case 'results':
         navigate('/admin/results');
         break;
          case 'transportation':
   navigate('/admin/transportation');
   break;
+case 'questionpaperview':
+  navigate('/admin/questionpaperview');
+  break;
+   case 'editpaper':
+        navigate('/admin/editpaper'); // You can dynamically pass classId as needed
+        break;
 
        case 'connectqueries':
   navigate('/admin/connectqueries');
@@ -248,6 +265,10 @@ const MainDashboard = () => {
         return <Admission />;
       case 'classes':
         return <Classes />;
+         case 'questionpaperview':
+        return <QuestionPaperView setActiveTab={setActiveTab} />;
+        case 'editpaper':
+        return <EditPaper setActiveTab={setActiveTab} />;
       case 'employee':
         return <Employee />;
       case 'results':
@@ -257,6 +278,11 @@ const MainDashboard = () => {
          case 'transportation':
   return <AdminTrans />;
        case 'connectqueries':
+
+        case 'adminentrance':
+        return <AdminEntrance />;
+
+        
   return <AdminConnectQuries setActiveQueryChat={setActiveQueryChat} />;
   // case 'transportation':
   // return <AdminTrans />;

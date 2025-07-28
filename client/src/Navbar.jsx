@@ -40,7 +40,7 @@ function Navbar() {
           <img
             src={logo}
             alt="Logo"
-            className="w-[110px] h-[100px] xl:w-[160px] xl:h-[120px] object-contain -mt-5"
+            className="w-[110px] h-[100px] xl:w-[160px] xl:h-[120px] object-contain -mt-20"
           />
         </div>
 
@@ -50,13 +50,13 @@ function Navbar() {
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className="cursor-pointer text-white relative -top-5 hover:text-[#FF9F1C]"
+              className="cursor-pointer text-white relative -mt-20 hover:text-[#FF9F1C]"
             >
               {item.label}
             </button>
           ))}
           <button
-            className="flex items-center border px-4 py-2 rounded-full text-white hover:bg-[#ffffff22]  relative -top-5 "
+            className="flex items-center border px-4 py-2 rounded-full text-white hover:bg-[#ffffff22]  relative -mt-20 "
             onClick={() => navigate('/login')}
           >
             <CiLogin className="mr-2" />
