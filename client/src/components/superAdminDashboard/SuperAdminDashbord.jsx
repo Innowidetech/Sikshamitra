@@ -46,19 +46,19 @@ const SuperAdminDashboard = () => {
       <h1 className="text-3xl text-[#146192] font-bold mb-6"> Dashboard</h1>
       <div className="bg-white max-w-6xl mb-2 ">
         <div className=" md:py-4 md:mt-6 xl:mx-auto rounded-lg grid grid-cols-2 lg:flex lg:justify-around p-4 mb-4 md:mb-0 md:mx-2 ">
-          {/* Students */}
+          {/* Schools */}
           <div className="lg:flex gap-2">
             <div className="flex justify-center items-center">
-              <div className="bg-[#4D44B5] rounded-full p-2 text-white">
-                <LuCircleUserRound className="md:h-4 md:w-4 lg:h-8 lg:w-8" />
+              <div className="bg-[#303972] rounded-full p-2 text-white">
+                <School className="lg:h-8 lg:w-8" />
               </div>
             </div>
             <div className="grid justify-center items-center">
               <div className="text-[#A098AE]" style={{ fontFamily: "Poppins" }}>
-                Students
+                Schools
               </div>
               <div className="text-center xl:text-[25px] text-[#303972] font-bold">
-                {dashboard?.students || "0"}
+                {dashboard?.schools || "0"}
               </div>
             </div>
           </div>
@@ -80,6 +80,23 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
 
+          {/* Students */}
+          <div className="lg:flex gap-2">
+            <div className="flex justify-center items-center">
+              <div className="bg-[#4D44B5] rounded-full p-2 text-white">
+                <LuCircleUserRound className="md:h-4 md:w-4 lg:h-8 lg:w-8" />
+              </div>
+            </div>
+            <div className="grid justify-center items-center">
+              <div className="text-[#A098AE]" style={{ fontFamily: "Poppins" }}>
+                Students
+              </div>
+              <div className="text-center xl:text-[25px] text-[#303972] font-bold">
+                {dashboard?.students || "0"}
+              </div>
+            </div>
+          </div>
+
           {/* Parents */}
           <div className="lg:flex gap-2">
             <div className="flex justify-center items-center">
@@ -93,23 +110,6 @@ const SuperAdminDashboard = () => {
               </div>
               <div className="text-center xl:text-[25px] text-[#303972] font-bold">
                 {dashboard?.parents || "0"}
-              </div>
-            </div>
-          </div>
-
-          {/* Schools */}
-          <div className="lg:flex gap-2">
-            <div className="flex justify-center items-center">
-              <div className="bg-[#303972] rounded-full p-2 text-white">
-                <School className="lg:h-8 lg:w-8" />
-              </div>
-            </div>
-            <div className="grid justify-center items-center">
-              <div className="text-[#A098AE]" style={{ fontFamily: "Poppins" }}>
-                Schools
-              </div>
-              <div className="text-center xl:text-[25px] text-[#303972] font-bold">
-                {dashboard?.schools || "0"}
               </div>
             </div>
           </div>

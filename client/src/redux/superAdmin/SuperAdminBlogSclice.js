@@ -60,6 +60,47 @@ export const createBlog = createAsyncThunk(
         }
     }
 );
+export const updateBlogById = createAsyncThunk(
+    "superAdminUserBlogs/updateBlogById",
+    async ({ id, formData }, thunkAPI) => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.put(
+
+                `https://sikshamitra.onrender.com/api/superadmin/blog/${id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Update blog error:", error.response?.data || error.message);
+            return thunkAPI.rejectWithValue(error.response?.data || { message: "Unknown error" });
+        }
+    }
+);
+
+export const deleteBlogDetailById = createAsyncThunk(
+    "superAdmin/deleteBlogDetailById",
+    async (id, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            await axios.delete(`https://sikshamitra.onrender.com/api/superadmin/blogDetail/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return id;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || "Failed to delete blog detail");
+        }
+    }
+);
+
+
 
 // Slice
 const superAdminBlogSlice = createSlice({
@@ -120,7 +161,37 @@ const superAdminBlogSlice = createSlice({
             .addCase(createBlog.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
-            });
+            })// update blog
+            .addCase(updateBlogById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateBlogById.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.blogs.findIndex((b) => b._id === action.payload._id);
+                if (index !== -1) {
+                    state.blogs[index] = action.payload;
+                }
+            })
+            .addCase(updateBlogById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // delete blogDetail
+            .addCase(deleteBlogDetailById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteBlogDetailById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.blogs = state.blogs.filter((b) => b._id !== action.payload);
+            })
+            .addCase(deleteBlogDetailById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
     },
 });
 

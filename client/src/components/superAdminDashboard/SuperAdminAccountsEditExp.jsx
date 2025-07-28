@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { editExpenseById } from "../../redux/superAdmin/superAdminAccountsSlice";
+import {
+  editExpenseById,
+  fetchIncomeAndExpenses, // ✅ Make sure this fetches expenses
+} from "../../redux/superAdmin/superAdminAccountsSlice";
 import { useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Header from "./layout/Header";
@@ -9,7 +12,10 @@ import "react-toastify/dist/ReactToastify.css";
 const SuperAdminAccountsEditExp = () => {
   const dispatch = useDispatch();
   const { id } = useParams(); // Expense ID from route
-  const { expenseSuccess } = useSelector((state) => state.superAdminAccounts);
+
+  const { expense, expenseSuccess } = useSelector(
+    (state) => state.superAdminAccounts
+  );
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +28,31 @@ const SuperAdminAccountsEditExp = () => {
 
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  // ✅ Fetch expenses if not loaded
+  useEffect(() => {
+    if (!expense.length) {
+      dispatch(fetchIncomeAndExpenses());
+    }
+  }, [dispatch, expense.length]);
+
+  // ✅ Pre-fill form with expense data by ID
+  useEffect(() => {
+    if (expense.length && id) {
+      const foundExpense = expense.find((item) => item._id === id);
+      if (foundExpense) {
+        setFormData({
+          name: foundExpense.name || "",
+          date: foundExpense.date?.substring(0, 10) || "",
+          purpose: foundExpense.purpose || "",
+          amount: foundExpense.amount || "",
+          paymentMethod: foundExpense.paymentMethod || "Online",
+          transactionId: foundExpense.transactionId || "",
+        });
+      }
+    }
+  }, [expense, id]);
+
+  // ✅ Show toast on success
   useEffect(() => {
     if (formSubmitted && expenseSuccess) {
       toast.success("Expense updated successfully!", {
@@ -38,12 +69,13 @@ const SuperAdminAccountsEditExp = () => {
         paymentMethod: "Online",
         transactionId: "",
       });
+
+      setFormSubmitted(false); // Reset submit state
     }
   }, [expenseSuccess, formSubmitted]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,

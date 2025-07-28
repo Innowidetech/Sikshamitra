@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import ContactNavimg from './assets/contactnavimg.png';
+import React, { useState } from "react";
+import ContactNavimg from "./assets/contactnavimg.png";
 import { BiSolidPhoneCall } from "react-icons/bi";
 import { IoMail } from "react-icons/io5";
 import { IoLocationOutline } from "react-icons/io5";
@@ -7,17 +7,17 @@ import { FaFacebook } from "react-icons/fa";
 import { FaSquareInstagram } from "react-icons/fa6";
 import { FaWhatsapp } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-import axios from 'axios';
-import { ToastContainer,toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Contact() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    message: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    message: "",
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -32,12 +32,42 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const response = await axios.post('https://sikshamitra.onrender.com/api/user/contactUs', formData);
-      
+      const response = await axios.post(
+        "https://sikshamitra.onrender.com/api/user/contactUs",
+        formData
+      );
+
       if (response.status === 200) {
-        toast.success('Message sent successfully! We will get back to you soon.', {
+        toast.success(
+          "Message sent successfully! We will get back to you soon.",
+          {
+            position: "top-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          }
+        );
+
+        setSubmitted(true);
+
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          message: "",
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Error sending message. Please try again later.",
+        {
           position: "top-right",
           autoClose: 2000,
           hideProgressBar: false,
@@ -45,28 +75,8 @@ function Contact() {
           pauseOnHover: true,
           draggable: true,
           progress: undefined,
-        });
-        
-        setSubmitted(true);
-
-        setFormData({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phoneNumber: '',
-          message: '',
-        });
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error sending message. Please try again later.', {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+        }
+      );
     } finally {
       setLoading(false);
     }
@@ -74,13 +84,10 @@ function Contact() {
 
   return (
     <>
-      <section className="xl:min-w-[1440px] bg-[#FF9F1C] xl:mt-[30px] mt-[20px] flex flex-col xl:flex-row overflow-hidden max-w-full">
+      <section className="xl:min-w-[1440px] bg-[#FF9F1C] -mt-4 xl:-mt-6 flex flex-col xl:flex-row overflow-hidden max-w-full pb-5">
         <div className="p-4 xl:p-0 text-white md:flex md:flex-col md:justify-center  xl:ml-[69px] xl:w-[50%] order-2 xl:-translate-y-10">
-          <h1 className="md:text-[16px] text-xs flex md:grid md:justify-start">
-            HOME / ADMISSION
-          </h1>
           <h3 className="md:text-[68px] font-medium text-xl md:mt-4 xl:mt-0 grid xl:grid md:justify-start">
-            <span className="block xl:mt-6">CONTACT US</span>
+            <span className="block xl:mt-6">GET IN TOUCH</span>
           </h3>
         </div>
 
@@ -93,33 +100,43 @@ function Contact() {
         </div>
       </section>
 
-      <section className='grid md:flex mx-6 py-16 min-h-screen justify-center'>
-        <div className='bg-[#1982C4] text-white rounded-xl px-10 z-20 md:translate-x-4 lg:translate-x-8 order-2 md:order-none -translate-y-4 md:translate-y-0' style={{ fontFamily: 'Poppins' }}>
-          <h1 className='font-medium xl:text-[28px] lg:text-xl py-6 '>Contact Information</h1>
-          <p className='font-light xl:text-[20px] lg:text-xl xl:py-6'>Fill up the form and our team will get back you!</p>
-          <div className='flex items-center py-4 xl:py-6'>
-            <BiSolidPhoneCall className='h-6 w-8' />
+      <section className="grid md:flex mx-6 py-16 min-h-screen justify-center">
+        <div
+          className="bg-[#1982C4] text-white rounded-xl px-10 z-20 md:translate-x-4 lg:translate-x-8 order-2 md:order-none -translate-y-4 md:translate-y-0"
+          style={{ fontFamily: "Poppins" }}
+        >
+          <h1 className="font-medium xl:text-[28px] lg:text-xl py-6 ">
+            Contact Information
+          </h1>
+          <p className="font-light xl:text-[20px] lg:text-xl xl:py-6">
+            Fill up the form and our team will get back you!
+          </p>
+          <div className="flex items-center py-4 xl:py-6">
+            <BiSolidPhoneCall className="h-6 w-8" />
             <label>+0123 456 789</label>
           </div>
-          <div className='flex items-center py-4 xl:py-6'>
-            <IoMail className='h-6 w-8' />
+          <div className="flex items-center py-4 xl:py-6">
+            <IoMail className="h-6 w-8" />
             <label>hello@gmail.com</label>
           </div>
-          <div className='flex items-center py-4 xl:py-6'>
-            <IoLocationOutline className='h-6 w-8' />
+          <div className="flex items-center py-4 xl:py-6">
+            <IoLocationOutline className="h-6 w-8" />
             <label>102 Street 2174, India</label>
           </div>
-          <div className='flex px-4 py-6 gap-6'>
-            <FaFacebook className='lg:h-6 lg:w-8 cursor-pointer' />
-            <FaSquareInstagram className='lg:h-6 lg:w-8 cursor-pointer' />
-            <FaWhatsapp className='lg:h-6 lg:w-8 cursor-pointer' />
-            <FaXTwitter className='lg:h-6 lg:w-8 cursor-pointer' />
+          <div className="flex px-4 py-6 gap-6">
+            <FaFacebook className="lg:h-6 lg:w-8 cursor-pointer" />
+            <FaSquareInstagram className="lg:h-6 lg:w-8 cursor-pointer" />
+            <FaWhatsapp className="lg:h-6 lg:w-8 cursor-pointer" />
+            <FaXTwitter className="lg:h-6 lg:w-8 cursor-pointer" />
           </div>
         </div>
 
-        <div className='border-2 p-2 shadow-2xl rounded-xl lg:mx-4 lg:-translate-x-4 xl:translate-x-0 md:-translate-x-2'>
+        <div className="border-2 p-2 shadow-2xl rounded-xl lg:mx-4 lg:-translate-x-4 xl:translate-x-0 md:-translate-x-2">
           <form onSubmit={handleSubmit}>
-            <div className="grid md:grid-cols-2 mx-6 lg:gap-6 xl:mx-10 md:gap-4" style={{ fontFamily: 'Poppins' }}>
+            <div
+              className="grid md:grid-cols-2 mx-6 lg:gap-6 xl:mx-10 md:gap-4"
+              style={{ fontFamily: "Poppins" }}
+            >
               <div className="mt-4 md:px-6 md:py-4">
                 <label className="block text-sm font-medium lg:text-lg">
                   First Name
@@ -196,7 +213,11 @@ function Contact() {
                 className="bg-[#1982C4] text-white py-2 lg:-translate-x-14 rounded-xl mb-4 min-w-[130px] md:min-w-[200px] xl:w-[200px] xl:h-[60px]"
                 disabled={loading}
               >
-                {loading ? 'Submitting...' : submitted ? 'Submitted' : 'Send Message'}
+                {loading
+                  ? "Submitting..."
+                  : submitted
+                  ? "Submitted"
+                  : "Send Message"}
               </button>
             </div>
           </form>

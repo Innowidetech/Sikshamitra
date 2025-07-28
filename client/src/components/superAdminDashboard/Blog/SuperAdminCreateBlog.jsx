@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
+import Header from "../layout/Header";
 import {
   setTitle,
   createBlog,
@@ -58,14 +59,22 @@ const SuperAdminStaffCreateBlog = () => {
     <div className="bg-[#f3f9fb] min-h-screen pt-20">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="">
-        <div className="flex justify-between items-center pb-8">
-          <div>
-            <h1 className="text-xl font-light xl:text-[32px]">Blog</h1>
-            <hr className="border-t-2 border-[#146192] mt-1" />
-            <h1 className="mt-2 text-xs md:text-md xl:text-[17px]">
-              Home &gt;{" "}
-              <span className="text-[#146192]">Blog &gt; Create Blog</span>
-            </h1>
+        <div className="pb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-light text-black xl:text-[38px]">
+                Blog
+              </h1>
+              <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+              <h1 className="mt-2 text-sm md:text-base">
+                <span>Home</span> {">"}{" "}
+                <span className="font-medium text-[#146192]">
+                  Blog &gt; Create Blog{" "}
+                </span>
+              </h1>
+            </div>
+
+            <Header />
           </div>
         </div>
 
@@ -119,25 +128,6 @@ const SuperAdminStaffCreateBlog = () => {
               </button>
             </div>
           </div>
-
-          {/* Blog Entry Preview */}
-          {entries.length > 0 && (
-            <div className="bg-[#f9fafb] rounded-lg p-4 mb-4 max-w-[720px] mx-auto">
-              <h3 className="text-md font-semibold text-[#146191] mb-3">
-                Blog Entries:
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-700">
-                {entries.map((entry, index) => (
-                  <li key={index} className="flex justify-between items-center">
-                    <span>{entry.description}</span>
-                    <span className="text-gray-500 text-xs">
-                      {entry.photo.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Submit */}
           <div className="flex justify-center">

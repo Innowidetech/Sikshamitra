@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import Header from "../layout/Header";
 import {
   fetchSchoolNames,
   postSuperAdminQuery,
@@ -8,6 +10,7 @@ import contactImage from "../../../assets/contact.png"; // Adjust path
 
 const SuperAdminQuery = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { schoolNames } = useSelector((state) => state.connectAndQuery);
 
   const [form, setForm] = useState({
@@ -83,15 +86,22 @@ const SuperAdminQuery = () => {
   return (
     <div>
       {/* Header and Breadcrumb */}
+
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Connect & Query
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[260px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Query</span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Connect & Query
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Query </span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       {/* Form Card Section */}
@@ -115,7 +125,10 @@ const SuperAdminQuery = () => {
                 <button className="bg-[#146192ED] hover:bg-[#0d8de1] text-white px-4 py-2 rounded text-sm font-medium">
                   Query
                 </button>
-                <button className="bg-white border border-[#00263c] text-[#00263c] px-4 py-2 rounded text-sm font-medium">
+                <button
+                  onClick={() => navigate("/superadmin/meeting")}
+                  className="bg-white border border-[#00263c] text-[#00263c] px-4 py-2 rounded text-sm font-medium"
+                >
                   Connect
                 </button>
               </div>

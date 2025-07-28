@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchSuperAdminTasks } from "../../../redux/superAdmin/superAdminTaskSlice";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import Header from "../layout/Header";
 
 const SuperAdminCompletedTask = () => {
   const dispatch = useDispatch();
@@ -19,14 +20,22 @@ const SuperAdminCompletedTask = () => {
   return (
     <div>
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Completed Tasks
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[160px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Completed Tasks</span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Completed Tasks
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">
+                Completed Tasks
+              </span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       <div className="p-4">

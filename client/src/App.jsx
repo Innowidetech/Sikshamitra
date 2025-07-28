@@ -129,6 +129,7 @@ function App() {
     '/scheduled-meeting',
     '/teacher-meeting',
     '/create-meeting',
+    '/superadminmeeting',
     '/driver',
     '/host',
     '/test',
@@ -154,6 +155,7 @@ function App() {
 
         {/* Parent Meeting */}
         <Route path="/meeting" element={<Meeting />} />
+        <Route path="/superadminmeeting" element={<SuperAdminMetting />} />
         <Route path="/host/:meetingLink" element={<Host />} />
         <Route path="/test/:meetingLink" element={<Test />} />
         <Route path="/scheduled-meeting" element={<ScheduleMeeting />} />

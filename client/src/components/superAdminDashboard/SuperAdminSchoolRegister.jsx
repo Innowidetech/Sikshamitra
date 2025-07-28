@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
+import Header from "./layout/Header";
 import { registerSchool } from "../../redux/superAdmin/superAdminSchoolSlice"; // adjust path as needed
 
 const SuperAdminSchoolRegister = () => {
@@ -69,20 +70,23 @@ const SuperAdminSchoolRegister = () => {
   return (
     <div>
       {/* Header Section */}
-      <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Registration
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">School Details</span>{" "}
-          {">"}{" "}
-          <span className="font-medium text-[#146192]"> Registration</span>
-        </h1>
-        <h2 className="mt-5 mb-5 text-xl font-semibold text-[#525252] m-7">
-          Register a New School
-        </h2>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-black xl:text-[38px]">
+            Registration
+          </h1>
+          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+          <h1 className="mt-2 text-sm md:text-base">
+            <span>Registration</span> {">"}{" "}
+            <span className="font-medium text-[#146192]">
+              {" "}
+              Register a New School{" "}
+            </span>
+          </h1>
+        </div>
+
+        <Header />
       </div>
 
       {/* Form Section */}

@@ -108,6 +108,51 @@ export const createMeeting = createAsyncThunk(
         }
     }
 );
+
+export const fetchQueryById = createAsyncThunk(
+    "superAdmin/fetchQueryById",
+    async (id, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.get(`https://sikshamitra.onrender.com/api/superadmin/query/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return res.data.query; // assuming response = { query: { ... } }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to fetch query by ID");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+export const postSuperAdminQueryReply = createAsyncThunk(
+    "superAdmin/postSuperAdminQueryReply",
+    async ({ id, replyMessage }, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const response = await axios.post(
+                `https://sikshamitra.onrender.com/api/superadmin/query/${id}`,
+                { message: replyMessage },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            toast.success("Reply sent successfully!");
+            return response.data; // contains updated query or success message
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send reply");
+            return rejectWithValue(error.response?.data);
+        }
+    }
+);
+
+
 // === INITIAL STATE ===
 
 const initialState = {
@@ -116,8 +161,11 @@ const initialState = {
     queriesSent: [],
     schoolNames: [],
     loading: false,
+    singleQuery: null,
     postQueryLoading: false,
     postQuerySuccess: false,
+    replyLoading: false,         // <-- add
+    replySuccess: false,
     error: null,
 };
 
@@ -188,11 +236,41 @@ const superAdminConnectAndQuerySlice = createSlice({
             .addCase(createMeeting.fulfilled, (state, action) => {
                 state.loading = false;
                 state.meetings.push(action.payload.createdMeeting); // <-- adjust key if different
-            })
+            }) // Fetch single query by ID
+
             .addCase(createMeeting.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || "Error creating meeting";
-            });
+            }).addCase(fetchQueryById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchQueryById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.singleQuery = action.payload;
+            })
+            .addCase(fetchQueryById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || "Error fetching single query";
+            }).addCase(postSuperAdminQueryReply.pending, (state) => {
+                state.replyLoading = true;
+                state.replySuccess = false;
+                state.error = null;
+            })
+            .addCase(postSuperAdminQueryReply.fulfilled, (state, action) => {
+                state.replyLoading = false;
+                state.replySuccess = true;
+                // Optional: update singleQuery with the new message thread
+                if (state.singleQuery && action.payload.updatedQuery) {
+                    state.singleQuery = action.payload.updatedQuery;
+                }
+            })
+            .addCase(postSuperAdminQueryReply.rejected, (state, action) => {
+                state.replyLoading = false;
+                state.replySuccess = false;
+                state.error = action.payload || "Error replying to query";
+            })
+
     },
 });
 

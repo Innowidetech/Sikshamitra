@@ -16,7 +16,7 @@ export const useSocket = () => {
         }
 
         const newSocket = io(SOCKET_URL, {
-            transports: ['websocket'],
+            // transports: ['websocket'],
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
@@ -34,7 +34,9 @@ export const useSocket = () => {
             console.log('🔌 Socket disconnected');
             setIsConnected(false);
         });
-
+        newSocket.on('connect_error', (err) => {
+            console.error('❌ Socket connection error:', err.message);
+        });
         return () => {
             newSocket.disconnect();
         };
