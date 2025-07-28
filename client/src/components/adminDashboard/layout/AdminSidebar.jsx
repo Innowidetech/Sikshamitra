@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { LuGraduationCap } from "react-icons/lu";
 import { FaGraduationCap } from "react-icons/fa6";
-import { BsFillPersonLinesFill } from "react-icons/bs";
+import { BsFillPersonLinesFill,} from "react-icons/bs";
+import { ClipboardList } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,6 +19,7 @@ const menuItems = [
   { id: 'inventory', icon: Package, label: 'Inventory'},
   { id: 'library', icon: Library, label: 'Library'},
   { id: 'admission', icon: FileSpreadsheet, label: 'Admission'},
+  { id: 'adminentrance', icon:  ClipboardList , label: 'Entrance Exam'},
   { id: 'classes', icon: FaGraduationCap, label: 'Classes'},
   { id: 'employee', icon: UserCog, label: 'Staff'},
   { id: 'results', icon: Award, label: 'Results'},

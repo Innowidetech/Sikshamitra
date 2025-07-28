@@ -4,24 +4,44 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import { logoutUser } from './redux/authSlice';
 
-import Home from "./Home";
-import About from "./About";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
-import Blog from "./blog/Blog";
-import Admission from "./Admission";
-import Contact from "./Contact";
-import StudentOnlinePortal from "./studentdashboard/StudentOnlinePortal";
-import Login from "./Auth/Login";
-import MainDashboard from "./components/adminDashboard/MainDashboard";
-import ParentMainDashboard from "./components/parentDashboard/ParentMainDashboard";
-import TeacherMainDashboard from "./components/teacherDashboard/TeacherMaindashboard";
-import StudentMainDashboard from "./components/studentDashboard/StudentMainDashboard";
-import AdminStaffDashboard from "./components/adminStaffDashboard/StaffMainDashboard";
+
+import Home from './Home';
+import About from './About';
+import Navbar from './Navbar';
+import Footer from './Footer';
+import Blog from './blog/Blog';
+import Admission from './Admission';
+import Contact from './Contact';
+import StudentOnlinePortal from './studentdashboard/StudentOnlinePortal';
+import Login from './Auth/Login';
+import EntranceExam from './studentdashboard/EntranceExam';
+
+// Dashboards
+import MainDashboard from './components/adminDashboard/MainDashboard';
+import ParentMainDashboard from './components/parentDashboard/ParentMainDashboard';
+import TeacherMainDashboard from './components/teacherDashboard/TeacherMaindashboard';
+import StudentMainDashboard from './components/studentDashboard/StudentMainDashboard';
+import AdminStaffDashboard from './components/adminStaffDashboard/StaffMainDashboard';
+
+// import Home from "./Home";
+// import About from "./About";
+// import Navbar from "./Navbar";
+// import Footer from "./Footer";
+// import Blog from "./blog/Blog";
+// import Admission from "./Admission";
+// import Contact from "./Contact";
+// import StudentOnlinePortal from "./studentdashboard/StudentOnlinePortal";
+// import Login from "./Auth/Login";
+// import MainDashboard from "./components/adminDashboard/MainDashboard";
+// import ParentMainDashboard from "./components/parentDashboard/ParentMainDashboard";
+// import TeacherMainDashboard from "./components/teacherDashboard/TeacherMaindashboard";
+// import StudentMainDashboard from "./components/studentDashboard/StudentMainDashboard";
+// import AdminStaffDashboard from "./components/adminStaffDashboard/StaffMainDashboard";
 import SuperAdminStaffDashboard from "./components/superAdminStaffDashboard/SuperAdminStaffMainDashboard";
 import SuperAdminMainDashboard from "./components/superAdminDashboard/SuperAdminMainDashbord";
 import SuperAdminMetting from "./components/superAdminDashboard/SuperAdminMetting";
 import SuperAdminScheduleMeeting from "./components/superAdminDashboard/Connect/SuperAdminScheduleMetting";
+
 import DriverDashboard from './components/driverDashboard/driverMainDashboard';
 
 // Parent Meeting
@@ -152,6 +172,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
+        <Route path="/entranceexam" element={<EntranceExam />} />
 
         {/* Parent Meeting */}
         <Route path="/meeting" element={<Meeting />} />

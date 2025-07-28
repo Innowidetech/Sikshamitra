@@ -103,14 +103,14 @@ function Admission() {
       <section className="xl:min-w-[1440px] bg-[#FF9F1C]  flex flex-col xl:flex-row overflow-hidden max-w-full relative ">
         <div className="p-4 xl:p-0 text-white md:flex md:flex-col md:justify-center xl:ml-[80px] xl:w-[50%] md:order-1 order-2">
 
-          <h3 className=" font-medium text-sm lg:text-3xl grid  justify-end xl:grid ">
-            <span className="block xl:mt-6 xl:text-[68px]">ENTRANCE EXAM</span>
+          <h3 className=" font-medium text-sm lg:text-3xl grid  justify-end xl:grid  xl:justify-start">
+            <span className="block xl:mt-6 xl:text-[60px]">ENTRANCE EXAM</span>
             <p className="block xl:mt-10 xl:text-lg md:justify-center ">Apply to EShikshamitra – a cloud-powered school <br />
               management system that streamlines enrollment with <br />
               a digital, secure, and transparent application process.</p>
           </h3>
-          <div className="xl:mt-5 flex gap-2  md:justify-center justify-end">
-            <button className="bg-white text-xs font-thin md:w-[250px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e]"  onClick={() => navigate('/entranceexam')} >
+          <div className="xl:mb-10 xl:mt-5 flex gap-2  md:justify-start ">
+            <button className="bg-white text-xs font-thin md:w-[250px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e] "  onClick={() => navigate('/entranceexam')} >
               APPLY FOR ENTERNCE EXAM
             </button>
             {/* <button className="bg-white text-xs font-thin md:w-[150px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e]" onClick={()=>Setmodelopen(true)}>
