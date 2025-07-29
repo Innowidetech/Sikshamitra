@@ -12,7 +12,7 @@ const SuperAdminScheduleMeeting = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { schoolNames, successMessage, errorMessage } = useSelector(
+  const { schoolNames, successMessage, errorMessage, loading } = useSelector(
     (state) => state.connectAndQuery
   );
   const [meetingType, setMeetingType] = useState("instant");
@@ -29,53 +29,60 @@ const SuperAdminScheduleMeeting = () => {
     dispatch(fetchSchoolNames());
   }, [dispatch]);
 
+  const resetForm = () => {
+    setMeetingTitle("");
+    setStartDate("");
+    setStartTime("");
+    setEndDate("");
+    setEndTime("");
+    setSelectsSchool([]);
+    setShowDropdown(false);
+  };
+
   useEffect(() => {
     if (successMessage) {
       toast.success(successMessage);
-      dispatch(clearMessages());
+      resetForm();
     }
     if (errorMessage) {
       toast.error(errorMessage);
-      dispatch(clearMessages());
     }
-  }, [successMessage, errorMessage, dispatch]);
+  }, [successMessage, errorMessage]);
 
-  const handleTeacherCheck = (name) => {
+  const handleSchoolCheck = (name) => {
     setSelectsSchool((prev) =>
       prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
     );
   };
-
   const handleGenerateLink = () => {
-    if (meetingType === "instant") {
-      if (!meetingTitle || attendants.length === 0) {
-        toast.error("Please enter title and select at least one recipient");
-        return;
-      }
-    } else {
-      if (
-        !meetingTitle ||
-        !startDate ||
-        !startTime ||
-        !endDate ||
-        !endTime ||
-        attendants.length === 0
-      ) {
-        toast.error("Please fill all required fields");
-        return;
-      }
+    if (
+      !meetingTitle ||
+      !startDate ||
+      !startTime ||
+      !endDate ||
+      !endTime ||
+      selectSchool.length === 0
+    ) {
+      toast.error("Please fill all required fields");
+      return;
     }
+
+    // Convert 24hr time to 12hr time with AM/PM
+    const formatTo12Hour = (timeStr) => {
+      const [hour, minute] = timeStr.split(":");
+      const hourNum = parseInt(hour);
+      const ampm = hourNum >= 12 ? "PM" : "AM";
+      const hour12 = hourNum % 12 || 12;
+      return `${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`;
+    };
 
     const payload = {
       title: meetingTitle,
-      meetingType,
-      attendants,
-      ...(meetingType === "scheduled" && {
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-      }),
+      startDate,
+      startTime: formatTo12Hour(startTime),
+      endDate,
+      endTime: formatTo12Hour(endTime),
+      attendants: selectSchool,
     };
 
     dispatch(createMeeting(payload));
@@ -168,14 +175,12 @@ const SuperAdminScheduleMeeting = () => {
               onClick={() => setShowDropdown((p) => !p)}
               className="w-full border rounded px-2 py-1 bg-white flex justify-between items-center"
             >
-              Select Teachers <span>&#9662;</span>
+              Schools <span>&#9662;</span>
             </button>
             {showDropdown && (
               <div className="absolute z-10 mt-1 w-full border rounded bg-white shadow-md max-h-40 overflow-y-auto">
-                {teacherLoading ? (
-                  <div className="p-2 text-center">Loading...</div>
-                ) : (
-                  teacherNames.map((name, idx) => (
+                {schoolNames?.length > 0 ? (
+                  schoolNames.map((name, idx) => (
                     <label
                       key={idx}
                       className="block px-2 py-1 hover:bg-gray-100 cursor-pointer"
@@ -183,12 +188,16 @@ const SuperAdminScheduleMeeting = () => {
                       <input
                         type="checkbox"
                         checked={selectSchool.includes(name)}
-                        onChange={() => handleTeacherCheck(name)}
+                        onChange={() => handleSchoolCheck(name)}
                         className="mr-2"
                       />
                       {name}
                     </label>
                   ))
+                ) : (
+                  <div className="p-2 text-center text-gray-500">
+                    No schools available
+                  </div>
                 )}
               </div>
             )}

@@ -4,6 +4,7 @@ import { fetchSuperAdminTasks } from "../../../redux/superAdmin/superAdminTaskSl
 import { useNavigate } from "react-router-dom";
 
 import dayjs from "dayjs";
+import Header from "../layout/Header";
 
 const SuperAdminTask = () => {
   const dispatch = useDispatch();
@@ -20,12 +21,20 @@ const SuperAdminTask = () => {
   return (
     <div>
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">Task</h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[80px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Task</span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Task
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Task</span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       <div className="p-4">
@@ -46,7 +55,7 @@ const SuperAdminTask = () => {
         </div>
 
         {/* Task Table */}
-        <div className="overflow-x-auto border rounded-md">
+        <div className="hidden md:block overflow-x-auto border rounded-md">
           <table className="min-w-full text-sm border-collapse">
             <thead>
               <tr className="bg-[#005077] text-white text-left">
@@ -101,6 +110,86 @@ const SuperAdminTask = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="block md:hidden mt-4">
+          {error && (
+            <p className="text-center text-red-600 font-medium">{error}</p>
+          )}
+          {pendingTasks?.length === 0 && !loading && (
+            <p className="text-center text-gray-500">No tasks found.</p>
+          )}
+          {pendingTasks?.map((task, index) => (
+            <div
+              key={task._id}
+              className="rounded-lg overflow-hidden mb-4 shadow bg-white border border-[#0000004D]"
+            >
+              <div className="grid grid-cols-2 text-sm">
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  S. No
+                </div>
+                <div className="p-2 border border-[#0000004D]">{index + 1}</div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Start Date
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {dayjs(task.startDate).format("DD-MM-YYYY")}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Due Date
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {dayjs(task.dueDate).format("DD-MM-YYYY")}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Employee
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {task.staffId?.name}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Designation
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {task.staffId?.designation}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Title
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {task.title}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Description
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {task.description}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Contact
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {task.staffId?.userId?.mobileNumber}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Status
+                </div>
+                <div className="p-2 border border-[#0000004D] capitalize">
+                  <span className="bg-gray-100 border px-3 py-1 text-xs rounded shadow text-gray-700">
+                    {task.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

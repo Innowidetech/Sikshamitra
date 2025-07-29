@@ -1,198 +1,297 @@
-import React from 'react'
-import Aboutimg1 from './assets/aboutimg1.png';
-import Aboutimg2 from './assets/aboutimg2.png';
-import Aboutimg3 from './assets/aboutimg3.png';
-import AboutIcon1 from './assets/abouticon1.png';
-import AboutIcon2 from './assets/abouticon2.png';
-import AboutIcon3 from './assets/abouticon3.png';
-import AboutIcon4 from './assets/abouticon4.png';
-import AboutFirst from './assets/aboutfirst.png';
-import Aboutend from './assets/aboutend.png';
-import AboutRight1 from './assets/aboutright1.png';
-import AboutRight2 from './assets/aboutright2.png';
-import AboutLeft1 from './assets/aboutleft1.png';
-import AboutLeft2 from './assets/aboutleft2.png';
+import pic1 from "./assets/aboutpic1.png";
+import pic2 from "./assets/aboutpic2.png";
+import pic3 from "./assets/aboutpic3.jpg";
+import cloud from "./assets/cloudimg1.png";
+import pic4 from "./assets/aboutpic4.png";
+import pic5 from "./assets/aboutpic5.png";
+import right from "./assets/aboutpic51.png";
+import handeshack from "./assets/aboutpic52.png";
+import help1 from "./assets/helppic1.png";
+import help2 from "./assets/helppic2.png";
+import help3 from "./assets/helppic3.png";
+import help4 from "./assets/helppic4.png";
+import mainpic from "./assets/helpmainpic.png";
 
 function About() {
   return (
     <>
-      <section className="xl:min-w-[1440px]  bg-[#FF9F1C] xl:mt-[30px] xl:flex xl:justify-between mt-[20px]">
-        <div className="p-4 xl:p-0 xl:w-[282px] xl:h-[262px] text-white xl:flex xl:flex-col xl:justify-center xl:ml-[69px]">
-          <h1 className="xl:text-[16px] text-lg">HOME/ABOUT US</h1>
-          <h3 className="xl:text-[68px] font-semibold text-3xl w-[120px] ml-4 xl:ml-0 xl:w-auto">WHO</h3>
-          <h4 className="xl:text-[68px] font-semibold text-3xl w-[120px] ml-4 xl:ml-4 xl:w-auto xl:mt-6">WE ARE</h4>
-        </div>
-        <div className="xl:w-[600px] xl:h-[262px] flex justify-end">
-          <img src={Aboutimg1} alt="Aboutimg1" className="xl:max-w-full xl:h-auto h-[200px]" />
+      <section className="bg-[#FF9F1C] ">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4  flex-wrap">
+          {/* Left Image */}
+          <img
+            src={pic1}
+            alt="Left Kid"
+            className="w-16 sm:w-20 md:w-40 lg:w-96 h-auto"
+          />
+
+          {/* Center Text */}
+          <div className="text-center text-white px-2 flex-1 min-w-[180px]">
+            <h1 className="text-[10px] sm:text-[20px] md:text-[22px] font-bold">
+              ESIKSHAMITRA
+            </h1>
+            <h2 className="text-[8px] sm:text-[20px] md:text-[16px] lg:text-[24px] font-semibold mt-1">
+              A NEW APPROACH TO STUDY
+            </h2>
+            <p className="mt-2 text-[#146192] font-semibold text-[6px] sm:text-[10px] md:text-[12px] lg:text-[16px] leading-snug">
+              "Your gateway to discovering schools, applying for admissions, and
+              preparing for entrance exams—all in one place".
+            </p>
+          </div>
+
+          {/* Right Image */}
+          <img
+            src={pic2}
+            alt="Right Kid"
+            className="w-16 sm:w-20 md:w-40 lg:w-96 h-auto"
+          />
         </div>
       </section>
 
-      <section className="xl:ml-[112px] mx-auto py-16 ">
-        <div>
-          <h1 className="text-xl md:text-3xl text-center xl:text-[50px] font-extralight text-[#1982C4]" style={{ fontFamily: 'Poppins' }}>
-            OUR MISSION
-          </h1>
-          <hr className="border-[#D48D2D] mx-auto w-[100px] mt-4 font-bold border" />
-        </div>
-        <div className="py-4 flex justify-center">
-          <p className="md:text-xl  mx-4 xl:text-[#1982C4] font-bold xl:text-[23px]">
-            Inspiring Excellence in Education
+      <section className="bg-[#fef9f4] py-8 px-2 pb-[80px]">
+        <div className="max-w-6xl mx-auto text-center pb-12">
+          {/* Title & Description */}
+          <h2 className="text-lg md:text-3xl font-semibold text-[#146192] uppercase">
+            About Eshikshamitra
+          </h2>
+          <p className="mt-2 text-sm md:text-lg text-[#656565] max-w-2xl mx-auto font-semibold">
+            Shikshamitra is your trusted partner in finding the best school for
+            your child from Class 1 to 12. Our platform provides verified school
+            listings, reviews, and admission guidance.
           </p>
-        </div>
-        <div className='md:flex xl:w-[1215px] xl:h-[501px] xl:mt-[70px] xl:ml-[32px] mx-4 md:ml-12 lg:mt-10'>
-          <div className='mx-4 p-2 md:mx-0 md:p-0'>
-            <img src={Aboutimg2} alt="Aboutimg2" className='xl:w-[396px] xl:h-[500px] ml-2 md:ml-0' />
+
+          {/* Three Columns Section */}
+          <div className="mt-10 flex flex-col md:flex-row items-center justify-between gap-6 pt-8">
+            {/* Mission */}
+            <div className="border-2 border-orange-400 p-4 md:p-6 w-[300px] md:w-1/3 h-[200px] md:h-[240px] text-center bg-white shadow-sm">
+              <p className="text-lg md:text-2xl font-semibold text-[#146192] mb-2">
+                OUR MISSION
+              </p>
+              <p className="text-sm md:text-lg text-gray-700 mt-4 font-semibold px-4 md:px-8">
+                “To make school search and admission easier, transparent, and
+                accessible for every family.”
+              </p>
+            </div>
+
+            {/* Image */}
+            <div className="w-full md:w-1/3">
+              <img
+                src={pic3}
+                alt="Two Kids with Books"
+                className="w-[280px] md:w-[350px] h-[120px] md:h-[240px] rounded-lg shadow-md mx-auto "
+              />
+            </div>
+
+            {/* Vision */}
+            <div className="border-2 border-orange-400 p-4 md:p-6 w-[300px] md:w-1/3 h-[200px] md:h-[240px] text-center bg-white shadow-sm">
+              <p className="text-lg md:text-2xl font-semibold text-[#146192] mb-2">
+                OUR VISION
+              </p>
+              <p className="text-sm md:text-lg text-gray-700 mt-4 font-semibold px-4 md:px-6">
+                We envision a future where every child finds the right
+                educational environment to thrive in.
+              </p>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* test image */}
+
+      <div>
+        {/* Top Cloud */}
+        <img
+          src={cloud}
+          alt="Cloud Top"
+          className="w-full  h-auto -mt-[110px]"
+        />
+
+        {/* Director's Message */}
+        <section className="bg-orange-400 text-white py-8 px-6 rounded-tr-3xl rounded-bl-3xl max-w-4xl mx-auto flex flex-col md:flex-row items-center shadow-lg mb-[100px]">
+          <img
+            src={pic4}
+            alt="Director"
+            className="w-34 h-24  object-cover mr-6 mb-4 md:mb-0 "
+          />
           <div>
-            <div className='bg-[#1982C4] mx-6 ml-8 md:ml-0 xl:w-[775px] xl:h-[403px] rounded-lg xl:ml-[43px] md:h-[400px] md:w-[300px] lg:w-[460px] lg:ml-12 lg:p-4 lg:h-[430px]'>
-              <div className='p-4 md:p-0 xl:ml-[62px] xl:p-[54px] xl:w-[670px] xl:font-light xl:text-[19px] md:mx-4 md:px-4 xl:px-0'>
-                <label className='text-white'>
-                  At Shikshamitra, our mission is to ignite a passion for learning and personal growth in every student. We are committed to creating a dynamic educational environment that encourages innovation, resilience, and collaboration.Our focus is on nurturing each child's potential through personalized learning experiences, empowering them to become confident, responsible citizens. We believe in fostering strong partnerships with families and the community to support holistic development. Together, we aim to shape future leaders who will positively impact the world.
-                </label>
-              </div>
-            </div>
-            <button className='bg-[#FF9F1C] text-white rounded-br-full rounded-tl-full  xl:w-[210px] xl:h-[55px]  w-[140px] h-[41px] mt-[20px] ml-10 md:ml-0 xl:translate-x-12 lg:ml-12 xl:ml-0'>
-              Learn More
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className='xl:ml-[130px] lg:flex xl:max-w-[1215px] xl:min-h-[562px] bg-[#FF9F1C] rounded-xl xl:mx-auto xl:py-[62px] xl:px-[58px] mx-6 md:mx-0 py-8 px-6'>
-        <div className='grid '>
-          <div className='xl:w-[630px] p-4 md:p-0'>
-            <h1 className='xl:text-[35px] text-white md:mb-[30px] md:text-center xl:text-start text-2xl mb-[20px] w-[130px] md:w-auto'>PLAY AS YOU LEARN</h1>
-            <label className='xl:text-[21px] font-extralight text-white text-center xl:text-start text-xl '>Our philosphy is learning through play as we offer a stimulating environment for children </label>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 ml-4 md:ml-0 gap-6 items-center md:mt-[40px] md:gap-[30px] xl:gap-0 xl:mt-0" style={{ fontFamily: 'Poppins' }}>
-            <div className="flex items-center space-x-4 xl:w-[265px] xl:h-[74px]">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <img src={AboutIcon1} alt="AboutIcon1" className="w-10 h-10" />
-              </div>
-              <label className="font-semibold text-md text-white xl:w-[177px] xl:text-[24px] w-[120px]">FRIENDLY PLACE</label>
-            </div>
-            <div className="flex items-center space-x-4 xl:w-[265px] xl:h-[74px]">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <img src={AboutIcon2} alt="AboutIcon2" className="w-10 h-10" />
-              </div>
-              <label className="font-semibold text-md text-white xl:w-[177px] xl:text-[24px] w-[120px]">VARIED CLASSES</label>
-            </div>
-            <div className="flex items-center space-x-4 ">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <img src={AboutIcon3} alt="AboutIcon3" className="w-10 h-10" />
-              </div>
-              <label className="font-semibold text-md text-white xl:w-[177px] xl:text-[24px] w-[120px]">ONLINE ACCESS</label>
-            </div>
-            <div className="flex items-center space-x-4 xl:w-[265px] xl:h-[74px]">
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center">
-                <img src={AboutIcon4} alt="AboutIcon4" className="w-10 h-10" />
-              </div>
-              <label className="font-semibold text-md text-white xl:w-[177px] xl:text-[24px] w-[120px]">TRANSPORTATION</label>
-            </div>
-          </div>
-        </div>
-        <div className='xl:mt-[50px] xl:ml-[30px] ml-[20px] mt-[30px] md:flex md:justify-center'>
-          <img src={Aboutimg3} alt="Aboutimg3" className='xl:w-[421px] xl:h-[398px] h-full w-auto' />
-        </div>
-      </section>
-
-      <section className="mx-auto py-16 px-4">
-        <div className="py-4 text-center">
-          <p className="text-xl mx-4 text-[#1982C4] font-medium xl:text-[23px]">
-            OUR DIRECTORS MESSAGE
-          </p>
-          <hr className="border-[#1982C4] mx-auto w-[100px] mt-4 font-bold border xl:w-[260px]" />
-        </div>
-
-        <div className="md:flex gap-8 max-w-6xl mx-auto md:mt-[50px]  xl:gap-[50px] flex-col sm:flex-row">
-          {/* First Box */}
-          <div className="bg-[#1982C4] p-8 rounded-br-[100px] shadow-lg w-full lg:h-[246px] lg:w-[511px] mx-4 -translate-x-4 md:translate-x-0">
-            <div className="flex items-center text-white">
-              <span className="mr-4 text-2xl">•</span>
-              <h1 className="lg:text-2xl font-semibold">
-                A Vision For The Future
-              </h1>
-            </div>
-            <p className="mt-4 text-white text-xs lg:text-xl">
-              Dear Students, Parents, and Educators, we are committed to transforming education through innovative technology. Together, we can create a brighter future for our students.
+            <h3 className="text-lg md:text-2xl  uppercase">
+              Our Director's Message
+            </h3>
+            <h4 className="text-md md:text-lg font-semibold mt-1">
+              A Vision for the Future
+            </h4>
+            <p className="text-sm md:text-base mt-2">
+              Dear Students, Parents, and Educators. We are committed to
+              transforming education through innovative technology. Together, we
+              can create a brighter future for our students.
             </p>
           </div>
+        </section>
 
-          {/* Second Box */}
-          <div className="bg-[#1982C4] p-8 rounded-br-[100px] shadow-lg w-full lg:h-[246px] lg:w-[511px] mx-4 mt-6 sm:mt-0 -translate-x-4 md:translate-x-0">
-            <div className="flex items-center text-white">
-              <span className="mr-4 text-2xl">•</span>
-              <h1 className="lg:text-2xl font-semibold">
-                Commitment To Excellence
-              </h1>
+        {/* Bottom Cloud */}
+
+        {/* Blue Section: What We Do */}
+        <section className="bg-[#1c3a5f] text-white py-12  text-center pb-[190px]">
+          <img
+            src={cloud}
+            alt="Cloud Bottom"
+            className="w-full h-auto -mt-[110px] "
+          />
+          <h2 className="text-3xl font-slabserif font-semibold mb-10 uppercase">
+            What We Do
+          </h2>
+          <div className="p-8 grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {/* Card 1 */}
+            <div className="md:border-r-2 border-dotted border-[#FF9F1C] pr-4">
+              <h4 className="text-[#FF9F1C] font-semibold mb-2">
+                ● School Discovery
+              </h4>
+              <p className="text-sm">
+                We help parents explore and compare schools based on location,
+                curriculum, fees, and reviews.
+              </p>
             </div>
-            <p className="mt-4 text-white text-xs lg:text-xl">
-              We strive to simplify school management while empowering teachers and engaging students. Let’s work together to inspire creativity and excellence in every classroom.
-            </p>
+
+            {/* Card 2 */}
+            <div className="md:border-r-2 border-dotted border-[#FF9F1C] px-4">
+              <h4 className="text-[#FF9F1C] font-semibold mb-2">
+                ● Admission Guidance
+              </h4>
+              <p className="text-sm">
+                We provide up-to-date admission timelines and application
+                resources.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="md:border-r-2 border-dotted border-[#FF9F1C] px-4">
+              <h4 className="text-[#FF9F1C] font-semibold mb-2">
+                ● Verified Reviews
+              </h4>
+              <p className="text-sm">
+                Real feedback from other parents to help you make informed
+                choices.
+              </p>
+            </div>
+
+            {/* Card 4 (last one - no right border) */}
+            <div className="pl-4">
+              <h4 className="text-[#FF9F1C] font-semibold mb-2">
+                ● Smart Filter & Comparison
+              </h4>
+              <p className="text-sm">
+                Filter by board, facilities, and fee range, compare multiple
+                schools side by side.
+              </p>
+            </div>
           </div>
+        </section>
+        <img
+          src={cloud}
+          alt="Cloud Bottom"
+          className="w-full h-auto -mt-[100px] "
+        />
+      </div>
+      <section className="bg-[#FF9F1C] text-white py-10 px-4 flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-4">
+        {/* Left Side - Text Content */}
+        <div className="space-y-4 pl-[160px]">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold flex items-center gap-2 text-[#146192]">
+            <img
+              src={right}
+              alt="Star"
+              className="w-8 sm:w-10 md:w-11 h-auto"
+            />
+            WHY TRUST US
+          </h2>
+          <div className="flex-1 flex justify-center block sm:hidden ">
+            <img src={pic5} alt="Illustration" className="w-[200px] h-auto " />
+          </div>
+          <ul className="space-y-3 text-xs sm:text-sm md:text-base ">
+            <li className="flex items-start gap-3">
+              <img src={handeshack} alt="Icon" className="w-6 sm:w-8 h-auto" />
+              <span>Curated & Verified School Listings</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <img src={handeshack} alt="Icon" className="w-6 sm:w-8 h-auto" />
+              <span>Transparent, Unbiased Reviews</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <img src={handeshack} alt="Icon" className="w-6 sm:w-8 h-auto" />
+              <span>Local Support for Personalized Assistance</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <img src={handeshack} alt="Icon" className="w-6 sm:w-8 h-auto" />
+              <span>Backed by an Experienced Team in EdTech</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Right Side - Illustration */}
+        <div className="flex-1 flex justify-center hidden sm:flex">
+          <img
+            src={pic5}
+            alt="Illustration"
+            className="w-[250px] md:w-[300px] lg:w-[400px] xl:w-[500px] h-auto"
+          />
         </div>
       </section>
 
-      <section className="xl:ml-[100px] py-16 px-4 -translate-y-24 xl:translate-y-0 xl:mr-[100px] mx-4 md:mx-4">
-        <div className="py-4 text-center mb-[20px] xl:mb-0">
-          <p className="text-xl mx-4 text-[#1982C4] xl:text-[34px]">
-            OUR GALLERY
-          </p>
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:mt-[60px]">
-          {/* Left Section */}
-          <div className="xl:col-span-6 space-y-4">
-            <div>
-              <img 
-                src={AboutFirst} 
-                alt="School facility entrance" 
-                className="w-full h-[298px] object-cover rounded-lg"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <img 
-                  src={AboutLeft1} 
-                  alt="Students in classroom" 
-                  className="w-full h-[293px] object-cover rounded-lg"
-                />
-              </div>
-              <div>
-                <img 
-                  src={AboutLeft2} 
-                  alt="School activities" 
-                  className="w-full h-[293px] object-cover rounded-lg"
-                />
-              </div>
-            </div>
-          </div>
+      <section className="bg-white py-12 px-4 md:px-10 xl:px-20 flex flex-col xl:flex-row items-center gap-10">
+        {/* Left Side - Text + Icons */}
+        <div className="w-full xl:w-2/3 space-y-8">
+          <h2 className="text-2xl md:text-3xl xl:text-4xl font-semibold text-[#146192]">
+            WHO WE HELP?
+          </h2>
 
-          {/* Right Section */}
-          <div className="xl:col-span-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <img 
-                  src={AboutRight1} 
-                  alt="Learning environment" 
-                  className="w-full h-[293px] object-cover rounded-lg"
-                />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm md:text-base text-gray-700">
+            {/* Card 1 */}
+            <div className="flex items-start gap-4">
+              <div className="bg-[#40E492] text-white p-2 rounded">
+                <img src={help1} alt="Star" className="w-8 h-8" />
               </div>
-              <div>
-                <img 
-                  src={AboutRight2} 
-                  alt="Student activities" 
-                  className="w-full h-[293px] object-cover rounded-lg"
-                />
-              </div>
+              <span className="pt-2 text-[16px] md:text-[18px]">
+                Parents of children in Classes K–12
+              </span>
             </div>
-            <div>
-              <img 
-                src={Aboutend} 
-                alt="School library" 
-                className="w-full h-[298px] object-cover rounded-lg"
-              />
+
+            {/* Card 2 */}
+            <div className="flex items-start gap-4">
+              <div className="bg-[#E4AE40] text-white p-2 rounded">
+                <img src={help2} alt="Star" className="w-8 h-8" />
+              </div>
+              <span className="pt-2 text-[16px] md:text-[18px]">
+                Students switching schools
+              </span>
+            </div>
+
+            {/* Card 3 */}
+            <div className="flex items-start gap-4">
+              <div className="bg-[#4082E4] text-white p-2 rounded">
+                <img src={help3} alt="Star" className="w-8 h-8" />
+              </div>
+              <span className="pt-2 text-[16px] md:text-[18px]">
+                Families relocating to new cities
+              </span>
+            </div>
+
+            {/* Card 4 */}
+            <div className="flex items-start gap-4">
+              <div className="bg-[#5EE440] text-white p-2 rounded">
+                <img src={help1} alt="Star" className="w-8 h-8" />
+              </div>
+              <span className="pt-2 text-[16px] md:text-[18px]">
+                Educators and school counselors
+              </span>
             </div>
           </div>
+        </div>
+
+        {/* Right Side - Image */}
+        <div className="w-full xl:w-1/3 flex justify-center">
+          <img
+            src={mainpic}
+            alt="Child playing"
+            className="rounded-lg w-full max-w-[250px] sm:max-w-[300px] xl:max-w-[320px] shadow-md"
+          />
         </div>
       </section>
     </>

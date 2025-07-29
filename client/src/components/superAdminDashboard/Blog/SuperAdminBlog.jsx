@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Header from "../layout/Header";
+
 import {
   fetchUserBlogs,
   deleteBlogById,
@@ -39,13 +41,21 @@ const SuperAdminBlog = ({ onCreateBlog, onEditBlog }) => {
     <div className="p-4 md:p-6">
       <ToastContainer position="top-right" autoClose={3000} />
       {/* Header */}
-      <div className="flex justify-between items-center py-10">
-        <div>
-          <h1 className="text-xl font-light xl:text-[32px]">Blog</h1>
-          <hr className="border-t-2 border-[#146192] mt-1" />
-          <p className="mt-2 text-sm lg:text-base text-gray-700">
-            Home &gt; <span className="text-[#146192] font-medium">Blogs</span>
-          </p>
+
+      <div className="pb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Blog
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Blogs </span>
+            </h1>
+          </div>
+
+          <Header />
         </div>
       </div>
 
@@ -79,7 +89,9 @@ const SuperAdminBlog = ({ onCreateBlog, onEditBlog }) => {
                 </h2>
                 <div className="flex space-x-3">
                   <button
-                    onClick={() => onEditBlog(blog._id)}
+                    onClick={() =>
+                      navigate(`/superadmin/edit-blog/${blog._id}`)
+                    } // navigate to edit page(blog._id)}
                     className="text-[#285A87] hover:text-[#0d8de1]"
                   >
                     <FaRegEdit size={20} />

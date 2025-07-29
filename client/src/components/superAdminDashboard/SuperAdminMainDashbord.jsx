@@ -19,6 +19,8 @@ import SuperAdminBlog from "./Blog/SuperAdminBlog";
 import SuperAdminCreateBlog from "./Blog/SuperAdminCreateBlog";
 import SuperAdminConnect from "./Connect/SuperAdminConnect";
 import SuperAdminQuery from "./Connect/SuperAdminQuery";
+import SuperAdminReplyPage from "./Connect/SuperAdminReplay";
+import EditBlog from "./Blog/EditBlog";
 
 const SuperAdminMainDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -109,9 +111,17 @@ const SuperAdminMainDashboard = () => {
           <Route path="task/assign" element={<SuperAdminAssign />} />
           <Route path="blog" element={<SuperAdminBlog />} />
           <Route path="blog/create-blog" element={<SuperAdminCreateBlog />} />
+          <Route path="edit-blog/:id" element={<EditBlog />} />
 
           <Route path="connect-queries" element={<SuperAdminConnect />} />
+
+          <Route path="connect-queries" element={<SuperAdminConnect />} />
+
           <Route path="connect-queries/Queries" element={<SuperAdminQuery />} />
+          <Route
+            path="connect-queries/reply/:id"
+            element={<SuperAdminReplyPage />}
+          />
           <Route
             path="*"
             element={

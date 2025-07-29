@@ -9,6 +9,7 @@ import { PiDownloadSimpleBold } from "react-icons/pi";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "../../assets/ESHIKSHAMITRA.png";
+import Header from "./layout/Header";
 
 const SuperAdminAccounts = () => {
   const navigate = useNavigate();
@@ -305,16 +306,20 @@ const SuperAdminAccounts = () => {
   return (
     <div>
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Accounts
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"} <span>Accounts</span> {">"}{" "}
-          <span className="font-medium text-[#146192] capitalize">
-            {selectedTab}
-          </span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Accounts
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Accounts </span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       {loading && <p>Loading...</p>}
@@ -367,7 +372,7 @@ const SuperAdminAccounts = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full text-sm border border-gray-300 rounded">
               <thead className="bg-[#07486F] text-white">
                 <tr>
@@ -434,6 +439,94 @@ const SuperAdminAccounts = () => {
           </div>
         </div>
       )}
+
+      <div className="block md:hidden mt-4">
+        {income?.length === 0 && !loading && (
+          <p className="text-center text-gray-500">No income data found.</p>
+        )}
+
+        {income?.map((item, index) => (
+          <div
+            key={item._id}
+            className="rounded-lg overflow-hidden mb-4 shadow bg-white border border-[#0000004D]"
+          >
+            <div className="grid grid-cols-2 text-sm">
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                S. No
+              </div>
+              <div className="p-2 border">{index + 1}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                School Code
+              </div>
+              <div className="p-2 border">{item.schoolCode}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                School Name
+              </div>
+              <div className="p-2 border">{item.schoolName}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Principal
+              </div>
+              <div className="p-2 border">{item.principalName || "-"}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Contact
+              </div>
+              <div className="p-2 border">{item.schoolContact || "-"}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Total Fees
+              </div>
+              <div className="p-2 border text-blue-600">
+                {(item.totalFees || 0).toLocaleString()}
+              </div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Paid
+              </div>
+              <div className="p-2 border text-green-600">
+                {(item.paidAmount || 0).toLocaleString()}
+              </div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Due
+              </div>
+              <div className="p-2 border text-red-500">
+                {(item.dueAmount || 0).toLocaleString()}
+              </div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Status
+              </div>
+              <div className="p-2 border">{item.schoolStatus || "-"}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Payment Method
+              </div>
+              <div className="p-2 border">{item.paymentMethod}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Transaction ID
+              </div>
+              <div className="p-2 border break-all">{item.transactionId}</div>
+
+              <div className="bg-[#146192E8] text-white p-2 font-semibold border">
+                Edit
+              </div>
+              <div className="p-2 border">
+                <PencilSquareIcon
+                  onClick={() =>
+                    navigate(`/superadmin/account/edit-income/${item._id}`)
+                  }
+                  className="w-5 h-5 text-[#146192] cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Expense Table */}
       {selectedTab === "expense" && (

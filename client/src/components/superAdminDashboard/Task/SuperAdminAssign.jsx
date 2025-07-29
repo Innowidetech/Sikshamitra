@@ -4,6 +4,7 @@ import {
   assignTask,
   fetchSuperAdminTasks,
 } from "../../../redux/superAdmin/superAdminTaskSlice";
+import Header from "../layout/Header";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -48,14 +49,23 @@ const SuperAdminAssign = () => {
     <div>
       <ToastContainer />
       {/* Heading Section */}
-      <div className="pb-10">
-        <h1 className="text-3xl font-light text-black xl:text-[40px]">Task</h1>
-        <hr className="mt-3 border-[#146192] border-[1.5px] w-[90px]" />
-        <h1 className="mt-2 text-base md:text-lg">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Task</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Assign Task</span>
-        </h1>
+
+      <div className="pb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Task
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Task</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Assign Task</span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       {/* Form Section */}

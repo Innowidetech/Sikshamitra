@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "../../../assets/ESHIKSHAMITRA.png";
+import Header from "../layout/Header";
 
 const SuperAdminStaff = () => {
   const dispatch = useDispatch();
@@ -115,12 +116,20 @@ const SuperAdminStaff = () => {
   return (
     <div className="p-4">
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">Staff</h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[100px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Staff</span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Staff
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Staff</span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
 
       <div className="flex justify-end gap-4 mb-4">

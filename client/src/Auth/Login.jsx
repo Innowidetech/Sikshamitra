@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { UserCircle, GraduationCap, Users2, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { loginUser, clearError } from "../redux/authSlice";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useState, useEffect } from 'react';
+import { UserCircle, GraduationCap, Users2, Users } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearError } from '../redux/authSlice';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,9 +12,9 @@ const Login = () => {
   const { isLoading, error, token, userId, userRole, employeeType, user } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    useremail: "",
-    password: "",
-    selectedRole: "",
+    useremail: '',
+    password: '',
+    selectedRole: '',
   });
 
   useEffect(() => {
@@ -35,9 +35,9 @@ const Login = () => {
       localStorage.setItem('userRole', userRole);
 
       if (employeeType) {
-        localStorage.setItem("employeeType", employeeType);
+        localStorage.setItem('employeeType', employeeType);
       } else {
-        localStorage.removeItem("employeeType");
+        localStorage.removeItem('employeeType');
       }
 
       if ((userRole === 'admin' || userRole === 'superadmin') && user) {
@@ -49,13 +49,13 @@ const Login = () => {
     }
   }, [token, userId, userRole, employeeType, user]);
 
-  const redirectToDashboard = (role, empType = "") => {
+  const redirectToDashboard = (role, empType = '') => {
     empType = empType?.toLowerCase();
 
-    if (role === "superadmin") {
-      navigate("/superadmin/maindashboard");
-    } else if (role === "staff") {
-      navigate("/superadminstaff/maindashboard");
+    if (role === 'superadmin') {
+      navigate('/superadmin/maindashboard');
+    } else if (role === 'staff') {
+      navigate('/superadminstaff/maindashboard');
     } else if (role === 'teacher') {
       if (empType === 'groupd') {
         navigate('/adminstaff/maindashboard');
@@ -74,11 +74,11 @@ const Login = () => {
   };
 
   const userTypes = [
-    { id: "admin", icon: UserCircle, label: "Admin" },
-    { id: "teacher", icon: GraduationCap, label: "Teacher" },
-    { id: "student", icon: Users, label: "Student" },
-    { id: "parent", icon: Users2, label: "Parent" },
-    { id: "superadmin", icon: UserCircle, label: "Super Admin" },
+    { id: 'admin', icon: UserCircle, label: 'Admin' },
+    { id: 'teacher', icon: GraduationCap, label: 'Employee' },
+    { id: 'student', icon: Users, label: 'Student' },
+    { id: 'parent', icon: Users2, label: 'Parent' },
+    { id: 'superadmin', icon: UserCircle, label: 'Super Admin' },
   ];
 
   const handleChange = (e) => {
@@ -105,104 +105,86 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
+      role: selectedRole || 'teacher',
     };
-
-    // Include role only if user selected it
-    if (selectedRole) {
-      loginPayload.role = selectedRole;
-    }
 
     try {
       await dispatch(loginUser(loginPayload)).unwrap();
     } catch (err) {
-      toast.error(error || "Login failed");
+      toast.error(error || 'Login failed');
     }
   };
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-5xl mx-4 py-16 md:mx-0 md:py-0">
-          <div className="grid md:grid-cols-2">
-            {/* Left - Login Form */}
-            <div className="bg-[#1982C4E0] p-8 md:p-12 rounded-3xl md:translate-x-10 z-70 relative">
-              <div className="max-w-lg mx-auto">
-                <div className="flex justify-center">
-                  <div className="bg-white text-[#1982C4E0] w-16 h-16 flex items-center justify-center rounded-full">
-                    <UserCircle size={32} />
-                  </div>
+      <div className="min-h-screen bg-[#f7931e] flex items-center justify-center px-4">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+          <h2 className="text-center text-[#146192] font-bold text-xl mb-6">LOGIN</h2>
+
+          {/* Role Selection */}
+          <div className="flex justify-between items-center mb-6 px-6">
+            {userTypes.map((userType) => (
+              <div
+                key={userType.id}
+                onClick={() => handleRoleSelect(userType.id)}
+                className={`flex flex-col items-center justify-center space-y-1 cursor-pointer transition-all duration-200 ${
+                  formData.selectedRole === userType.id ? 'text-[#146192]' : 'text-gray-500'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
+                    formData.selectedRole === userType.id ? 'bg-[#f7931e] text-white' : 'border-[#f7931e]'
+                  }`}
+                >
+                  <userType.icon size={20} />
                 </div>
-
-                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-                  <div>
-                    <label className="block text-white text-sm mb-2">
-                      Email / Mobile Number
-                    </label>
-                    <input
-                      type="text"
-                      name="useremail"
-                      value={formData.useremail}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-lg bg-[#5AA7D7] text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
-                      placeholder="Enter email or mobile number"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-white text-sm mb-2">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-lg bg-[#5AA7D7] text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50"
-                      placeholder="Enter your password"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-white text-[#1982C4] py-3 px-4 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
-                  >
-                    {isLoading ? "Logging in..." : "LOGIN"}
-                  </button>
-                </form>
-
-                <div className="flex items-center justify-end">
-                  <label className="ml-2 mt-4 text-sm md:text-lg text-white hover:underline cursor-pointer">
-                    Forgot password?
-                  </label>
-                </div>
+                <span className="text-sm font-medium">{userType.label}</span>
               </div>
-            </div>
-
-            {/* Right - Role Selection */}
-            <div className="flex flex-col items-center justify-center md:border-t md:border-b md:border-r border-[#1982C4] p-8 md:p-12 rounded-3xl space-y-6 bg-[#1982C417]">
-              <h1 className="text-2xl font-medium mb-6">LOG-IN</h1>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {userTypes.map((userType) => (
-                  <div
-                    key={userType.id}
-                    onClick={() => handleRoleSelect(userType.id)}
-                    className={`flex flex-col items-center justify-center p-4 rounded-lg space-y-2 cursor-pointer transition-colors
-                      ${
-                        formData.selectedRole === userType.id
-                          ? "bg-[#1982C4] text-white"
-                          : "hover:bg-[#1982C4] hover:text-white"
-                      }`}
-                  >
-                    <userType.icon className="w-14 h-14 border rounded-full p-2 bg-[#1982C46E]" />
-                    <span className="text-lg">{userType.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm text-[#146192]">E-mail</label>
+              <input
+                type="text"
+                name="useremail"
+                value={formData.useremail}
+                onChange={handleChange}
+                placeholder="Enter your email id"
+                className="mt-1 block w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#146192]">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="xxxxxx"
+                className="mt-1 block w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded focus:outline-none"
+                required
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-xs text-gray-600 hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-[#f7931e] text-white py-2 font-bold text-lg rounded hover:bg-orange-600 transition"
+            >
+              {isLoading ? 'Logging in...' : 'LOGIN'}
+            </button>
+          </form>
         </div>
       </div>
       <ToastContainer />

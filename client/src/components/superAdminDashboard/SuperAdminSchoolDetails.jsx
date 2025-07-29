@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -24,6 +24,8 @@ const SuperAdminSchoolDetails = () => {
   useEffect(() => {
     dispatch(fetchAllSchools());
   }, [dispatch]);
+
+  const [statusFilter, setStatusFilter] = useState("");
 
   const handleStatusChange = (schoolId, currentStatus, newStatus) => {
     console.log("=== STATUS CHANGE TRIGGERED ===");
@@ -162,7 +164,9 @@ const SuperAdminSchoolDetails = () => {
             <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
             <h1 className="mt-2 text-sm md:text-base">
               <span>Home</span> {">"}{" "}
-              <span className="font-medium text-[#146192]">School Details</span>
+              <span className="font-medium text-[#146192]">
+                School Details{" "}
+              </span>
             </h1>
           </div>
 
@@ -171,6 +175,28 @@ const SuperAdminSchoolDetails = () => {
       </div>
 
       <div className="flex justify-end items-center gap-3 mb-4">
+        <select
+          className="text-sm text-white bg-[#146192] px-4 py-2 rounded"
+          onChange={(e) => {
+            const selected = e.target.value;
+            setStatusFilter(selected);
+            toast.info(`Selected filter: ${selected}`);
+            // Optional: Filter table data or trigger a fetch based on selection
+          }}
+        >
+          <option className="text-black bg-white" value="">
+            Status
+          </option>
+          <option className="text-black bg-white" value="active">
+            Active
+          </option>
+          <option className="text-black bg-white" value="inactive">
+            Inactive
+          </option>
+          <option className="text-black bg-white" value="suspended">
+            Suspended
+          </option>
+        </select>
         <button
           onClick={() => navigate("/superadmin/school-details/register")}
           className="bg-[#146192] text-white px-4 py-2 rounded"
@@ -185,98 +211,229 @@ const SuperAdminSchoolDetails = () => {
           <span>PDF</span>
         </button>
       </div>
+      <div className="hidden md:block">
+        <div className="overflow-x-auto rounded-lg shadow-md bg-white">
+          <table className="w-full text-sm text-gray-800 border border-collapse">
+            <thead className="bg-[#01497c] text-white">
+              <tr>
+                <th className="p-3 border text-left">School Code</th>
+                <th className="p-3 border text-left">School Name</th>
+                <th className="p-3 border text-left">Contact</th>
+                <th className="p-3 border text-left">Email Id</th>
+                <th className="p-3 border text-left">Address</th>
+                <th className="p-3 border text-left">Website Link</th>
+                <th className="p-3 border text-left">Principal Name</th>
+                <th className="p-3 border text-left">Board Type</th>
+                <th className="p-3 border text-left">Medium</th>
+                <th className="p-3 border text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="10" className="text-center p-4 text-gray-500">
+                    Loading schools...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan="10" className="text-center p-4 text-red-500">
+                    {error}
+                  </td>
+                </tr>
+              ) : schools.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="text-center p-4 text-gray-500">
+                    No school data found.
+                  </td>
+                </tr>
+              ) : (
+                schools
+                  .filter((school) => {
+                    return (
+                      statusFilter === "" || school.status === statusFilter
+                    );
+                  })
+                  .map((school, index) => {
+                    return (
+                      <tr key={school._id} className="hover:bg-gray-50">
+                        <td className="p-3 border">{school.schoolCode}</td>
+                        <td className="p-3 border">{school.schoolName}</td>
+                        <td className="p-3 border">{school.contact?.phone}</td>
+                        <td className="p-3 border">{school.userId?.email}</td>
+                        <td className="p-3 border">{school.address}</td>
+                        <td className="p-3 border">
+                          <a
+                            href={school.contact?.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            Website
+                          </a>
+                        </td>
+                        <td className="p-3 border">{school.principalName}</td>
+                        <td className="p-3 border">
+                          {school.details?.boardType}
+                        </td>
+                        <td className="p-3 border">{school.details?.medium}</td>
+                        <td className="p-3 border">
+                          <select
+                            key={`${school._id}-${school.status}`} // Force re-render on status change
+                            value={school.status}
+                            onChange={(e) => {
+                              console.log("=== DROPDOWN CHANGED ===");
+                              console.log("School Name:", school.schoolName);
+                              console.log("School ID:", school._id);
+                              console.log("New Status:", e.target.value);
+                              handleStatusChange(
+                                school._id,
+                                school.status,
+                                e.target.value
+                              );
+                            }}
+                            className={`text-xs p-1 rounded border bg-white ${
+                              school.status === "active"
+                                ? "text-green-600 border-green-600"
+                                : school.status === "inactive"
+                                ? "text-red-600 border-red-600"
+                                : "text-blue-600 border-blue-600"
+                            }`}
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <div className="overflow-x-auto rounded-lg shadow-md bg-white">
-        <table className="w-full text-sm text-gray-800 border border-collapse">
-          <thead className="bg-[#01497c] text-white">
-            <tr>
-              <th className="p-3 border text-left">School Code</th>
-              <th className="p-3 border text-left">School Name</th>
-              <th className="p-3 border text-left">Contact</th>
-              <th className="p-3 border text-left">Email Id</th>
-              <th className="p-3 border text-left">Address</th>
-              <th className="p-3 border text-left">Website Link</th>
-              <th className="p-3 border text-left">Principal Name</th>
-              <th className="p-3 border text-left">Board Type</th>
-              <th className="p-3 border text-left">Medium</th>
-              <th className="p-3 border text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="10" className="text-center p-4 text-gray-500">
-                  Loading schools...
-                </td>
-              </tr>
-            ) : error ? (
-              <tr>
-                <td colSpan="10" className="text-center p-4 text-red-500">
-                  {error}
-                </td>
-              </tr>
-            ) : schools.length === 0 ? (
-              <tr>
-                <td colSpan="10" className="text-center p-4 text-gray-500">
-                  No school data found.
-                </td>
-              </tr>
-            ) : (
-              schools.map((school, index) => {
-                return (
-                  <tr key={school._id} className="hover:bg-gray-50">
-                    <td className="p-3 border">{school.schoolCode}</td>
-                    <td className="p-3 border">{school.schoolName}</td>
-                    <td className="p-3 border">{school.contact?.phone}</td>
-                    <td className="p-3 border">{school.userId?.email}</td>
-                    <td className="p-3 border">{school.address}</td>
-                    <td className="p-3 border">
-                      <a
-                        href={school.contact?.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        Website
-                      </a>
-                    </td>
-                    <td className="p-3 border">{school.principalName}</td>
-                    <td className="p-3 border">{school.details?.boardType}</td>
-                    <td className="p-3 border">{school.details?.medium}</td>
-                    <td className="p-3 border">
-                      <select
-                        key={`${school._id}-${school.status}`} // Force re-render on status change
-                        value={school.status}
-                        onChange={(e) => {
-                          console.log("=== DROPDOWN CHANGED ===");
-                          console.log("School Name:", school.schoolName);
-                          console.log("School ID:", school._id);
-                          console.log("New Status:", e.target.value);
-                          handleStatusChange(
-                            school._id,
-                            school.status,
-                            e.target.value
-                          );
-                        }}
-                        className={`text-xs p-1 rounded border bg-white ${
-                          school.status === "active"
-                            ? "text-green-600 border-green-600"
-                            : school.status === "inactive"
-                            ? "text-red-600 border-red-600"
-                            : "text-blue-600 border-blue-600"
-                        }`}
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="suspended">Suspended</option>
-                      </select>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      {/* Mobile View - Card Format */}
+      <div className="block md:hidden">
+        <h3 className="font-semibold mb-3 text-center">Schools</h3>
+        {loading ? (
+          <p className="text-center text-gray-500">Loading schools...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : schools.length === 0 ? (
+          <p className="text-center text-gray-500">No school data found.</p>
+        ) : (
+          schools
+            .filter((school) => {
+              return statusFilter === "" || school.status === statusFilter;
+            })
+            .map((school) => (
+              <div
+                key={school._id}
+                className="rounded-lg overflow-hidden mb-4 shadow bg-white border border-[#0000004D]"
+              >
+                <div className="grid grid-cols-2 text-sm">
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    School Code
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.schoolCode}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    School Name
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.schoolName}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Contact
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.contact?.phone}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Email
+                  </div>
+                  <div className="p-2 border border-[#0000004D] break-words">
+                    {school.userId?.email}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Address
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.address}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Website
+                  </div>
+                  <div className="p-2 border border-[#0000004D] break-words">
+                    <a
+                      href={school.contact?.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      {school.contact?.website}
+                    </a>
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Principal
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.principalName}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Board Type
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.details?.boardType}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Medium
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    {school.details?.medium}
+                  </div>
+
+                  <div className="bg-[#01497c] text-white p-2 font-semibold border border-[#0000004D]">
+                    Status
+                  </div>
+                  <div className="p-2 border border-[#0000004D]">
+                    <select
+                      value={school.status}
+                      onChange={(e) =>
+                        handleStatusChange(
+                          school._id,
+                          school.status,
+                          e.target.value
+                        )
+                      }
+                      className={`text-xs p-1 rounded border bg-white w-full ${
+                        school.status === "active"
+                          ? "text-green-600 border-green-600"
+                          : school.status === "inactive"
+                          ? "text-red-600 border-red-600"
+                          : "text-blue-600 border-blue-600"
+                      }`}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="suspended">Suspended</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))
+        )}
       </div>
 
       <ToastContainer position="top-right" autoClose={2000} />

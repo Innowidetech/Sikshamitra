@@ -6,6 +6,7 @@ import {
 } from "../../redux/superAdmin/superAdminAccountsSlice";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Header from "./layout/Header";
 
 const SuperAdminAccountsAddInc = () => {
   const dispatch = useDispatch();
@@ -60,16 +61,21 @@ const SuperAdminAccountsAddInc = () => {
   return (
     <div>
       <ToastContainer />
-      <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Add Income
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Accounts</span> {">"}{" "}
-          <span className="font-medium text-[#146192]"></span>
-        </h1>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-black xl:text-[38px]">
+            Add Income
+          </h1>
+          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+          <h1 className="mt-2 text-sm md:text-base">
+            <span>Home</span> {">"}{" "}
+            <span className="font-medium text-[#146192]">Accounts</span> {">"}{" "}
+            <span className="font-medium text-[#146192]">Add Income </span>
+          </h1>
+        </div>
+
+        <Header />
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md">

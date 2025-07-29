@@ -27,13 +27,15 @@ import AdminQueryForm from './AdminQueryForm';
 import AdminEntrance from './AdminEntrance';
 import EditPaper from './EditPaper';
 
-
-// 🆕 Import the new pages
+// ✅ Merge conflict resolved here:
 import SyllabusPage from './SyllabusPage';
-import ExamPage from './ExamPage'; // Optional
+import ExamPage from './ExamPage';
 import AdminQueryChat from './AdminQueryChat';
 import AdminTrans from './AdminTrans';
-import QuestionPaperView from './QuestionPaperView';
+import Track from './Track';
+import VehicleView from './VehicleView';
+import AddVehicle from './AddVehicle';
+import QuestionPaperView from './QuestionPaperView'; // ✅ Keep this too
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -45,12 +47,11 @@ const MainDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Sync activeTab based on current path
     if (location.pathname === '/admin') {
       setActiveTab('dashboard');
     } else if (location.pathname.startsWith('/admin/curriculum')) {
       setActiveTab('curriculum');
-      } else if (location.pathname.startsWith('/admin/adminentrance')) {
+    } else if (location.pathname.startsWith('/admin/adminentrance')) {
       setActiveTab('adminentrance');
     } else if (location.pathname === '/admin/profile') {
       setActiveTab('profile');
@@ -76,17 +77,15 @@ const MainDashboard = () => {
       setActiveTab('employee');
     } else if (location.pathname.startsWith('/admin/results')) {
       setActiveTab('results');
-        } else if (location.pathname.startsWith('/admin/transportation')) {
-  setActiveTab('transportation');
-}else if (location.pathname.startsWith('/admin/connectqueries')) {
+    } else if (location.pathname.startsWith('/admin/transportation')) {
+      setActiveTab('transportation');
+    } else if (location.pathname.startsWith('/admin/connectqueries')) {
       setActiveTab('connectqueries');
-      } else if (location.pathname === '/admin/questionpaperview') {
-  setActiveTab('questionpaperview');
+    } else if (location.pathname === '/admin/questionpaperview') {
+      setActiveTab('questionpaperview');
     } else if (location.pathname.startsWith('/admin/editpaper')) {
-      setActiveTab('editpaper'); // ✅ Add for edit paper route
+      setActiveTab('editpaper');
     }
-    
-    // Add more routes as needed
   }, [location.pathname]);
 
   const handleTabChange = (tabId) => {
@@ -94,53 +93,6 @@ const MainDashboard = () => {
     setStudentsSubTab('default');
     setAccountSubTab('default');
 
-  //   const renderContent = () => {
-  //       if (location.pathname === '/admin/profile') {
-  //           return <AdminProfile />;
-  //       }
-        
-  //       switch (activeTab) {
-  //           case 'dashboard':
-  //               return <AdminDashboard />;
-  //           case 'fees':
-  //               return <Fees />;
-  //           case 'teachers':
-  //               return <Teachers />;
-  //           case 'students':
-  //               return <Students />;
-  //           case 'parents':
-  //               return <Parents />;
-  //           case 'accounts':
-  //               return <Accounts />;
-  //           case 'inventory':
-  //               return <Inventory />;
-  //          case 'library':
-  // return <Library setActiveTab={setActiveTab} />;
-
-  //               case 'resolve':
-  // return <ResolvePage  setActiveTab={setActiveTab}  />;
-
-  //   case 'allbook':
-  // return <Allbook setActiveTab={setActiveTab} />;
-
-  //           case 'admission':
-  //     return <Admission setActiveTab={setActiveTab} />;  // ⬅️ Pass setter so button can change tab
-  // case 'admission-application':                      // ✅ NEW CASE
-  //   return <Application />;
-  //           case 'classes':
-  //               return <Classes />;
-  //           case 'employee':
-  //               return <Employee />;
-  //           case 'results':
-  //               return <Results />;
-  //           case 'curriculum':
-  //               return <Curriculam />;
-             
-  //           default:
-  //               return <AdminDashboard />;
-  //       }
-  //   };
-    // Navigate to the base route of the tab
     switch (tabId) {
       case 'dashboard':
         navigate('/admin');
@@ -178,48 +130,57 @@ const MainDashboard = () => {
       case 'employee':
         navigate('/admin/employee');
         break;
-         case 'adminentrance':
+      case 'adminentrance':
         navigate('/admin/adminentrance');
         break;
       case 'results':
         navigate('/admin/results');
         break;
-         case 'transportation':
-  navigate('/admin/transportation');
-  break;
-case 'questionpaperview':
-  navigate('/admin/questionpaperview');
-  break;
-   case 'editpaper':
-        navigate('/admin/editpaper'); // You can dynamically pass classId as needed
+      case 'transportation':
+        navigate('/admin/transportation');
         break;
-
-       case 'connectqueries':
-  navigate('/admin/connectqueries');
-  break;
-  // case 'transportation':
-  // navigate('/admin/transportation');
-  // break;
-
-
+      case 'questionpaperview':
+        navigate('/admin/questionpaperview');
+        break;
+      case 'editpaper':
+        navigate('/admin/editpaper');
+        break;
+      case 'connectqueries':
+        navigate('/admin/connectqueries');
+        break;
       default:
         navigate('/admin');
     }
   };
 
   const renderContent = () => {
-   
-
     if (activeQueryChat) {
-    return (
-      <AdminQueryChat
-        query={activeQueryChat}
-        onBack={() => setActiveQueryChat(null)}
-      />
-    );
-  }
+      return (
+        <AdminQueryChat
+          query={activeQueryChat}
+          onBack={() => setActiveQueryChat(null)}
+        />
+      );
+    }
 
-    // Handle custom pages by exact pathname first
+    if (location.pathname.startsWith('/admin/transportation/track/')) {
+      const parts = location.pathname.split('/');
+      const vehicleId = parts[4];
+      if (!vehicleId || vehicleId === 'undefined') {
+        return <div className="text-red-500 text-center mt-8">Invalid URL. Vehicle ID missing.</div>;
+      }
+      return <Track vehicleId={vehicleId} />;
+    }
+
+    if (location.pathname.startsWith('/admin/transportation/view')) {
+      const parts = location.pathname.split('/');
+      const vehicleId = parts[4];
+      if (!vehicleId || vehicleId === 'undefined') {
+        return <div className="text-red-500 text-center mt-8">Invalid URL. Vehicle ID missing.</div>;
+      }
+      return <VehicleView vehicleId={vehicleId} />;
+    }
+
     if (location.pathname === '/admin/profile') {
       return <AdminProfile />;
     }
@@ -229,13 +190,13 @@ case 'questionpaperview':
     if (location.pathname === '/admin/curriculum/exams') {
       return <ExamPage />;
     }
-
+    if (location.pathname === '/admin/transportation/add') {
+      return <AddVehicle />;
+    }
     if (location.pathname === '/admin/connectqueries/queries') {
-  return <AdminQueryForm />;
-}
+      return <AdminQueryForm />;
+    }
 
-
-    // Default tab-based rendering
     switch (activeTab) {
       case 'dashboard':
         return <AdminDashboard />;
@@ -255,19 +216,21 @@ case 'questionpaperview':
           : <Accounts openHistory={() => setAccountSubTab('history')} />;
       case 'inventory':
         return <Inventory />;
-     case 'library':
+      case 'library':
         return <Library setActiveTab={setActiveTab} />;
       case 'resolve':
         return <ResolvePage setActiveTab={setActiveTab} />;
       case 'allbook':
         return <Allbook setActiveTab={setActiveTab} />;
       case 'admission':
-        return <Admission />;
+        return <Admission setActiveTab={setActiveTab} />;
+      case 'admission-application':
+        return <Application />;
       case 'classes':
         return <Classes />;
-         case 'questionpaperview':
+      case 'questionpaperview':
         return <QuestionPaperView setActiveTab={setActiveTab} />;
-        case 'editpaper':
+      case 'editpaper':
         return <EditPaper setActiveTab={setActiveTab} />;
       case 'employee':
         return <Employee />;
@@ -275,19 +238,12 @@ case 'questionpaperview':
         return <Results />;
       case 'curriculum':
         return <Curriculam />;
-         case 'transportation':
-  return <AdminTrans />;
-       case 'connectqueries':
-
-        case 'adminentrance':
+      case 'transportation':
+        return <AdminTrans />;
+      case 'adminentrance':
         return <AdminEntrance />;
-
-        
-  return <AdminConnectQuries setActiveQueryChat={setActiveQueryChat} />;
-  // case 'transportation':
-  // return <AdminTrans />;
-
-
+      case 'connectqueries':
+        return <AdminConnectQuries setActiveQueryChat={setActiveQueryChat} />;
       default:
         return <AdminDashboard />;
     }

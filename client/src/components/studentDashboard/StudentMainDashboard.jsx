@@ -19,7 +19,7 @@ import BorrowingHistory from './BorrowingHistory';
 import ConnectQueries from './ConnectQueries';
 import QueryChatPage from './QueryChatPage';
 import QueriesPage from './QueriesPage'; // ✅ New Component
-// import StudentTrans from './StudentTrans';
+import StudentTrans from './StudentTrans';
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

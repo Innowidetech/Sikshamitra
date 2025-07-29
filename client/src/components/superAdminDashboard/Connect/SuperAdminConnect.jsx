@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import Header from "../layout/Header";
 import {
   fetchConnectMeetings,
   fetchSuperAdminQueries,
@@ -51,6 +52,14 @@ const SuperAdminConnect = () => {
       console.error("❌ Socket connection failed:", err.message);
     });
 
+    socketInstance.on("joinAccepted", ({ meetingLink }) => {
+      toast.success(`🎉 Your request to join ${meetingLink} was accepted!`);
+    });
+
+    socketInstance.on("joinDenied", ({ meetingLink }) => {
+      toast.error(`❌ Your request to join ${meetingLink} was denied.`);
+    });
+
     setSocket(socketInstance);
 
     return () => {
@@ -84,38 +93,49 @@ const SuperAdminConnect = () => {
         socket.emit("requestJoin", { meetingLink, role, name });
         if (!isHost) toast.info(`Request to join meeting sent: ${meetingLink}`);
       }
-     
-      console.log("Navigating to:", isHost ? `/host/${meetingLink}` : `/test/${meetingLink}`);
 
-     navigate(
-  isHost
-    ? `/host/${encodeURIComponent(meetingLink)}`
-    : `/test/${encodeURIComponent(meetingLink)}`,
-  {
-    state: {
-      meetingId: meetingLink,
-      role,
-      name,
-    },
-  }
-);
+      console.log(
+        "Navigating to:",
+        isHost ? `/host/${meetingLink}` : `/test/${meetingLink}`
+      );
 
+      navigate(
+        isHost
+          ? `/host/${encodeURIComponent(meetingLink)}`
+          : `/test/${encodeURIComponent(meetingLink)}`,
+        {
+          state: {
+            meetingId: meetingLink,
+            role,
+            name,
+          },
+        }
+      );
     }
   };
 
   return (
     <div>
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">
-          Connect & Query
-        </h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[260px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Connect & Query</span>
-        </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              Connect & Query
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">
+                Connect & Query{" "}
+              </span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
+
       <div className="p-6 bg-white rounded-lg shadow space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
@@ -147,7 +167,7 @@ const SuperAdminConnect = () => {
         {error && <p className="text-center text-red-500">{error}</p>}
 
         {/* Ongoing / Upcoming Meetings */}
-        <div>
+        <div className="hidden md:block">
           <h3 className="font-semibold mb-2">Ongoing / Upcoming Meetings</h3>
           <div className="overflow-auto">
             <table className="min-w-full text-sm border border-gray-300">
@@ -203,8 +223,72 @@ const SuperAdminConnect = () => {
           </div>
         </div>
 
+        <div className="block md:hidden ">
+          <h3 className="font-semibold mb-2">Ongoing / Upcoming Meetings</h3>
+          {meetings?.map((meeting, index) => (
+            <div
+              key={meeting._id}
+              className="border border-[#0000004D] rounded-lg overflow-hidden shadow mb-4"
+            >
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Meeting Title
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  {meeting.title}
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Date
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  {moment(meeting.startDate).format("DD-MM-YYYY")}
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Time
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  {formatTime12Hour(meeting.startTime)}
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Hosted by
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  {meeting.hostedByName}
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Link
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  <span
+                    className="text-blue-600 underline cursor-pointer"
+                    onClick={() => handleJoinMeeting(meeting)}
+                  >
+                    {meeting.meetingLink}
+                  </span>
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-1/2 bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Status
+                </div>
+                <div className="w-1/2 p-2 border border-[#0000004D]">
+                  {meeting.status}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Query Received by Super Admin */}
-        <div>
+        <div className="hidden md:block">
           <h3 className="font-semibold mb-2">Query Received by Super Admin</h3>
           <div className="overflow-auto">
             <table className="min-w-full text-sm border border-gray-300">
@@ -227,7 +311,14 @@ const SuperAdminConnect = () => {
                     <td className="p-2 border">{query.contact}</td>
                     <td className="p-2 border">{query.email}</td>
                     <td className="p-2 border">
-                      <button className="text-sm text-[#146192E8] underline hover:text-blue-800">
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/superadmin/connect-queries/reply/${query._id}`
+                          )
+                        }
+                        className="text-sm text-[#146192E8] underline hover:text-blue-800"
+                      >
                         Reply
                       </button>
                     </td>
@@ -238,8 +329,59 @@ const SuperAdminConnect = () => {
           </div>
         </div>
 
+        <div className="block md:hidden">
+          <h3 className="font-semibold mb-2">Query Received by Super Admin</h3>
+          {queriesReceived?.map((item, index) => (
+            <div
+              key={item._id}
+              className="rounded-lg overflow-hidden mb-4 shadow bg-white border border-[#0000004D]"
+            >
+              <div className="grid grid-cols-2 text-sm">
+                {/* Label column */}
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Name
+                </div>
+                <div className="p-2 border border-[#0000004D]">{item.name}</div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Role
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {item.createdByRole}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Contact
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {item.contact}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Email id
+                </div>
+                <div className="p-2 border border-[#0000004D] break-words">
+                  {item.email}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Action
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  <button
+                    onClick={() => onOpenQueryChat(item._id, "reply")}
+                    className="text-[#1982C4] font-medium bg-white px-3 py-1 rounded shadow"
+                  >
+                    Reply
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Query Sent by Super Admin */}
-        <div>
+        <div className="hidden md:block">
           <h3 className="font-semibold mb-2">Query Sent by Super Admin</h3>
           <div className="overflow-auto">
             <table className="min-w-full text-sm border border-gray-300">
@@ -262,7 +404,14 @@ const SuperAdminConnect = () => {
                     <td className="p-2 border">{query.email}</td>
                     <td className="p-2 border">{query.schoolName}</td>
                     <td className="p-2 border">
-                      <button className="text-sm text-[#146192E8] underline hover:text-blue-800">
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/superadmin/connect-queries/reply/${query._id}`
+                          )
+                        }
+                        className="text-sm text-[#146192E8] underline hover:text-blue-800"
+                      >
                         View
                       </button>
                     </td>
@@ -271,6 +420,56 @@ const SuperAdminConnect = () => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="block md:hidden">
+          <h3 className="font-semibold mb-2">Query Sent by Super Admin</h3>
+          {queriesSent?.map((item, index) => (
+            <div
+              key={item._id}
+              className="rounded-lg overflow-hidden mb-4 shadow bg-white border border-[#0000004D]"
+            >
+              <div className="grid grid-cols-2 text-sm">
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Name
+                </div>
+                <div className="p-2 border border-[#0000004D]">{item.name}</div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Contact
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {item.contact}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Email
+                </div>
+                <div className="p-2 border border-[#0000004D] break-words">
+                  {item.email}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Sent To
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  {item.sendTo}
+                </div>
+
+                <div className="bg-[#146192E8] text-white p-2 font-semibold border border-[#0000004D]">
+                  Action
+                </div>
+                <div className="p-2 border border-[#0000004D]">
+                  <button
+                    onClick={() => onOpenQueryChat(item._id, "view")}
+                    className="bg-white text-blue-600 font-medium px-3 py-1 rounded shadow hover:bg-gray-100"
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { RiFileUploadFill } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { addSuperAdminStaff } from "../../../redux/superAdmin/superAdminStaffSlice"; // adjust path as needed
-
+import Header from "../layout/Header";
 
 const SuperAdminAddStaff = () => {
   const dispatch = useDispatch();
@@ -110,16 +110,25 @@ const SuperAdminAddStaff = () => {
   return (
     <div>
       <div className="pb-8">
-        <h1 className="text-2xl font-light text-black xl:text-[38px]">staff</h1>
-        <hr className="mt-2 border-[#146192] border-[1px] w-[80px]" />
-        <h1 className="mt-2 text-sm md:text-base">
-          <span>Home</span> {">"}{" "}
-          <span className="font-medium text-[#146192]">Add staff</span>
-        </h1>
-        <h2 className="mt-6 mb-6 text-xl font-semibold text-[#525252]">
-          Staff Details
-        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-light text-black xl:text-[38px]">
+              staff
+            </h1>
+            <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+            <h1 className="mt-2 text-sm md:text-base">
+              <span>Home</span> {">"}{" "}
+              <span className="font-medium text-[#146192]">
+                {" "}
+                Staff Details{" "}
+              </span>
+            </h1>
+          </div>
+
+          <Header />
+        </div>
       </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Login Details */}
         <div className="border shadow rounded-md">
