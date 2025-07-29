@@ -40,7 +40,6 @@ const Login = () => {
         localStorage.removeItem("employeeType");
       }
 
-      // ✅ Store full user info if admin or superadmin (required for meeting host check)
       if ((userRole === 'admin' || userRole === 'superadmin') && user) {
         localStorage.setItem('admin', JSON.stringify(user));
       }
@@ -57,14 +56,12 @@ const Login = () => {
       navigate("/superadmin/maindashboard");
     } else if (role === "staff") {
       navigate("/superadminstaff/maindashboard");
-    }else if (role === 'teacher') {
+    } else if (role === 'teacher') {
       if (empType === 'groupd') {
         navigate('/adminstaff/maindashboard');
-      }
-      else if (empType === 'driver') {
-        navigate('/driver/maindashboard')
-      }
-      else {
+      } else if (empType === 'driver') {
+        navigate('/driver/maindashboard');
+      } else {
         navigate('/teacher/maindashboard');
       }
     } else if (role === 'admin') {
@@ -108,8 +105,12 @@ const Login = () => {
     const loginPayload = {
       email: useremail,
       password,
-      role: selectedRole || "staff" || "teacher" || "authority", // default roles
     };
+
+    // Include role only if user selected it
+    if (selectedRole) {
+      loginPayload.role = selectedRole;
+    }
 
     try {
       await dispatch(loginUser(loginPayload)).unwrap();

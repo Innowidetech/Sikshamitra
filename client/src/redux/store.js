@@ -103,7 +103,7 @@ const store = configureStore({
     accounts: accountReducer,
     admitCard: admitCardSliceReducer,
     // adminClasses: adminClassesReducer, // Duplicate
-    // adminConnectQueries: adminConnectQueriesReducer, // Duplicate
+    adminConnectQueries: adminConnectQueriesReducer, // Duplicate
     // adminCurriculum: adminCurriculumReducer, // Duplicate
     // adminEmployee: adminEmployeeReducer, // Duplicate
     // adminFees: adminFeesReducer, // Duplicate

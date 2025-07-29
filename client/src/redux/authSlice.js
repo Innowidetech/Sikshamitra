@@ -36,13 +36,17 @@ export const loginUser = createAsyncThunk(
 
       if (token) {
         const decoded = decodeToken(token);
-        const role = decoded.role || user?.role || credentials.role;
-        const employeeType = decoded.employeeType || user?.employeeType || null;
+
+        // Extract role and employeeType safely
+        const role =
+          decoded.role || user?.role || credentials?.role || null;
+
+        const employeeType =
+          decoded.employeeType || user?.employeeType || null;
 
         localStorage.setItem('token', token);
         localStorage.setItem('userId', user._id);
-        localStorage.setItem('userRole', role);
-
+        if (role) localStorage.setItem('userRole', role);
         if (employeeType) {
           localStorage.setItem('employeeType', employeeType);
         } else {

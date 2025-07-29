@@ -14,7 +14,13 @@ const colorPool = [
 function StudyMaterial() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { teacherMaterial, classMaterial, loading, error } = useSelector((state) => state.studyMaterial);
+  const {
+  teacherMaterial = [],
+  classMaterial = [],
+  loading,
+  error
+} = useSelector((state) => state.studyMaterial);
+
   const [subjectColorMap, setSubjectColorMap] = useState({});
 
   useEffect(() => {
