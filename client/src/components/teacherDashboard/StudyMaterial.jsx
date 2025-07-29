@@ -4,6 +4,8 @@ import { fetchStudyMaterials, deleteStudyMaterial } from '../../redux/teacher/st
 import { User, Calendar, Book, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../adminDashboard/layout/Header';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const colorPool = [
   'bg-[#e6d8f5]', 'bg-[#fcebc5]', 'bg-[#c7eaf8]', 'bg-[#d7f3d8]',
@@ -14,7 +16,14 @@ const colorPool = [
 function StudyMaterial() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { teacherMaterial, classMaterial, loading, error } = useSelector((state) => state.studyMaterial);
+
+  const {
+    teacherMaterial = [],
+    classMaterial = [],
+    loading,
+    error
+  } = useSelector((state) => state.studyMaterialTeacher);
+
   const [subjectColorMap, setSubjectColorMap] = useState({});
 
   useEffect(() => {
@@ -37,37 +46,68 @@ function StudyMaterial() {
   }, [classMaterial]);
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this material?')) {
-      dispatch(deleteStudyMaterial(id));
-    }
+    dispatch(deleteStudyMaterial(id))
+      .unwrap()
+      .then(() => {
+        toast.success('Study material deleted successfully');
+      })
+      .catch((err) => {
+        toast.error(`Deletion failed: ${err.message}`);
+      });
+  };
+
+  const confirmDelete = (id) => {
+    toast(
+      ({ closeToast }) => (
+        <div className="text-sm">
+          <p>Are you sure you want to delete this material?</p>
+          <div className="flex justify-end gap-2 mt-3">
+            <button
+              onClick={() => {
+                closeToast();
+                handleDelete(id);
+              }}
+              className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+            >
+              Delete
+            </button>
+            <button
+              onClick={closeToast}
+              className="px-3 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: false,
+        position: 'top-center',
+      }
+    );
   };
 
   const handleDownload = async (fileUrl) => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       alert("Authorization token is missing.");
       return;
     }
 
-  
-
     try {
       const response = await fetch(fileUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch PDF.');
-      }
+      if (!response.ok) throw new Error('Failed to fetch PDF.');
 
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `material-${new Date().getTime()}.pdf`;
+      a.download = `material-${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -79,9 +119,7 @@ function StudyMaterial() {
   };
 
   const TableHeader = ({ label }) => (
-    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
-      {label}
-    </th>
+    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">{label}</th>
   );
 
   const navigateToAddMaterial = () => {
@@ -90,6 +128,7 @@ function StudyMaterial() {
 
   return (
     <>
+      <ToastContainer />
       <div className="flex justify-between items-center mx-8 mt-20 md:ml-72">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Study Material</h1>
@@ -110,7 +149,7 @@ function StudyMaterial() {
             </div>
             <input
               type="search"
-              className="block w-full p-2.5 pl-10 text-sm text-gray-900 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full p-2.5 pl-10 text-sm text-gray-900 border border-gray-300 rounded-md bg-gray-50"
               placeholder="Search"
             />
           </div>
@@ -184,7 +223,7 @@ function StudyMaterial() {
                   <TableHeader label="Section" />
                   <TableHeader label="Subject Name" />
                   <TableHeader label="Date" />
-                  <TableHeader label="Download" />
+                  <TableHeader label="Actions" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -208,7 +247,7 @@ function StudyMaterial() {
                           Download PDF
                         </button>
                         <button
-                          onClick={() => handleDelete(item._id)}
+                          onClick={() => confirmDelete(item._id)}
                           className="text-red-600 hover:text-red-800 disabled:opacity-50"
                           title="Delete"
                           disabled={loading}

@@ -106,6 +106,30 @@ const store = configureStore({
     parent: parentdashboardReducer,
     fees: feesReducer,
     accounts: accountReducer,
+
+    admitCard: admitCardSliceReducer,
+    // adminClasses: adminClassesReducer, // Duplicate
+    adminConnectQueries: adminConnectQueriesReducer, // Duplicate
+    // adminCurriculum: adminCurriculumReducer, // Duplicate
+    // adminEmployee: adminEmployeeReducer, // Duplicate
+    // adminFees: adminFeesReducer, // Duplicate
+    // adminProfile: adminProfileReducer, // Duplicate
+    // adminResults: adminResultsReducer, // Duplicate
+    // admissions: admissionsReducer, // Duplicate
+    assignment: assignmentSliceReducer,
+    assignments: assignmentsReducer,
+    // auth: authReducer, // Duplicate
+    book: bookReducer,
+    classPlan: classPlanSliceReducer,
+    connectQueries: connectQueriesReducer,
+    createExam: createExamSliceReducer,
+    createmeeting: createMeetingReducer,
+    curriculum: curriculumReducer,
+    // dashboard: dashboardReducer, // Duplicate
+    // exam: examSliceReducer, // Duplicate
+    // exams: examReducer, // Duplicate
+
+
     expenses: expensesReducer,
     query: queryReducer,
     curriculum: curriculumReducer,
