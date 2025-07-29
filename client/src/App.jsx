@@ -4,7 +4,6 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 import { logoutUser } from './redux/authSlice';
 
-
 import Home from './Home';
 import About from './About';
 import Navbar from './Navbar';
@@ -14,6 +13,7 @@ import Admission from './Admission';
 import Contact from './Contact';
 import StudentOnlinePortal from './studentdashboard/StudentOnlinePortal';
 import Login from './Auth/Login';
+import ForgotPassword from './Auth/ForgotPassword';
 import EntranceExam from './studentdashboard/EntranceExam';
 
 // Dashboards
@@ -22,26 +22,10 @@ import ParentMainDashboard from './components/parentDashboard/ParentMainDashboar
 import TeacherMainDashboard from './components/teacherDashboard/TeacherMaindashboard';
 import StudentMainDashboard from './components/studentDashboard/StudentMainDashboard';
 import AdminStaffDashboard from './components/adminStaffDashboard/StaffMainDashboard';
-
-// import Home from "./Home";
-// import About from "./About";
-// import Navbar from "./Navbar";
-// import Footer from "./Footer";
-// import Blog from "./blog/Blog";
-// import Admission from "./Admission";
-// import Contact from "./Contact";
-// import StudentOnlinePortal from "./studentdashboard/StudentOnlinePortal";
-// import Login from "./Auth/Login";
-// import MainDashboard from "./components/adminDashboard/MainDashboard";
-// import ParentMainDashboard from "./components/parentDashboard/ParentMainDashboard";
-// import TeacherMainDashboard from "./components/teacherDashboard/TeacherMaindashboard";
-// import StudentMainDashboard from "./components/studentDashboard/StudentMainDashboard";
-// import AdminStaffDashboard from "./components/adminStaffDashboard/StaffMainDashboard";
 import SuperAdminStaffDashboard from "./components/superAdminStaffDashboard/SuperAdminStaffMainDashboard";
 import SuperAdminMainDashboard from "./components/superAdminDashboard/SuperAdminMainDashbord";
 import SuperAdminMetting from "./components/superAdminDashboard/SuperAdminMetting";
 import SuperAdminScheduleMeeting from "./components/superAdminDashboard/Connect/SuperAdminScheduleMetting";
-
 import DriverDashboard from './components/driverDashboard/driverMainDashboard';
 
 // Parent Meeting
@@ -128,7 +112,6 @@ function App() {
     }
   }
 
-  // Routes without navbar/footer
   const noNavbarFooterPaths = [
     "/login",
     "/applyonline",
@@ -140,19 +123,20 @@ function App() {
     "/meeting",
     "/superadminstaff",
     "/superadmin",
-    '/connect',
-    '/schedulepage',
-    '/instantmeeting',
-    '/adminconnectpage',
-    '/adminschedulepage',
-    '/admininstantpage',
-    '/scheduled-meeting',
-    '/teacher-meeting',
-    '/create-meeting',
-    '/superadminmeeting',
-    '/driver',
-    '/host',
-    '/test',
+    "/connect",
+    "/schedulepage",
+    "/instantmeeting",
+    "/adminconnectpage",
+    "/adminschedulepage",
+    "/admininstantpage",
+    "/scheduled-meeting",
+    "/teacher-meeting",
+    "/create-meeting",
+    "/superadminmeeting",
+    "/driver",
+    "/host",
+    "/test",
+    "/forgot-password"
   ];
 
   const isNoNavbarFooter = noNavbarFooterPaths.some((path) =>
@@ -172,6 +156,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/entranceexam" element={<EntranceExam />} />
 
         {/* Parent Meeting */}
@@ -186,7 +171,7 @@ function App() {
         <Route path="/create-meeting" element={<CreateMeeting />} />
 
         {/* Student Meeting */}
-        <Route path="/connect" element={<ConnectPage />} /> 
+        <Route path="/connect" element={<ConnectPage />} />
         <Route path="/schedulepage" element={<SchedulePage />} />
         <Route path="/instantmeeting" element={<InstantMeetingPage />} />
 

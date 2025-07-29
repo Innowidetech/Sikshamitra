@@ -84,103 +84,104 @@ function Contact() {
 
   return (
     <>
-      <section className="xl:min-w-[1440px] bg-[#FF9F1C] -mt-4 xl:-mt-6 flex flex-col xl:flex-row overflow-hidden max-w-full pb-5">
-        <div className="p-4 xl:p-0 text-white md:flex md:flex-col md:justify-center  xl:ml-[69px] xl:w-[50%] order-2 xl:-translate-y-10">
-          <h3 className="md:text-[68px] font-medium text-xl md:mt-4 xl:mt-0 grid xl:grid md:justify-start">
-            <span className="block xl:mt-6">GET IN TOUCH</span>
-          </h3>
+      <section className="bg-[#FF9F1C] w-full px-4 flex flex-col-reverse md:flex-row items-center justify-between overflow-hidden h-[220px] md:h-[280px]">
+        {/* Left Side - Text */}
+        <div className="md:w-1/2 flex justify-end md:justify-end text-right">
+          <h2 className="text-white text-3xl md:text-7xl font-bold tracking-wide">
+            Get In Touch
+          </h2>
         </div>
 
-        <div className="xl:w-[600px] xl:h-[262px] flex justify-end order-2 md:-translate-y-10 xl:translate-y-0">
+        {/* Right Side - Image */}
+        <div className="md:w-1/2 flex justify-center md:justify-end">
           <img
             src={ContactNavimg}
-            alt="ContactNavimg"
-            className="xl:max-w-full h-[200px] xl:ml-0 ml-4 max-w-full xl:h-[350px] xl:-translate-y-8 rotate-6"
+            alt="Contact"
+            className="w-[280px] md:w-[450px] rotate-3 object-contain"
           />
         </div>
       </section>
 
-      <section className="grid md:flex mx-6 py-16 min-h-screen justify-center">
+      <section className="flex flex-col md:flex-row justify-center items-stretch mx-auto max-w-6xl my-10 rounded-xl shadow-lg overflow-hidden bg-[#F5EEE4]">
+        {/* Left Blue Panel */}
         <div
-          className="bg-[#1982C4] text-white rounded-xl px-10 z-20 md:translate-x-4 lg:translate-x-8 order-2 md:order-none -translate-y-4 md:translate-y-0"
+          className="bg-[#1982C4] text-white p-8 md:w-[35%] flex flex-col justify-center gap-4"
           style={{ fontFamily: "Poppins" }}
         >
-          <h1 className="font-medium xl:text-[28px] lg:text-xl py-6 ">
-            Contact Information
-          </h1>
-          <p className="font-light xl:text-[20px] lg:text-xl xl:py-6">
-            Fill up the form and our team will get back you!
+          <h1 className="text-xl font-semibold">Contact Information</h1>
+          <p className="text-sm">
+            Fill up the form and our Team will get back to you!
           </p>
-          <div className="flex items-center py-4 xl:py-6">
-            <BiSolidPhoneCall className="h-6 w-8" />
-            <label>+0123 456 789</label>
+
+          <div className="flex items-center gap-3 mt-4 text-sm">
+            <BiSolidPhoneCall className="h-5 w-5" />
+            <span>+0123 456 789</span>
           </div>
-          <div className="flex items-center py-4 xl:py-6">
-            <IoMail className="h-6 w-8" />
-            <label>hello@gmail.com</label>
+          <div className="flex items-center gap-3 text-sm">
+            <IoMail className="h-5 w-5" />
+            <span>hello@gmail.com</span>
           </div>
-          <div className="flex items-center py-4 xl:py-6">
-            <IoLocationOutline className="h-6 w-8" />
-            <label>102 Street 2174, India</label>
+          <div className="flex items-center gap-3 text-sm">
+            <IoLocationOutline className="h-5 w-5" />
+            <span>102 Street 2174, India</span>
           </div>
-          <div className="flex px-4 py-6 gap-6">
-            <FaFacebook className="lg:h-6 lg:w-8 cursor-pointer" />
-            <FaSquareInstagram className="lg:h-6 lg:w-8 cursor-pointer" />
-            <FaWhatsapp className="lg:h-6 lg:w-8 cursor-pointer" />
-            <FaXTwitter className="lg:h-6 lg:w-8 cursor-pointer" />
+
+          <div className="flex gap-4 mt-6">
+            <FaFacebook className="h-5 w-5 cursor-pointer" />
+            <FaSquareInstagram className="h-5 w-5 cursor-pointer" />
+            <FaWhatsapp className="h-5 w-5 cursor-pointer" />
+            <FaXTwitter className="h-5 w-5 cursor-pointer" />
           </div>
         </div>
 
-        <div className="border-2 p-2 shadow-2xl rounded-xl lg:mx-4 lg:-translate-x-4 xl:translate-x-0 md:-translate-x-2">
+        {/* Right Form Panel */}
+        <div
+          className="bg-white md:w-[65%] p-8"
+          style={{ fontFamily: "Poppins" }}
+        >
           <form onSubmit={handleSubmit}>
-            <div
-              className="grid md:grid-cols-2 mx-6 lg:gap-6 xl:mx-10 md:gap-4"
-              style={{ fontFamily: "Poppins" }}
-            >
-              <div className="mt-4 md:px-6 md:py-4">
-                <label className="block text-sm font-medium lg:text-lg">
-                  First Name
-                </label>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium">First Name</label>
                 <input
                   type="text"
                   name="firstName"
                   value={firstName}
                   onChange={handleChange}
                   placeholder="Riya"
-                  className="mt-1 block w-full p-2 border-b border-gray-300 rounded-md"
+                  className="w-full border-b border-black outline-none py-1 bg-transparent text-sm"
                   required
                 />
               </div>
-              <div className="mt-4 md:px-6 md:py-4">
-                <label className="block text-sm font-medium lg:text-lg">
-                  Last Name
-                </label>
+
+              <div>
+                <label className="block text-sm font-medium">Last Name</label>
                 <input
                   type="text"
                   name="lastName"
                   value={lastName}
                   onChange={handleChange}
                   placeholder="Domini"
-                  className="mt-1 block w-full p-2 border-b border-gray-300 rounded-md"
+                  className="w-full border-b border-black outline-none py-1 bg-transparent text-sm"
                   required
                 />
               </div>
-              <div className="mt-4 md:mt-0 md:px-6 md:py-4">
-                <label className="block text-sm font-medium lg:text-lg">
-                  Email ID
-                </label>
+
+              <div>
+                <label className="block text-sm font-medium">Mail ID</label>
                 <input
                   type="email"
                   name="email"
                   value={email}
                   onChange={handleChange}
                   placeholder="john@gmail.com"
-                  className="mt-1 block w-full p-2 border-b border-gray-300 rounded-md"
+                  className="w-full border-b border-black outline-none py-1 bg-transparent text-sm"
                   required
                 />
               </div>
-              <div className="mt-4 md:mt-0 md:px-6 md:py-4">
-                <label className="block text-sm font-medium lg:text-lg">
+
+              <div>
+                <label className="block text-sm font-medium">
                   Phone Number
                 </label>
                 <input
@@ -189,28 +190,29 @@ function Contact() {
                   value={phoneNumber}
                   onChange={handleChange}
                   placeholder="9876543212"
-                  className="mt-1 block w-full p-2 border-b border-gray-300 rounded-md"
+                  className="w-full border-b border-black outline-none py-1 bg-transparent text-sm"
                   required
                 />
               </div>
-              <div className="md:col-span-2 mt-4 md:mt-0 md:px-6 md:py-4">
-                <label className="block text-sm font-medium lg:text-lg">
-                  Message
-                </label>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium">Message</label>
                 <textarea
                   name="message"
                   value={message}
                   onChange={handleChange}
-                  placeholder="lorem"
-                  className="mt-1 block w-full p-2 border-b border-gray-300 rounded-md"
+                  placeholder="Type your message here..."
+                  className="w-full border-b border-black outline-none py-1 bg-transparent text-sm resize-none"
+                  rows={3}
                   required
                 />
               </div>
             </div>
-            <div className="mt-4 text-center flex justify-end">
+
+            <div className="flex justify-center mt-6">
               <button
                 type="submit"
-                className="bg-[#1982C4] text-white py-2 lg:-translate-x-14 rounded-xl mb-4 min-w-[130px] md:min-w-[200px] xl:w-[200px] xl:h-[60px]"
+                className="bg-[#1982C4] text-white px-6 py-2 rounded-md font-semibold text-sm shadow-md"
                 disabled={loading}
               >
                 {loading
@@ -223,6 +225,7 @@ function Contact() {
           </form>
         </div>
       </section>
+
       <ToastContainer
         position="top-right"
         autoClose={2000}
