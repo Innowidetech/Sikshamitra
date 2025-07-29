@@ -3,23 +3,23 @@ import logo from "../../../assets/ESHIKSHAMITRA1.png";
 import {
   LayoutDashboard,
   BookOpen,
-  Users,
   Users2,
   Calculator,
   UserCog,
   Menu,
   X,
 } from "lucide-react";
-import { LuGraduationCap } from "react-icons/lu";
+import { BsBank } from "react-icons/bs";
+import { MdTask } from "react-icons/md";
 
 const menuItems = [
   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { id: "school-details", icon: BookOpen, label: "School Details" },
-  { id: "account", icon: LuGraduationCap, label: "Account" },
+  { id: "account", icon: BsBank, label: "Account" },
   { id: "employee", icon: UserCog, label: "Staff" },
-  { id: "task", icon: Users, label: "Task" },
+  { id: "task", icon: MdTask, label: "Task" },
   { id: "blog", icon: Users2, label: "Blog" },
-  { id: "connect & queries", icon: Calculator, label: "Connect" },
+  { id: "connect & queries", icon: Calculator, label: "Connect & Queries" },
 ];
 
 const AdminSidebar = ({ setActiveSection, activeTab }) => {
@@ -48,7 +48,7 @@ const AdminSidebar = ({ setActiveSection, activeTab }) => {
 
       {/* Sidebar */}
       <aside
-        className={`bg-[#FF9F1C] text-white w-64 h-screen fixed left-0 top-0 flex flex-col transition-all duration-300 ease-in-out transform 
+        className={`bg-[#FF9F1C] text-white w-[270px] h-screen fixed left-0 top-0 flex flex-col transition-all duration-300 ease-in-out transform 
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0 z-40 shadow-lg`}
       >
@@ -69,15 +69,18 @@ const AdminSidebar = ({ setActiveSection, activeTab }) => {
               <button
                 key={item.id}
                 onClick={() => handleTabChange(item.id)}
-                className={`flex items-center w-full space-x-4 p-3 rounded-lg mb-2 transition-all duration-200
-                  ${
-                    activeTabState === item.id
-                      ? "bg-white text-[#FF9F1C] shadow-md"
-                      : "hover:bg-white/10"
-                  }`}
+                className={`flex w-full p-3 rounded-lg mb-2 transition-all duration-200 items-start gap-4
+  ${
+    activeTabState === item.id
+      ? "bg-white text-[#FF9F1C] shadow-md"
+      : "hover:bg-white/10"
+  }`}
               >
                 <Icon size={20} className="min-w-[20px]" />
-                <span className="text-lg" style={{ fontFamily: "Poppins" }}>
+                <span
+                  className="truncate text-lg"
+                  style={{ fontFamily: "Poppins" }}
+                >
                   {item.label}
                 </span>
               </button>

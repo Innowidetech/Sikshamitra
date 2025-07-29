@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Testimonial1 from "./assets/testimonial1.png";
 import Testimonial2 from "./assets/testimonial2.png";
 import Testimonial3 from "./assets/testimonial3.png";
@@ -55,6 +56,7 @@ import {
 } from "react-icons/fa";
 
 function Home() {
+  const navigate = useNavigate();
   return (
     <>
       <div className="bg-[#FF9F1C] -mt-28  pb-12">
@@ -185,7 +187,10 @@ function Home() {
               <br />
               future
             </h2>
-            <button className="mt-6 bg-white text-[#1d588e] font-medium px-4 py-2 rounded-md text-sm">
+            <button
+              onClick={() => navigate("/about")}
+              className="mt-6 bg-white text-[#1d588e] font-medium px-4 py-2 rounded-md text-sm"
+            >
               Learn More
             </button>
           </div>
@@ -224,7 +229,10 @@ function Home() {
               <br />
               dreams.
             </h2>
-            <button className="mt-6 bg-white text-[#1d588e] font-semibold px-5 py-2 rounded-full">
+            <button
+              onClick={() => navigate("/about")}
+              className="mt-6 bg-white text-[#1d588e] font-semibold px-5 py-2 rounded-full"
+            >
               Learn More
             </button>
 
@@ -392,7 +400,10 @@ function Home() {
 
           {/* Center: ADMISSION Button */}
           <div className="mt-6 lg:mt-0 flex flex-col items-center space-y-4">
-            <button className="bg-white text-[#1c4875] font-bold px-10 py-3 rounded-full shadow-md border-2 border-white hover:scale-105 transition-transform whitespace-nowrap md:mt-10">
+            <button
+              onClick={() => navigate("/admission")}
+              className="bg-white text-[#1c4875] font-bold px-10 py-3 rounded-full shadow-md border-2 border-white hover:scale-105 transition-transform whitespace-nowrap md:mt-10"
+            >
               ADMISSION
             </button>
 
@@ -681,7 +692,10 @@ function Home() {
           </div>
         </div>
 
-        <button className="mt-8 bg-[#FFA500] hover:bg-[#e69500] text-white font-semibold py-2 px-6 rounded-md transition-colors duration-300 pl-5 pr-6">
+        <button
+          onClick={() => navigate("/blog")}
+          className="mt-8 bg-[#FFA500] hover:bg-[#e69500] text-white font-semibold py-2 px-6 rounded-md transition-colors duration-300 pl-5 pr-6"
+        >
           View
         </button>
       </div>
