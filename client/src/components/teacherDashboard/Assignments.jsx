@@ -149,7 +149,7 @@ function Assignments({ handleTabChange }) {
           <tbody>
             {assignments.map((a) => (
               <tr key={a._id} className="hover:bg-gray-100">
-                <td className="px-4 py-2 border">{a.assignmentName}</td>
+                <td className="px-4 py-2 border">{a.chapterName}</td>
                 <td className="px-4 py-2 border bg-[#1982C424]">{a.teacherName}</td>
                 <td className="px-4 py-2 border">{a.class}</td>
                 <td className="px-4 py-2 border bg-[#1982C424]">{a.section}</td>

@@ -19,7 +19,7 @@ import html2canvas from 'html2canvas';
 const Employee = () => {
   const dispatch = useDispatch();
   const { staffList, loading } = useSelector((state) => state.adminEmployee);
-  const employees = staffList;
+  const employees = staffList || []; // Prevent error if staffList undefined
   const pdfRef = useRef();
 
   const [filters, setFilters] = useState({
@@ -118,7 +118,7 @@ const Employee = () => {
 
   return (
     <>
-      {/* Page Title and Header */}
+      {/* Header Section */}
       <div className="flex justify-between items-center mx-8 pt-10">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Staff</h1>
@@ -131,9 +131,9 @@ const Employee = () => {
         <Header />
       </div>
 
-      {/* Main Section */}
+      {/* Content Section */}
       <div className="p-4 bg-white">
-        {/* Filters and Actions */}
+        {/* Filters & Buttons */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <input
@@ -170,7 +170,7 @@ const Employee = () => {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Employees Table */}
         {loading ? (
           <p>Loading...</p>
         ) : (
@@ -229,7 +229,6 @@ const Employee = () => {
               onSubmit={handleSubmit}
               className="bg-white rounded shadow-md w-full max-w-4xl"
             >
-              {/* Modal Header */}
               <div className="bg-[#146192] text-white px-6 py-3 rounded-t flex justify-between items-center">
                 <h2 className="text-lg font-semibold">
                   {formData.isEdit ? 'Edit Employee' : 'Add Staff details'}
@@ -243,7 +242,6 @@ const Employee = () => {
                 </button>
               </div>
 
-              {/* Modal Body */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
                 <input
                   type="text"
@@ -323,7 +321,6 @@ const Employee = () => {
                 </select>
               </div>
 
-              {/* Modal Footer */}
               <div className="flex justify-center px-6 pb-6">
                 <button
                   type="submit"

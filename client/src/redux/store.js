@@ -60,6 +60,26 @@ import transReducer from './transSlice';
 import stransportationReducer from './student/stransportationSlice';
 import forgotPasswordReducer from './forgotPasswordSlice';
 
+import superAdminStaffDashboardSliceReducer from './superAdminStaff/superAdminStaffDashboardSlice';
+import superAdminStaffSendQueryReducer from './superAdminStaff/superAdminStaffQuerySlice';
+import superAdminQueryReplayReducer from './superAdminStaff/superAdminStaffQueryReplaySlice';
+import superAdminStaffBlogSliceReducer from './superAdminStaff/superAdminStaffBlogSlice';
+import superAdminStaffSendQueryIdReplayReducer from './superAdminStaff/superAdminStaffReplayIdSlice';
+import superAdminStaffPostReplyReducer from './superAdminStaff/superAdminStaffReplayIdPostSlice';
+import blogReducer from "./superAdminStaff/superAdminStaffCreateBlogSlice";
+
+import superAdminReducer from './superAdmin/superAdminDashboard';
+import superAdminSchoolReducer from "./superAdmin/superAdminSchoolSlice";
+import superAdminAccountsSliceReducer from './superAdmin/superAdminAccountsSlice';
+import superAdminStaffReducer from './superAdmin/superAdminStaffSlice';
+import superAdminTaskReducer from './superAdmin/superAdminTaskSlice';
+import superAdminUserBlogReducer from './superAdmin/SuperAdminBlogSclice';
+import superAdminConnectAndQueryReducer from './superAdmin/superAdminConnectSlice';
+import ptransportationReducer from './parent/ptransportationSlice';
+import adminEntranceReducer from './adminEntranceSlice';
+import transportationReducer from './driver/transportationSlice';
+import entranceReducer from './users/entranceSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -117,7 +137,26 @@ const store = configureStore({
     createmeeting: createMeetingReducer,
     transportation: transReducer,
     stransportation: stransportationReducer,
-      forgotPassword: forgotPasswordReducer,
+    forgotPassword: forgotPasswordReducer,
+    superAdminStaffDashboard: superAdminStaffDashboardSliceReducer,
+    superAdminStaffSendQuery: superAdminStaffSendQueryReducer,
+    superAdminStaffSendQueryReplay: superAdminQueryReplayReducer,
+    superAdminStaffBlog: superAdminStaffBlogSliceReducer,
+    superAdminStaffSendQueryIdReplay: superAdminStaffSendQueryIdReplayReducer,
+    superAdminStaffPostReply: superAdminStaffPostReplyReducer,
+    blogData: blogReducer,
+    superAdminDashboard: superAdminReducer,
+    superAdminSchools: superAdminSchoolReducer,
+    superAdminAccounts: superAdminAccountsSliceReducer,
+    superAdminStaff: superAdminStaffReducer,
+    superAdminTasks: superAdminTaskReducer,
+    superAdminUserBlogs: superAdminUserBlogReducer,
+    connectAndQuery: superAdminConnectAndQueryReducer,
+    ptransportation: ptransportationReducer,
+    adminEntrance: adminEntranceReducer,
+    transportation: transportationReducer,
+    entrance: entranceReducer,
+
   },
 });
 
