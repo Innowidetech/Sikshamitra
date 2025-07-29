@@ -950,7 +950,6 @@ exports.getTeacherNames = async (req, res) => {
   }
 };
 
-
 exports.getAllTeachersOfSchool = async (req, res) => {
   try {
     const adminId = req.user && req.user.id;
@@ -976,8 +975,9 @@ exports.getAllTeachersOfSchool = async (req, res) => {
     for (let teacher of teachers) {
       totalTeachersSalary += Number(teacher.profile.salary)
     }
+    const validTeachers = teachers.filter(t => t.userId && t.userId.employeeType);
 
-    const sortedTeachers = teachers.sort((a, b) => {
+    const sortedTeachers = validTeachers.sort((a, b) => {
       const typeOrder = ['accountant', 'librarian', '-', 'teaching'];
       const aTypeIndex = typeOrder.indexOf(a.userId.employeeType);
       const bTypeIndex = typeOrder.indexOf(b.userId.employeeType);
