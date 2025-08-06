@@ -1,5 +1,5 @@
 const express = require('express');
-const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs, applyForEntranceExamination, getQuestionsToApplicants, submitExamAnswers } = require('../controllers/user.controller');
+const { applyOffline, contactUs, applyOnline, verifyRazorpayPayment, getAllSchoolsName, getBlogs, applyForEntranceExamination, getQuestionsToApplicants, submitExamAnswers,verifyExamResultLogin } = require('../controllers/user.controller');
 const multer = require('multer');
 const { loginForEntranceExam } = require('../controllers/auth.controller');
 const { protectEntranceApplicant } = require('../middleware/auth.middleware');
@@ -24,6 +24,7 @@ router.post('/entranceExam', upload.single('photo'), applyForEntranceExamination
 router.post('/examLogin', loginForEntranceExam);
 router.get('/questionPaper', protectEntranceApplicant, getQuestionsToApplicants);
 router.post('/submitAnswers', protectEntranceApplicant, submitExamAnswers);
+router.post('/verify-exam-result-login', verifyExamResultLogin);
 
 
 module.exports = router;

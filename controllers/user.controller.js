@@ -416,3 +416,36 @@ exports.submitExamAnswers = async (req, res) => {
         res.status(500).json({ message: "Internal server error.", error: err.message })
     }
 };
+
+exports.verifyExamResultLogin = async (req, res) => {
+  try {
+    const { examId, email } = req.body;
+
+    // 1. Validate input (examId is required, email is optional)
+    if (!examId || !email) {
+      return res.status(400).json({ message: 'Exam ID is required.' });
+    }
+
+    // 2. Check if the result exists for this examId and if it's marked as "sent"
+
+    const result = await EntranceExamResults.findOne({
+      examId,
+      status: 'sent'
+       // Ensure the result is marked as "sent"
+    }).populate('applicantId');
+    if(result.applicantId.studentDetails.email!=email){
+        return res.status(400).json({ message: 'Invalid email ' });
+    }
+
+    if (!result ) {
+      return res.status(404).json({ message: 'Invalid exam ID or result not available  a.' });
+    }
+
+    return res.status(200).json({
+      message: 'Login successful.',
+    });
+    
+  } catch (err) {
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
