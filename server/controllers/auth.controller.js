@@ -181,8 +181,8 @@ exports.loginForEntranceExam = async (req, res) => {
     const currentTime = moment();
 
     const examDateFormatted = moment(application.examDate).format('YYYY-MM-DD');
-    const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
-    const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
+   const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
+const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
 
     if (currentTime.isBefore(examStart)) {
       return res.status(403).json({ message: "The exam has not started yet. Please wait until the scheduled time." });
