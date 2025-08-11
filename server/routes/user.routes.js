@@ -20,7 +20,10 @@ router.post('/applyOnline', upload.fields([
 
 router.post('/verifyOnlinePayment', verifyRazorpayPayment);
 router.get('/blogs', getBlogs);
-router.post('/entranceExam', upload.single('photo'), applyForEntranceExamination);
+router.post('/entranceExam', upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'previousSchoolDetails[documents]', maxCount: 5 }
+]), applyForEntranceExamination);
 router.post('/examLogin', loginForEntranceExam);
 router.get('/questionPaper', protectEntranceApplicant, getQuestionsToApplicants);
 router.post('/submitAnswers', protectEntranceApplicant, submitExamAnswers);
