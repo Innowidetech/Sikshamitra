@@ -282,22 +282,28 @@ exports.applyForEntranceExamination = async (req, res) => {
         if (previousSchoolDetails.board == 'Others') {
             if (!previousSchoolDetails.schoolBoard) { return res.status(400).json({ message: "Please specify the board type." }) }
         }
+
         let uploadedPhotoUrl;
-        if (req.file) {
+        if (req.files?.photo && req.files.photo[0]) {
             try {
-                const [photoUrl] = await uploadImage(req.file);
+                const [photoUrl] = await uploadImage(req.files.photo[0]);
                 uploadedPhotoUrl = photoUrl;
             } catch (error) {
                 return res.status(500).json({ message: 'Failed to upload photo.', error: error.message });
             }
+        } else {
+            return res.status(400).json({ message: "Please provide student photo." });
         }
-        else { return res.status(400).json({ message: "Please provide student photo." }) };
 
         const existingSchool = await School.findOne({ schoolName: school });
         if (!existingSchool) {
             return res.status(404).json({ message: `No school found with the name - ${school}` });
         };
         studentDetails.photo = uploadedPhotoUrl;
+        if (req.files?.['previousSchoolDetails[documents]']) {
+            const docUrls = await uploadImage(req.files['previousSchoolDetails[documents]']);
+            previousSchoolDetails.documents = docUrls.map(url => ({ url }));
+        }
 
         const application = new ApplyForEntranceExam({
             academicYear, classApplying, schoolId: existingSchool._id, previousSchoolDetails,
