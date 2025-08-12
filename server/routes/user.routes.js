@@ -11,8 +11,6 @@ router.post('/offline', applyOffline);
 router.post('/contactUs', contactUs);
 
 router.post('/applyOnline', upload.fields([
-  { name: 'studentPhoto', maxCount: 1 },
-  { name: 'educationDocuments', maxCount: 12 },
   { name: 'aadharCard', maxCount: 1 },
   { name: 'voterId', maxCount: 1 },
   { name: 'panCard', maxCount: 1 },
