@@ -118,104 +118,125 @@ const razorpay = new Razorpay({
 exports.applyOnline = async (req, res) => {
     try {
         const studentDetails = JSON.parse(req.body.studentDetails);
-        const educationDetails = JSON.parse(req.body.educationDetails);
         const parentDetails = JSON.parse(req.body.parentDetails);
+        const applicationFee = Number(req.body.applicationFee) || 0;
 
-        const existingUser = await Offline.findOne({ email: studentDetails.email, schoolName: studentDetails.schoolName }) || await Online.findOne({ 'studentDetails.email': studentDetails.email, 'studentDetails.schoolName': studentDetails.schoolName });
-        if (existingUser) { return res.status(400).json({ message: 'You have already applied to this school through Online/Offline. Please contact the school to know more details.' }) }
+        //  Check for existing application
+        const onlineExist = await Online.findOne({
+            'studentDetails.examId': studentDetails.examId
+        });
+        if (onlineExist) {
+            return res.status(400).json({
+                message: 'You have already applied to this school through Online. Please contact the school to know more details.'
+            });
+        }
+        const existingUser = await Offline.findOne({
+            examId: studentDetails.examId,
+        }) || await Online.findOne({
+            'studentDetails.examId': studentDetails.examId
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: 'You have already applied to this school through Offline. Please contact the school to know more details.'
+            });
+        }
+
 
         const files = req.files;
-        if (!files || !files.studentPhoto || !files.aadharCard || !files.voterId || !files.panCard) {
-            return res.status(400).json({ message: 'Missing one or more required files (studentPhoto, parentDocuments)' });
-        };
+        if (!files || !files.aadharCard || !files.voterId || !files.panCard) {
+            return res.status(400).json({
+                message: 'Missing one or more required files (aadharCard, voterId, panCard)'
+            });
+        }
 
+        //  Check required fields
         if (!studentDetails || !parentDetails) {
             return res.status(400).json({ message: 'Missing data fields.' });
-        };
-
-        const school = await School.findOne({ schoolName: studentDetails.schoolName });
-        if (!school) {
-            return res.status(404).json({ message: 'School not found' });
-        };
-
-        const result = await EntranceExamResults.findOne({ schoolId: school._id, examId: studentDetails.examId, resultPercentage: studentDetails.resultPercentage, status: 'sent' }).populate({ path: 'applicantId', select: 'studentDetails.email classApplying' });
-        if (!result) { return res.status(404).json({ message: "No result found with the examId and exam percentage for the school." }) }
-
-        if (studentDetails.email != result.applicantId.studentDetails.email || studentDetails.classToJoin != result.applicantId.classApplying) {
-            return res.status(400).json({ message: "You are only allowed to apply using the same email and class with which you registered and wrote the exam." });
         }
 
-        if (studentDetails.classToJoin) {
-            const classNum = parseInt(studentDetails.classToJoin, 10);
-            if (!isNaN(classNum) && classNum >= 1 && classNum <= 9) {
-                studentDetails.classToJoin = classNum.toString().padStart(2, '0');
-            }
-        }
-
-        const classWiseFees = await ClassWiseFees.findOne({ schoolId: school._id, class: studentDetails.classToJoin });
-        if (!classWiseFees) { return res.status(404).json({ message: "No admission fees found for the class to join, please contact the school." }) }
-        let applicationFee = classWiseFees.admissionFees;
-
-        let uploadedImages = await uploadImage(files.studentPhoto.concat(files.educationDocuments, files.aadharCard, files.voterId, files.panCard));
-
-        if (!uploadedImages || uploadedImages.length < 5) {
-            return res.status(400).json({ message: 'Required files are missing.' });
-        }
-        studentDetails.photo = { url: uploadedImages[0] };
-
-        educationDetails.forEach((eduDetail, index) => {
-            if (files.educationDocuments && files.educationDocuments[index]) {
-                eduDetail.documents = { url: uploadedImages[index + 1] };
-            }
+        //  Verify exam result
+        const result = await EntranceExamResults.findOne({
+            examId: studentDetails.examId,
+            resultPercentage: studentDetails.resultPercentage,
+            status: 'sent'
         });
 
-        parentDetails.aadharCard = uploadedImages[uploadedImages.length - 3];
-        parentDetails.voterId = uploadedImages[uploadedImages.length - 2];
-        parentDetails.panCard = uploadedImages[uploadedImages.length - 1];
+        if (!result) {
+            return res.status(404).json({
+                message: "No result found with the examId and exam percentage for the school."
+            });
+        }
 
-        studentDetails.admissionFees = applicationFee;
-        const options = {
-            amount: applicationFee,
-            currency: 'INR',
-            receipt: `receipt_${Date.now()}`,
-            notes: {
-                schoolName: school.schoolName,
-                schoolCode: school.schoolCode,
-            },
-        };
+        //  Attach file references (placeholder logic)
+        const aadharUrl = await uploadImage(files.aadharCard[0]);
+        const voterUrl = await uploadImage(files.voterId[0]);
+        const panUrl = await uploadImage(files.panCard[0]);
 
-        razorpay.orders.create(options, async (err, order) => {
-            if (err) {
-                return res.status(500).json({ message: 'Error creating Razorpay order', error: err });
-            }
+        parentDetails.aadharCard = Array.isArray(aadharUrl) ? aadharUrl[0] : aadharUrl;
+        parentDetails.voterId = Array.isArray(voterUrl) ? voterUrl[0] : voterUrl;
+        parentDetails.panCard = Array.isArray(panUrl) ? panUrl[0] : panUrl;
 
-            const onlineApplication = new Online({
-                studentDetails,
-                educationDetails,
-                parentDetails,
-                paymentDetails: {
-                    razorpayOrderId: order.id,
-                    status: 'pending',
-                },
+        let paymentDetails;
+
+        if (applicationFee > 0) {
+            //  Create Razorpay order
+            const razorpayOrder = await razorpay.orders.create({
+                amount: applicationFee * 100, // in paise
+                currency: "INR",
+                receipt: `receipt_${Date.now()}`
             });
 
-            await onlineApplication.save();
+            paymentDetails = {
+                razorpayOrderId: razorpayOrder.id,
+                status: 'pending',
+                amount: applicationFee
+            };
+        } else {
+            // Skip payment
+            paymentDetails = {
+                razorpayOrderId: null,
+                status: 'not_required',
+                amount: 0
+            };
+        }
 
-            let memberIds = []
-            memberIds.push({ memberId: school.userId });
-            const notification = new Notifications({ section: 'admission', memberIds, text: `Received a new Online Application from '${studentDetails.firstName} ${studentDetails.lastName}', who scored '${studentDetails.resultPercentage}%' in the entrance examination for class '${studentDetails.classToJoin}'.` });
-            await notification.save();
-
-            res.status(201).json({
-                message: 'Application created successfully, Razorpay order initiated',
-                order,
-                applicationId: onlineApplication._id,
-            });
+        // Save application
+        const onlineApplication = new Online({
+            studentDetails,
+            parentDetails,
+            paymentDetails,
         });
+
+        await onlineApplication.save();
+
+        //  Notify school
+        const notification = new Notifications({
+            section: 'admission',
+            memberIds: [],
+            text: `Received a new Online Application from '${studentDetails.firstName} ${studentDetails.lastName}', who scored '${studentDetails.resultPercentage}%' in the entrance examination for class '${studentDetails.classToJoin}'.`
+        });
+        await notification.save();
+
+        return res.status(201).json({
+            message: applicationFee > 0
+                ? 'Application created successfully, payment required'
+                : 'Application created successfully',
+            applicationId: onlineApplication._id,
+            paymentDetails,
+            studentDetails: onlineApplication.studentDetails,
+            parentDetails: onlineApplication.parentDetails,
+            paymentDetails: onlineApplication.paymentDetails
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error', error: error.message });
+        res.status(500).json({
+            message: 'Internal server error',
+            error: error.message
+        });
     }
 };
+
 
 exports.verifyRazorpayPayment = async (req, res) => {
     try {
