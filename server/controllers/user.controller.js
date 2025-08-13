@@ -169,12 +169,10 @@ exports.applyOnline = async (req, res) => {
         }
 
         //  Attach file references (placeholder logic)
-        const aadharUrl = await uploadImage(files.aadharCard[0]);
-        const voterUrl = await uploadImage(files.voterId[0]);
+           const aadharUrl = await uploadImage(files.aadharCard[0]);
         const panUrl = await uploadImage(files.panCard[0]);
 
         parentDetails.aadharCard = Array.isArray(aadharUrl) ? aadharUrl[0] : aadharUrl;
-        parentDetails.voterId = Array.isArray(voterUrl) ? voterUrl[0] : voterUrl;
         parentDetails.panCard = Array.isArray(panUrl) ? panUrl[0] : panUrl;
 
         let paymentDetails;
