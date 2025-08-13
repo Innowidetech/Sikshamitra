@@ -144,9 +144,9 @@ exports.applyOnline = async (req, res) => {
 
 
         const files = req.files;
-        if (!files || !files.aadharCard || !files.voterId || !files.panCard) {
+        if (!files || !files.aadharCard || !files.panCard) {
             return res.status(400).json({
-                message: 'Missing one or more required files (aadharCard, voterId, panCard)'
+                message: 'Missing one or more required files (aadharCard, panCard)'
             });
         }
 
