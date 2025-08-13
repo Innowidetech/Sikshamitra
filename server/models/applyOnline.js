@@ -89,13 +89,9 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        voterId: {
-            type: String,
-            required: true,
-        },
         panCard: {
             type: String,
-            required: true,
+            // required: true,
         },
     },
     paymentDetails: {
