@@ -11,6 +11,7 @@ import { SiGooglebigquery } from "react-icons/si";
 import { IoBookSharp } from "react-icons/io5";
 import { IoIosCreate } from "react-icons/io";
 import { TbMessageQuestion } from "react-icons/tb";
+import logo from '../../../assets/logo1.png';
 
 // Menu items
 const menuItems = [
@@ -56,13 +57,16 @@ const TeacherSidebar = ({ setActiveSection, activeTab }) => {
           md:translate-x-0 z-40 shadow-lg`}
       >
         {/* Logo */}
-        <div
-          className="text-xl lg:text-3xl font-semibold p-4 xl:text-[48px] lg:py-10 cursor-pointer flex-shrink-0 flex justify-center"
-          style={{ fontFamily: 'Poppins' }}
-          onClick={() => handleTabChange('dashboard')}
-        >
-          LOGO
-        </div>
+        <div 
+                 className="flex justify-center items-center p-6 cursor-pointer"
+                 onClick={() => handleTabChange('dashboard')}
+               >
+                 <img 
+                   src={logo} 
+                   alt="Logo"
+                   className="h-20 w-auto object-contain rounded-full"
+                 />
+               </div>
 
         {/* Menu */}
         <nav className="flex-1 overflow-y-auto p-4 hide-scrollbar">

@@ -171,168 +171,134 @@ const Employee = () => {
         </div>
 
         {/* Employees Table */}
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div ref={pdfRef} className="overflow-x-auto border">
-            <table className="min-w-full text-sm border">
-              <thead className="bg-[#f5f8fa] text-gray-700 font-medium">
-                <tr>
-                  <th className="border px-2 py-2">S.no</th>
-                  <th className="border px-2 py-2">Staff Name</th>
-                  <th className="border px-2 py-2">Staff Department</th>
-                  <th className="border px-2 py-2">Wage/Salary</th>
-                  <th className="border px-2 py-2">E-mail ID</th>
-                  <th className="border px-2 py-2">Mobile Number</th>
-                  <th className="border px-2 py-2">Employee Role</th>
-                  <th className="border px-2 py-2">Edit</th>
-                  <th className="border px-2 py-2">Status</th>
+         {!loading && (
+        <div ref={pdfRef} className="hidden md:block overflow-x-auto border">
+          <table className="min-w-full text-sm border">
+            <thead className="bg-[#f5f8fa] text-gray-700 font-medium">
+              <tr>
+                <th className="border px-2 py-2">S.no</th>
+                <th className="border px-2 py-2">Staff Name</th>
+                <th className="border px-2 py-2">Staff Department</th>
+                <th className="border px-2 py-2">Wage/Salary</th>
+                <th className="border px-2 py-2">E-mail ID</th>
+                <th className="border px-2 py-2">Mobile Number</th>
+                <th className="border px-2 py-2">Employee Role</th>
+                <th className="border px-2 py-2">Edit</th>
+                <th className="border px-2 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEmployees.map((emp, index) => (
+                <tr key={emp._id} className="text-center">
+                  <td className="border px-2 py-2">{index + 1}</td>
+                  <td className="border px-2 py-2">{emp.name}</td>
+                  <td className="border px-2 py-2">{emp.department}</td>
+                  <td className="border px-2 py-2">₹{emp.salary}</td>
+                  <td className="border px-2 py-2">{emp.userId?.email}</td>
+                  <td className="border px-2 py-2">{emp.userId?.mobileNumber}</td>
+                  <td className="border px-2 py-2">{emp.employeeRole}</td>
+                  <td className="border px-2 py-2">
+                    <button onClick={() => openEditModal(emp)}>
+                      <Edit className="text-blue-600 h-4 w-4" />
+                    </button>
+                  </td>
+                  <td className="border px-2 py-2">
+                    {emp.userId?.isActive === false ? (
+                      <span className="flex items-center justify-center gap-1 text-red-600">
+                        <XCircle className="h-4 w-4" />
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                      </span>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredEmployees.map((emp, index) => (
-                  <tr key={emp._id} className="text-center">
-                    <td className="border px-2 py-2">{index + 1}</td>
-                    <td className="border px-2 py-2">{emp.name}</td>
-                    <td className="border px-2 py-2">{emp.department}</td>
-                    <td className="border px-2 py-2">₹{emp.salary}</td>
-                    <td className="border px-2 py-2">{emp.userId?.email}</td>
-                    <td className="border px-2 py-2">{emp.userId?.mobileNumber}</td>
-                    <td className="border px-2 py-2">{emp.employeeRole}</td>
-                    <td className="border px-2 py-2">
-                      <button onClick={() => openEditModal(emp)}>
-                        <Edit className="text-blue-600 h-4 w-4" />
-                      </button>
-                    </td>
-                    <td className="border px-2 py-2">
-                      {emp.userId?.isActive === false ? (
-                        <span className="flex items-center justify-center gap-1 text-red-600">
-                          <XCircle className="h-4 w-4" />
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-1 text-green-600">
-                          <CheckCircle className="h-4 w-4" />
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <form
-              onSubmit={handleSubmit}
-              className="bg-white rounded shadow-md w-full max-w-4xl"
-            >
-              <div className="bg-[#146192] text-white px-6 py-3 rounded-t flex justify-between items-center">
-                <h2 className="text-lg font-semibold">
-                  {formData.isEdit ? 'Edit Employee' : 'Add Staff details'}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="text-white text-2xl"
-                >
-                  ×
+      {/* Mobile View - Cards */}
+      {!loading && (
+        <div className="block md:hidden space-y-4 mt-4">
+          {filteredEmployees.map((emp, index) => (
+            <div key={emp._id} className="border rounded-lg p-4 shadow bg-white">
+              <p><strong>S.no:</strong> {index + 1}</p>
+              <p><strong>Name:</strong> {emp.name}</p>
+              <p><strong>Department:</strong> {emp.department}</p>
+              <p><strong>Salary:</strong> ₹{emp.salary}</p>
+              <p><strong>Email:</strong> {emp.userId?.email}</p>
+              <p><strong>Mobile:</strong> {emp.userId?.mobileNumber}</p>
+              <p><strong>Role:</strong> {emp.employeeRole}</p>
+              <p><strong>Status:</strong> {emp.userId?.isActive ? (
+                <span className="text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" /></span>
+              ) : (
+                <span className="text-red-600 flex items-center gap-1"><XCircle className="h-4 w-4" /></span>
+              )}</p>
+              <div className="pt-2">
+                <button onClick={() => openEditModal(emp)} className="text-blue-600 flex items-center gap-1">
+                  <Edit className="h-4 w-4" /> Edit
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
-                  placeholder="Name"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  placeholder="Email-ID"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                <input
-                  type="text"
-                  name="mobileNumber"
-                  value={formData.mobileNumber}
-                  onChange={handleFormChange}
-                  placeholder="Mobile Number"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                {!formData.isEdit && (
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleFormChange}
-                    placeholder="Password"
-                    className="border p-2 rounded w-full"
-                    required
-                  />
-                )}
-                <input
-                  type="text"
-                  name="employeeRole"
-                  value={formData.employeeRole}
-                  onChange={handleFormChange}
-                  placeholder="Staff Role"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                <input
-                  type="number"
-                  name="salary"
-                  value={formData.salary}
-                  onChange={handleFormChange}
-                  placeholder="Salary"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleFormChange}
-                  placeholder="Department"
-                  className="border p-2 rounded w-full"
-                  required
-                />
-                <select
-                  name="isActive"
-                  value={formData.isActive}
-                  onChange={handleFormChange}
-                  className="border p-2 rounded w-full"
-                  required
-                >
-                  <option value="">Select Status</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </div>
+      {/* Loading */}
+      {loading && <p>Loading...</p>}
 
-              <div className="flex justify-center px-6 pb-6">
-                <button
-                  type="submit"
-                  className="bg-[#146192] text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
+      {/* Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-2">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded shadow-md w-full max-w-4xl"
+          >
+            <div className="bg-[#146192] text-white px-6 py-3 rounded-t flex justify-between items-center">
+              <h2 className="text-lg font-semibold">
+                {formData.isEdit ? 'Edit Employee' : 'Add Staff details'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-6">
+              <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="Name" className="border p-2 rounded w-full" required />
+              <input type="email" name="email" value={formData.email} onChange={handleFormChange} placeholder="Email-ID" className="border p-2 rounded w-full" required />
+              <input type="text" name="mobileNumber" value={formData.mobileNumber} onChange={handleFormChange} placeholder="Mobile Number" className="border p-2 rounded w-full" required />
+              {!formData.isEdit && (
+                <input type="password" name="password" value={formData.password} onChange={handleFormChange} placeholder="Password" className="border p-2 rounded w-full" required />
+              )}
+              <input type="text" name="employeeRole" value={formData.employeeRole} onChange={handleFormChange} placeholder="Staff Role" className="border p-2 rounded w-full" required />
+              <input type="number" name="salary" value={formData.salary} onChange={handleFormChange} placeholder="Salary" className="border p-2 rounded w-full" required />
+              <input type="text" name="department" value={formData.department} onChange={handleFormChange} placeholder="Department" className="border p-2 rounded w-full" required />
+              <select name="isActive" value={formData.isActive} onChange={handleFormChange} className="border p-2 rounded w-full" required>
+                <option value="">Select Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div className="flex justify-center px-6 pb-6">
+              <button
+                type="submit"
+                className="bg-[#146192] text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
     </>
   );
 };

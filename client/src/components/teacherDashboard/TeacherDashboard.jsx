@@ -449,7 +449,8 @@ const handleEditSubmit = async () => {
 
 
   return (
-    <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56 mt-10">
+    <div className="max-w-[1440px] mx-auto  overflow-x-hidden">
+    <div className="px-4 sm:px-6 md:px-8 lg:px-16 md:ml-56 mt-10 ">
       <Header />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 md:mx-8 pt-6">
@@ -525,9 +526,11 @@ const handleEditSubmit = async () => {
           </div>
 
         {/* Combined Container for Income Chart and Expenses */}
-<div className="flex flex-col md:flex-row gap-6 mt-6">
+<div className="flex flex-col lg:flex-row flex-wrap gap-6 mt-6 w-full">
+
 {/* Income Chart Section - Left Side */}
-<div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2">
+<div className="bg-white p-6 rounded-lg shadow-md w-full  md:w-[100%] min-w-0">
+
   <h3 className="text-lg font-semibold text-[#146192]">Income Chart</h3>
 
   {/* Monthly Income Summary */}
@@ -548,7 +551,7 @@ const handleEditSubmit = async () => {
 
 
 {/* Expenses Section - Right Side */}
-<div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/2 mt-6">
+<div className="bg-white p-6 rounded-lg shadow-md w-full  md:w-[100%]  mt-6">
   <div className="flex justify-between items-center mb-4">
     <h3 className="text-lg font-semibold text-[#146192] ">Expenses</h3>
   <button
@@ -574,8 +577,9 @@ const handleEditSubmit = async () => {
   </div>
 
   {/* Bar Chart */}
-  <div className="mt-4 overflow-x-hidden">
-    <div className="w-full max-w-full">
+ <div className="mt-4">
+  <div className="w-full overflow-hidden">
+
       <Bar
         data={{
           labels: classAccounts?.accounts?.map((item) => item.monthYear),
@@ -1170,6 +1174,7 @@ const handleEditSubmit = async () => {
 
 
       <ToastContainer />
+    </div>
     </div>
   );
 }

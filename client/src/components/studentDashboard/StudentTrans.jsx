@@ -337,48 +337,73 @@ const StudentTrans = () => {
   </div>
 </div>
 
-{/* Student Details Table */}
-<div className="bg-white rounded-xl shadow-md p-4">
-  <h3 className="text-lg font-semibold mb-4 text-[#0f4a70]">Student Details</h3>
-  
-  <div className="overflow-x-auto">
-    <table className="min-w-[900px] w-full border border-gray-300 text-sm text-left ">
-      <thead className="bg-[#146192E8] text-white">
-        <tr>
-          <th className="p-3 border border-gray-300">S.No</th>
-          <th className="p-3 border border-gray-300">Name</th>
-          <th className="p-3 border border-gray-300">Class</th>
-          <th className="p-3 border border-gray-300">Section</th>
-          <th className="p-3 border border-gray-300">Parent Name</th>
-          <th className="p-3 border border-gray-300">Contact</th>
-          <th className="p-3 border border-gray-300">Pick-up Location</th>
-        </tr>
-      </thead>
+ <div className="bg-white rounded-xl shadow-md p-4">
+      <h3 className="text-lg font-semibold mb-4 text-[#0f4a70]">Student Details</h3>
 
-      <tbody>
+      {/* Table for md and up */}
+      <div className="overflow-x-auto hidden md:block">
+        <table className="min-w-[900px] w-full border border-gray-300 text-sm text-left">
+          <thead className="bg-[#146192E8] text-white">
+            <tr>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">S.No</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">Name</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">Class</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">Section</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">Parent Name</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap">Contact</th>
+              <th className="p-3 border border-gray-300 whitespace-nowrap max-w-xs">Pick-up Location</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {studentDetails?.map((entry, idx) => {
+              const profile = entry?.studentId?.studentProfile || {};
+              const parent = entry?.parent || {};
+              return (
+                <tr key={entry._id || idx} className="hover:bg-[#f9f9f9] border-t border-gray-200">
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">{idx + 1}</td>
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">{profile.fullname || "N/A"}</td>
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">{profile.class || "N/A"}</td>
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">{profile.section || "N/A"}</td>
+                  <td className="p-3 border border-gray-300 whitespace-nowrap">{parent.fatherName || "N/A"}</td>
+                  <td className="p-3 border border-gray-300 break-words whitespace-normal">
+                    {parent.fatherPhoneNumber ? `+91-${parent.fatherPhoneNumber}` : "N/A"}
+                  </td>
+                  <td className="p-3 border border-gray-300 break-words max-w-xs whitespace-normal">
+                    {entry.pickUpLocation || "N/A"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Card view for mobile (sm and below, md hidden) */}
+      <div className="md:hidden space-y-4">
         {studentDetails?.map((entry, idx) => {
           const profile = entry?.studentId?.studentProfile || {};
           const parent = entry?.parent || {};
           return (
-            <tr key={entry._id || idx} className="hover:bg-[#f9f9f9] border-t border-gray-200">
-              <td className="p-3 border border-gray-300">{idx + 1}</td>
-              <td className="p-3 border border-gray-300">{profile.fullname || "N/A"}</td>
-              <td className="p-3 border border-gray-300">{profile.class || "N/A"}</td>
-              <td className="p-3 border border-gray-300">{profile.section || "N/A"}</td>
-              <td className="p-3 border border-gray-300">{parent.fatherName || "N/A"}</td>
-              <td className="p-3 border border-gray-300 break-words">
+            <div
+              key={entry._id || idx}
+              className="border border-gray-300 rounded-lg p-4 shadow-sm bg-white"
+            >
+              <p><strong>S.No:</strong> {idx + 1}</p>
+              <p><strong>Name:</strong> {profile.fullname || "N/A"}</p>
+              <p><strong>Class:</strong> {profile.class || "N/A"}</p>
+              <p><strong>Section:</strong> {profile.section || "N/A"}</p>
+              <p><strong>Parent Name:</strong> {parent.fatherName || "N/A"}</p>
+              <p>
+                <strong>Contact:</strong>{" "}
                 {parent.fatherPhoneNumber ? `+91-${parent.fatherPhoneNumber}` : "N/A"}
-              </td>
-              <td className="p-3 border border-gray-300 break-words max-w-xs">
-                {entry.pickUpLocation || "N/A"}
-              </td>
-            </tr>
+              </p>
+              <p><strong>Pick-up Location:</strong> {entry.pickUpLocation || "N/A"}</p>
+            </div>
           );
         })}
-      </tbody>
-    </table>
-  </div>
       </div>
+    </div>
     </div>
   );
 };

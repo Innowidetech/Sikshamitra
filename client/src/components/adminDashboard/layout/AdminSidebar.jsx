@@ -8,6 +8,7 @@ import { LuGraduationCap } from "react-icons/lu";
 import { FaGraduationCap } from "react-icons/fa6";
 import { BsFillPersonLinesFill,} from "react-icons/bs";
 import { ClipboardList } from 'lucide-react';
+import logo from '../../../assets/logo1.png';
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -57,12 +58,16 @@ const AdminSidebar = ({ setActiveSection, activeTab }) => {
       >
         {/* Logo Section */}
         <div 
-          className="text-xl lg:text-3xl font-semibold p-4 xl:text-[48px] lg:py-10 cursor-pointer flex-shrink-0 flex justify-center" 
-          style={{ fontFamily: 'Poppins' }}
-          onClick={() => handleTabChange('dashboard')}
-        >
-          LOGO
-        </div>
+                        className="flex justify-center items-center p-6 cursor-pointer"
+                        onClick={() => handleTabChange('dashboard')}
+                      >
+                        <img 
+                          src={logo} 
+                          alt="Logo"
+                          className="h-20 w-auto object-contain rounded-full"
+                        />
+                      </div>
+       
 
         {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">

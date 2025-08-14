@@ -172,7 +172,7 @@ const AdminSchedulePage = () => {
   });
 
   return (
-    <div className="p-6">
+   <div className="p-6">
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-4">
         <div
@@ -189,6 +189,7 @@ const AdminSchedulePage = () => {
       {/* Form Box */}
       <div className="border border-[#CBD5E0] rounded-md p-6 max-w-4xl mx-auto shadow-sm">
         <h2 className="text-lg font-semibold text-[#3E5FD7] mb-4">Schedule a Meeting</h2>
+
         <div className="mb-6">
           <label className="block text-sm mb-1">Title</label>
           <input
@@ -200,10 +201,12 @@ const AdminSchedulePage = () => {
         </div>
 
         <h2 className="text-lg font-semibold text-[#3E5FD7] mb-4">Add your time</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* Make grid stack on mobile/tablet */}
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm mb-1">Start time of meeting</label>
-            <div className="flex gap-2 items-center">
+            {/* Stack date and time inputs vertically on mobile/tablet */}
+            <div className="flex flex-col sm:flex-col md:flex-row gap-2 items-center">
               <input
                 type="date"
                 value={startDate}
@@ -220,7 +223,8 @@ const AdminSchedulePage = () => {
           </div>
           <div>
             <label className="block text-sm mb-1">End time of meeting</label>
-            <div className="flex gap-2 items-center">
+            {/* Stack date and time inputs vertically on mobile/tablet */}
+            <div className="flex flex-col sm:flex-col md:flex-row gap-2 items-center">
               <input
                 type="date"
                 value={endDate}
@@ -239,6 +243,7 @@ const AdminSchedulePage = () => {
 
         <div className="mb-6">
           <h3 className="text-sm font-semibold mb-2">Members</h3>
+          {/* Make members grid stack vertically on mobile/tablet */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="flex flex-col">
               <label className="text-sm mb-1">Super Admin</label>
@@ -250,21 +255,24 @@ const AdminSchedulePage = () => {
               />
             </div>
 
-            {renderDropdown(
+            {/* Wrap dropdown containers with w-full to be responsive */}
+            <div className="w-full">{renderDropdown(
               'Teacher',
               'Teacher',
               teachers,
               (t) => `${t?.profile?.fullname || t?.name || 'Unnamed'}`,
               (t) => t._id
-            )}
-            {renderDropdown(
+            )}</div>
+
+            <div className="w-full">{renderDropdown(
               'Parents',
               'Parent',
               parents,
               (p) => `${p?.parentProfile?.fatherName || 'Unnamed'}`,
               (p) => p._id
-            )}
-            {renderDropdown(
+            )}</div>
+
+            <div className="w-full">{renderDropdown(
               'Students',
               'Student',
               students,
@@ -276,21 +284,23 @@ const AdminSchedulePage = () => {
                   : 'Unnamed';
               },
               (s) => s?.parent?.parentProfile?.parentOf?.[0]?.student?._id
-            )}
-            {renderDropdown(
+            )}</div>
+
+            <div className="w-full">{renderDropdown(
               'Staff',
               'Staff',
               staffList,
               (s) => `${s?.name || 'Unnamed'} (${s?.employeeRole || 'Role N/A'})`,
               (s) => s._id
-            )}
+            )}</div>
           </div>
         </div>
 
+        {/* Make button full width on mobile/tablet */}
         <div className="text-center mt-6">
           <button
             onClick={handleSubmit}
-            className="bg-[#4C78FF] text-white px-6 py-2 rounded hover:bg-blue-700"
+            className="bg-[#4C78FF] text-white px-6 py-2 rounded hover:bg-blue-700 w-full md:w-auto"
           >
             Generate Meet Link
           </button>

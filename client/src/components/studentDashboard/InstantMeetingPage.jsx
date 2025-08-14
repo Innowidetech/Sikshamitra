@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { fetchTimetable } from '../../redux/student/timetableSlice';
+import { fetchTimetable } from '../../redux/student/timeTableSlice';
 import {
   createMeeting,
   fetchConnects,

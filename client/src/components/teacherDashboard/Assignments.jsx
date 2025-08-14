@@ -25,7 +25,7 @@ function Assignments({ handleTabChange }) {
 
       // Determine extension from MIME type
       let ext = '.pdf';
-      if (blob.type.includes('pdf')) ext = '.pdf';
+      if      (blob.type.includes('pdf'))  ext = '.pdf';
       // else if (blob.type.includes('jpeg')) ext = '.jpg';
       // else if (blob.type.includes('png'))  ext = '.png';
       // else if (blob.type.includes('mp4'))  ext = '.mp4';
@@ -48,7 +48,7 @@ function Assignments({ handleTabChange }) {
   };
 
   if (loading) return <div className="mt-20 ml-72">Loading...</div>;
-  if (error) return <div className="mt-20 ml-72">Error: {error}</div>;
+  if (error)   return <div className="mt-20 ml-72">Error: {error}</div>;
 
   return (
     <div className="flex flex-col mx-4 md:ml-72 mt-20">
@@ -74,8 +74,9 @@ function Assignments({ handleTabChange }) {
           {assignments.map((a, i) => (
             <div
               key={a._id}
-              className={`p-6 rounded-bl-2xl rounded-br-2xl shadow-md ${i % 2 === 0 ? 'bg-[#FF9F1C1A]' : 'bg-[#1982C424]'
-                }`}
+              className={`p-6 rounded-bl-2xl rounded-br-2xl shadow-md ${
+                i % 2 === 0 ? 'bg-[#FF9F1C1A]' : 'bg-[#1982C424]'
+              }`}
             >
               <div className="mb-2 flex items-center">
                 <FaUser className="text-[#146192] mr-2" />
@@ -108,7 +109,7 @@ function Assignments({ handleTabChange }) {
                 >
                   View
                 </button>
-
+               
               </div>
             </div>
           ))}
@@ -125,106 +126,97 @@ function Assignments({ handleTabChange }) {
         </button>
       </div>
 
-      {/* Assignment Table */}
-      <div className="mt-6">
-        {/* Desktop Table */}
-        <div className="overflow-x-auto hidden md:block">
-          <table className="min-w-full bg-white border rounded-lg shadow">
-            <thead className="text-[#146192]">
-              <tr>
-                {[
-                  'Assignment Name',
-                  'Teacher',
-                  'Class',
-                  'Section',
-                  'Subject',
-                  'Chapter',
-                  'Start Date',
-                  'End Date',
-                  'Actions',
-                ].map((h) => (
-                  <th key={h} className="px-4 py-2 border">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((a) => (
-                <tr key={a._id} className="hover:bg-gray-100">
-                  <td className="px-4 py-2 border">{a.chapterName}</td>
-                  <td className="px-4 py-2 border bg-[#1982C424]">{a.teacherName}</td>
-                  <td className="px-4 py-2 border">{a.class}</td>
-                  <td className="px-4 py-2 border bg-[#1982C424]">{a.section}</td>
-                  <td className="px-4 py-2 border">{a.subject}</td>
-                  <td className="px-4 py-2 border bg-[#1982C424]">{a.chapter}</td>
-                  <td className="px-4 py-2 border">
-                    {a.startDate ? new Date(a.startDate).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="px-4 py-2 border bg-[#1982C424]">
-                    {a.endDate ? new Date(a.endDate).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="px-4 py-2 border text-center">
-                    <FaFileAlt
-                      className="text-[#1982C4] text-xl cursor-pointer hover:text-[#146192]"
-                      title="View Details"
-                      onClick={() => handleTabChange('assignmentdetails', a)}
-                    />
-                  </td>
-                </tr>
+      {/* Table for Laptop/Desktop */}
+      <div className="mt-6 overflow-x-auto hidden md:block">
+        <table className="min-w-full bg-white border rounded-lg shadow">
+          <thead className="text-[#146192]">
+            <tr>
+              {[
+                'Assignment Name',
+                'Teacher',
+                'Class',
+                'Section',
+                'Subject',
+                'Chapter',
+                'Start Date',
+                'End Date',
+                'Actions',
+              ].map((h) => (
+                <th key={h} className="px-4 py-2 border">{h}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {assignments.map((a) => (
+              <tr key={a._id} className="hover:bg-gray-100">
+                <td className="px-4 py-2 border">{a.chapterName}</td>
+                <td className="px-4 py-2 border bg-[#1982C424]">{a.teacherName}</td>
+                <td className="px-4 py-2 border">{a.class}</td>
+                <td className="px-4 py-2 border bg-[#1982C424]">{a.section}</td>
+                <td className="px-4 py-2 border">{a.subject}</td>
+                <td className="px-4 py-2 border bg-[#1982C424]">{a.chapter}</td>
+                <td className="px-4 py-2 border">
+                  {a.startDate ? new Date(a.startDate).toLocaleDateString() : 'N/A'}
+                </td>
+                <td className="px-4 py-2 border bg-[#1982C424]">
+                  {a.endDate ? new Date(a.endDate).toLocaleDateString() : 'N/A'}
+                </td>
+                <td className="px-4 py-2 border text-center">
+                  <FaFileAlt
+                    className="text-[#1982C4] text-xl cursor-pointer hover:text-[#146192]"
+                    title="View Details"
+                    onClick={() => handleTabChange('assignmentdetails', a)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
-          {assignments.map((a) => (
-            <div
-              key={a._id}
-              className="bg-white border rounded-lg p-4 shadow space-y-2"
-            >
-              <p>
-                <span className="font-semibold">Assignment Name:</span> {a.chapterName}
-              </p>
-              <p>
-                <span className="font-semibold">Teacher:</span> {a.teacherName}
-              </p>
-              <p>
-                <span className="font-semibold">Class:</span> {a.class}
-              </p>
-              <p>
-                <span className="font-semibold">Section:</span> {a.section}
-              </p>
-              <p>
-                <span className="font-semibold">Subject:</span> {a.subject}
-              </p>
-              <p>
-                <span className="font-semibold">Chapter:</span> {a.chapter}
-              </p>
-              <p>
-                <span className="font-semibold">Start Date:</span>{' '}
-                {a.startDate ? new Date(a.startDate).toLocaleDateString() : 'N/A'}
-              </p>
-              <p>
-                <span className="font-semibold">End Date:</span>{' '}
-                {a.endDate ? new Date(a.endDate).toLocaleDateString() : 'N/A'}
-              </p>
-              <div className="text-right">
-                <FaFileAlt
-                  className="text-[#1982C4] text-2xl cursor-pointer hover:text-[#146192]"
-                  title="View Details"
-                  onClick={() => handleTabChange('assignmentdetails', a)}
-                />
-              </div>
+      {/* Card View for Mobile/Tablet */}
+      <div className="mt-6 md:hidden space-y-4">
+        {assignments.map((a) => (
+          <div key={a._id} className="bg-white shadow rounded-lg border p-4">
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Assignment Name:</span> {a.chapterName}
             </div>
-          ))}
-        </div>
-
-
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Teacher:</span> {a.teacherName}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Class:</span> {a.class}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Section:</span> {a.section}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Subject:</span> {a.subject}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Chapter:</span> {a.chapter}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Start Date:</span>{' '}
+              {a.startDate ? new Date(a.startDate).toLocaleDateString() : 'N/A'}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">End Date:</span>{' '}
+              {a.endDate ? new Date(a.endDate).toLocaleDateString() : 'N/A'}
+            </div>
+             <div className="mb-2">
+        <span className="font-semibold text-[#146192]">Actions:</span>{' '}
+        <FaFileAlt
+          className="inline-block text-[#1982C4] text-xl cursor-pointer hover:text-[#146192] ml-2"
+          title="View Details"
+          onClick={() => handleTabChange('assignmentdetails', a)}
+        />
+      </div>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
 
 export default Assignments;

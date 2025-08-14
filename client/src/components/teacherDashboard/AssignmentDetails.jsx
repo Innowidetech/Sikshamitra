@@ -128,7 +128,8 @@ const AssignmentDetails = ({ assignment }) => {
                 <th className="px-4 py-2 text-left text-sm font-semibold">Download</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+
+            <tbody className="bg-[#1982C408] divide-y divide-gray-200">
               {current.length > 0 ? (
                 current.map((sub) => {
                   const profile = sub.studentId?.studentProfile || {};
@@ -137,14 +138,30 @@ const AssignmentDetails = ({ assignment }) => {
                     : 'Not Available';
 
                   return (
-                    <tr key={sub._id}>
-                      <td className="px-4 py-2 text-sm">{profile.registrationNumber || 'N/A'}</td>
-                      <td className="px-4 py-2 text-sm">{profile.fullname || 'N/A'}</td>
-                      <td className="px-4 py-2 text-sm">{submittedDate}</td>
-                      <td className="px-4 py-2 text-sm">
+                    <tr
+                      key={sub._id}
+                      className="block sm:table-row border sm:border-0 rounded-lg sm:rounded-none mb-4 sm:mb-0 shadow-sm sm:shadow-none p-4 sm:p-0"
+                    >
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Student ID: </span>
+                        {profile.registrationNumber || 'N/A'}
+                      </td>
+
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Student Name: </span>
+                        {profile.fullname || 'N/A'}
+                      </td>
+
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Submitted On: </span>
+                        {submittedDate}
+                      </td>
+
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Download: </span>
                         <button
                           onClick={() => handleDownload(sub.assignmentWork, profile.fullname)}
-                          className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e]"
+                          className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e] mt-2 sm:mt-0"
                         >
                           Download
                         </button>

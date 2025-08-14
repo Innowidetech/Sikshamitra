@@ -35,6 +35,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -343,8 +344,9 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 w-full gap-6 mx-4">
-        <div className="md:col-span-3 lg:py-14">
+      <div className="grid grid-cols-1 lg:grid-cols-5 w-full gap-6 mx-4">
+  <div className="lg:col-span-3 lg:py-14">
+
           {/* Stats Cards */}
           <div className="bg-white max-w-5xl md:py-4 md:mt-6 xl:mx-auto rounded-lg grid grid-cols-2 lg:flex lg:justify-around p-4 mb-4 md:mb-0 md:mx-2">
             <div className="lg:flex gap-2">
@@ -488,7 +490,7 @@ const AdminDashboard = () => {
           </div>
 
           {/* Notices Section */}
-          <div className="max-w-5xl md:py-4 md:mt-6 xl:mx-auto rounded-lg md:mx-2">
+          <div className="max-w-5xl md:py-4 md:mt-3 xl:mx-auto rounded-lg md:mx-2">
             <div className="bg-white p-6 rounded-lg shadow mb-8">
               <div className="flex justify-between items-center mb-6">
                 <h2
@@ -540,123 +542,125 @@ const AdminDashboard = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h1
-                  className="text-[#000000] text-center mb-4"
-                  style={{ fontFamily: "Inter" }}
-                >
-                  Student Gender Ratio
-                </h1>
-                {studentsByGender &&
-                (studentsByGender.male > 0 || studentsByGender.female > 0) ? (
-                  <GenderRatioChart
-                    male={studentsByGender.male || 0}
-                    female={studentsByGender.female || 0}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
-                    <User size={40} className="text-gray-400 mb-2" />
-                    <p className="text-gray-600 font-medium">
-                      No student data available
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      Add students to see gender distribution
-                    </p>
-                  </div>
-                )}
-              </div>
+           {/* Charts Section */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  {/* Gender Ratio Chart */}
+  <div className="bg-white p-6 rounded-lg shadow">
+    <h1 className="text-[#000000] text-center mb-4" style={{ fontFamily: "Inter" }}>
+      Student Gender Ratio
+    </h1>
+    {studentsByGender && (studentsByGender.male > 0 || studentsByGender.female > 0) ? (
+      <div className="flex flex-col items-center text-center">
+        <GenderRatioChart
+          male={studentsByGender.male || 0}
+          female={studentsByGender.female || 0}
+        />
+        {/* <div className="mt-4 flex gap-6 justify-center">
+          <p className="text-sm font-medium text-gray-700">Male: <span className="font-bold">{studentsByGender.male}</span></p>
+          <p className="text-sm font-medium text-gray-700">Female: <span className="font-bold">{studentsByGender.female}</span></p>
+        </div> */}
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <User size={40} className="text-gray-400 mb-2" />
+        <p className="text-gray-600 font-medium">No student data available</p>
+        <p className="text-gray-400 text-sm">Add students to see gender distribution</p>
+      </div>
+    )}
+  </div>
 
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h1
-                  className="text-[#000000] text-center mb-4"
-                  style={{ fontFamily: "Inter" }}
-                >
-                  Active-Inactive Students
-                </h1>
-                {activeStudents &&
-                (activeStudents.activeCount > 0 ||
-                  activeStudents.inactiveCount > 0) ? (
-                  <ActiveInactiveChart
-                    active={activeStudents.activeCount || 0}
-                    inactive={activeStudents.inactiveCount || 0}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
-                    <IoPeople size={40} className="text-gray-400 mb-2" />
-                    <p className="text-gray-600 font-medium">
-                      No activity data available
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      Student activity will be shown here
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+  {/* Active-Inactive Chart */}
+  <div className="bg-white p-6 rounded-lg shadow">
+    <h1 className="text-[#000000] text-center mb-4" style={{ fontFamily: "Inter" }}>
+      Active-Inactive Students
+    </h1>
+    {activeStudents && (activeStudents.activeCount > 0 || activeStudents.inactiveCount > 0) ? (
+      <div className="flex flex-col items-center text-center">
+        <ActiveInactiveChart
+          active={activeStudents.activeCount || 0}
+          inactive={activeStudents.inactiveCount || 0}
+        />
+        {/* <div className="mt-4 flex gap-6 justify-center">
+          <p className="text-sm font-medium text-gray-700">Active: <span className="font-bold">{activeStudents.activeCount}</span></p>
+          <p className="text-sm font-medium text-gray-700">Inactive: <span className="font-bold">{activeStudents.inactiveCount}</span></p>
+        </div> */}
+      </div>
+    ) : (
+      <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg">
+        <IoPeople size={40} className="text-gray-400 mb-2" />
+        <p className="text-gray-600 font-medium">No activity data available</p>
+        <p className="text-gray-400 text-sm">Student activity will be shown here</p>
+      </div>
+    )}
+  </div>
+</div>
+
           </div>
         </div>
 
         {/* Right Column */}
-        <div className="lg:py-14 px-2 lg:mt-6">
-          <div className="space-y-6">
-            {/* Calendar Component */}
-            <div className="bg-white rounded-lg shadow">
-              <Calendar 
-                events={calendar || []} 
-                onEventAdded={handleCalendarEventAdded} 
-              />
-            </div>
-            
-            {/* Upcoming Events */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4 text-[#146192]">
-                Upcoming Events
-              </h2>
-              {Array.isArray(calendar) &&
-                calendar.filter(cal => {
-                  const eventDate = new Date(cal.date);
-                  const now = new Date();
-                  return (
-                    eventDate > now &&
-                    eventDate.getMonth() === now.getMonth() &&
-                    eventDate.getFullYear() === now.getFullYear()
-                  );
-                }).length > 0 ? (
-                calendar
-                  .filter(cal => {
-                    const eventDate = new Date(cal.date);
-                    const now = new Date();
-                    return (
-                      eventDate > now &&
-                      eventDate.getMonth() === now.getMonth() &&
-                      eventDate.getFullYear() === now.getFullYear()
-                    );
-                  })
-                  .sort((a, b) => new Date(a.date) - new Date(b.date))
-                  .map((cal, index) => {
-                    const backgroundColor = eventColors[index % eventColors.length];
-                    return (
-                      <div
-                        key={cal._id}
-                        className={`p-4 rounded-lg shadow-md mb-2 ${backgroundColor}`}
-                      >
-                        <h3 className="text-md font-medium">{cal.title}</h3>
-                        <p className="text-sm flex justify-end mt-2">
-                          {new Date(cal.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    );
-                  })
-              ) : (
-                <div className="text-center py-6 bg-gray-50 rounded-lg">
-                  <p className="text-gray-600 font-medium">No upcoming events</p>
-                  <p className="text-gray-400 text-sm">Add events using the calendar</p>
-                </div>
-              )}
-            </div>
+    {/* Right Column with Student Design, Admin Functionality */}
+<div className="lg:col-span-2 lg:py-14 px-2 lg:mt-6">
+  <div className="space-y-6">
+    {/* Calendar Component with Student Design */}
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+      <h2 className="text-lg font-semibold text-[#146192] mb-4">Academic Calendar</h2>
+      <div className="rounded-xl overflow-hidden border border-gray-300 shadow-sm">
+        <Calendar 
+          events={calendar || []} 
+          onEventAdded={handleCalendarEventAdded} 
+        />
+      </div>
+    </div>
 
-          </div>
+    {/* Upcoming Events Styled Like Student Dashboard */}
+    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+      <h2 className="text-lg font-semibold text-[#146192] mb-4">Upcoming Events</h2>
+      {Array.isArray(calendar) &&
+        calendar.filter(cal => {
+          const eventDate = new Date(cal.date);
+          const now = new Date();
+          return (
+            eventDate > now &&
+            eventDate.getMonth() === now.getMonth() &&
+            eventDate.getFullYear() === now.getFullYear()
+          );
+        }).length > 0 ? (
+        calendar
+          .filter(cal => {
+            const eventDate = new Date(cal.date);
+            const now = new Date();
+            return (
+              eventDate > now &&
+              eventDate.getMonth() === now.getMonth() &&
+              eventDate.getFullYear() === now.getFullYear()
+            );
+          })
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .map((cal, index) => {
+            const backgroundColor = eventColors[index % eventColors.length];
+            return (
+              <div
+                key={cal._id}
+                className={`p-4 rounded-md mb-3 border border-gray-300 shadow-sm ${backgroundColor}`}
+              >
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">{cal.title}</h3>
+                  <span className="text-xs text-gray-600">
+                    {new Date(cal.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+      ) : (
+        <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+          <p className="text-gray-600 font-medium">No upcoming events</p>
+          <p className="text-gray-400 text-sm">Add events using the calendar</p>
+        </div>
+      )}
+    </div>
+  </div>
         </div>
       </div>
     </div>

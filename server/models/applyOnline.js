@@ -4,15 +4,15 @@ const onlineSchema = new mongoose.Schema({
     studentDetails: {
         firstName: {
             type: String,
-            required: true
+            //  required: true
         },
         lastName: {
             type: String,
-            required: true
+            //  required: true
         },
         dob: {
             type: String,
-            required: true,
+            //    required: true,
         },
         placeOfBirth: {
             type: String,
@@ -20,28 +20,28 @@ const onlineSchema = new mongoose.Schema({
         },
         email: {
             type: String,
-            required: true,
+           // required: true,
         },
         aadhar: {
             type: String,
-            required: true,
+            //     required: true,
         },
-        gender:{
-            type:String,
-            enum:['male','female'],
-            required:true,
+        gender: {
+            type: String,
+            enum: ['male', 'female'],
+            //    required:true,
         },
         schoolName: {
             type: String,
-            required: true,
+            //    required: true,
         },
         classToJoin: {
             type: String,
-            required: true,
+            //    required: true,
         },
-        admissionFees:{ //based on class
-            type:String,
-            required:true
+        admissionFees: { //based on class
+            type: String,
+            //    required:true
         },
         address: {
             type: String,
@@ -50,40 +50,18 @@ const onlineSchema = new mongoose.Schema({
         photo: {
             url: {
                 type: String,
-                required: true,
+                //    required: true,
             },
         },
-        examId:{
-            type:String,
-            required:true,
+        examId: {
+            type: String,
+            required: true,
         },
-        resultPercentage:{
-            type:String,
-            required:true,
+        resultPercentage: {
+            type: String,
+            required: true,
         },
     },
-    educationDetails: [{
-        school: {
-            type: String,
-        },
-        class: {
-            type: String,
-        },
-        startDate: {
-            type: Date,
-        },
-        endDate: {
-            type: Date,
-        },
-        city: {
-            type: String,
-        },
-        documents: {
-            url: {
-                type: String,
-            },
-        },
-    }],
     parentDetails: {
         fatherName: {
             type: String,
@@ -111,32 +89,29 @@ const onlineSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
-        voterId: {
-            type: String,
-            required: true,
-        },
         panCard: {
             type: String,
-            required: true,
+            // required: true,
         },
     },
     paymentDetails: {
         razorpayOrderId: {
             type: String,
-            required: true,
+            default: null
         },
         razorpayPaymentId: {
             type: String,
+            default: null
         },
         status: {
             type: String,
-            enum: ['pending', 'success', 'failed'],
+            enum: ['pending', 'success', 'failed', 'not_required'],
             default: 'pending',
         },
     },
-    approval:{
-        type:Boolean,
-        required:true,
+    approval: {
+        type: Boolean,
+        required: true,
         default: false
     }
 }, { timestamps: true });

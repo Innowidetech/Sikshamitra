@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '../adminDashboard/layout/Header';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitTeacherResult, fetchSubjectsAndExams, fetchTeacherResults } from '../../redux/teacher/teacherResultSlice';
-import { toast, ToastContainer } from 'react-toastify'; // Import toast and ToastContainer
-import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for notifications
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AddStudentResult() {
   const dispatch = useDispatch();
@@ -41,8 +41,6 @@ function AddStudentResult() {
         grade: grade.toUpperCase(),
       },
     ]);
-
-    // Reset subject-related fields after adding
     setSubjectName('');
     setMarksObtained('');
     setTotalMarks('');
@@ -55,7 +53,6 @@ function AddStudentResult() {
       toast.error('Please fill all required fields and add at least one subject result.');
       return;
     }
-
     const resultData = {
       classs,
       section,
@@ -63,14 +60,9 @@ function AddStudentResult() {
       exam,
       result: resultList,
     };
-
     dispatch(submitTeacherResult(resultData));
-
-    // Clear the form, but only after successful submission
-    // This is handled inside the useEffect for submitSuccessMessage
   };
 
-  // Fetch results after successful submission
   useEffect(() => {
     if (submitSuccessMessage) {
       dispatch(fetchTeacherResults());
@@ -85,7 +77,7 @@ function AddStudentResult() {
 
   return (
     <>
-      <div className="flex justify-between items-center mx-8 mt-20 md:ml-72">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mx-4 mt-20 md:ml-72 md:mx-8">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Results</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
@@ -98,8 +90,8 @@ function AddStudentResult() {
           <h2 className="text-xl font-semibold text-white bg-[#245c88] p-3 rounded-md mb-6">ADD STUDENT RESULT</h2>
 
           {/* Class & Section with Search */}
-          <div className="flex mb-6 gap-4">
-            <div className="w-[48%]">
+          <div className="flex flex-col md:flex-row mb-6 gap-4">
+            <div className="w-full md:w-[48%]">
               <input 
                 value={classs} 
                 onChange={(e) => setClassName(e.target.value)} 
@@ -107,7 +99,7 @@ function AddStudentResult() {
                 className="bg-[#d4e1ec] rounded-md px-4 py-2 w-full"
               />
             </div>
-            <div className="w-[48%]">
+            <div className="w-full md:w-[48%]">
               <input 
                 value={section} 
                 onChange={(e) => setSection(e.target.value)} 
@@ -127,8 +119,8 @@ function AddStudentResult() {
 
           {/* Student Name and Exam Type */}
           {subjectsAndExams.students?.length > 0 && (
-            <div className="flex mb-6 gap-4">
-              <div className="w-[48%]">
+            <div className="flex flex-col md:flex-row mb-6 gap-4">
+              <div className="w-full md:w-[48%]">
                 <select 
                   value={student} 
                   onChange={(e) => setStudentName(e.target.value)} 
@@ -142,8 +134,7 @@ function AddStudentResult() {
                   ))}
                 </select>
               </div>
-
-              <div className="w-[48%]">
+              <div className="w-full md:w-[48%]">
                 <select
                   value={exam}
                   onChange={(e) => setExamType(e.target.value)}
@@ -160,7 +151,7 @@ function AddStudentResult() {
 
           {/* Subject, Marks, and Grade */}
           <div className="mb-6">
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <input 
                 value={subject} 
                 onChange={(e) => setSubjectName(e.target.value)} 
@@ -188,7 +179,7 @@ function AddStudentResult() {
             </div>
             <button
               onClick={handleAddSubjectResult}
-              className="mt-2 bg-[#245c88] text-white px-4 py-2 rounded-md"
+              className="mt-2 bg-[#245c88] text-white px-4 py-2 rounded-md w-full md:w-auto"
             >
               Add Subject Result
             </button>
@@ -207,10 +198,10 @@ function AddStudentResult() {
           </div>
 
           {/* Submit Button */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-col md:flex-row">
             <button 
               onClick={handleSubmit} 
-              className="bg-[#245c88] text-white px-4 py-2 rounded-md"
+              className="bg-[#245c88] text-white px-4 py-2 rounded-md w-full md:w-auto"
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Result'}

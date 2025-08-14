@@ -59,8 +59,33 @@ import createMeetingReducer from './teacher/createMeetingSlice';
 import transReducer from './transSlice';
 import stransportationReducer from './student/stransportationSlice';
 import forgotPasswordReducer from './forgotPasswordSlice';
+
 import ptransportationReducer from './parent/ptransportationSlice';
+// import transportationReducer from './driver/transportationSlice';
+
+
+import superAdminStaffDashboardSliceReducer from './superAdminStaff/superAdminStaffDashboardSlice';
+import superAdminStaffSendQueryReducer from './superAdminStaff/superAdminStaffQuerySlice';
+import superAdminQueryReplayReducer from './superAdminStaff/superAdminStaffQueryReplaySlice';
+import superAdminStaffBlogSliceReducer from './superAdminStaff/superAdminStaffBlogSlice';
+import superAdminStaffSendQueryIdReplayReducer from './superAdminStaff/superAdminStaffReplayIdSlice';
+import superAdminStaffPostReplyReducer from './superAdminStaff/superAdminStaffReplayIdPostSlice';
+import blogReducer from "./superAdminStaff/superAdminStaffCreateBlogSlice";
+
+import superAdminReducer from './superAdmin/superAdminDashboard';
+import superAdminSchoolReducer from "./superAdmin/superAdminSchoolSlice";
+import superAdminAccountsSliceReducer from './superAdmin/superAdminAccountsSlice';
+import superAdminStaffReducer from './superAdmin/superAdminStaffSlice';
+import superAdminTaskReducer from './superAdmin/superAdminTaskSlice';
+import superAdminUserBlogReducer from './superAdmin/SuperAdminBlogSclice';
+import superAdminConnectAndQueryReducer from './superAdmin/superAdminConnectSlice';
+// import ptransportationReducer from './parent/ptransportationSlice';
+// 
+
+
+
 import transportationReducer from './driver/transportationSlice';
+
 
 const store = configureStore({
   reducer: {
@@ -99,7 +124,8 @@ const store = configureStore({
     // admissions: admissionsReducer, // Duplicate
     assignment: assignmentSliceReducer,
     assignments: assignmentsReducer,
-    adminEntrance: adminEntranceReducer,
+  
+    // adminEntrance: adminEntranceReducer,
     // auth: authReducer, // Duplicate
     book: bookReducer,
     classPlan: classPlanSliceReducer,
@@ -110,7 +136,7 @@ const store = configureStore({
     // dashboard: dashboardReducer, // Duplicate
     // exam: examSliceReducer, // Duplicate
     // exams: examReducer, // Duplicate
-      ptransportation: ptransportationReducer,
+      // ptransportation: ptransportationReducer,
 
     expenses: expensesReducer,
     query: queryReducer,
@@ -141,11 +167,36 @@ const store = configureStore({
     meeting: meetingReducer,
     teacherQuery: teacherQueryReducer,
     createmeeting: createMeetingReducer,
+
     trans: transReducer,
     stransportation: stransportationReducer,
       forgotPassword: forgotPasswordReducer,
       transportation: transportationReducer,
       entrance: entranceReducer,
+
+     trans: transReducer, 
+    stransportation: stransportationReducer,
+    forgotPassword: forgotPasswordReducer,
+    superAdminStaffDashboard: superAdminStaffDashboardSliceReducer,
+    superAdminStaffSendQuery: superAdminStaffSendQueryReducer,
+    superAdminStaffSendQueryReplay: superAdminQueryReplayReducer,
+    superAdminStaffBlog: superAdminStaffBlogSliceReducer,
+    superAdminStaffSendQueryIdReplay: superAdminStaffSendQueryIdReplayReducer,
+    superAdminStaffPostReply: superAdminStaffPostReplyReducer,
+    blogData: blogReducer,
+    superAdminDashboard: superAdminReducer,
+    superAdminSchools: superAdminSchoolReducer,
+    superAdminAccounts: superAdminAccountsSliceReducer,
+    superAdminStaff: superAdminStaffReducer,
+    superAdminTasks: superAdminTaskReducer,
+    superAdminUserBlogs: superAdminUserBlogReducer,
+    connectAndQuery: superAdminConnectAndQueryReducer,
+    ptransportation: ptransportationReducer,
+    adminEntrance: adminEntranceReducer,
+    // transportation: transportationReducer,
+    entrance: entranceReducer,
+
+
   },
 });
 

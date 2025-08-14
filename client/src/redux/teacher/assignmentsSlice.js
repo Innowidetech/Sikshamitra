@@ -15,10 +15,10 @@ export const fetchTeacherAssignments = createAsyncThunk(
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      if (response.data && response.data.classAssignments) {
+      if (response.data?.classAssignments) {
         return response.data.classAssignments;
       } else {
-        throw new Error('No class assignments found in response');
+        throw new Error('No class assignments found');
       }
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -33,8 +33,9 @@ export const createTeacherAssignment = createAsyncThunk(
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
-      formData.append('assignmentName', assignmentData.assignmentName);
-      formData.append('classs', assignmentData.class);
+
+      formData.append('assignmentName', assignmentData.chapterName); // 👈 use chapterName for assignmentName
+      formData.append('class', assignmentData.class); // ✅ using correct key
       formData.append('section', assignmentData.section);
       formData.append('subject', assignmentData.subject);
       formData.append('chapter', assignmentData.chapter);
@@ -52,7 +53,12 @@ export const createTeacherAssignment = createAsyncThunk(
           },
         }
       );
-      return response.data;
+
+      if (response.data?.assignment) {
+        return response.data.assignment;
+      } else {
+        return response.data;
+      }
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -89,6 +95,7 @@ const assignmentsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // 🔄 Fetch Assignments
       .addCase(fetchTeacherAssignments.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -102,6 +109,7 @@ const assignmentsSlice = createSlice({
         state.error = action.payload;
       })
 
+      // ➕ Create Assignment
       .addCase(createTeacherAssignment.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -115,6 +123,7 @@ const assignmentsSlice = createSlice({
         state.error = action.payload;
       })
 
+      // 📄 Fetch Submitted Assignments
       .addCase(fetchSubmittedAssignments.pending, (state) => {
         state.loading = true;
         state.error = null;

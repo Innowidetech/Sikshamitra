@@ -251,3 +251,135 @@ video {
 }
 
 
+@media screen and (max-width: 768px) {
+  .custom-table-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .custom-table-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+  }
+
+  .custom-table-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  .custom-table-card table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .custom-table-card th,
+  .custom-table-card td {
+    padding: 10px 8px;
+    font-size: 14px;
+    text-align: left;
+    word-break: break-word;
+  }
+
+  .custom-table-card select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dropdown-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+
+
+
+
+
+
+
+/* Calendar custom styling (optional improvement) */
+.react-calendar {
+  width: 100% !important;
+  border: none;
+  font-family: inherit;
+  line-height: 1.125em;
+}
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+.react-calendar__navigation button {
+  color: #146192;
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 6px 8px;
+  transition: background 0.3s ease;
+  border-radius: 6px;
+}
+
+.react-calendar__navigation button:hover {
+  background-color: #f0f0f0;
+}
+
+.react-calendar__tile {
+  padding: 10px 0;
+}
+
+.react-calendar__tile--active {
+  background: #146192;
+  color: white;
+  border-radius: 8px;
+}
+
+
+
+
+/* body {
+  overflow-x: hidden;
+}
+
+
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+} */
+
+
+/* body {
+  overflow-x: hidden;
+} */
+
+
+/* .react-calendar {
+  width: 100% !important;
+}
+
+.react-calendar__tile {
+  text-align: center;
+} */
+
+

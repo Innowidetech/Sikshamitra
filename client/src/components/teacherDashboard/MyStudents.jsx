@@ -93,25 +93,46 @@ const MyStudents = () => {
         {!loading && !error && (
           <>
             {/* Mobile/Tablet Card View */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
-              {filteredStudents.length > 0 ? (
-                filteredStudents.map((student, index) => (
-                  <div key={index} className="border rounded-lg p-4 shadow-sm bg-gray-50">
-                    <p><strong>ID:</strong> {student.id}</p>
-                    <p><strong>Name:</strong> {student.fullname}</p>
-                    <p><strong>Reg. No:</strong> {student.registrationNumber}</p>
-                    <p><strong>Gender:</strong> {student.gender}</p>
-                    <p><strong>DOB:</strong> {student.dob ? new Date(student.dob).toLocaleDateString() : ''}</p>
-                    <p><strong>Total Fees:</strong> ₹{student.totalFees}</p>
-                    <p><strong>Parent Name:</strong> {student.parentName}</p>
-                    <p><strong>Parent Mobile:</strong> {student.parentPhone}</p>
-                    <p><strong>Address:</strong> {student.address}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 col-span-full text-center">No student data found.</p>
-              )}
-            </div>
+           <div className="grid grid-cols-1 gap-4 lg:hidden">
+  {filteredStudents.length > 0 ? (
+    filteredStudents.map((student, index) => (
+      <div key={index} className="border border-gray-300 rounded-md bg-white shadow-sm p-4">
+        <div className="flex flex-col space-y-[4px] text-sm">
+          <div>
+            <span className="font-semibold text-[#146192]">Student ID</span>: <span className="text-black">{student.id}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Student Name</span>: <span className="text-black">{student.fullname}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Registration Number</span>: <span className="text-black">{student.registrationNumber}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Parent Name</span>: <span className="text-black">{student.parentName}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Parent Mobile</span>: <span className="text-black">{student.parentPhone}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Student Gender</span>: <span className="text-black">{student.gender}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">DOB</span>: <span className="text-black">{student.dob ? new Date(student.dob).toLocaleDateString() : ''}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Total fees</span>: <span className="text-black">₹{student.totalFees}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[#146192]">Address</span>: <span className="text-black">{student.address}</span>
+          </div>
+        </div>
+      </div>
+    ))
+  ) : (
+    <p className="text-gray-500 col-span-full text-center">No student data found.</p>
+  )}
+</div>
+
 
             {/* Desktop Table View */}
             <div className="hidden lg:block overflow-auto">

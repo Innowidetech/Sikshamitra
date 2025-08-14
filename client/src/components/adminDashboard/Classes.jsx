@@ -321,38 +321,43 @@ function Classes() {
                     <td className="px-2 py-2 text-sm whitespace-nowrap border-r">{classItem.section}</td>
                     <td className="px-2 py-2 text-sm whitespace-nowrap border-r">{classItem.teacher}</td>
                     <td className="px-2 py-2 text-sm whitespace-nowrap border-r">{classItem.studentCount}</td>
-                    <td className="px-2 py-2 text-sm whitespace-nowrap">
-                      <button
-                        onClick={() => handleEditClick(index, classItem.teacher)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        ✏️
-                      </button>
+                  <td className="px-2 py-2 text-sm whitespace-nowrap relative">
+  <button
+    onClick={() => handleEditClick(index, classItem.teacher)}
+    className="text-blue-500 hover:text-blue-700"
+  >
+    ✏️
+  </button>
 
-                      {editingRow === index && (
-                        <div className="absolute top-10 right-14 bg-white border shadow-md p-4 rounded-md z-10 w-60">
-                          <label className="block text-sm mb-2 text-gray-700 font-semibold">
-                            Edit Teacher Name
-                          </label>
+  {editingRow === index && (
+    <div className="absolute top-10 right-14 bg-white border shadow-md p-4 rounded-md z-10 w-60">
+      <label className="block text-sm mb-2 text-gray-700 font-semibold">
+        Edit Teacher Name
+      </label>
 
-                          <input
-                            type="text"
-                            value={editedTeacher}
-                            onChange={(e) => setEditedTeacher(e.target.value)}
-                            className="w-full border rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          />
+      <input
+        type="text"
+        value={editedTeacher}
+        onChange={(e) => setEditedTeacher(e.target.value)}
+        className="w-full border rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
 
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => handleSaveTeacher(classItem)}
-                              className="bg-[#146192] text-white px-6 py-1 rounded text-sm hover:bg-[#0f4c7a]"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
+      <div className="flex justify-between gap-2">
+        <button
+          onClick={() => handleSaveTeacher(classItem)}
+          className="bg-[#146192] text-white px-4 py-1 rounded text-sm hover:bg-[#0f4c7a]"
+        >
+          Save
+        </button>
+        <button
+          onClick={() => setEditingRow(null)} // 👈 Cancel the edit
+          className="border border-gray-400 text-gray-600 px-4 py-1 rounded text-sm hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )}
 
                     </td>
                   </tr>
@@ -365,35 +370,80 @@ function Classes() {
       </div>
 
       {/* Mobile and Tablet View - Cards */}
-      <div className="mx-8 mb-6 lg:hidden shadow-lg">
-        {loading ? (
-          <div className="p-4 text-center text-gray-600">Loading...</div>
-        ) : (
-          <div className="space-y-6">
-            {Array.isArray(classes) && classes.map((classItem) => (
-              <div key={`${classItem.class}-${classItem.section}`} className="p-4 rounded-lg">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-[#146192] font-medium">Class Type</div>
-                  <div>{classItem.classType}</div>
+  {/* Mobile and Tablet View - Cards */}
+<div className="mx-4 mb-6 lg:hidden shadow-lg">
+  {loading ? (
+    <div className="p-4 text-center text-gray-600">Loading...</div>
+  ) : (
+    <div className="space-y-6">
+      {Array.isArray(classes) && classes.map((classItem, index) => (
+        <div key={`${classItem.class}-${classItem.section}`} className="p-4 rounded-lg border shadow-sm bg-white">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="text-[#146192] font-medium">Class Type</div>
+            <div>{classItem.classType}</div>
 
-                  <div className="text-[#146192] font-medium">Class</div>
-                  <div>{classItem.class}</div>
+            <div className="text-[#146192] font-medium">Class</div>
+            <div>{classItem.class}</div>
 
-                  <div className="text-[#146192] font-medium">Section</div>
-                  <div>{classItem.section}</div>
+            <div className="text-[#146192] font-medium">Section</div>
+            <div>{classItem.section}</div>
 
-                  <div className="text-[#146192] font-medium">Assigned Teacher</div>
-                  <div>{classItem.teacher}</div>
+            <div className="text-[#146192] font-medium">Assigned Teacher</div>
+            <div>{classItem.teacher}</div>
 
-                  <div className="text-[#146192] font-medium">Number of Students</div>
-                  <div>{classItem.studentCount}</div>
-                </div>
-                <hr className="border mt-4 border-[#146192]" />
-              </div>
-            ))}
+            <div className="text-[#146192] font-medium">Number of Students</div>
+            <div>{classItem.studentCount}</div>
           </div>
-        )}
-      </div>
+
+       {/* Edit Button */}
+<div className="mt-4 text-right">
+  <button
+    onClick={() => handleEditClick(index, classItem.teacher)}
+    className="text-blue-600 text-sm hover:text-blue-800"
+  >
+    ✏️ Edit
+  </button>
+</div>
+
+{/* Edit Input Box */}
+{editingRow === index && (
+  <div className="mt-3 bg-gray-50 border rounded p-3">
+    <label className="block text-sm mb-2 text-gray-700 font-semibold">
+      Edit Teacher Name
+    </label>
+    <input
+      type="text"
+      value={editedTeacher}
+      onChange={(e) => setEditedTeacher(e.target.value)}
+      className="w-full border rounded px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    
+    {/* Save & Cancel Buttons */}
+    <div className="flex justify-center gap-4">
+      <button
+        onClick={() => handleSaveTeacher(classItem)}
+        className="bg-[#146192] text-white px-6 py-1 rounded text-sm hover:bg-[#0f4c7a]"
+      >
+        Save
+      </button>
+
+      <button
+        onClick={() => setEditingRow(null)} // Cancel logic
+        className="bg-gray-300 text-black px-6 py-1 rounded text-sm hover:bg-gray-400"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+
+          <hr className="border mt-4 border-[#146192]" />
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
 
       {error && <div className="text-center text-red-500">{error}</div>}
       {isModalOpen && <CreateClassModal />}

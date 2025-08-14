@@ -71,20 +71,28 @@ export const createStudentAndParent = createAsyncThunk(
 
 export const fetchExistingStudents = createAsyncThunk(
   "students/fetchExistingStudents",
-  async ({ class: selectedClass, section: selectedSection }) => {
-    const res = await fetch(
-      `https://sikshamitra.onrender.com/api/your-endpoint?class=${selectedClass}&section=${selectedSection}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // if needed
-        },
-      }
-    );
-    const data = await res.json();
-    return data.students; // or data if it's just the array
+  async ({ class: selectedClass, section: selectedSection }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return rejectWithValue('No token found.');
+
+      const res = await fetch(
+        `https://sikshamitra.onrender.com/api/your-endpoint?class=${selectedClass}&section=${selectedSection}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      return data.students;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Server Error');
+    }
   }
 );
 
+// Create student for existing parent
 export const createStudentForExistingParent = createAsyncThunk(
   'admissions/createStudentForExistingParent',
   async (formData, { rejectWithValue }) => {
@@ -110,6 +118,31 @@ export const createStudentForExistingParent = createAsyncThunk(
   }
 );
 
+// ✅ NEW API - POST admission by ID
+export const postAdmissionById = createAsyncThunk(
+  'admissions/postAdmissionById',
+  async ({ id, formData }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return rejectWithValue('No token found.');
+
+      const response = await axios.post(
+       `https://sikshamitra.onrender.com/api/admin/admission/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message || 'Server Error');
+    }
+  }
+);
 
 const admissionsSlice = createSlice({
   name: 'admissions',
@@ -121,7 +154,7 @@ const admissionsSlice = createSlice({
       male: 0,
       female: 0,
     },
-      existingStudents: [],
+    existingStudents: [],
     loading: false,
     error: null,
     searchQuery: '',
@@ -136,6 +169,7 @@ const admissionsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch new admissions
       .addCase(fetchNewAdmissions.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -151,6 +185,8 @@ const admissionsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Fetch all admissions
       .addCase(fetchAdmissions.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -163,6 +199,8 @@ const admissionsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Create student + parent
       .addCase(createStudentAndParent.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -180,34 +218,49 @@ const admissionsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Fetch existing students
       .addCase(fetchExistingStudents.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(fetchExistingStudents.fulfilled, (state, action) => {
-  state.loading = false;
-    state.existingStudents = action.payload.students;
-})
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchExistingStudents.fulfilled, (state, action) => {
+        state.loading = false;
+        state.existingStudents = action.payload.students || [];
+      })
+      .addCase(fetchExistingStudents.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-.addCase(fetchExistingStudents.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
+      // Create student for existing parent
+      .addCase(createStudentForExistingParent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createStudentForExistingParent.fulfilled, (state, action) => {
+        state.loading = false;
+        state.admissions.push(action.payload.student);
+      })
+      .addCase(createStudentForExistingParent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-.addCase(createStudentForExistingParent.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(createStudentForExistingParent.fulfilled, (state, action) => {
-  state.loading = false;
-  state.admissions.push(action.payload.student); // or newAdmissions if needed
-})
-.addCase(createStudentForExistingParent.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-});
-
-
+      // ✅ Post admission by ID
+      .addCase(postAdmissionById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(postAdmissionById.fulfilled, (state, action) => {
+        state.loading = false;
+        // If needed, update admissions state
+        state.admissions = [...state.admissions, action.payload];
+      })
+      .addCase(postAdmissionById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

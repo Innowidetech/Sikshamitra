@@ -9,6 +9,7 @@ import { HiMiniUserGroup } from "react-icons/hi2";
 import { FiFileText } from "react-icons/fi";
 import { SiGooglebigquery } from "react-icons/si";
 import { FaBusAlt } from 'react-icons/fa';
+import logo from '../../../assets/logo1.png';
 
 
 const menuItems = [
@@ -53,12 +54,15 @@ const ParentSidebar = ({ setActiveSection, activeTab }) => {
       >
         {/* Logo Section */}
         <div 
-          className="text-xl lg:text-3xl font-semibold p-4 xl:text-[48px] lg:py-10 cursor-pointer flex-shrink-0 flex justify-center" 
-          style={{ fontFamily: 'Poppins' }}
-          onClick={() => handleTabChange('dashboard')}
-        >
-          LOGO
-        </div>
+                 className="flex justify-center items-center p-6 cursor-pointer"
+                 onClick={() => handleTabChange('dashboard')}
+               >
+                 <img 
+                   src={logo} 
+                   alt="Logo"
+                   className="h-20 w-auto object-contain rounded-full"
+                 />
+               </div>
 
         {/* Navigation Menu */}
         <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">

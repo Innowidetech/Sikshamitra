@@ -104,6 +104,8 @@ import { MdOutlineAssignmentReturned  } from "react-icons/md";
 import {  MdBook } from "react-icons/md";
 import { AiOutlineMenu } from "react-icons/ai"; // Toggle button icon
 import { BsFillPersonLinesFill } from "react-icons/bs";
+import logo from '../../../assets/logo1.png';
+
 
 const menuItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -146,13 +148,16 @@ const StudentSidebar = ({ setActiveSection, activeTab }) => {
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0 z-40 shadow-lg`}
       >
-        {/* Logo Section */}
+        {/* Logo Image Section */}
         <div 
-          className="text-xl lg:text-3xl font-semibold p-4 xl:text-[48px] lg:py-10 cursor-pointer flex-shrink-0 flex justify-center" 
-          style={{ fontFamily: 'Poppins' }}
+          className="flex justify-center items-center p-6 cursor-pointer"
           onClick={() => handleTabChange('dashboard')}
         >
-          LOGO
+          <img 
+            src={logo} 
+            alt="Logo"
+            className="h-20 w-auto object-contain rounded-full"
+          />
         </div>
 
         {/* Navigation Menu */}

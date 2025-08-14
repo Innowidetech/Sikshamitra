@@ -197,92 +197,165 @@ const Allbook = ({ setActiveTab }) => {
         </div>
       </div>
 
-      {/* === Table === */}
-      <div className="overflow-x-auto mt-6">
-        {loading ? (
-          <div className="text-center py-4">Loading books...</div>
-        ) : (
-          <table className="w-full text-sm border border-gray-300 text-center">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 border">S.no</th>
-                <th className="p-2 border">Book Image</th>
-                <th className="p-2 border">Book ID</th>
-                <th className="p-2 border">Book Name<br /><span className="text-xs text-gray-500 font-normal">Author</span></th>
-                <th className="p-2 border">Available<br /><span className="text-xs text-gray-500 font-normal">Total</span></th>
-                <th className="p-2 border">Subject</th>
-                <th className="p-2 border">Edition</th>
-                <th className="p-2 border">Price</th>
-                <th className="p-2 border">Pages</th>
-                <th className="p-2 border">Status</th>
-                <th className="p-2 border">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBooks.map((book, index) => (
-                <tr key={book._id} className="border hover:bg-gray-50 transition">
-                  <td className="p-2 border">{index + 1}</td>
-                  <td className="p-2 border">
-                    <img
-                      src={book.photo || 'https://via.placeholder.com/50x70?text=No+Cover'}
-                      alt="Book"
-                      className="w-12 h-16 object-cover mx-auto rounded-md"
-                    />
-                  </td>
-                  <td className="p-2 border">{book._id.slice(-6).toUpperCase()}</td>
-                  <td className="p-2 border">
-                    <div className="font-medium">{book.bookName}</div>
-                    <div className="text-xs text-gray-500">{book.author}</div>
-                  </td>
-                  <td className="p-2 border">
-                    <div>{book.availableBooks}</div>
-                    <div className="text-xs text-gray-500">{book.noOfBooks}</div>
-                  </td>
-                  <td className="p-2 border">{book.subject}</td>
-                  <td className="p-2 border">{book.edition}</td>
-                  <td className="p-2 border">₹{book.price}</td>
-                  <td className="p-2 border">{book.pages}</td>
-                  <td className="p-2 border">
-                    <span className={`px-2 py-0.5 text-xs rounded-full font-semibold ${book.availableBooks > 0
-                        ? 'bg-green-100 text-green-700 border border-green-300'
-                        : 'bg-red-100 text-red-700 border border-red-300'
-                      }`}>
-                      {book.availableBooks > 0 ? 'Available' : 'Unavailable'}
-                    </span>
-                  </td>
-                  <td className="p-2 border flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedBookId(book._id);
-                        setEditData({
-                          bookName: book.bookName || '',
-                          author: book.author || '',
-                          subject: book.subject || '',
-                          noOfBooks: book.noOfBooks || '',
-                          edition: book.edition || '',
-                          price: book.price || '',
-                          pages: book.pages || '',
-                          availableBooks: book.availableBooks || '',
-                          photo: book.photo || '',
-                        });
-                        setShowEditPopup(true);
-                      }}
-                    >
-                      <i className="fas fa-edit" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBook(book._id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <i className="fas fa-trash" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+    {/* === Responsive Book Display === */}
+<div className="mt-6">
+  {/* Mobile & Tablet View (Card Layout) */}
+ {/* Mobile & Tablet View (Card Layout) */}
+<div className="lg:hidden bg-[#F4F6FA] px-4 py-4">
+  <h2 className="text-[18px] font-semibold text-[#1E1E1E] mb-4 border-b pb-1">
+    All Books Data
+  </h2>
+
+  <div className="flex flex-col gap-6">
+    {filteredBooks.map((book) => (
+      <div key={book._id} className="bg-[#285A870D] rounded-xl px-6 py-5 shadow-md">
+        {/* Book Cover Image */}
+        <div className="w-full flex justify-center mb-4">
+          <img
+            src={book.photo || 'https://via.placeholder.com/100x140?text=No+Cover'}
+            alt="Book"
+            className="w-[85px] h-[120px] object-cover rounded-md"
+          />
+        </div>
+
+        {/* Book Details */}
+     {/* Book Details - Clean 2 Column Layout */}
+{/* Book Details - Clean 2 Column Layout */}
+<div className="text-[14px] text-gray-800 grid grid-cols-[auto,1fr] gap-y-2 gap-x-4">
+  <p className="font-semibold text-[#146192]">Book ID:</p>
+  <p>{book._id.slice(-6).toUpperCase()}</p>
+
+  <p className="font-semibold text-[#146192]">Book Name:</p>
+  <p>{book.bookName}</p>
+
+  <p className="font-semibold text-[#146192]">Author Name:</p>
+  <p>{book.author}</p>
+
+  <p className="font-semibold text-[#146192]">Available Books:</p>
+  <p>{book.availableBooks}</p>
+
+  <p className="font-semibold text-[#146192]">Total Books:</p>
+  <p>{book.noOfBooks}</p>
+
+  <p className="font-semibold text-[#146192]">Subject:</p>
+  <p>{book.subject}</p>
+
+  <p className="font-semibold text-[#146192]">Edition:</p>
+  <p>{book.edition}</p>
+
+  <p className="font-semibold text-[#146192]">Price:</p>
+  <p>₹{book.price}</p>
+
+  <p className="font-semibold text-[#146192]">Pages:</p>
+  <p>{book.pages}</p>
+</div>
+
+        {/* Status */}
+        <div className="mt-4">
+          <span className={`inline-block text-sm font-medium px-4 py-[4px] rounded-full border ${
+            book.availableBooks > 0
+              ? 'bg-white text-[#098934] border-[#098934]'
+              : 'bg-red-100 text-red-700 border-red-400'
+          }`}>
+            {book.availableBooks > 0 ? 'Available' : 'Unavailable'}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-4 flex gap-4">
+          <button
+            onClick={() => handleEditClick(book)}
+            className="w-9 h-9 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition"
+          >
+            <i className="fas fa-edit" />
+          </button>
+          <button
+            onClick={() => handleDeleteBook(book._id)}
+            className="w-9 h-9 bg-red-100 text-red-500 rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition"
+          >
+            <i className="fas fa-trash" />
+          </button>
+        </div>
       </div>
+    ))}
+  </div>
+</div>
+
+
+  {/* Desktop / Laptop Table View */}
+  <div className="overflow-x-auto mt-6 hidden lg:block">
+    {loading ? (
+      <div className="text-center py-4">Loading books...</div>
+    ) : (
+      <table className="w-full text-sm border border-gray-300 text-center">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 border">S.no</th>
+            <th className="p-2 border">Book Image</th>
+            <th className="p-2 border">Book ID</th>
+            <th className="p-2 border">Book Name<br /><span className="text-xs text-gray-500 font-normal">Author</span></th>
+            <th className="p-2 border">Available<br /><span className="text-xs text-gray-500 font-normal">Total</span></th>
+            <th className="p-2 border">Subject</th>
+            <th className="p-2 border">Edition</th>
+            <th className="p-2 border">Price</th>
+            <th className="p-2 border">Pages</th>
+            <th className="p-2 border">Status</th>
+            <th className="p-2 border">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredBooks.map((book, index) => (
+            <tr key={book._id} className="border hover:bg-gray-50 transition">
+              <td className="p-2 border">{index + 1}</td>
+              <td className="p-2 border">
+                <img
+                  src={book.photo || 'https://via.placeholder.com/50x70?text=No+Cover'}
+                  alt="Book"
+                  className="w-12 h-16 object-cover mx-auto rounded-md"
+                />
+              </td>
+              <td className="p-2 border">{book._id.slice(-6).toUpperCase()}</td>
+              <td className="p-2 border">
+                <div className="font-medium">{book.bookName}</div>
+                <div className="text-xs text-gray-500">{book.author}</div>
+              </td>
+              <td className="p-2 border">
+                <div>{book.availableBooks}</div>
+                <div className="text-xs text-gray-500">{book.noOfBooks}</div>
+              </td>
+              <td className="p-2 border">{book.subject}</td>
+              <td className="p-2 border">{book.edition}</td>
+              <td className="p-2 border">₹{book.price}</td>
+              <td className="p-2 border">{book.pages}</td>
+              <td className="p-2 border">
+                <span className={`px-2 py-0.5 text-xs rounded-full font-semibold ${book.availableBooks > 0
+                    ? 'bg-green-100 text-green-700 border border-green-300'
+                    : 'bg-red-100 text-red-700 border border-red-300'
+                  }`}>
+                  {book.availableBooks > 0 ? 'Available' : 'Unavailable'}
+                </span>
+              </td>
+              <td className="p-2 border flex items-center justify-center gap-2">
+                <button
+                  onClick={() => handleEditClick(book)}
+                >
+                  <i className="fas fa-edit" />
+                </button>
+                <button
+                  onClick={() => handleDeleteBook(book._id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <i className="fas fa-trash" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </div>
+</div>
+
 
 
       {showEditPopup && (
