@@ -154,7 +154,7 @@ const AdminInstantPage = () => {
   const renderDropdown = (role, label, list) => {
     const isOpen = dropdownOpen === role;
     return (
-      <div className="relative w-[220px] text-sm font-medium">
+      <div className="relative w-full sm:w-[220px] text-sm font-medium">
         <label className="block text-sm mb-1">{label}</label>
         <button
           type="button"
@@ -191,16 +191,19 @@ const AdminInstantPage = () => {
     <div className="min-h-screen w-full bg-white text-gray-800 font-sans">
       <ToastContainer position="top-right" autoClose={3000} />
       <div
-          className="text-sm text-blue-600 cursor-pointer font-medium"
-          onClick={() => navigate(-1)}
-        >
-          &larr; Meet
-        </div>
+        className="text-sm text-blue-600 cursor-pointer font-medium px-4 py-3"
+        onClick={() => navigate(-1)}
+      >
+        &larr; Meet
+      </div>
 
-      <div className="flex justify-center items-start pt-20">
+      <div className="flex justify-center items-start pt-20 px-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-4xl border border-blue-400 bg-white p-6 rounded-md shadow-md"
+          className="w-full max-w-4xl border border-blue-400 bg-white p-6 rounded-md shadow-md
+            sm:p-6
+            md:p-8
+            "
         >
           <h2 className="text-blue-600 font-semibold text-lg mb-4">Generate Admin Meeting Link</h2>
 
@@ -216,8 +219,14 @@ const AdminInstantPage = () => {
           </div>
 
           <h3 className="text-blue-600 font-semibold mb-2">Members</h3>
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-2 mt-1">
+          <div
+            className="
+              flex flex-wrap gap-4 mb-6
+              sm:gap-4
+              md:flex-nowrap md:gap-6
+              "
+          >
+            <div className="flex items-center gap-2 mt-1 min-w-[120px]">
               <input
                 type="checkbox"
                 id="superAdminCheck"
@@ -247,21 +256,25 @@ const AdminInstantPage = () => {
           </div>
 
           {generated && (
-            <div className="mt-6 bg-green-50 border border-green-400 text-green-800 px-4 py-3 rounded">
+            <div className="mt-6 bg-green-50 border border-green-400 text-green-800 px-4 py-3 rounded break-words">
               <p className="font-semibold">Meeting Created!</p>
-              <p><strong>Title:</strong> {generated.title}</p>
+              <p>
+                <strong>Title:</strong> {generated.title}
+              </p>
               <p>
                 <strong>Link:</strong>{' '}
                 <a
                   href={generated.meetingLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline"
+                  className="text-blue-600 underline break-all"
                 >
                   {generated.meetingLink}
                 </a>
               </p>
-              <p><strong>Created:</strong> {new Date(generated.createdAt).toLocaleString()}</p>
+              <p>
+                <strong>Created:</strong> {new Date(generated.createdAt).toLocaleString()}
+              </p>
             </div>
           )}
         </form>

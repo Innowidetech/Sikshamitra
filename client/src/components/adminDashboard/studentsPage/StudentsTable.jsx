@@ -557,7 +557,10 @@ const handleStudentClick = (studentId) => {
 
               <div className="text-[#146192] font-medium text-left">Email ID</div>
               <div className="text-center">-</div>
-              <div className="text-left">{studentData?.userId?.email || "N/A"}</div>
+             <div className="text-left break-words whitespace-normal">
+  {studentData?.userId?.email || "N/A"}
+</div>
+
 
               <div className="text-[#146192] font-medium text-left">Phone Number</div>
               <div className="text-center">-</div>

@@ -222,133 +222,201 @@ function Attendence({ handleTabChange }) {
         </div>
 
         {/* Mark Attendance Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center mt-8 bg-white p-4 ">
-          <div className="flex items-center gap-3 mb-4 md:mb-0">
-            <FaLink className="text-[#146192] text-xl" />
-            <h2 className="text-lg font-semibold text-gray-800">Class Attendance Student List</h2>
-          </div>
-          <div>
-            <button
-              className="bg-[#146192] text-white px-6 py-3 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300"
-              onClick={() => handleTabChange('markattendance')}
-            >
-              Mark Attendance
-            </button>
-          </div>
-        </div>
+<div className="flex flex-col md:flex-row justify-between items-center mt-8 bg-white p-4 rounded-lg shadow w-full">
+  <div className="flex items-center gap-3 mb-4 md:mb-0 w-full md:w-auto">
+    <FaLink className="text-[#146192] text-xl" />
+    <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 whitespace-nowrap">
+      Class Attendance Student List
+    </h2>
+  </div>
+  <div className="w-full md:w-auto text-center md:text-right">
+    <button
+      className="w-full md:w-auto bg-[#146192] text-white px-4 py-2 md:px-6 md:py-3 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300"
+      onClick={() => handleTabChange('markattendance')}
+    >
+      Mark Attendance
+    </button>
+  </div>
+</div>
 
-        {/* Filters */}
-        <div className="mt-6 bg-white p-4 rounded-lg shadow border flex flex-col sm:flex-row gap-4 w-full max-w-[900px]">
-          <DateSelector
-            label="Date"
-            value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
-              setMonth('');
-              setYear('');
-              setSearchQuery('');
-            }}
-            disabled={!!month || !!year}
-          />
-          <SelectSelector
-            label="Month"
-            value={month}
-            options={Object.keys(monthMap)}
-            onChange={(value) => {
-              setMonth(value);
-              setDate('');
-              setSearchQuery('');
-            }}
-            disabled={!!date}
-          />
-          <SelectSelector
-            label="Year"
-            value={year}
-            options={['2023', '2024', '2025', '2026']}
-            onChange={(value) => {
-              setYear(value);
-              setDate('');
-              setSearchQuery('');
-            }}
-            disabled={!!date}
-          />
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search Student"
-              className="px-4 py-2 border rounded-lg w-60 mt-6"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') setTriggerSearch(!triggerSearch);
-              }}
-              disabled={!!date || !!month || !!year}
-            />
-            <button
-              className="bg-[#146192] text-white px-4 py-2 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300 mt-6"
-              onClick={() => setTriggerSearch(!triggerSearch)}
-              disabled={!!date || !!month || !!year}
-            >
-              <FaSearch />
-            </button>
-          </div>
-        </div>
+{/* Filters */}
+<div className="mt-6 bg-white p-4 rounded-lg shadow border w-full flex flex-col lg:flex-row flex-wrap gap-4">
+  <div className="w-full sm:w-auto flex-1">
+    <DateSelector
+      label="Date"
+      value={date}
+      onChange={(e) => {
+        setDate(e.target.value);
+        setMonth('');
+        setYear('');
+        setSearchQuery('');
+      }}
+      disabled={!!month || !!year}
+    />
+  </div>
+  <div className="w-full sm:w-auto flex-1">
+    <SelectSelector
+      label="Month"
+      value={month}
+      options={Object.keys(monthMap)}
+      onChange={(value) => {
+        setMonth(value);
+        setDate('');
+        setSearchQuery('');
+      }}
+      disabled={!!date}
+    />
+  </div>
+  <div className="w-full sm:w-auto flex-1">
+    <SelectSelector
+      label="Year"
+      value={year}
+      options={['2023', '2024', '2025', '2026']}
+      onChange={(value) => {
+        setYear(value);
+        setDate('');
+        setSearchQuery('');
+      }}
+      disabled={!!date}
+    />
+  </div>
+  <div className="w-full sm:w-auto flex-1 flex flex-col sm:flex-row sm:items-end gap-2">
+    <input
+      type="text"
+      placeholder="Search Student"
+      className="px-4 py-2 border rounded-lg w-full sm:w-60"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') setTriggerSearch(!triggerSearch);
+      }}
+      disabled={!!date || !!month || !!year}
+    />
+    <button
+      className="bg-[#146192] text-white px-4 py-2 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300"
+      onClick={() => setTriggerSearch(!triggerSearch)}
+      disabled={!!date || !!month || !!year}
+    >
+      <FaSearch />
+    </button>
+  </div>
+</div>
 
-        {/* Table */}
-        <div className="overflow-x-auto mt-6">
-          <table className="min-w-full border text-sm text-left">
-            <thead className="bg-[#f5f5f5]">
-              <tr>
-                {[
-                  'S.No', 'Student Name', 'Registration Number', 'Parent Name',
-                  'Parent Mobile No.', 'Student Gender', 'Date', 'Status',
-                ].map((heading) => (
-                  <th key={heading} className="px-4 py-2 border font-medium text-gray-600">{heading}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-2 text-center text-gray-500">Loading...</td>
-                </tr>
-              ) : noData ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-2 text-center text-gray-500">
-                    No data available for the selected filters.
-                  </td>
-                </tr>
-              ) : (
-                displayData.map((student, index) => (
-                  <tr key={index} className="bg-white border-b">
-                    <td className="px-4 py-2 border">{index + 1}</td>
-                    <td className="px-4 py-2 border">{student.student.studentProfile.fullname}</td>
-                    <td className="px-4 py-2 border">{student.student.studentProfile.registrationNumber}</td>
-                    <td className="px-4 py-2 border">{student.parentProfile.fatherName}</td>
-                    <td className="px-4 py-2 border">{student.parentProfile.fatherPhoneNumber}</td>
-                    <td className="px-4 py-2 border">{student.student.studentProfile.gender}</td>
-                    <td className="px-4 py-2 border">
-                      {student.date ? new Date(student.date).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td className="px-4 py-2 border">
-                      <span
-                        className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
-                          student.status === 'Present'
-                            ? 'bg-green-500'
-                            : student.status === 'Absent'
-                            ? 'bg-red-500'
-                            : 'bg-yellow-500'
-                        }`}
-                      >
-                        {student.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+{/* Table - Desktop Only */}
+<div className="overflow-x-auto mt-6 hidden lg:block">
+  <table className="min-w-full border text-sm text-left">
+    <thead className="bg-[#f5f5f5]">
+      <tr>
+        {[
+          'S.No', 'Student Name', 'Registration Number', 'Parent Name',
+          'Parent Mobile No.', 'Student Gender', 'Date', 'Status',
+        ].map((heading) => (
+          <th key={heading} className="px-4 py-2 border font-medium text-gray-600 whitespace-nowrap">{heading}</th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {loading ? (
+        <tr>
+          <td colSpan="8" className="px-4 py-2 text-center text-gray-500">Loading...</td>
+        </tr>
+      ) : noData ? (
+        <tr>
+          <td colSpan="8" className="px-4 py-2 text-center text-gray-500">
+            No data available for the selected filters.
+          </td>
+        </tr>
+      ) : (
+        displayData.map((student, index) => (
+          <tr key={index} className="bg-white border-b">
+            <td className="px-4 py-2 border">{index + 1}</td>
+            <td className="px-4 py-2 border">{student.student.studentProfile.fullname}</td>
+            <td className="px-4 py-2 border">{student.student.studentProfile.registrationNumber}</td>
+            <td className="px-4 py-2 border">{student.parentProfile.fatherName}</td>
+            <td className="px-4 py-2 border">{student.parentProfile.fatherPhoneNumber}</td>
+            <td className="px-4 py-2 border">{student.student.studentProfile.gender}</td>
+            <td className="px-4 py-2 border">
+              {student.date ? new Date(student.date).toLocaleDateString() : 'N/A'}
+            </td>
+            <td className="px-4 py-2 border">
+              <span
+                className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
+                  student.status === 'Present'
+                    ? 'bg-green-500'
+                    : student.status === 'Absent'
+                    ? 'bg-red-500'
+                    : 'bg-yellow-500'
+                }`}
+              >
+                {student.status}
+              </span>
+            </td>
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
+{/* Card View - Mobile/Tablet */}
+<div className="grid gap-4 mt-6 lg:hidden">
+  {loading ? (
+    <p className="text-center text-gray-500">Loading...</p>
+  ) : noData ? (
+    <p className="text-center text-gray-500">No data available for the selected filters.</p>
+  ) : (
+    displayData.map((student, index) => (
+      <div key={index} className="bg-white p-4 rounded-lg shadow border">
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">S.No</span>
+          <span className="text-sm text-gray-700">{index + 1}</span>
         </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Student Name</span>
+          <span className="text-sm text-gray-700">{student.student.studentProfile.fullname}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Registration No.</span>
+          <span className="text-sm text-gray-700">{student.student.studentProfile.registrationNumber}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Parent Name</span>
+          <span className="text-sm text-gray-700">{student.parentProfile.fatherName}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Parent Mobile</span>
+          <span className="text-sm text-gray-700">{student.parentProfile.fatherPhoneNumber}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Gender</span>
+          <span className="text-sm text-gray-700">{student.student.studentProfile.gender}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span className="text-sm font-semibold text-[#146192]">Date</span>
+          <span className="text-sm text-gray-700">
+            {student.date ? new Date(student.date).toLocaleDateString() : 'N/A'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center mt-2">
+          <span className="text-sm font-semibold text-[#146192]">Status</span>
+          <span
+            className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${
+              student.status === 'Present'
+                ? 'bg-green-500'
+                : student.status === 'Absent'
+                ? 'bg-red-500'
+                : 'bg-yellow-500'
+            }`}
+          >
+            {student.status}
+          </span>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
+
       </div>
     </>
   );

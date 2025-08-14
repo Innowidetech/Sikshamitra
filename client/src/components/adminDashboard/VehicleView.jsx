@@ -4,7 +4,7 @@ import { fetchVehicleDetailsById } from '../../redux/transSlice';
 
 const VehicleView = ({ vehicleId }) => {
   const dispatch = useDispatch();
-  const { vehicleDetails, loading, error } = useSelector((state) => state.transportation);
+  const { vehicleDetails, loading, error } = useSelector((state) => state.trans);
 
   useEffect(() => {
     if (vehicleId) {

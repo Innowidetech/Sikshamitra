@@ -98,46 +98,44 @@ const SchedulePage = () => {
     date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
   // Submit handler
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const attendants = [...(admin ? ['Admin'] : []), ...selectedTeachers];
+    const attendants = [...(admin ? ['Admin'] : []), ...selectedTeachers];
 
-  const payload = {
-    title,
-    attendants,
-    startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD
-    endDate: endDate.toISOString().split('T')[0],     // YYYY-MM-DD
-    startTime: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), // HH:mm
-    endTime: endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })      // HH:mm
+    const payload = {
+      title,
+      attendants,
+      startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD
+      endDate: endDate.toISOString().split('T')[0],     // YYYY-MM-DD
+      startTime: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), // HH:mm
+      endTime: endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })      // HH:mm
+    };
+
+    try {
+      await dispatch(createMeeting(payload)).unwrap();
+      toast.success('🎉 Meeting scheduled successfully!');
+      dispatch(fetchConnects()); // Fetch updated meetings list
+    } catch (err) {
+      toast.error('❌ Failed to schedule meeting.');
+    }
   };
-
-  try {
-    await dispatch(createMeeting(payload)).unwrap();
-    toast.success('🎉 Meeting scheduled successfully!');
-    dispatch(fetchConnects()); // Fetch updated meetings list
-  } catch (err) {
-    toast.error('❌ Failed to schedule meeting.');
-  }
-};
-
 
   return (
     <div className="h-screen w-full bg-white relative font-sans">
       {/* Toast container for notifications */}
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
-     {/* Top bar */}
-<div className="w-full bg-white text-black flex justify-between items-center px-4 py-2 text-sm absolute top-0 left-0 shadow">
-  <span
-    onClick={() => navigate(-1)} // Go back to previous page
-    className="font-medium cursor-pointer hover:underline"
-  >
-    &larr; Meet
-  </span>
-  <span>{currentTime}</span>
-</div>
-
+      {/* Top bar */}
+      <div className="w-full bg-white text-black flex justify-between items-center px-4 py-2 text-sm absolute top-0 left-0 shadow">
+        <span
+          onClick={() => navigate(-1)} // Go back to previous page
+          className="font-medium cursor-pointer hover:underline"
+        >
+          &larr; Meet
+        </span>
+        <span>{currentTime}</span>
+      </div>
 
       {/* Form content */}
       <div className="flex justify-center items-center h-full pt-10">
@@ -162,9 +160,10 @@ const handleSubmit = async (e) => {
           {/* Time selection */}
           <h3 className="text-blue-700 font-semibold mb-2">Add your time</h3>
           <div className="flex flex-wrap gap-6 mb-6">
+            {/* Start time pickers wrapper: stack on mobile, row on sm+ */}
             <div>
               <label className="block mb-1 text-sm font-medium">Start time of meeting</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <DatePicker
                   selected={startDate}
                   onChange={(date) => setStartDate(date)}
@@ -184,9 +183,10 @@ const handleSubmit = async (e) => {
               </div>
             </div>
 
+            {/* End time pickers wrapper: stack on mobile, row on sm+ */}
             <div>
               <label className="block mb-1 text-sm font-medium">End time of meeting</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <DatePicker
                   selected={endDate}
                   onChange={(date) => setEndDate(date)}
@@ -209,7 +209,7 @@ const handleSubmit = async (e) => {
 
           {/* Members selection */}
           <h3 className="text-blue-700 font-semibold mb-2">Members</h3>
-          <div className="flex gap-6 mb-6 items-start sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-6 mb-6 items-start sm:items-center">
             {/* Admin Checkbox */}
             <div className="flex items-center gap-2 mt-2">
               <input
@@ -225,7 +225,7 @@ const handleSubmit = async (e) => {
             </div>
 
             {/* Teacher Dropdown */}
-            <div className="relative teacher-dropdown w-[200px] text-sm font-medium">
+            <div className="relative teacher-dropdown w-full sm:w-[200px] text-sm font-medium">
               <button
                 type="button"
                 onClick={() => setShowDropdown((prev) => !prev)}
@@ -264,7 +264,7 @@ const handleSubmit = async (e) => {
             <button
               type="submit"
               disabled={sendStatus === 'loading'}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 w-full sm:w-auto"
             >
               {sendStatus === 'loading' ? 'Scheduling...' : 'Generate Meet Link'}
             </button>

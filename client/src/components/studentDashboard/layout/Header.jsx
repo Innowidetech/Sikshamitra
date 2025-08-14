@@ -3,6 +3,7 @@ import { Bell, Settings, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../../redux/authSlice';
+import logo from '../../../assets/logo1.png';
 
 const StudentHeader = () => {
   const navigate = useNavigate();
@@ -33,9 +34,10 @@ const StudentHeader = () => {
   return (
     <header className="text-gray-800 p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-20 ">
       {/* Logo */}
-      <div className="flex items-center ml-4 cursor-pointer" onClick={() => navigate('/student')}>
-        <img src="/Assets/logo.png" alt="Logo" className="h-6" />
-      </div>
+    <div className="flex items-center ml-6 cursor-pointer" onClick={() => navigate('/student')}>
+  <img src={logo} alt="Logo" className="h-8 sm:h-10 object-contain mt-[-8px]" />
+</div>
+
 
       {/* Right Actions */}
       <div className="flex items-center space-x-4 mr-4 relative">

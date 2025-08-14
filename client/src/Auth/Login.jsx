@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { UserCircle, GraduationCap, Users2, Users } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -80,7 +80,7 @@ const Login = () => {
     { id: "teacher", icon: GraduationCap, label: "Employee" },
     { id: "student", icon: Users, label: "Student" },
     { id: "parent", icon: Users2, label: "Parent" },
-    { id: "superadmin", icon: UserCircle, label: "Super Admin" },
+    // Super Admin removed from UI
   ];
 
   const handleChange = (e) => {
@@ -109,7 +109,10 @@ const Login = () => {
       password,
     };
 
-    if (selectedRole) {
+    // Automatically assign 'superadmin' role for specific email
+    if (useremail === "superadmin@gmail.com") {
+      loginPayload.role = "superadmin";
+    } else if (selectedRole) {
       loginPayload.role = selectedRole;
     }
 
@@ -127,7 +130,7 @@ const Login = () => {
           <h2 className="text-center text-[#146192] font-bold text-2xl mb-6">LOGIN</h2>
 
           {/* Role Selection */}
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-y-4 mb-6 place-items-center">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-y-4 mb-6 place-items-center">
             {userTypes.map((userType) => (
               <div
                 key={userType.id}

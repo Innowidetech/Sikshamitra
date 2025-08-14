@@ -970,185 +970,293 @@ function Library({ setActiveTab }) {
               )}
             </div>
           </div>
-          {loading ? (
-            <div className="p-4 text-center text-gray-600">Loading...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y border-2 text-sm">
-                <thead style={{ fontFamily: "Poppins" }}>
-                  <tr className="bg-[#ECF4FF] text-[#146192]">
-                    <th className="px-2 py-2 border">S.no</th>
-                    <th className="px-2 py-2 border">Book name<br />(Book ID)</th>
-                    <th className="px-2 py-2 border">Student Name<br />(Registration No.)</th>
-                    <th className="px-2 py-2 border">Class</th>
-                    <th className="px-2 py-2 border">Sec</th>
-                    <th className="px-2 py-2 border">Issue Date<br />Return on date</th>
-                    <th className="px-2 py-2 border">Due Date</th>
-                    <th className="px-2 py-2 border">Email-ID</th>
-                    <th className="px-2 py-2 border">Contact no.</th>
-                    <th className="px-2 py-2 border">Fine amt</th>
-                    <th className="px-2 py-2 border">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y">
-                  {requests
-                    ?.filter((book) => {
-                      const currentStatus = selectedStatus[book._id] || book.status;
-                      // ✅ Don't render row if fine = 0 and returned
-                      if (book.fine === 0 && currentStatus === "returned") return false;
-                      // ✅ Don't render row if fine > 0 and already resolved
-                      if (book.fine > 0 && currentStatus === "returned" && book.resolved) return false;
+        {loading ? (
+  <div className="p-4 text-center text-gray-600">Loading...</div>
+) : (
+  <div className="overflow-x-auto">
+    {/* Desktop Table */}
+    <table className="min-w-full divide-y border-2 text-sm hidden md:table">
+      <thead style={{ fontFamily: "Poppins" }}>
+        <tr className="bg-[#ECF4FF] text-[#146192]">
+          <th className="px-2 py-2 border">S.no</th>
+          <th className="px-2 py-2 border">Book name<br />(Book ID)</th>
+          <th className="px-2 py-2 border">Student Name<br />(Registration No.)</th>
+          <th className="px-2 py-2 border">Class</th>
+          <th className="px-2 py-2 border">Sec</th>
+          <th className="px-2 py-2 border">Issue Date<br />Return on date</th>
+          <th className="px-2 py-2 border">Due Date</th>
+          <th className="px-2 py-2 border">Email-ID</th>
+          <th className="px-2 py-2 border">Contact no.</th>
+          <th className="px-2 py-2 border">Fine amt</th>
+          <th className="px-2 py-2 border">Status</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y">
+        {requests
+          ?.filter((book) => {
+            const currentStatus = selectedStatus[book._id] || book.status;
+            if (book.fine === 0 && currentStatus === "returned") return false;
+            if (book.fine > 0 && currentStatus === "returned" && book.resolved) return false;
+            return (
+              book &&
+              book._id &&
+              book.book &&
+              book.requestedBy &&
+              book.requestedBy.userId &&
+              book.requestedBy.studentProfile
+            );
+          })
+          .map((book, idx) => {
+            const student = book?.requestedBy?.studentProfile || {};
+            const parentInfo = book?.parentInfo || {};
+            const email = book?.requestedBy?.userId?.email || parentInfo?.parentEmail || "-";
+            const contactNo = parentInfo?.fatherPhoneNumber || parentInfo?.motherPhoneNumber || "-";
+            const currentStatus = selectedStatus[book._id] || book.status;
 
-                      return book &&
-                        book._id &&
-                        book.book &&
-                        book.requestedBy &&
-                        book.requestedBy.userId &&
-                        book.requestedBy.studentProfile;
-                    })
-                    .map((book, idx) => {
-                      const student = book?.requestedBy?.studentProfile || {};
-                      const parentInfo = book?.parentInfo || {};
-                      const email = book?.requestedBy?.userId?.email || parentInfo?.parentEmail || "-";
-                      const contactNo = parentInfo?.fatherPhoneNumber || parentInfo?.motherPhoneNumber || "-";
-                      const currentStatus = selectedStatus[book._id] || book.status;
+            return (
+              <tr key={book._id}>
+                <td className="px-2 py-2 border text-center">{idx + 1}</td>
+                <td className="px-2 py-2 border text-center whitespace-pre-line">
+                  {book.book?.bookName || "-"} <br />({book.book?._id || "-"})
+                </td>
+                <td className="px-2 py-2 border text-center whitespace-pre-line">
+                  {student?.fullname || "-"} <br />({student?.registrationNumber || "-"})
+                </td>
+                <td className="px-2 py-2 border text-center">{student?.class || "-"}</td>
+                <td className="px-2 py-2 border text-center">{student?.section || "-"}</td>
+                <td className="px-2 py-2 border text-center whitespace-pre-line">
+                  {book.borrowedOn ? new Date(book.borrowedOn).toLocaleDateString() : "-"} <br />
+                  {book.returnedOn ? new Date(book.returnedOn).toLocaleDateString() : "-"}
+                </td>
+                <td className="px-2 py-2 border text-center">
+                  {book.dueOn ? new Date(book.dueOn).toLocaleDateString() : "-"}
+                </td>
+                <td className="px-2 py-2 border text-center">{email}</td>
+                <td className="px-2 py-2 border text-center">{contactNo}</td>
+                <td className="px-2 py-2 border text-center">₹{book.fine || 0}</td>
+                <td className="px-2 py-2 border text-center relative">
+                  <div className="relative inline-block w-36">
+                    <select
+                      className="w-full appearance-none border border-gray-300 px-3 py-1.5 rounded-md font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pr-6 bg-white text-gray-700"
+                      value={currentStatus}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedStatus({ ...selectedStatus, [book._id]: value });
+                        if (value === "issued") {
+                          setActiveIssuedRow(book._id);
+                        } else {
+                          setActiveIssuedRow(null);
+                          dispatch(updateBookRequestStatus({ requestId: book._id, status: value }))
+                            .then(() => dispatch(fetchLibrary()));
+                        }
+                      }}
+                    >
+                      <option value="requested">Requested</option>
+                      <option value="accepted">Accepted</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="issued">Issued</option>
+                      <option value="returned">Returned</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
 
-                      return (
-                        <tr key={book._id}>
-                          <td className="px-2 py-2 border text-center">{idx + 1}</td>
-                          <td className="px-2 py-2 border text-center">
-                            {book.book?.bookName || "-"} <br />({book.book?._id || "-"})
-                          </td>
-                          <td className="px-2 py-2 border text-center">
-                            {student?.fullname || "-"} <br />({student?.registrationNumber || "-"})
-                          </td>
-                          <td className="px-2 py-2 border text-center">{student?.class || "-"}</td>
-                          <td className="px-2 py-2 border text-center">{student?.section || "-"}</td>
-                          <td className="px-2 py-2 border text-center">
-                            {book.borrowedOn ? new Date(book.borrowedOn).toLocaleDateString() : "-"} <br />
-                            {book.returnedOn ? new Date(book.returnedOn).toLocaleDateString() : "-"}
-                          </td>
-                          <td className="px-2 py-2 border text-center">
-                            {book.dueOn ? new Date(book.dueOn).toLocaleDateString() : "-"}
-                          </td>
-                          <td className="px-2 py-2 border text-center">{email}</td>
-                          <td className="px-2 py-2 border text-center">{contactNo}</td>
-                          <td className="px-2 py-2 border text-center">₹{book.fine || 0}</td>
-                          <td className="px-2 py-2 border text-center relative">
-                            <div className="relative inline-block w-36">
-                              <select
-                                className="w-full appearance-none border border-gray-300 px-3 py-1.5 rounded-md font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pr-6 bg-white text-gray-700"
-                                value={currentStatus}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setSelectedStatus({ ...selectedStatus, [book._id]: value });
+                  {currentStatus === "issued" && activeIssuedRow === book._id && (
+                    <div className="absolute mt-2 right-0 -translate-x-20 bg-white border border-blue-400 p-3 rounded shadow z-50 w-64">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Enter Due Date*
+                      </label>
+                      <input
+                        type="date"
+                        value={dueDates[book._id] || ""}
+                        onChange={(e) =>
+                          setDueDates({ ...dueDates, [book._id]: e.target.value })
+                        }
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!dueDates[book._id]) return alert("Please enter due date.");
+                          dispatch(
+                            updateBookRequestStatus({
+                              requestId: book._id,
+                              status: "issued",
+                              dueOn: dueDates[book._id],
+                            })
+                          ).then(() => {
+                            dispatch(fetchLibrary());
+                            setActiveIssuedRow(null);
+                          });
+                        }}
+                        className="mt-2 px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setActiveIssuedRow(null)}
+                        className="absolute top-1 right-2 text-red-600 font-bold"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
 
-                                  if (value === "issued") {
-                                    setActiveIssuedRow(book._id);
-                                  } else {
-                                    setActiveIssuedRow(null);
-                                    dispatch(updateBookRequestStatus({ requestId: book._id, status: value }))
-                                      .then(() => dispatch(fetchLibrary()));
-                                  }
-                                }}
-                              >
-                                <option value="requested">Requested</option>
-                                <option value="accepted">Accepted</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="issued">Issued</option>
-                                <option value="returned">Returned</option>
-                              </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
-                                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
+                  {currentStatus === "returned" && book.fine > 0 && !book.resolved && (
+                    <button
+                      onClick={() => {
+                        dispatch(resolveBookRequest(book._id)).then(() => dispatch(fetchLibrary()));
+                      }}
+                      className="mt-2 px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Resolve
+                    </button>
+                  )}
 
-                            {/* Issued Due Date Setter */}
-                            {currentStatus === "issued" && (
-                              <>
-                                {activeIssuedRow === book._id ? (
-                                  <div className="absolute mt-2 right-0 -translate-x-20 bg-white border border-blue-400 p-3 rounded shadow z-50 w-64">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                      Enter Due Date*
-                                    </label>
-                                    <input
-                                      type="date"
-                                      value={dueDates[book._id] || ""}
-                                      onChange={(e) =>
-                                        setDueDates({ ...dueDates, [book._id]: e.target.value })
-                                      }
-                                      className="border border-gray-300 px-2 py-1 rounded w-full"
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        if (!dueDates[book._id]) return alert("Please enter due date.");
-                                        dispatch(
-                                          updateBookRequestStatus({
-                                            requestId: book._id,
-                                            status: "issued",
-                                            dueOn: dueDates[book._id],
-                                          })
-                                        ).then(() => {
-                                          dispatch(fetchLibrary());
-                                          setActiveIssuedRow(null);
-                                        });
-                                      }}
-                                      className="mt-2 px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                    >
-                                      Save
-                                    </button>
-                                    <button
-                                      onClick={() => setActiveIssuedRow(null)}
-                                      className="absolute top-1 right-2 text-red-600 font-bold"
-                                    >
-                                      ×
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => setActiveIssuedRow(book._id)}
-                                    className="mt-2 text-blue-600 underline text-xs"
-                                  >
-                                    Set / Change Due Date
-                                  </button>
-                                )}
-                              </>
-                            )}
+                  {currentStatus === "returned" && book.fine > 0 && book.resolved && (
+                    <div className="mt-1 text-green-700 font-semibold text-sm">Resolved</div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+      </tbody>
+    </table>
 
-                            {/* ✅ Show Resolve button when returned + fine > 0 + not resolved */}
-                            {currentStatus === "returned" &&
-                              book.fine > 0 &&
-                              !book.resolved && (
-                                <button
-                                  onClick={() => {
-                                    dispatch(resolveBookRequest(book._id)).then(() => dispatch(fetchLibrary()));
-                                  }}
-                                  className="mt-2 px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                                >
-                                  Resolve
-                                </button>
-                              )}
+              
 
-                            {/* ✅ Show Resolved label if already resolved */}
-                            {currentStatus === "returned" &&
-                              book.fine > 0 &&
-                              book.resolved && (
-                                <div className="mt-1 text-green-700 font-semibold text-sm">Resolved</div>
-                              )}
+              {/* ✅ Mobile view cards - like screenshot */}
+<div className="md:hidden grid gap-4 mt-4">
+  {requests
+    ?.filter((book) => {
+      const currentStatus = selectedStatus[book._id] || book.status;
+      if (book.fine === 0 && currentStatus === "returned") return false;
+      if (book.fine > 0 && currentStatus === "returned" && book.resolved) return false;
 
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
+      return (
+        book &&
+        book._id &&
+        book.book &&
+        book.requestedBy &&
+        book.requestedBy.userId &&
+        book.requestedBy.studentProfile
+      );
+    })
+    .map((book, idx) => {
+      const student = book?.requestedBy?.studentProfile || {};
+      const parentInfo = book?.parentInfo || {};
+      const email = book?.requestedBy?.userId?.email || parentInfo?.parentEmail || "-";
+      const contactNo = parentInfo?.fatherPhoneNumber || parentInfo?.motherPhoneNumber || "-";
+      const currentStatus = selectedStatus[book._id] || book.status;
 
-              </table>
+      return (
+        <div key={book._id} className="border border-gray-300 rounded-lg shadow bg-white p-4 text-sm">
+          <div className="mb-2 font-semibold text-[#0F4A70]">Book Name: <span className="font-normal">{book.book?.bookName || "-"}</span></div>
+          <table className="w-full text-left border-t border-gray-200">
+            <tbody>
+              <tr><td className="font-medium p-1 w-1/2">Book ID</td><td className="p-1">{book.book?._id || "-"}</td></tr>
+              <tr><td className="font-medium p-1">Student</td><td className="p-1">{student?.fullname || "-"}</td></tr>
+              <tr><td className="font-medium p-1">Reg. No.</td><td className="p-1">{student?.registrationNumber || "-"}</td></tr>
+              <tr><td className="font-medium p-1">Class</td><td className="p-1">{student?.class || "-"}</td></tr>
+              <tr><td className="font-medium p-1">Section</td><td className="p-1">{student?.section || "-"}</td></tr>
+              <tr><td className="font-medium p-1">Issue Date</td><td className="p-1">{book.borrowedOn ? new Date(book.borrowedOn).toLocaleDateString() : "-"}</td></tr>
+              <tr><td className="font-medium p-1">Return Date</td><td className="p-1">{book.returnedOn ? new Date(book.returnedOn).toLocaleDateString() : "-"}</td></tr>
+              <tr><td className="font-medium p-1">Due Date</td><td className="p-1">{book.dueOn ? new Date(book.dueOn).toLocaleDateString() : "-"}</td></tr>
+              <tr><td className="font-medium p-1">Email</td><td className="p-1">{email}</td></tr>
+              <tr><td className="font-medium p-1">Contact</td><td className="p-1">{contactNo}</td></tr>
+              <tr><td className="font-medium p-1">Fine</td><td className="p-1">₹{book.fine || 0}</td></tr>
+              <tr>
+                <td className="font-medium p-1">Status</td>
+                <td className="p-1">
+                  <select
+                    className="w-full border border-gray-300 px-2 py-1 rounded text-sm"
+                    value={currentStatus}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedStatus({ ...selectedStatus, [book._id]: value });
+
+                      if (value === "issued") {
+                        setActiveIssuedRow(book._id);
+                      } else {
+                        setActiveIssuedRow(null);
+                        dispatch(updateBookRequestStatus({ requestId: book._id, status: value }))
+                          .then(() => dispatch(fetchLibrary()));
+                      }
+                    }}
+                  >
+                    <option value="requested">Requested</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="issued">Issued</option>
+                    <option value="returned">Returned</option>
+                  </select>
+
+                  {/* Issued Due Date input */}
+                  {currentStatus === "issued" && activeIssuedRow === book._id && (
+                    <div className="mt-2">
+                      <label className="block text-xs mb-1">Enter Due Date*</label>
+                      <input
+                        type="date"
+                        value={dueDates[book._id] || ""}
+                        onChange={(e) => setDueDates({ ...dueDates, [book._id]: e.target.value })}
+                        className="w-full border border-gray-300 px-2 py-1 rounded"
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => {
+                            if (!dueDates[book._id]) return alert("Please enter due date.");
+                            dispatch(updateBookRequestStatus({
+                              requestId: book._id,
+                              status: "issued",
+                              dueOn: dueDates[book._id],
+                            })).then(() => {
+                              dispatch(fetchLibrary());
+                              setActiveIssuedRow(null);
+                            });
+                          }}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setActiveIssuedRow(null)}
+                          className="text-red-600 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resolve logic */}
+                  {currentStatus === "returned" && book.fine > 0 && !book.resolved && (
+                    <button
+                      onClick={() => {
+                        dispatch(resolveBookRequest(book._id)).then(() => dispatch(fetchLibrary()));
+                      }}
+                      className="mt-2 w-full bg-green-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Resolve
+                    </button>
+                  )}
+                  {currentStatus === "returned" && book.fine > 0 && book.resolved && (
+                    <div className="mt-2 text-green-700 text-sm font-medium">Resolved</div>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    })}
+</div>
+
             </div>
           )}
 

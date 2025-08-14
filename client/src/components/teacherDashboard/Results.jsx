@@ -5,31 +5,27 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchTeacherResults } from '../../redux/teacher/teacherResultSlice';
 import { useNavigate } from 'react-router-dom';
 
-
 function Results({ handleTabChange }) {
   const dispatch = useDispatch();
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const { results, loading, error } = useSelector((state) => state.teacherResults);
 
   const [expandedRow, setExpandedRow] = useState(null);
   const [examTypeFilter, setExamTypeFilter] = useState('All');
-  
-  // Data for the new result form
+
   const [newResultData, setNewResultData] = useState({
     studentId: '',
     examType: '',
     marks: '',
-    subjectResults: []
+    subjectResults: [],
   });
 
   useEffect(() => {
     dispatch(fetchTeacherResults());
   }, [dispatch]);
 
-  // Extract unique exam types for the dropdown
   const examTypes = ['All', ...new Set(results.map((res) => res.exam?.examType))];
 
-  // Filter results based on selected exam type
   const filteredResults =
     examTypeFilter === 'All'
       ? results
@@ -39,8 +35,6 @@ function Results({ handleTabChange }) {
     setExpandedRow(expandedRow === index ? null : index);
   };
 
-  
-  // Handle the form submission of new student result
   const handleAddResult = async (event) => {
     event.preventDefault();
 
@@ -52,14 +46,12 @@ function Results({ handleTabChange }) {
     try {
       const response = await fetch('/api/teacher/results', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newResultData),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || 'Failed to submit result');
       }
@@ -72,8 +64,6 @@ function Results({ handleTabChange }) {
       alert('Error submitting result. Please try again later.');
     }
   };
-
-  
 
   return (
     <>
@@ -97,7 +87,6 @@ function Results({ handleTabChange }) {
           ADD STUDENT RESULT
         </button>
 
-        {/* Exam Type Dropdown Filter */}
         <div className="mb-4">
           <label htmlFor="examType" className="mr-2 font-medium text-gray-700">
             Exam Type:
@@ -116,7 +105,8 @@ function Results({ handleTabChange }) {
           </select>
         </div>
 
-        <div className="w-full overflow-x-auto">
+        {/* Desktop Table Layout */}
+        <div className="w-full hidden lg:block overflow-x-auto">
           <table className="min-w-full border border-gray-300 bg-white rounded-lg shadow-md">
             <thead className="bg-[#1982C424] text-[#146192]">
               <tr>
@@ -125,32 +115,20 @@ function Results({ handleTabChange }) {
                 <th className="py-2 px-4 border">Exam Type</th>
                 <th className="py-2 px-4 border">Marks</th>
                 <th className="py-2 px-4 border">Percentage</th>
-                <th className="py-2 px-4 border">Edit</th> {/* New Actions column */}
+                <th className="py-2 px-4 border">Edit</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4">
-                    Loading...
-                  </td>
-                </tr>
+                <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr>
               ) : error ? (
-                <tr>
-                  <td colSpan="6" className="text-center text-red-500 py-4">
-                    {error}
-                  </td>
-                </tr>
+                <tr><td colSpan="6" className="text-center text-red-500 py-4">{error}</td></tr>
               ) : filteredResults.length > 0 ? (
                 filteredResults.map((result, i) => (
                   <React.Fragment key={i}>
                     <tr className="text-center hover:bg-gray-50 transition-colors">
-                      <td className="py-2 px-4 border">
-                        {result.student.studentProfile.registrationNumber}
-                      </td>
-                      <td className="py-2 px-4 border">
-                        {result.student.studentProfile.fullname}
-                      </td>
+                      <td className="py-2 px-4 border">{result.student.studentProfile.registrationNumber}</td>
+                      <td className="py-2 px-4 border">{result.student.studentProfile.fullname}</td>
                       <td className="py-2 px-4 border">{result.exam?.examType || 'N/A'}</td>
                       <td className="py-2 px-4 border">{result.total}</td>
                       <td className="py-2 px-4 border">
@@ -162,10 +140,9 @@ function Results({ handleTabChange }) {
                         </div>
                       </td>
                       <td className="py-2 px-4 border">
-                         <button
+                        <button
                           className="text-[#000000] hover:text-blue-800"
                           onClick={() => handleTabChange('editresult', result)}
-
                           aria-label={`Edit result for ${result.student.studentProfile.fullname}`}
                         >
                           <FaEdit />
@@ -180,22 +157,13 @@ function Results({ handleTabChange }) {
                             <h2 className="text-lg font-semibold mb-4 text-center">RESULT SLIP</h2>
                             <div className="flex justify-between mb-2">
                               <div>
-                                <p>
-                                  <strong>Name:</strong> {result.student.studentProfile.fullname}
-                                </p>
-                                <p>
-                                  <strong>Class:</strong> {result.class}
-                                </p>
+                                <p><strong>Name:</strong> {result.student.studentProfile.fullname}</p>
+                                <p><strong>Class:</strong> {result.class}</p>
                               </div>
                               <div>
-                                <p>
-                                  <strong>Roll:</strong>{' '}
-                                  {result.student.studentProfile.rollNumber || 'N/A'}
-                                </p>
-                                <p>
-                                  <strong>Section:</strong> {result.section}
-                                </p>
-                              </div>                                     
+                                <p><strong>Roll:</strong> {result.student.studentProfile.rollNumber || 'N/A'}</p>
+                                <p><strong>Section:</strong> {result.section}</p>
+                              </div>
                             </div>
                             <table className="w-full border border-gray-300 mt-2 text-center">
                               <thead className="bg-gray-200">
@@ -216,9 +184,7 @@ function Results({ handleTabChange }) {
                                   </tr>
                                 ))}
                                 <tr className="font-semibold bg-gray-100">
-                                  <td className="border px-2 py-1" colSpan="2">
-                                    Total Marks
-                                  </td>
+                                  <td className="border px-2 py-1" colSpan="2">Total Marks</td>
                                   <td className="border px-2 py-1">{result.total}</td>
                                   <td className="border px-2 py-1">-</td>
                                 </tr>
@@ -231,14 +197,73 @@ function Results({ handleTabChange }) {
                   </React.Fragment>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-4">
-                    No data found
-                  </td>
-                </tr>
+                <tr><td colSpan="6" className="text-center py-4">No data found</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile/Tablet Card Layout */}
+        <div className="lg:hidden w-full space-y-4">
+          {filteredResults.map((result, i) => (
+            <div key={i} className="border border-gray-300 rounded-lg shadow-md p-4 bg-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p><strong>ID:</strong> {result.student.studentProfile.registrationNumber}</p>
+                  <p><strong>Name:</strong> {result.student.studentProfile.fullname}</p>
+                  <p><strong>Exam:</strong> {result.exam?.examType || 'N/A'}</p>
+                  <p><strong>Total Marks:</strong> {result.total}</p>
+                  <p className="flex items-center gap-2">
+                    <strong>Percentage:</strong> {result.totalPercentage}
+                    <button onClick={() => toggleRow(i)}>{expandedRow === i ? <FaChevronUp /> : <FaChevronDown />}</button>
+                  </p>
+                </div>
+                <button
+                  className="text-[#000000] hover:text-blue-800"
+                  onClick={() => handleTabChange('editresult', result)}
+                  aria-label={`Edit result for ${result.student.studentProfile.fullname}`}
+                >
+                  <FaEdit />
+                </button>
+              </div>
+
+              {expandedRow === i && (
+                <div className="mt-4 bg-gray-50 p-3 rounded">
+                  <h2 className="text-center font-semibold mb-2">Result Slip</h2>
+                  <p><strong>Roll:</strong> {result.student.studentProfile.rollNumber || 'N/A'}</p>
+                  <p><strong>Class:</strong> {result.class}</p>
+                  <p><strong>Section:</strong> {result.section}</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm mt-2 border border-gray-300 text-center">
+                      <thead className="bg-gray-200">
+                        <tr>
+                          <th className="border px-2 py-1">Subject</th>
+                          <th className="border px-2 py-1">Obtained</th>
+                          <th className="border px-2 py-1">Total</th>
+                          <th className="border px-2 py-1">Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.result.map((subject, idx) => (
+                          <tr key={idx}>
+                            <td className="border px-2 py-1">{subject.subject}</td>
+                            <td className="border px-2 py-1">{subject.marksObtained}</td>
+                            <td className="border px-2 py-1">{subject.totalMarks}</td>
+                            <td className="border px-2 py-1">{subject.grade}</td>
+                          </tr>
+                        ))}
+                        <tr className="font-semibold bg-gray-100">
+                          <td className="border px-2 py-1" colSpan="2">Total</td>
+                          <td className="border px-2 py-1">{result.total}</td>
+                          <td className="border px-2 py-1">-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </>

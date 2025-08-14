@@ -80,7 +80,6 @@ import adminEntranceReducer from './adminEntranceSlice';
 import transportationReducer from './driver/transportationSlice';
 import entranceReducer from './users/entranceSlice';
 
-
 const store = configureStore({
   reducer: {
     teachers: teachersReducer,
@@ -159,7 +158,7 @@ const store = configureStore({
     meeting: meetingReducer,
     teacherQuery: teacherQueryReducer,
     createmeeting: createMeetingReducer,
-    transportation: transReducer,
+     trans: transReducer, 
     stransportation: stransportationReducer,
     forgotPassword: forgotPasswordReducer,
     superAdminStaffDashboard: superAdminStaffDashboardSliceReducer,

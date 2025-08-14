@@ -126,8 +126,8 @@ function Assignments({ handleTabChange }) {
         </button>
       </div>
 
-      {/* Assignment Table */}
-      <div className="mt-6 overflow-x-auto">
+      {/* Table for Laptop/Desktop */}
+      <div className="mt-6 overflow-x-auto hidden md:block">
         <table className="min-w-full bg-white border rounded-lg shadow">
           <thead className="text-[#146192]">
             <tr>
@@ -173,8 +173,50 @@ function Assignments({ handleTabChange }) {
           </tbody>
         </table>
       </div>
+
+      {/* Card View for Mobile/Tablet */}
+      <div className="mt-6 md:hidden space-y-4">
+        {assignments.map((a) => (
+          <div key={a._id} className="bg-white shadow rounded-lg border p-4">
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Assignment Name:</span> {a.chapterName}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Teacher:</span> {a.teacherName}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Class:</span> {a.class}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Section:</span> {a.section}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Subject:</span> {a.subject}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">Chapter:</span> {a.chapter}
+            </div>
+            <div className="mb-2">
+              <span className="font-semibold text-[#146192]">Start Date:</span>{' '}
+              {a.startDate ? new Date(a.startDate).toLocaleDateString() : 'N/A'}
+            </div>
+            <div className="mb-2 bg-[#1982C424] p-1 rounded">
+              <span className="font-semibold text-[#146192]">End Date:</span>{' '}
+              {a.endDate ? new Date(a.endDate).toLocaleDateString() : 'N/A'}
+            </div>
+             <div className="mb-2">
+        <span className="font-semibold text-[#146192]">Actions:</span>{' '}
+        <FaFileAlt
+          className="inline-block text-[#1982C4] text-xl cursor-pointer hover:text-[#146192] ml-2"
+          title="View Details"
+          onClick={() => handleTabChange('assignmentdetails', a)}
+        />
+      </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
 
 export default Assignments;

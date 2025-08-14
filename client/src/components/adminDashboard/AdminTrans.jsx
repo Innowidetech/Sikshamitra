@@ -9,9 +9,8 @@ const  AdminTrans = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); // ✅
 
-  const { transDetails, loading, error } = useSelector(
-    (state) => state.transportation
-  );
+ const { transDetails, loading, error } = useSelector(state => state.trans);
+
 
   useEffect(() => {
     dispatch(fetchTransportationDetails());
@@ -133,42 +132,38 @@ const  AdminTrans = () => {
         </div>
       )}
 
-      {/* Vehicle Details Header and Add Button */}
-      {!loading && !error && tableData.length > 0 && (
-        <div className="flex justify-between items-center my-6">
-          <h2 className="text-xl font-semibold text-[#0F4A70]">
-            Vehicle Details
-          </h2>
-         <button
-  className="bg-[#0F4A70] text-white px-4 py-2 rounded shadow-md flex items-center gap-2 hover:bg-[#073559]"
-  onClick={() => navigate("/admin/transportation/add")}
->
-  <FaPlus /> Add Vehicle
-</button>
-
+     {!loading && !error && tableData.length > 0 && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center my-6 gap-4">
+          <h2 className="text-xl font-semibold text-[#0F4A70]">Vehicle Details</h2>
+          <button
+            className="bg-[#0F4A70] text-white px-4 py-2 rounded shadow-md flex items-center gap-2 hover:bg-[#073559]"
+            onClick={() => navigate("/admin/transportation/add")}
+          >
+            <FaPlus /> Add Vehicle
+          </button>
         </div>
       )}
 
-      {/* Table */}
+      {/* ✅ Table View (Desktop/Tablet) */}
       {!loading && !error && tableData.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border border-gray-300">
-            <thead className="bg-[#f1f1f1]">
+        <div className="overflow-x-auto rounded-md shadow-md border border-gray-200 hidden md:block">
+          <table className="min-w-full text-sm text-center bg-white">
+            <thead className="bg-[#f1f1f1] text-gray-700">
               <tr>
-                <th className="border px-4 py-2">S.NO</th>
-                <th className="border px-4 py-2">Driver Name</th>
-                <th className="border px-4 py-2">Type</th>
-                <th className="border px-4 py-2">Vehicle Name</th>
-                <th className="border px-4 py-2">Driver Contact No.</th>
-                <th className="border px-4 py-2">Assistant Name</th>
-                <th className="border px-4 py-2">Departure Time</th>
-                <th className="border px-4 py-2">Track</th>
-                <th className="border px-4 py-2">Action</th>
+                <th className="border px-4 py-2 whitespace-nowrap">S.NO</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Driver Name</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Type</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Vehicle Name</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Driver Contact No.</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Assistant Name</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Departure Time</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Track</th>
+                <th className="border px-4 py-2 whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-gray-800">
               {tableData.map((item, idx) => (
-                <tr key={item.id} className="text-center">
+                <tr key={item.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-2">{idx + 1}</td>
                   <td className="border px-4 py-2">{item.driver}</td>
                   <td className="border px-4 py-2">{item.type}</td>
@@ -177,22 +172,22 @@ const  AdminTrans = () => {
                   <td className="border px-4 py-2">{item.assistant}</td>
                   <td className="border px-4 py-2">{item.time}</td>
                   <td className="border px-4 py-2">
-         <FaMapMarkerAlt
-                    className="text-[#146192] cursor-pointer"
-                    onClick={() =>
-                      navigate(`/admin/transportation/track/${item.id}`)
-                    }
-                  />
+                    <FaMapMarkerAlt
+                      className="text-[#146192] cursor-pointer mx-auto"
+                      onClick={() =>
+                        navigate(`/admin/transportation/track/${item.id}`)
+                      }
+                    />
                   </td>
                   <td className="border px-4 py-2">
                     <button
-  className="bg-[#0F4A70] text-white px-3 py-1 rounded"
-  onClick={() => navigate(`/admin/transportation/view/${item.id}`)}
-
->
-  View
-</button>
-
+                      className="bg-[#0F4A70] text-white px-3 py-1 rounded hover:bg-[#073559]"
+                      onClick={() =>
+                        navigate(`/admin/transportation/view/${item.id}`)
+                      }
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -200,6 +195,73 @@ const  AdminTrans = () => {
           </table>
         </div>
       )}
+
+      {/* ✅ Mobile Card View */}
+     {/* ✅ Mobile Card View - like table inside card */}
+{!loading && !error && tableData.length > 0 && (
+  <div className="grid gap-4 md:hidden">
+    {tableData.map((item, idx) => (
+      <div
+        key={item.id}
+        className="bg-white rounded-lg shadow-md border border-gray-300 overflow-hidden"
+      >
+        <table className="w-full text-sm text-left">
+          <tbody>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r w-1/2">Driver Name</td>
+              <td className="p-2">{item.driver}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Type</td>
+              <td className="p-2">{item.type}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Vehicle Name</td>
+              <td className="p-2">{item.name}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Driver Contact No.</td>
+              <td className="p-2">{item.contact}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Assistant Time</td>
+              <td className="p-2">{item.assistant || "-"}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Departure Time</td>
+              <td className="p-2">{item.time}</td>
+            </tr>
+            <tr className="border-b">
+              <td className="font-medium p-2 border-r">Track</td>
+              <td className="p-2">
+                <FaMapMarkerAlt
+                  className="text-[#146192] cursor-pointer text-xl"
+                  onClick={() =>
+                    navigate(`/admin/transportation/track/${item.id}`)
+                  }
+                />
+              </td>
+            </tr>
+            <tr>
+              <td className="font-medium p-2 border-r">Action</td>
+              <td className="p-2">
+                <button
+                  className="bg-[#0F4A70] text-white px-4 py-1 rounded hover:bg-[#073559]"
+                  onClick={() =>
+                    navigate(`/admin/transportation/view/${item.id}`)
+                  }
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    ))}
+  </div>
+)}
+
     </div>
   );
 };

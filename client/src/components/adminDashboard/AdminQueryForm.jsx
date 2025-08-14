@@ -6,10 +6,12 @@ import { fetchTeachers } from '../../redux/teachersSlice';
 import { fetchParents } from '../../redux/parentSlice';
 import { fetchStudents } from '../../redux/studentsSlice';
 import { fetchEmployees } from '../../redux/adminEmployee';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 const AdminQueryForm = () => {
   const dispatch = useDispatch();
+    const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(fetchTeachers());
@@ -148,7 +150,12 @@ const handleSubmit = async (e) => {
         </div>
         <div className="flex gap-3">
           <button className="bg-[#146192] text-white px-6 py-2 rounded-md">Queries</button>
-          <button className="border border-[#146192] text-[#146192] px-6 py-2 rounded-md">Connect</button>
+           <button
+              className="border border-blue-500 text-blue-600 px-4 py-1 rounded hover:bg-blue-100 transition text-sm"
+              onClick={() => navigate('/adminconnectpage')}
+            >
+              Connect
+            </button>
         </div>
       </div>
 

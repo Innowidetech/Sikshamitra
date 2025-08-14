@@ -1,8 +1,6 @@
-// ExamPage.js
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import html2pdf from "html2pdf.js";
-import { X } from "lucide-react";
 import { fetchExams } from "../../redux/curriculum";
 
 const ExamPage = () => {
@@ -36,19 +34,20 @@ const ExamPage = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto mt-16 mb-16">
-        <div>
-          <h1 className="text-xl font-light text-black xl:text-[30px]">
-            Curriculum
-          </h1>
-          <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
-          <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {">"}
-            <span className="xl:text-[17px] text-lg font-medium text-[#146192]">
-              Exams
-            </span>
-          </h1>
-        </div>
-      <h2 className="text-2xl font-semibold text-[#146192] mb-6 text-center">Exam Timetable</h2>
+      <div>
+        <h1 className="text-xl font-light text-black xl:text-[30px]">Curriculum</h1>
+        <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
+        <h1 className="mt-2">
+          <span className="xl:text-[17px] text-xl">Home</span> {">"}{" "}
+          <span className="xl:text-[17px] text-lg font-medium text-[#146192]">
+            Exams
+          </span>
+        </h1>
+      </div>
+
+      <h2 className="text-2xl font-semibold text-[#146192] mb-6 text-center">
+        Exam Timetable
+      </h2>
 
       <div className="mb-6 flex justify-center">
         <label className="mr-2 text-sm self-center">Class - </label>
@@ -66,7 +65,8 @@ const ExamPage = () => {
         </select>
       </div>
 
-      <div ref={contentRef} className="overflow-x-auto border rounded-md p-4 bg-white">
+      {/* Desktop Table View */}
+      <div ref={contentRef} className="overflow-x-auto border rounded-md p-4 bg-white hidden lg:block">
         {filteredExams.length === 0 ? (
           <p className="text-center text-gray-500">No exams found for selected class.</p>
         ) : (
@@ -99,7 +99,39 @@ const ExamPage = () => {
         )}
       </div>
 
-      <div className="flex justify-center mt-4">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-6">
+        {filteredExams.length === 0 ? (
+          <p className="text-center text-gray-500">No exams found for selected class.</p>
+        ) : (
+          filteredExams.map((schedule) => (
+            <div key={schedule._id} className="space-y-4">
+              {schedule.exam.map((e) => (
+                <div
+                  key={e._id}
+                  className="border border-gray-300 rounded-lg shadow-sm p-4 bg-white"
+                >
+                  <p className="text-sm mb-1">
+                    <span className="font-semibold">📅 Date:</span>{" "}
+                    {new Date(e.date).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm mb-1">
+                    <span className="font-semibold">📚 Subject:</span> {e.subject}
+                  </p>
+                  <p className="text-sm mb-1">
+                    <span className="font-semibold">⏰ Timing:</span> 10:00 am - 1:00 pm
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-semibold">📝 Syllabus:</span> {e.syllabus}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="flex justify-center mt-6">
         <button
           onClick={handleDownload}
           className="bg-[#146192] hover:bg-[#0f4c7a] text-white px-6 py-2 rounded-md"
@@ -112,3 +144,4 @@ const ExamPage = () => {
 };
 
 export default ExamPage;
+ 

@@ -18,6 +18,9 @@ import {
 } from '../../redux/accountSlice';
 import Header from './layout/Header';
 import { Pie, Line } from 'react-chartjs-2';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import {
   Chart,
   ArcElement,
@@ -129,31 +132,36 @@ const updatedIncomeHistoryById = useSelector(
     }));
   };
 
-  const handleAddExpense = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(postExpense(expenseFormData)).unwrap();
-      alert('Expense added successfully');
-      setExpenseFormData({ title: '', amount: '', date: '', category: '' });
-      setIsAddModalOpen(false);
-    } catch (err) {
-      console.error('Failed to add expense:', err);
-      alert('Failed to add expense');
-    }
-  };
 
-  const handleAddIncome = async (e) => {
-    e.preventDefault();
-    try {
-      await dispatch(postIncome(incomeFormData)).unwrap();
-      alert('Income added successfully');
-      setIncomeFormData({ title: '', amount: '', date: '', category: '' });
-      setIsIncomeModalOpen(false);
-    } catch (err) {
-      console.error('Failed to add income:', err);
-      alert('Failed to add income');
-    }
-  };
+const handleAddExpense = async (e) => {
+  e.preventDefault();
+  try {
+    await dispatch(postExpense(expenseFormData)).unwrap();
+    toast.success('Expense added successfully'); // ✅ Success toast
+    setExpenseFormData({ title: '', amount: '', date: '', category: '' });
+    setIsAddModalOpen(false);
+  } catch (err) {
+    console.error('Failed to add expense:', err);
+    toast.error('Failed to add expense'); // ❌ Error toast
+  }
+};
+
+
+ const handleAddIncome = async (e) => {
+  e.preventDefault();
+  try {
+    await dispatch(postIncome(incomeFormData)).unwrap();
+    toast.success("Income added successfully!");  // ✅ Success notification
+
+    // Reset form and close modal
+    setIncomeFormData({ title: '', amount: '', date: '', category: '' });
+    setIsIncomeModalOpen(false);
+  } catch (err) {
+    console.error("Failed to add income:", err);
+    toast.error("Failed to add income");  // ❌ Error notification
+  }
+};
+
 
   const openEditModal = (request) => {
     setSelectedRequest(request);
@@ -228,11 +236,16 @@ const cards = [
 
 
   const handleDeleteExpense = async (row) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
-      await dispatch(deleteExpense(row._id));
+  if (window.confirm('Are you sure you want to delete this expense?')) {
+    try {
+      await dispatch(deleteExpense(row._id)).unwrap();
+      toast.success('Expense deleted successfully'); // ✅ Success toast
+    } catch (err) {
+      console.error('Failed to delete expense:', err);
+      toast.error('Failed to delete expense'); // ❌ Error toast
     }
-  };
-
+  }
+};
   const accountsArray = Array.isArray(accounts) ? accounts : [];
 
   if (status === 'loading') return <div>Loading...</div>;
@@ -415,6 +428,7 @@ const allRevenueData = [
       <div className="flex justify-between gap-4">
         <button onClick={() => setIsIncomeModalOpen(true)} className="bg-[#146192] text-white px-4 py-2 rounded">+Add Income</button>
 
+<ToastContainer position="top-right" autoClose={3000} />
 
         {/* Modal */}
         {/* Modal */}
@@ -626,6 +640,7 @@ const allRevenueData = [
           </div>
         )}
 
+      <ToastContainer position="top-right" autoClose={3000} />
 
         <button className="bg-[#146192] text-white px-4 py-2 rounded" onClick={() => setIsAddModalOpen(true)}>
           + Add Expense
