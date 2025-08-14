@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Sidebar from './Sidebar';
-import StudentForm from './StudentForm';
+import StudentForm from '../StudentForm';
 import EducationForm from './EducationForm';
 import ParentForm from './ParentForm';
-import PaymentForm from './PaymentForm';
+import PaymentForm from '../PaymentForm';
 import DownloadSection from './DownloadSection';
 
 

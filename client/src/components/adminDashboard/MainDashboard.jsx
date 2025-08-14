@@ -36,6 +36,8 @@ import Track from './Track';
 import VehicleView from './VehicleView';
 import AddVehicle from './AddVehicle';
 import QuestionPaperView from './QuestionPaperView'; // ✅ Keep this too
+import ApplicantsDetails from './ApplicantsDetails';
+
 
 const MainDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -83,6 +85,8 @@ const MainDashboard = () => {
       setActiveTab('connectqueries');
     } else if (location.pathname === '/admin/questionpaperview') {
       setActiveTab('questionpaperview');
+    }  else if (location.pathname.startsWith('/admin/applicantsdetails')) {
+      setActiveTab('applicantsdetails');
     } else if (location.pathname.startsWith('/admin/editpaper')) {
       setActiveTab('editpaper');
     }
@@ -141,6 +145,9 @@ const MainDashboard = () => {
         break;
       case 'questionpaperview':
         navigate('/admin/questionpaperview');
+        break;
+         case 'applicantsdetails':
+        navigate('/admin/applicantsdetails');
         break;
       case 'editpaper':
         navigate('/admin/editpaper');
@@ -230,6 +237,8 @@ const MainDashboard = () => {
         return <Classes />;
       case 'questionpaperview':
         return <QuestionPaperView setActiveTab={setActiveTab} />;
+         case 'applicantsdetails':
+        return <ApplicantsDetails setActiveTab={setActiveTab} />;
       case 'editpaper':
         return <EditPaper setActiveTab={setActiveTab} />;
       case 'employee':

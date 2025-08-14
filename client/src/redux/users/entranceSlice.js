@@ -1,23 +1,25 @@
-// features/entrance/entranceSlice.js
+// src/redux/users/entranceSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const BASE_URL = 'https://sikshamitra.onrender.com/api/user';
-
-// === GET Schools ===
+// === GET Schools List ===
 export const fetchSchools = createAsyncThunk(
   'entrance/fetchSchools',
   async (_, thunkAPI) => {
     try {
-      const response = await axios.get(`${BASE_URL}/schools`);
+      const response = await axios.get(
+        'https://sikshamitra.onrender.com/api/user/schools'
+      );
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch schools'
+      );
     }
   }
 );
 
-// === POST Entrance Exam Application using FormData ===
+// === POST Entrance Exam Application ===
 export const applyForEntranceExam = createAsyncThunk(
   'entrance/applyForEntranceExam',
   async (formDataPayload, thunkAPI) => {
@@ -25,9 +27,9 @@ export const applyForEntranceExam = createAsyncThunk(
       const formData = new FormData();
 
       // Basic Info
-      formData.append('academicYear', formDataPayload.academicYear);
-      formData.append('classApplying', formDataPayload.classApplying);
-      formData.append('school', formDataPayload.school); // Must be name, not ID
+      formData.append('academicYear', formDataPayload.academicYear || '');
+      formData.append('classApplying', formDataPayload.classApplying || '');
+      formData.append('school', formDataPayload.school || '');
 
       // Student Details
       const student = formDataPayload.studentDetails || {};
@@ -39,6 +41,7 @@ export const applyForEntranceExam = createAsyncThunk(
       formData.append('studentDetails[phoneNumber]', student.phoneNumber || '');
       formData.append('studentDetails[gender]', student.gender || '');
 
+      // ✅ Photo is required and must be a File
       if (student.photo instanceof File) {
         formData.append('photo', student.photo);
       } else {
@@ -52,10 +55,27 @@ export const applyForEntranceExam = createAsyncThunk(
       formData.append('previousSchoolDetails[board]', prev.board || '');
       formData.append('previousSchoolDetails[schoolBoard]', prev.schoolBoard || '');
       formData.append('previousSchoolDetails[percentage]', prev.percentage || '');
+      formData.append('previousSchoolDetails[schoolAddress]', prev.schoolAddress || '');
+      formData.append('previousSchoolDetails[startDate]', prev.startDate || '');
+      formData.append('previousSchoolDetails[endDate]', prev.endDate || '');
 
-      const response = await axios.post(`${BASE_URL}/entranceExam`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      // ✅ Multiple documents upload
+      if (Array.isArray(prev.documents)) {
+        prev.documents.forEach((file) => {
+          if (file instanceof File) {
+            formData.append('previousSchoolDetails[documents]', file);
+          }
+        });
+      }
+
+      // Send request
+      const response = await axios.post(
+        'https://sikshamitra.onrender.com/api/user/entranceExam',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
 
       return response.data;
     } catch (error) {
@@ -66,19 +86,22 @@ export const applyForEntranceExam = createAsyncThunk(
   }
 );
 
-// === SLICE ===
 const entranceSlice = createSlice({
   name: 'entrance',
   initialState: {
     schools: [],
     isLoadingSchools: false,
     schoolError: null,
-
-    applicationStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+    applicationStatus: null,
     applicationError: null,
-    applicationResponse: null,
+    isSubmitting: false,
   },
-  reducers: {},
+  reducers: {
+    resetApplicationStatus: (state) => {
+      state.applicationStatus = null;
+      state.applicationError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch Schools
@@ -97,19 +120,19 @@ const entranceSlice = createSlice({
 
       // Apply for Entrance Exam
       .addCase(applyForEntranceExam.pending, (state) => {
-        state.applicationStatus = 'loading';
+        state.isSubmitting = true;
         state.applicationError = null;
-        state.applicationResponse = null;
       })
       .addCase(applyForEntranceExam.fulfilled, (state, action) => {
-        state.applicationStatus = 'succeeded';
-        state.applicationResponse = action.payload;
+        state.isSubmitting = false;
+        state.applicationStatus = action.payload;
       })
       .addCase(applyForEntranceExam.rejected, (state, action) => {
-        state.applicationStatus = 'failed';
+        state.isSubmitting = false;
         state.applicationError = action.payload;
       });
   },
 });
 
+export const { resetApplicationStatus } = entranceSlice.actions;
 export default entranceSlice.reducer;

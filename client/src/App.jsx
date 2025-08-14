@@ -15,7 +15,10 @@ import StudentOnlinePortal from './studentdashboard/StudentOnlinePortal';
 import Login from './Auth/Login';
 import ForgotPassword from './Auth/ForgotPassword';
 import EntranceExam from './studentdashboard/EntranceExam';
-
+import LoginExam from "./Auth/LoginExam";
+import OnlineExam from "./OnlineExam";
+import StudentForm from "./StudentForm";
+import PaymentForm from "./PaymentForm";
 // Dashboards
 import MainDashboard from './components/adminDashboard/MainDashboard';
 import ParentMainDashboard from './components/parentDashboard/ParentMainDashboard';
@@ -118,7 +121,7 @@ function App() {
     "/admin",
     "/parents",
     "/teacher",
-    "/student",
+    "/student/",
     "/adminstaff",
     "/meeting",
     "/superadminstaff",
@@ -136,7 +139,11 @@ function App() {
     "/driver",
     "/host",
     "/test",
-    "/forgot-password"
+    "/forgot-password",
+    "login-exam",
+    "/online-exam",
+    
+    
   ];
 
   const isNoNavbarFooter = noNavbarFooterPaths.some((path) =>
@@ -158,6 +165,12 @@ function App() {
         <Route path="/applyonline" element={<StudentOnlinePortal />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/entranceexam" element={<EntranceExam />} />
+          <Route path="/student-form" element={<StudentForm/>}/>
+           <Route path="/payment-form" element={<PaymentForm/>}/>
+   
+        <Route path="/login-exam" element={<LoginExam/>}/>
+         <Route path="/online-exam" element={<OnlineExam/>}/>
+   
 
         {/* Parent Meeting */}
         <Route path="/meeting" element={<Meeting />} />

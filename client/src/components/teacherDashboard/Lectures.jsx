@@ -12,24 +12,24 @@ function Lectures({ handleTabChange }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // ✅ Create Online Lecture Modal
   const [editableTimetable, setEditableTimetable] = useState({});
- const handleDeletePeriod = async (periodId, day) => {
-  try {
-    const resultAction = await dispatch(deleteLecturePeriod(periodId));
-    if (deleteLecturePeriod.fulfilled.match(resultAction)) {
-      // Remove from editableTimetable UI state
-      setEditableTimetable((prev) => ({
-        ...prev,
-        [day]: (prev[day] || []).filter((item) => item._id !== periodId),
-      }));
-      toast.success('Period deleted successfully');
-    } else {
-      toast.error(resultAction.payload || 'Failed to delete period');
+  const handleDeletePeriod = async (periodId, day) => {
+    try {
+      const resultAction = await dispatch(deleteLecturePeriod(periodId));
+      if (deleteLecturePeriod.fulfilled.match(resultAction)) {
+        // Remove from editableTimetable UI state
+        setEditableTimetable((prev) => ({
+          ...prev,
+          [day]: (prev[day] || []).filter((item) => item._id !== periodId),
+        }));
+        toast.success('Period deleted successfully');
+      } else {
+        toast.error(resultAction.payload || 'Failed to delete period');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('An error occurred while deleting');
     }
-  } catch (err) {
-    console.error(err);
-    toast.error('An error occurred while deleting');
-  }
-};
+  };
   const [lectureForm, setLectureForm] = useState({
     subject: '',
     topic: '',
@@ -245,7 +245,7 @@ function Lectures({ handleTabChange }) {
 
   return (
     <>
-      <div className="flex justify-between items-center mx-8 md:ml-72 mt-20">
+      <div className="flex justify-between items-center mx-2 md:ml-72 mt-20">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Lectures</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
@@ -260,42 +260,45 @@ function Lectures({ handleTabChange }) {
       </div>
 
       {/* Timetable Data */}
-      <div className="mx-8 mt-6 md:ml-72">
+      <div className="mx-2 mt-6 md:ml-72">
         {Object.keys(teacherTimetable).length === 0 && Object.keys(classTimetable).length === 0 ? (
           <span className="text-lg font-semibold text-gray-600">No timetable data available</span>
         ) : (
           <>
-            {/* Class Timetable - Desktop */}
+            {/* Class Timetable - Desktop & Mobile */}
             {Object.keys(classTimetable).length > 0 && (
-              <div className=" justify-center mt-12 mx-8">
+              <div className="justify-center mt-12 mx-2 md:mx-8">
                 <div className="w-full p-6">
-                  {/* Buttons aligned left */}
-                  <div className="w-full p-6 flex justify-end space-x-4 mb-6">
-                    <div className="w-full p-6 flex justify-end space-x-4 mb-6">
-                      <button
-                        onClick={openCreateModal}
-                        className="bg-[#146192] text-white px-4 py-2 rounded-md text-sm"
-                      >
-                        Create Online Lecture
-                      </button>
+                  {/* Buttons aligned right */}
+                  <div className="flex justify-end space-x-4 mb-6">
+                    <button
+                      onClick={openCreateModal}
+                      className="bg-[#146192] text-white px-4 py-2 rounded-md text-sm"
+                    >
+                      Create Online Lecture
+                    </button>
 
-                      <button
-                        onClick={() => handleTabChange('scheduledlec')}
-                        className="bg-[#146192] text-white px-4 py-1 rounded-md text-sm"
-                      >
-                        Scheduled Lecture
-                      </button>
-
-                    </div>
+                    <button
+                      onClick={() => handleTabChange('scheduledlec')}
+                      className="bg-[#146192] text-white px-4 py-1 rounded-md text-sm"
+                    >
+                      Scheduled Lecture
+                    </button>
                   </div>
+
                   <h2 className="text-3xl font-bold text-center mb-6 text-[#146192]">Class Timetable</h2>
-                  <div className="overflow-hidden p-4 border-2 border-[#146192] rounded-lg">
+
+                  {/* Table for md+ */}
+                  <div className="hidden md:block overflow-hidden p-4 border-2 border-[#146192] rounded-lg">
                     <table className="table-auto w-full text-center border-collapse">
                       <thead>
                         <tr className="text-black">
                           <th className="border-b-2 border-[#146192] py-2 bg-[#1982C438]">Day</th>
                           {timeSlots.map((slot) => (
-                            <th key={slot} className="border-b-2 border-l-2 border-[#146192] py-2 bg-[#1982C438]">
+                            <th
+                              key={slot}
+                              className="border-b-2 border-l-2 border-[#146192] py-2 bg-[#1982C438]"
+                            >
                               {slot}
                             </th>
                           ))}
@@ -308,20 +311,27 @@ function Lectures({ handleTabChange }) {
                             {timeSlots.map((slot) => {
                               if (slot === lunchBreakTime) {
                                 return (
-                                  <td key={slot} className="border-b border-l-2 border-[#146192] py-2 bg-[#FF0707DB]">
+                                  <td
+                                    key={slot}
+                                    className="border-b border-l-2 border-[#146192] py-2 bg-[#FF0707DB]"
+                                  >
                                     <span className="text-xl font-bold">Lunch Break</span>
                                   </td>
                                 );
                               }
-                              const lecture = lectures.find(item => getTimeSlot(item.startTime) === slot);
+                              const lecture = lectures.find((item) => getTimeSlot(item.startTime) === slot);
                               return (
                                 <td key={slot} className="border-b border-l-2 border-[#146192] py-2">
                                   {lecture ? (
                                     <>
-                                      <span>{lecture.subject}</span><br />
-                                      <small>({lecture.teacher.profile.fullname})</small><br />
+                                      <span>{lecture.subject}</span>
+                                      <br />
+                                      <small>({lecture.teacher.profile.fullname})</small>
+                                      <br />
                                     </>
-                                  ) : '-'}
+                                  ) : (
+                                    '-'
+                                  )}
                                 </td>
                               );
                             })}
@@ -330,6 +340,44 @@ function Lectures({ handleTabChange }) {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Mobile stacked view */}
+                  <div className="md:hidden space-y-6">
+                    {Object.entries(classTimetable).map(([day, lectures]) => (
+                      <div key={day} className="border-2 border-[#146192] rounded-lg p-4 bg-gray-50">
+                        <h3 className="text-xl font-semibold text-[#146192] mb-4 capitalize">{day}</h3>
+                        {timeSlots.map((slot) => {
+                          if (slot === lunchBreakTime) {
+                            return (
+                              <div
+                                key={slot}
+                                className="mb-4 p-3 bg-[#FF0707DB] rounded text-center font-bold text-white"
+                              >
+                                Lunch Break
+                              </div>
+                            );
+                          }
+                          const lecture = lectures.find((item) => getTimeSlot(item.startTime) === slot);
+                          return (
+                            <div key={slot} className="mb-4 p-3 border rounded border-[#146192]">
+                              <div className="font-semibold">{slot}</div>
+                              {lecture ? (
+                                <>
+                                  <div>{lecture.subject}</div>
+                                  <div className="text-sm text-gray-700">
+                                    ({lecture.teacher.profile.fullname})
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="text-gray-400">-</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
                   {/* Download Class Timetable PDF Button */}
                   <div className="flex justify-center mt-6">
                     <button
@@ -342,64 +390,118 @@ function Lectures({ handleTabChange }) {
                 </div>
               </div>
             )}
-            {/* Teacher Timetable - Desktop */}
+
+            {/* Teacher Timetable - Desktop & Mobile */}
             {Object.keys(teacherTimetable).length > 0 && (
-              <div className="justify-center mt-12 mx-8">
+              <div className="justify-center mt-12 mx-2 md:mx-8">
                 <div className="w-full p-6">
-                  {/* Teacher Timetable */}
                   <h2 className="text-3xl font-bold text-center mb-6 text-[#146192]">Teacher Timetable</h2>
-                  <div className="overflow-hidden p-4 border-2 border-[#146192] rounded-lg">
+
+                  {/* Table for md+ */}
+                  <div className="hidden md:block overflow-hidden p-4 border-2 border-[#146192] rounded-lg">
                     <table className="table-auto w-full text-center border-collapse">
                       <thead>
                         <tr className="text-black">
                           <th className="border-b-2 border-[#146192] py-2 bg-[#1982C438]">Day</th>
                           {timeSlots.map((slot) => (
-                            <th key={slot} className="border-b-2 border-l-2 border-[#146192] py-2 bg-[#1982C438]">
+                            <th
+                              key={slot}
+                              className="border-b-2 border-l-2 border-[#146192] py-2 bg-[#1982C438]"
+                            >
                               {slot}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-
                         {Object.entries(teacherTimetable).map(([day, lectures]) => (
                           <tr key={day} className="bg-gray-50">
                             <td className="border-b border-[#146192] py-2 capitalize">{day}</td>
                             {timeSlots.map((slot) => {
                               if (slot === lunchBreakTime) {
                                 return (
-                                  <td key={slot} className="border-b border-l-2 border-[#146192] py-2 bg-[#FF0707DB]">
+                                  <td
+                                    key={slot}
+                                    className="border-b border-l-2 border-[#146192] py-2 bg-[#FF0707DB]"
+                                  >
                                     <span className="text-xl font-bold">Lunch Break</span>
                                   </td>
                                 );
                               }
-                              const lecture = lectures.find(item => getTimeSlot(item.startTime) === slot);
+                              const lecture = lectures.find((item) => getTimeSlot(item.startTime) === slot);
                               return (
                                 <td key={slot} className="border-b border-l-2 border-[#146192] py-2">
                                   {lecture ? (
                                     <>
-                                      <span>{lecture.class}{lecture.section}</span><br />
-                                      <small>({lecture.subject})</small><br />
-
+                                      <span>
+                                        {lecture.class}
+                                        {lecture.section}
+                                      </span>
+                                      <br />
+                                      <small>({lecture.subject})</small>
+                                      <br />
                                     </>
-                                  ) : '-'}
+                                  ) : (
+                                    '-'
+                                  )}
                                 </td>
                               );
                             })}
                           </tr>
                         ))}
                       </tbody>
-
                     </table>
+
                     <div className="flex justify-center mt-6">
                       <button
                         onClick={openEditModal}
                         className="bg-green-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-green-700"
                       >
-                        {Object.keys(teacherTimetable).length === 0 ? 'Create Teacher Timetable' : 'Edit Teacher Timetable'}
+                        {Object.keys(teacherTimetable).length === 0
+                          ? 'Create Teacher Timetable'
+                          : 'Edit Teacher Timetable'}
                       </button>
                     </div>
                   </div>
+
+                  {/* Mobile stacked view */}
+                  <div className="md:hidden space-y-6">
+                    {Object.entries(teacherTimetable).map(([day, lectures]) => (
+                      <div key={day} className="border-2 border-[#146192] rounded-lg p-4 bg-gray-50">
+                        <h3 className="text-xl font-semibold text-[#146192] mb-4 capitalize">{day}</h3>
+                        {timeSlots.map((slot) => {
+                          if (slot === lunchBreakTime) {
+                            return (
+                              <div
+                                key={slot}
+                                className="mb-4 p-3 bg-[#FF0707DB] rounded text-center font-bold text-white"
+                              >
+                                Lunch Break
+                              </div>
+                            );
+                          }
+                          const lecture = lectures.find((item) => getTimeSlot(item.startTime) === slot);
+                          return (
+                            <div key={slot} className="mb-4 p-3 border rounded border-[#146192]">
+                              <div className="font-semibold">{slot}</div>
+                              {lecture ? (
+                                <>
+                                  <div>
+                                    {lecture.class}
+                                    {lecture.section}
+                                  </div>
+                                  <div className="text-sm text-gray-700">({lecture.subject})</div>
+                                </>
+                              ) : (
+                                <div className="text-gray-400">-</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
                   {/* Download Teacher Timetable PDF Button */}
                   <div className="flex justify-center mt-6">
                     <button
@@ -419,7 +521,9 @@ function Lectures({ handleTabChange }) {
                 <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl">
                   <div className="flex justify-between mb-4">
                     <h2 className="text-xl font-semibold text-blue-800">Create Online Lecture</h2>
-                    <button onClick={closeCreateModal} className="text-gray-600 text-xl font-bold">&times;</button>
+                    <button onClick={closeCreateModal} className="text-gray-600 text-xl font-bold">
+                      &times;
+                    </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
@@ -460,98 +564,104 @@ function Lectures({ handleTabChange }) {
                 </div>
               </div>
             )}
-           {isEditModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-    <div className="bg-white rounded-xl shadow-xl w-full max-w-6xl p-6 max-h-[90vh] overflow-y-auto">
 
-      {/* Header */}
-      <div className="flex justify-between items-center border-b pb-4 mb-6">
-        <h2 className="text-2xl font-semibold">Edit Teacher's Timetable</h2>
-        <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
-      </div>
-
-      {/* Description */}
-      <p className="text-blue-600 font-medium mb-6">Edit and Save Teacher's Timetable details</p>
-
-      {/* Form Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.keys(editableTimetable).map((day) => (
-          <div key={day} className="bg-[#f4fafe] border border-blue-100 rounded-xl p-5">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">{day}</h3>
-
-            {timeSlots.map((slot) => {
-              const lecture = (editableTimetable[day] || []).find(
-                (item) => getTimeSlot(item.startTime) === slot
-              ) || { subject: '', section: '', class: '', startTime: slot.split('-')[0] };
-
-              const periodId = lecture._id;
-
-              return (
-                <div key={slot} className="mb-5">
-                  <div className="flex justify-between items-center text-sm text-blue-700 font-semibold mb-2">
-                    <span>{slot}</span>
-                    {periodId && (
-                      <button
-                        onClick={() => handleDeletePeriod(periodId, day)}
-                        className="text-red-600 hover:underline text-xs"
-                      >
-                        Delete
-                      </button>
-                    )}
+            {isEditModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                <div className="bg-white rounded-xl shadow-xl w-full max-w-6xl p-6 max-h-[90vh] overflow-y-auto">
+                  {/* Header */}
+                  <div className="flex justify-between items-center border-b pb-4 mb-6">
+                    <h2 className="text-2xl font-semibold">Edit Teacher's Timetable</h2>
+                    <button
+                      onClick={closeEditModal}
+                      className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                    >
+                      &times;
+                    </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Subject"
-                      value={lecture.subject}
-                      onChange={(e) => handleInputChange(day, slot, 'subject', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Class"
-                      value={lecture.class}
-                      onChange={(e) => handleInputChange(day, slot, 'class', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Section"
-                      value={lecture.section}
-                      onChange={(e) => handleInputChange(day, slot, 'section', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
+
+                  {/* Description */}
+                  <p className="text-blue-600 font-medium mb-6">Edit and Save Teacher's Timetable details</p>
+
+                  {/* Form Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {Object.keys(editableTimetable).map((day) => (
+                      <div key={day} className="bg-[#f4fafe] border border-blue-100 rounded-xl p-5">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">{day}</h3>
+
+                        {timeSlots.map((slot) => {
+                          const lecture =
+                            (editableTimetable[day] || []).find(
+                              (item) => getTimeSlot(item.startTime) === slot
+                            ) || { subject: '', section: '', class: '', startTime: slot.split('-')[0] };
+
+                          const periodId = lecture._id;
+
+                          return (
+                            <div key={slot} className="mb-5">
+                              <div className="flex justify-between items-center text-sm text-blue-700 font-semibold mb-2">
+                                <span>{slot}</span>
+                                {periodId && (
+                                  <button
+                                    onClick={() => handleDeletePeriod(periodId, day)}
+                                    className="text-red-600 hover:underline text-xs"
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input
+                                  type="text"
+                                  placeholder="Subject"
+                                  value={lecture.subject}
+                                  onChange={(e) => handleInputChange(day, slot, 'subject', e.target.value)}
+                                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Class"
+                                  value={lecture.class}
+                                  onChange={(e) => handleInputChange(day, slot, 'class', e.target.value)}
+                                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Section"
+                                  value={lecture.section}
+                                  onChange={(e) => handleInputChange(day, slot, 'section', e.target.value)}
+                                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="mt-8 flex justify-end space-x-4">
+                    <button
+                      onClick={closeEditModal}
+                      className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={submitEdit}
+                      className="px-6 py-2 rounded-lg bg-blue-700 text-white font-medium hover:bg-blue-800 transition"
+                    >
+                      Save
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* Footer Buttons */}
-      <div className="mt-8 flex justify-end space-x-4">
-        <button
-          onClick={closeEditModal}
-          className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={submitEdit}
-          className="px-6 py-2 rounded-lg bg-blue-700 text-white font-medium hover:bg-blue-800 transition"
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+              </div>
+            )}
           </>
         )}
       </div>
     </>
+
   );
 }
 export default Lectures;

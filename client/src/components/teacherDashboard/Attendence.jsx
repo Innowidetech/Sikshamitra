@@ -133,10 +133,10 @@ function Attendence({ handleTabChange }) {
   // Filter based on searchQuery (only if searchQuery present)
   const filteredByName = searchQuery
     ? allStudentRecords.filter((student) =>
-        student?.student?.studentProfile?.fullname
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase())
-      )
+      student?.student?.studentProfile?.fullname
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    )
     : allStudentRecords;
 
   // Filter by Date
@@ -189,7 +189,8 @@ function Attendence({ handleTabChange }) {
 
   return (
     <>
-      <div className="flex justify-between items-center mx-8 mt-20 md:ml-72">
+      {/* Page Header */}
+      <div className="flex justify-between items-center mx-4 mt-20 md:ml-72">
         <div>
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Attendance</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
@@ -201,8 +202,9 @@ function Attendence({ handleTabChange }) {
         <Header />
       </div>
 
-      <div className="mx-8 mt-10 md:ml-72">
-        {/* Donut Chart and Stats */}
+      {/* Main Content */}
+      <div className="mx-4 mt-10 md:ml-72">
+        {/* Donut Chart and Info */}
         <div className="flex flex-col md:flex-row gap-6 bg-white p-6 shadow-lg border rounded-xl">
           <div className="flex justify-center items-center min-h-[250px]">
             {loading ? (
@@ -221,6 +223,20 @@ function Attendence({ handleTabChange }) {
           </div>
         </div>
 
+        {/* Mark Attendance Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center mt-8 bg-white p-4">
+          <div className="flex items-center gap-3 mb-4 md:mb-0">
+            <FaLink className="text-[#146192] text-xl" />
+            <h2 className="text-lg font-semibold text-gray-800">Class Attendance Student List</h2>
+          </div>
+          <button
+            className="bg-[#146192] text-white px-6 py-3 rounded-lg shadow hover:bg-[#0e4a73] transition duration-300"
+            onClick={() => handleTabChange('markattendance')}
+          >
+            Mark Attendance
+          </button>
+        </div>
+=======
         {/* Mark Attendance Section */}
 <div className="flex flex-col md:flex-row justify-between items-center mt-8 bg-white p-4 rounded-lg shadow w-full">
   <div className="flex items-center gap-3 mb-4 md:mb-0 w-full md:w-auto">
@@ -238,6 +254,7 @@ function Attendence({ handleTabChange }) {
     </button>
   </div>
 </div>
+
 
 {/* Filters */}
 <div className="mt-6 bg-white p-4 rounded-lg shadow border w-full flex flex-col lg:flex-row flex-wrap gap-4">
@@ -301,6 +318,95 @@ function Attendence({ handleTabChange }) {
     </button>
   </div>
 </div>
+
+
+        {/* Table View (Desktop) */}
+        <div className="overflow-x-auto mt-6 hidden md:block">
+          <table className="min-w-full border text-sm text-left">
+            <thead className="bg-[#f5f5f5]">
+              <tr>
+                {[
+                  'S.No', 'Student Name', 'Registration Number', 'Parent Name',
+                  'Parent Mobile No.', 'Student Gender', 'Date', 'Status',
+                ].map((heading) => (
+                  <th key={heading} className="px-4 py-2 border font-medium text-gray-600">{heading}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="px-4 py-2 text-center text-gray-500">Loading...</td>
+                </tr>
+              ) : noData ? (
+                <tr>
+                  <td colSpan="8" className="px-4 py-2 text-center text-gray-500">
+                    No data available for the selected filters.
+                  </td>
+                </tr>
+              ) : (
+                displayData.map((student, index) => (
+                  <tr key={index} className="bg-white border-b">
+                    <td className="px-4 py-2 border">{index + 1}</td>
+                    <td className="px-4 py-2 border">{student.student.studentProfile.fullname}</td>
+                    <td className="px-4 py-2 border">{student.student.studentProfile.registrationNumber}</td>
+                    <td className="px-4 py-2 border">{student.parentProfile.fatherName}</td>
+                    <td className="px-4 py-2 border">{student.parentProfile.fatherPhoneNumber}</td>
+                    <td className="px-4 py-2 border">{student.student.studentProfile.gender}</td>
+                    <td className="px-4 py-2 border">
+                      {student.date ? new Date(student.date).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <span
+                        className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${student.status === 'Present'
+                            ? 'bg-green-500'
+                            : student.status === 'Absent'
+                              ? 'bg-red-500'
+                              : 'bg-yellow-500'
+                          }`}
+                      >
+                        {student.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Card View (Mobile) */}
+        <div className="flex flex-col gap-4 mt-6 md:hidden">
+          {loading ? (
+            <p className="text-center text-gray-500">Loading...</p>
+          ) : noData ? (
+            <p className="text-center text-gray-500">No data available for the selected filters.</p>
+          ) : (
+            displayData.map((student, index) => (
+              <div key={index} className="bg-white rounded-xl shadow border p-4">
+                <div className="mb-2 text-sm text-gray-600 font-medium">#{index + 1}</div>
+                <div className="mb-1"><strong>Name:</strong> {student.student.studentProfile.fullname}</div>
+                <div className="mb-1"><strong>Reg No:</strong> {student.student.studentProfile.registrationNumber}</div>
+                <div className="mb-1"><strong>Parent:</strong> {student.parentProfile.fatherName}</div>
+                <div className="mb-1"><strong>Phone:</strong> {student.parentProfile.fatherPhoneNumber}</div>
+                <div className="mb-1"><strong>Gender:</strong> {student.student.studentProfile.gender}</div>
+                <div className="mb-1"><strong>Date:</strong> {student.date ? new Date(student.date).toLocaleDateString() : 'N/A'}</div>
+                <div className="mt-2">
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-white text-xs font-semibold ${student.status === 'Present'
+                        ? 'bg-green-500'
+                        : student.status === 'Absent'
+                          ? 'bg-red-500'
+                          : 'bg-yellow-500'
+                      }`}
+                  >
+                    {student.status}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
 
 {/* Table - Desktop Only */}
 <div className="overflow-x-auto mt-6 hidden lg:block">
@@ -417,8 +523,10 @@ function Attendence({ handleTabChange }) {
 </div>
 
 
+
       </div>
     </>
+
   );
 }
 

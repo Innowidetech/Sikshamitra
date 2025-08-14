@@ -12,7 +12,6 @@ const AssignmentDetails = ({ assignment }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const assignmentsPerPage = 5;
-  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (assignment?._id) {
@@ -61,7 +60,7 @@ const AssignmentDetails = ({ assignment }) => {
 
   return (
     <div className="flex flex-col mx-4 md:ml-72 mt-20">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-light xl:text-[35px]">Assignments</h1>
           <hr className="mt-2 border-[#146192] w-[180px]" />
@@ -84,8 +83,14 @@ const AssignmentDetails = ({ assignment }) => {
           <DetailRow label="Subject" value={assignmentData.subject} />
           <DetailRow label="Section" value={assignmentData.section} />
           <DetailRow label="Chapter" value={assignmentData.chapter} />
-          <DetailRow label="Start Date" value={new Date(assignmentData.startDate).toLocaleDateString()} />
-          <DetailRow label="End Date" value={new Date(assignmentData.endDate).toLocaleDateString()} />
+          <DetailRow
+            label="Start Date"
+            value={new Date(assignmentData.startDate).toLocaleDateString()}
+          />
+          <DetailRow
+            label="End Date"
+            value={new Date(assignmentData.endDate).toLocaleDateString()}
+          />
           <div className="flex items-center gap-4">
             <p className="text-white font-medium">File:</p>
             {assignmentData.assignment ? (
@@ -102,80 +107,119 @@ const AssignmentDetails = ({ assignment }) => {
         </div>
       </div>
 
-     {/* Submissions */}
-<div className="mt-12 max-w-5xl mx-auto">
-  <div className="flex items-center mb-4">
-    <FaBook className="text-[#146192] text-2xl mr-2" />
-    <h2 className="text-xl font-semibold text-[#146192]">Submitted Assignments</h2>
-  </div>
+      {/* Submissions */}
+      <div className="mt-12 max-w-5xl mx-auto">
+        <div className="flex items-center mb-4">
+          <FaBook className="text-[#146192] text-2xl mr-2" />
+          <h2 className="text-xl font-semibold text-[#146192]">Submitted Assignments</h2>
+        </div>
 
-  {loading && <p className="text-gray-700 mb-4">Loading...</p>}
-  {error && <p className="text-red-500 mb-4">{error}</p>}
+        {loading && <p className="text-gray-700 mb-4">Loading...</p>}
+        {error && <p className="text-red-500 mb-4">{error}</p>}
 
-  <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-[#146192] text-white sm:table-header-group hidden">
-        <tr>
-          <th className="px-4 py-2 text-left text-sm font-semibold">Student ID</th>
-          <th className="px-4 py-2 text-left text-sm font-semibold">Student Name</th>
-          <th className="px-4 py-2 text-left text-sm font-semibold">Submitted On</th>
-          <th className="px-4 py-2 text-left text-sm font-semibold">Download</th>
-        </tr>
-      </thead>
+        {/* Desktop Table */}
+        <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200 hidden md:block">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-[#146192] text-white">
+              <tr>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Student ID</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Student Name</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Submitted On</th>
+                <th className="px-4 py-2 text-left text-sm font-semibold">Download</th>
+              </tr>
+            </thead>
 
-      <tbody className="bg-[#1982C408] divide-y divide-gray-200">
-        {current.length > 0 ? (
-          current.map((sub) => {
-            const profile = sub.studentId?.studentProfile || {};
-            const submittedDate = sub?.submittedDate
-              ? new Date(sub.submittedDate).toLocaleDateString()
-              : 'Not Available';
+            <tbody className="bg-[#1982C408] divide-y divide-gray-200">
+              {current.length > 0 ? (
+                current.map((sub) => {
+                  const profile = sub.studentId?.studentProfile || {};
+                  const submittedDate = sub?.submittedDate
+                    ? new Date(sub.submittedDate).toLocaleDateString()
+                    : 'Not Available';
 
-            return (
-              <tr
-                key={sub._id}
-                className="block sm:table-row border sm:border-0 rounded-lg sm:rounded-none mb-4 sm:mb-0 shadow-sm sm:shadow-none p-4 sm:p-0"
-              >
-                <td className="px-4 py-2 text-sm sm:table-cell block">
-                  <span className="sm:hidden font-semibold text-gray-700">Student ID: </span>
-                  {profile.registrationNumber || 'N/A'}
-                </td>
+                  return (
+                    <tr
+                      key={sub._id}
+                      className="block sm:table-row border sm:border-0 rounded-lg sm:rounded-none mb-4 sm:mb-0 shadow-sm sm:shadow-none p-4 sm:p-0"
+                    >
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Student ID: </span>
+                        {profile.registrationNumber || 'N/A'}
+                      </td>
 
-                <td className="px-4 py-2 text-sm sm:table-cell block">
-                  <span className="sm:hidden font-semibold text-gray-700">Student Name: </span>
-                  {profile.fullname || 'N/A'}
-                </td>
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Student Name: </span>
+                        {profile.fullname || 'N/A'}
+                      </td>
 
-                <td className="px-4 py-2 text-sm sm:table-cell block">
-                  <span className="sm:hidden font-semibold text-gray-700">Submitted On: </span>
-                  {submittedDate}
-                </td>
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Submitted On: </span>
+                        {submittedDate}
+                      </td>
 
-                <td className="px-4 py-2 text-sm sm:table-cell block">
-                  <span className="sm:hidden font-semibold text-gray-700">Download: </span>
+                      <td className="px-4 py-2 text-sm sm:table-cell block">
+                        <span className="sm:hidden font-semibold text-gray-700">Download: </span>
+                        <button
+                          onClick={() => handleDownload(sub.assignmentWork, profile.fullname)}
+                          className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e] mt-2 sm:mt-0"
+                        >
+                          Download
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-4 py-4 text-center text-sm text-gray-500">
+                    No submissions found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {current.length > 0 ? (
+            current.map((sub) => {
+              const profile = sub.studentId?.studentProfile || {};
+              const submittedDate = sub?.submittedDate
+                ? new Date(sub.submittedDate).toLocaleDateString()
+                : 'Not Available';
+
+              return (
+                <div
+                  key={sub._id}
+                  className="border border-gray-300 rounded-lg p-4 shadow flex flex-col gap-2"
+                >
+                  <p>
+                    <span className="font-semibold">Student ID:</span> {profile.registrationNumber || 'N/A'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Student Name:</span> {profile.fullname || 'N/A'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Submitted On:</span> {submittedDate}
+                  </p>
                   <button
                     onClick={() => handleDownload(sub.assignmentWork, profile.fullname)}
-                    className="bg-[#146192] text-white px-3 py-1 rounded-md hover:bg-[#0f4b6e] mt-2 sm:mt-0"
+                    className="bg-[#146192] text-white px-4 py-2 rounded-md hover:bg-[#0f4b6e] mt-2 self-start"
                   >
                     Download
                   </button>
-                </td>
-              </tr>
-            );
-          })
-        ) : (
-          <tr>
-            <td colSpan="4" className="px-4 py-4 text-center text-sm text-gray-500">
-              No submissions found.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-sm text-gray-500">No submissions found.</p>
+          )}
+        </div>
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center mt-4 gap-2">
+          <div className="flex justify-center mt-4 gap-2 flex-wrap">
             {Array.from({ length: totalPages }, (_, idx) => (
               <button
                 key={idx}

@@ -32,34 +32,34 @@ const Transportation = () => {
 
   // Auto update location every 5 seconds
   useEffect(() => {
-  const interval = setInterval(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
-          console.log('Live Coordinates:', latitude, longitude, 'Accuracy:', accuracy);
+    const interval = setInterval(() => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude, accuracy } = position.coords;
+            console.log('Live Coordinates:', latitude, longitude, 'Accuracy:', accuracy);
 
-          // You can add a check here if accuracy is important
-          if (accuracy <= 100) {
-            dispatch(updateVehicleLocation({ lat: latitude, lng: longitude }));
-          } else {
-            console.warn('Location not accurate enough to update:', accuracy);
+            // You can add a check here if accuracy is important
+            if (accuracy <= 100) {
+              dispatch(updateVehicleLocation({ lat: latitude, lng: longitude }));
+            } else {
+              console.warn('Location not accurate enough to update:', accuracy);
+            }
+          },
+          (err) => {
+            console.error('Geolocation error:', err);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
           }
-        },
-        (err) => {
-          console.error('Geolocation error:', err);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    }
-  }, 5000);
+        );
+      }
+    }, 5000);
 
-  return () => clearInterval(interval);
-}, [dispatch]);
+    return () => clearInterval(interval);
+  }, [dispatch]);
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -205,9 +205,10 @@ const Transportation = () => {
         )}
       </div>
 
-      {/* Student Table */}
+      {/* Student Table Responsive */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white text-left shadow-md rounded-lg text-sm">
+        {/* Desktop Table View */}
+        <table className="min-w-full bg-white text-left shadow-md rounded-lg text-sm hidden md:table">
           <thead className="bg-gray-100 text-gray-700 font-medium">
             <tr>
               <th className="py-2 px-4">Student</th>
@@ -217,55 +218,119 @@ const Transportation = () => {
               <th className="py-2 px-4">Location</th>
             </tr>
           </thead>
-         <tbody>
-  {studentDetails?.map((s, i) => (
-    <tr key={i} className="border-t">
-      <td className="py-2 px-4">
-        {s.studentId?.studentProfile?.fullname} <br />
-        <span className="text-gray-500 text-sm">{s.action?.checkInTime || '--'}</span>
-      </td>
-      <td className="py-2 px-4 space-x-1">
-        {!s.action?.checkIn ? (
-          <span className="text-gray-700 font-semibold">
-            {s.action?.checkInTime || '--'}
-          </span>
-        ) : (
-          <button
-            onClick={() => handleStudentAction(s._id, 'checkIn')}
-            className="px-2 py-1 rounded text-white text-sm bg-green-600"
-          >
-            Check-in
-          </button>
-        )}
+          <tbody>
+            {studentDetails?.map((s, i) => (
+              <tr key={i} className="border-t">
+                <td className="py-2 px-4">
+                  {s.studentId?.studentProfile?.fullname} <br />
+                  <span className="text-gray-500 text-sm">{s.action?.checkInTime || '--'}</span>
+                </td>
+                <td className="py-2 px-4 space-x-1">
+                  {!s.action?.checkIn ? (
+                    <span className="text-gray-700 font-semibold">
+                      {s.action?.checkInTime || '--'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleStudentAction(s._id, 'checkIn')}
+                      className="px-2 py-1 rounded text-white text-sm bg-green-600"
+                    >
+                      Check-in
+                    </button>
+                  )}
 
-        <button
-          onClick={() => handleStudentAction(s._id, 'checkOut')}
-          className={`px-2 py-1 rounded text-white text-sm ${
-            s.action?.checkOut ? 'bg-yellow-500' : 'bg-gray-400'
-          }`}
-        >
-          Check-out
-        </button>
+                  <button
+                    onClick={() => handleStudentAction(s._id, 'checkOut')}
+                    className={`px-2 py-1 rounded text-white text-sm ${s.action?.checkOut ? 'bg-yellow-500' : 'bg-gray-400'
+                      }`}
+                  >
+                    Check-out
+                  </button>
 
-        <button
-          onClick={() => handleStudentAction(s._id, 'Absent')}
-          className="px-2 py-1 rounded bg-red-500 text-white text-sm"
-        >
-          Absent
-        </button>
-      </td>
-      <td className="py-2 px-4">
-        ₹{s.totalFee} <br />
-        Paid: ₹{s.amountPaid} <br />
-        Due: ₹{s.amountDue}
-      </td>
-      <td className="py-2 px-4">{s.parent?.fatherPhoneNumber}</td>
-      <td className="py-2 px-4">{s.pickUpLocation}</td>
-    </tr>
-  ))}
-</tbody>
-
+                  <button
+                    onClick={() => handleStudentAction(s._id, 'Absent')}
+                    className="px-2 py-1 rounded bg-red-500 text-white text-sm"
+                  >
+                    Absent
+                  </button>
+                </td>
+                <td className="py-2 px-4">
+                  ₹{s.totalFee} <br />
+                  Paid: ₹{s.amountPaid} <br />
+                  Due: ₹{s.amountDue}
+                </td>
+                <td className="py-2 px-4">{s.parent?.fatherPhoneNumber}</td>
+                <td className="py-2 px-4">{s.pickUpLocation}</td>
+              </tr>
+            ))}
+          </tbody>
         </table>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {studentDetails?.map((s, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+              {[
+                ['Student', (
+                  <>
+                    {s.studentId?.studentProfile?.fullname}
+                    <br />
+                    <span className="text-gray-500 text-sm">
+                      {s.action?.checkInTime || '--'}
+                    </span>
+                  </>
+                )],
+                ['Action', (
+                  <div className="space-x-1">
+                    {!s.action?.checkIn ? (
+                      <span className="text-gray-700 font-semibold">
+                        {s.action?.checkInTime || '--'}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleStudentAction(s._id, 'checkIn')}
+                        className="px-2 py-1 rounded text-white text-sm bg-green-600"
+                      >
+                        Check-in
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleStudentAction(s._id, 'checkOut')}
+                      className={`px-2 py-1 rounded text-white text-sm ${s.action?.checkOut ? 'bg-yellow-500' : 'bg-gray-400'
+                        }`}
+                    >
+                      Check-out
+                    </button>
+
+                    <button
+                      onClick={() => handleStudentAction(s._id, 'Absent')}
+                      className="px-2 py-1 rounded bg-red-500 text-white text-sm"
+                    >
+                      Absent
+                    </button>
+                  </div>
+                )],
+                ['Fee Detail', (
+                  <>
+                    ₹{s.totalFee} <br />
+                    Paid: ₹{s.amountPaid} <br />
+                    Due: ₹{s.amountDue}
+                  </>
+                )],
+                ['Parent No.', s.parent?.fatherPhoneNumber],
+                ['Location', s.pickUpLocation],
+              ].map(([label, value], index) => (
+                <div key={index} className="flex border-b">
+                  <div className="w-1/3 bg-blue-100 text-blue-800 font-medium px-3 py-2 border-r border-gray-300">
+                    {label}
+                  </div>
+                  <div className="w-2/3 px-3 py-2">{value}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

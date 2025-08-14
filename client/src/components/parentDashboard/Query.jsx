@@ -126,9 +126,12 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
 
       <div className="p-4 md:p-6 min-h-screen md:ml-64">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-blue-800">Contact Us for Any Query!</h2>
-            <div className="space-x-2">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-3">
+            <h2 className="text-xl font-bold text-blue-800 text-center md:text-left">
+              Contact Us for Any Query!
+            </h2>
+
+            <div className="flex justify-center md:justify-end gap-2">
               <button
                 className="px-4 py-2 border border-blue-600 text-blue-600 rounded"
                 onClick={() => setActiveTab('queryform')}
@@ -143,11 +146,14 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
               </button>
             </div>
           </div>
+
           <p className="text-sm text-gray-500 mb-6">We are here to help you! How can we help?</p>
 
-          {/* Meetings */}
+          {/* Meetings Section */}
           <h3 className="font-semibold text-gray-700 mb-2">Ongoing / Upcoming Meetings</h3>
-          <div className="overflow-x-auto mb-6">
+
+          {/* Desktop Table View */}
+          <div className="overflow-x-auto mb-6 hidden md:block">
             <table className="w-full text-sm border">
               <thead className="bg-blue-100">
                 <tr>
@@ -160,31 +166,29 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                 </tr>
               </thead>
               <tbody>
-                {connects?.length > 0 ? (
-                  connects.map((connect, idx) => (
-                    <tr key={connect._id} className="text-center">
-                      <td className="border px-3 py-2">{idx + 1}</td>
-                      <td className="border px-3 py-2">{connect.title}</td>
-                      <td className="border px-3 py-2">
-                        {new Date(connect.startDate).toLocaleDateString()}
-                      </td>
-                      <td className="border px-3 py-2">
-                        {connect.startTime} - {connect.endTime}
-                      </td>
-                      <td className="border px-3 py-2 capitalize">
-                        {connect.hostedByName} ({connect.hostedByRole})
-                      </td>
-                      <td className="border px-3 py-2">
-                        <button
-                          onClick={() => handleJoinMeeting(connect)}
-                          className="text-blue-600 underline"
-                        >
-                          Join Meeting
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+                {connects?.length > 0 ? connects.map((connect, idx) => (
+                  <tr key={connect._id} className="text-center">
+                    <td className="border px-3 py-2">{idx + 1}</td>
+                    <td className="border px-3 py-2">{connect.title}</td>
+                    <td className="border px-3 py-2">
+                      {new Date(connect.startDate).toLocaleDateString()}
+                    </td>
+                    <td className="border px-3 py-2">
+                      {connect.startTime} - {connect.endTime}
+                    </td>
+                    <td className="border px-3 py-2 capitalize">
+                      {connect.hostedByName} ({connect.hostedByRole})
+                    </td>
+                    <td className="border px-3 py-2">
+                      <button
+                        onClick={() => handleJoinMeeting(connect)}
+                        className="text-blue-600 underline"
+                      >
+                        Join Meeting
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
                   <tr>
                     <td colSpan="6" className="text-center py-4 text-gray-500">
                       No upcoming meetings found.
@@ -195,9 +199,42 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 mb-6">
+            {connects?.length > 0 ? connects.map((connect, idx) => (
+              <div key={connect._id} className="bg-white rounded-lg shadow-md">
+                {[
+                  ['Meeting Title', connect.title],
+                  ['Date', new Date(connect.startDate).toLocaleDateString()],
+                  ['Time', `${connect.startTime} - ${connect.endTime}`],
+                  ['Hosted By', `${connect.hostedByName} (${connect.hostedByRole})`],
+                  ['Action', (
+                    <button
+                      onClick={() => handleJoinMeeting(connect)}
+                      className="text-blue-600 underline"
+                    >
+                      Join Meeting
+                    </button>
+                  )]
+                ].map(([label, value], i) => (
+                  <div key={i} className="flex border-b">
+                    <div className="w-1/3  bg-[#146192] text-white font-medium px-3 py-2 border-r">
+                      {label}
+                    </div>
+                    <div className="w-2/3 px-3 py-2">{value}</div>
+                  </div>
+                ))}
+              </div>
+            )) : (
+              <div className="text-center text-gray-500">No upcoming meetings found.</div>
+            )}
+          </div>
+
           {/* Received Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Received Queries</h3>
-          <div className="overflow-x-auto mb-6">
+
+          {/* Desktop View */}
+          <div className="overflow-x-auto mb-6 hidden md:block">
             <table className="w-full text-sm border">
               <thead className="bg-blue-100">
                 <tr>
@@ -231,9 +268,40 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
             </table>
           </div>
 
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4 mb-6">
+            {received.map((query, idx) => (
+              <div key={query._id} className="bg-white rounded-lg shadow-md">
+                {[
+                  ['Name', query.name],
+                  ['Role', query.createdByRole],
+                  ['Contact', query.contact],
+                  ['Email', query.email],
+                  ['Action', (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      onClick={() => setActiveTab('replypage', query._id)}
+                    >
+                      Reply
+                    </button>
+                  )]
+                ].map(([label, value], i) => (
+                  <div key={i} className="flex border-b">
+                    <div className="w-1/3  bg-[#146192] text-white font-medium px-3 py-2 border-r">
+                      {label}
+                    </div>
+                    <div className="w-2/3 px-3 py-2">{value}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
           {/* Sent Queries */}
           <h3 className="font-semibold text-gray-700 mb-2">Queries Sent by Parent</h3>
-          <div className="overflow-x-auto">
+
+          {/* Desktop View */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm border">
               <thead className="bg-blue-100">
                 <tr>
@@ -267,6 +335,36 @@ const Query = ({ setActiveTab, setSelectedQueryId }) => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            {sent.map((query, idx) => (
+              <div key={query._id} className="bg-white rounded-lg shadow-md">
+                {[
+                  ['Name', query.name],
+                  ['Contact', query.contact],
+                  ['Email', query.email],
+                  ['Sent To', query.sendToName],
+                  ['Role', query.sendToRole],
+                  ['Action', (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                      onClick={() => setActiveTab('replypage', query._id)}
+                    >
+                      View
+                    </button>
+                  )]
+                ].map(([label, value], i) => (
+                  <div key={i} className="flex border-b">
+                    <div className="w-1/3  bg-[#146192] text-white font-medium px-3 py-2 border-r">
+                      {label}
+                    </div>
+                    <div className="w-2/3 px-3 py-2">{value}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
 
         </div>

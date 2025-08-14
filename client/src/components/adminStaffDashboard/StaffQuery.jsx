@@ -17,7 +17,7 @@ const StaffQuery = ({ onSendQuery, onReplyView }) => {
     dispatch(fetchStaffQueries());
   }, [dispatch]);
 
-  
+
 
   return (
     <div className="bg-[#f3f9fb] min-h-screen">
@@ -57,8 +57,11 @@ const StaffQuery = ({ onSendQuery, onReplyView }) => {
           </div>
 
           {/* Received Queries Table */}
+          {/* Received Queries */}
           <h3 className="text-md font-semibold text-gray-800 mb-3">Received Queries</h3>
-          <div className="overflow-x-auto mb-6">
+
+          {/* Desktop Table */}
+          <div className="overflow-x-auto mb-6 hidden md:block">
             {queryLoading ? (
               <p className="text-gray-500">Loading queries...</p>
             ) : queryError ? (
@@ -108,9 +111,49 @@ const StaffQuery = ({ onSendQuery, onReplyView }) => {
             )}
           </div>
 
-          {/* Sent Queries Table */}
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 mb-6">
+            {queriesReceived.length > 0 ? (
+              queriesReceived.map((query, index) => (
+                <div key={query._id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                  {[
+                    { label: "S.NO", value: index + 1 },
+                    { label: "Name", value: query.name },
+                    { label: "Role", value: query.createdByRole },
+                    { label: "Contact", value: query.contact },
+                    { label: "Email ID", value: query.email },
+                    { label: "School", value: query.schoolName }
+                  ].map((item, i) => (
+                    <div key={i} className="flex border-b last:border-b-0">
+                      <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">{item.label}</div>
+                      <div className="w-[60%] p-2 text-sm">{item.value}</div>
+                    </div>
+                  ))}
+                  <div className="flex">
+                    <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">Action</div>
+                    <div className="w-[60%] p-2 text-sm">
+                      <button
+                        onClick={() => onReplyView({ ...query, type: 'received' })}
+                        className="px-3 py-1 border border-blue-500 text-blue-600 rounded shadow-sm text-sm hover:bg-blue-50 transition w-full"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center p-4 text-gray-500 bg-white rounded-lg shadow-md">
+                No received queries found.
+              </div>
+            )}
+          </div>
+
+          {/* Sent Queries */}
           <h3 className="text-md font-semibold text-gray-800 mb-3">Sent Queries</h3>
-          <div className="overflow-x-auto">
+
+          {/* Desktop Table */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full border text-sm text-left text-gray-800">
               <thead className="bg-[#01497c] text-white">
                 <tr>
@@ -152,6 +195,46 @@ const StaffQuery = ({ onSendQuery, onReplyView }) => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {queriesSent.length > 0 ? (
+              queriesSent.map((query, index) => (
+                <div key={query._id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+                  {[
+                    { label: "S.NO", value: index + 1 },
+                    { label: "Name", value: query.name },
+                    { label: "Contact", value: query.contact },
+                    { label: "Email ID", value: query.email },
+                    { label: "Sent To", value: query.sendToName || '-' },
+                    { label: "To Role", value: query.sendToRole || '-' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex border-b last:border-b-0">
+                      <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">{item.label}</div>
+                      <div className="w-[60%] p-2 text-sm">{item.value}</div>
+                    </div>
+                  ))}
+                  <div className="flex">
+                    <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">Action</div>
+                    <div className="w-[60%] p-2 text-sm">
+                      <button
+                        onClick={() => onReplyView({ ...query, type: 'sent' })}
+                        className="px-3 py-1 border border-blue-500 text-blue-600 rounded shadow-sm text-sm hover:bg-blue-50 transition w-full"
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center p-4 text-gray-500 bg-white rounded-lg shadow-md">
+                No sent queries found.
+              </div>
+            )}
+
+
           </div>
         </div>
       </div>

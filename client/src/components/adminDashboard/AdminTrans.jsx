@@ -9,7 +9,12 @@ const  AdminTrans = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); // ✅
 
- const { transDetails, loading, error } = useSelector(state => state.trans);
+
+  const { transDetails, loading, error } = useSelector(
+    (state) => state.trans
+  );
+
+
 
 
   useEffect(() => {

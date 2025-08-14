@@ -305,36 +305,71 @@ const dropTime = routeDetails?.[routeDetails.length - 1]?.timing || 'N/A';
 
         {/* Student Table */}
         <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="font-semibold mb-3">Student Details</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left border border-gray-300">
-              <thead className="bg-[#EAF3FB] text-[#146192]">
-                <tr>
-                  <th className="p-2 border">S.No</th>
-                  <th className="p-2 border">Student Name</th>
-                  <th className="p-2 border">Class</th>
-                  <th className="p-2 border">Section</th>
-                  <th className="p-2 border">Parent Name</th>
-                  <th className="p-2 border">Student Contact</th>
-                  <th className="p-2 border">Pick-up Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students?.map((s, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="p-2 border">{i + 1}</td>
-                    <td className="p-2 border">{s.name}</td>
-                    <td className="p-2 border">{s.class}</td>
-                    <td className="p-2 border">{s.section}</td>
-                    <td className="p-2 border">{s.parentName}</td>
-                    <td className="p-2 border break-all">+91-{s.phone}</td>
-                    <td className="p-2 border break-words">{s.location}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <h3 className="font-semibold mb-3">Student Details</h3>
+
+  {/* Table for medium and larger screens */}
+  <div className="hidden md:block overflow-x-auto">
+    <table className="min-w-full text-sm text-left border border-gray-300">
+      <thead className="bg-[#EAF3FB] text-[#146192]">
+        <tr>
+          <th className="p-2 border">S.No</th>
+          <th className="p-2 border">Student Name</th>
+          <th className="p-2 border">Class</th>
+          <th className="p-2 border">Section</th>
+          <th className="p-2 border">Parent Name</th>
+          <th className="p-2 border">Student Contact</th>
+          <th className="p-2 border">Pick-up Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        {students?.map((s, i) => (
+          <tr key={i} className="border-t">
+            <td className="p-2 border">{i + 1}</td>
+            <td className="p-2 border">{s.name}</td>
+            <td className="p-2 border">{s.class}</td>
+            <td className="p-2 border">{s.section}</td>
+            <td className="p-2 border">{s.parentName}</td>
+            <td className="p-2 border break-all">+91-{s.phone}</td>
+            <td className="p-2 border break-words">{s.location}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* Card layout for small screens */}
+  <div className="md:hidden space-y-4">
+    {students?.map((s, i) => (
+      <div
+        key={i}
+        className="border rounded-lg p-4 shadow-sm bg-[#EAF3FB] text-[#146192]"
+      >
+        <p>
+          <span className="font-semibold">S.No:</span> {i + 1}
+        </p>
+        <p>
+          <span className="font-semibold">Student Name:</span> {s.name}
+        </p>
+        <p>
+          <span className="font-semibold">Class:</span> {s.class}
+        </p>
+        <p>
+          <span className="font-semibold">Section:</span> {s.section}
+        </p>
+        <p>
+          <span className="font-semibold">Parent Name:</span> {s.parentName}
+        </p>
+        <p>
+          <span className="font-semibold">Student Contact:</span> +91-{s.phone}
+        </p>
+        <p>
+          <span className="font-semibold">Pick-up Location:</span> {s.location}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
       </div>
     </>
   );
