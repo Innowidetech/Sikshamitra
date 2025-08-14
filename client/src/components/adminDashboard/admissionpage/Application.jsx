@@ -242,7 +242,6 @@ const Application = () => {
         })
       );
     } else {
-      // offline table untouched
       return filteredAdmissions.length === 0 ? (
         <tr>
           <td colSpan="10" className="text-center p-4">
@@ -263,9 +262,7 @@ const Application = () => {
             <td className="border p-2">{student.schoolName}</td>
             <td className="border p-2">{student.address}</td>
             <td className="border p-2">{student.examId}</td>
-            <td className="border p-2">
-              {student.resultPercentage}%
-            </td>
+            <td className="border p-2">{student.resultPercentage}%</td>
           </tr>
         ))
       );
@@ -293,24 +290,9 @@ const Application = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mx-4 sm:mx-6 lg:mx-8 mb-6">
-        <StatCard
-          icon={<FaUserGraduate />}
-          label="New Admissions"
-          value={total}
-          color="#5C4E8E"
-        />
-        <StatCard
-          icon={<FaMale />}
-          label="Male"
-          value={maleCount}
-          color="#FFC000"
-        />
-        <StatCard
-          icon={<FaFemale />}
-          label="Female"
-          value={femaleCount}
-          color="#3FB56F"
-        />
+        <StatCard icon={<FaUserGraduate />} label="New Admissions" value={total} color="#5C4E8E" />
+        <StatCard icon={<FaMale />} label="Male" value={maleCount} color="#FFC000" />
+        <StatCard icon={<FaFemale />} label="Female" value={femaleCount} color="#3FB56F" />
       </div>
 
       <div className="mx-4 sm:mx-6 lg:mx-8 mb-8">
@@ -321,29 +303,133 @@ const Application = () => {
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setActiveTab('online')}
-              className={`px-3 py-1 sm:px-4 sm:py-2 rounded shadow text-sm sm:text-base transition ${
-                activeTab === 'online'
-                  ? 'bg-[#FF9F00] text-white'
-                  : 'border border-[#FF9F00] text-[#FF9F00] hover:bg-[#FFF4E5]'
-              }`}
+              className={`px-3 py-1 sm:px-4 sm:py-2 rounded shadow text-sm sm:text-base transition ${activeTab === 'online'
+                ? 'bg-[#FF9F00] text-white'
+                : 'border border-[#FF9F00] text-[#FF9F00] hover:bg-[#FFF4E5]'
+                }`}
             >
               Online Application
             </button>
             <button
               onClick={() => setActiveTab('offline')}
-              className={`px-3 py-1 sm:px-4 sm:py-2 rounded shadow text-sm sm:text-base transition ${
-                activeTab === 'offline'
-                  ? 'bg-[#FF9F00] text-white'
-                  : 'border border-[#FF9F00] text-[#FF9F00] hover:bg-[#FFF4E5]'
-              }`}
+              className={`px-3 py-1 sm:px-4 sm:py-2 rounded shadow text-sm sm:text-base transition ${activeTab === 'offline'
+                ? 'bg-[#FF9F00] text-white'
+                : 'border border-[#FF9F00] text-[#FF9F00] hover:bg-[#FFF4E5]'
+                }`}
             >
               Offline Application
             </button>
           </div>
         </div>
 
-        {/* Mobile Cards */}
-        {/* unchanged */}
+      {/* ✅ Mobile Cards */}
+<div className="block md:hidden space-y-4">
+  {filteredAdmissions.length === 0 ? (
+    <p className="text-center">No {activeTab} applications found.</p>
+  ) : (
+    filteredAdmissions.map((student, index) => {
+      const isOnline = activeTab === 'online';
+
+      // Online data structure
+      const sd = isOnline
+        ? student.examApplication?.studentDetails || {}
+        : student;
+
+      const pd = isOnline ? student.parentDetails || {} : {};
+      const ed = isOnline
+        ? student.examApplication?.previousSchoolDetails || {}
+        : {};
+
+      return (
+        <div
+          key={student._id || index}
+          className="bg-white rounded shadow-md p-4 border relative"
+          onClick={() => isOnline && handleRowClick(index)}
+        >
+          <p className="font-semibold text-lg">
+            {isOnline ? `${sd.firstName} ${sd.lastName}` : sd.fullname}
+          </p>
+
+          <p><strong>Class:</strong> {isOnline ? student.examApplication?.classApplying : sd.class}</p>
+          <p><strong>Phone:</strong> {isOnline ? sd.phoneNumber || pd.fatherPhone || pd.motherPhone || 'N/A' : sd.phoneNumber}</p>
+          <p><strong>DOB:</strong> {sd.dob ? new Date(sd.dob).toLocaleDateString() : 'N/A'}</p>
+          <p><strong>Email:</strong> {sd.email}</p>
+
+          {/* ✅ Offline Only */}
+          {!isOnline && (
+            <>
+              <p><strong>School Name:</strong> {sd.schoolName}</p>
+              <p><strong>Address:</strong> {sd.address}</p>
+              <p><strong>Exam ID:</strong> {sd.examId}</p>
+              <p><strong>Exam %:</strong> {sd.resultPercentage}%</p>
+            </>
+          )}
+
+          {/* ✅ Online Only */}
+          {isOnline && (
+            <>
+              <p><strong>Address:</strong> {pd.address || 'N/A'}</p>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreateAccount(student);
+                }}
+                className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 text-xs sm:text-sm"
+              >
+                Create Account
+              </button>
+
+              {expandedRowIndex === index && (
+                <div className="mt-4 bg-gray-50 p-3 rounded">
+                  {sd.photo && (
+                    <img
+                      src={sd.photo}
+                      alt="Student"
+                      className="w-24 h-24 object-cover rounded border mb-2"
+                    />
+                  )}
+                  <p><strong>Birthplace:</strong> {student.studentDetails?.placeOfBirth || 'N/A'}</p>
+                  <p><strong>School Name:</strong> {ed.schoolName || 'N/A'}</p>
+                  <p><strong>City:</strong> {ed.schoolAddress || 'N/A'}</p>
+                  <p><strong>Edu Start:</strong> {ed.startDate ? new Date(ed.startDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Edu End:</strong> {ed.endDate ? new Date(ed.endDate).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Father Name:</strong> {pd.fatherName}</p>
+                  <p><strong>Mother Name:</strong> {pd.motherName}</p>
+                  <p><strong>Exam ID:</strong> {student.studentDetails?.examId}</p>
+                  <p><strong>Exam %:</strong> {student.studentDetails?.resultPercentage || 'N/A'}%</p>
+
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {pd.aadharCard && (
+                      <a
+                        href={pd.aadharCard}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Aadhar PDF
+                      </a>
+                    )}
+                    {pd.panCard && (
+                      <a
+                        href={pd.panCard}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline text-sm"
+                      >
+                        PAN PDF
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      );
+    })
+  )}
+</div>
 
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
@@ -384,11 +470,12 @@ const StatCard = ({ icon, label, value, color }) => (
     className={`bg-white rounded-lg shadow p-4 sm:p-6 flex items-center justify-start sm:justify-around space-x-4 border-l-[6px] sm:border-l-[8px]`}
     style={{ borderColor: color }}
   >
-    <div className="rounded-full text-xl sm:text-2xl">{icon}</div>
-    <hr className="h-14 w-[2px] bg-gray-300 hidden sm:block" />
+    <div className="text-3xl sm:text-4xl text-gray-700">{icon}</div>
     <div>
-      <p className="text-sm">{label}</p>
-      <h3 className="text-lg sm:text-2xl font-medium">{value}</h3>
+      <h4 className="text-sm sm:text-base text-gray-600">{label}</h4>
+      <p className="text-lg sm:text-2xl font-semibold text-gray-800">
+        {value}
+      </p>
     </div>
   </div>
 );
