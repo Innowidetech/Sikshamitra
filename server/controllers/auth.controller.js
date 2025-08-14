@@ -12,7 +12,7 @@ const Teacher = require('../models/Teacher');
 const School = require('../models/School');
 const SchoolStaff = require('../models/SchoolStaff');
 const ApplyForEntranceExam = require('../models/ApplyForEntranceExam');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const EntranceExamResults = require('../models/EntranceExamResults');
 
 
@@ -158,6 +158,7 @@ exports.resetPassword = async (req, res) => {
 };
 
 
+
 exports.loginForEntranceExam = async (req, res) => {
   try {
     const { examId, email } = req.body;
@@ -176,13 +177,18 @@ exports.loginForEntranceExam = async (req, res) => {
     }
 
     const result = await EntranceExamResults.findOne({ schoolId: school._id, applicantId: application._id });
-    if (result) { return res.status(403).json({ message: "You have already attempted the exam." }) }
+    if (result) {
+      return res.status(403).json({ message: "You have already attempted the exam." });
+    }
 
-    const currentTime = moment();
+   
+    const currentTime = moment().tz("Asia/Kolkata");
 
-    const examDateFormatted = moment(application.examDate).format('YYYY-MM-DD');
-    const examStart = moment(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm');
-    const examEnd = moment(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm');
+    const examDateFormatted = moment(application.examDate).tz("Asia/Kolkata").format('YYYY-MM-DD');
+    const examStart = moment.tz(`${examDateFormatted} ${application.startTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata');
+    const examEnd = moment.tz(`${examDateFormatted} ${application.endTime}`, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata');
+
+
 
     if (currentTime.isBefore(examStart)) {
       return res.status(403).json({ message: "The exam has not started yet. Please wait until the scheduled time." });
@@ -202,6 +208,7 @@ exports.loginForEntranceExam = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '3h' }
     );
+
     res.status(200).json({ message: "Login successful for entrance exam.", token });
   } catch (error) {
     console.error("Login error:", error);

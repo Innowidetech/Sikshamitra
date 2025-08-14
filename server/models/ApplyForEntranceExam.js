@@ -58,6 +58,14 @@ const ApplyForEntranceExamSchema = new mongoose.Schema({
             type: Number,
             required: true,
         },
+        startDate: {
+            type: Date,
+            required: true
+        },
+        endDate: {
+            type: Date,
+            required: true
+        },
         board: {
             type: String,
             required: true,
@@ -72,19 +80,28 @@ const ApplyForEntranceExamSchema = new mongoose.Schema({
         percentage: {
             type: String,
             required: true
-        }
+        },
+        schoolAddress: {
+            type: String,
+            required: true
+        },
+        documents: [
+            {
+                url: { type: String }
+            }
+        ],
     },
-    status:{
-        type:String,
-        default:'pending',
-        enum:['pending','sent'],
-        required:true,
+    status: {
+        type: String,
+        default: 'pending',
+        enum: ['pending', 'sent'],
+        required: true,
     },
-    examId:String,
-    examLink:String,
-    examDate:Date,
-    startTime:String,
-    endTime:String
+    examId: String,
+    examLink: String,
+    examDate: Date,
+    startTime: String,
+    endTime: String
 }, { timestamps: true });
 
 module.exports = mongoose.model('ApplyForEntranceExam', ApplyForEntranceExamSchema);
