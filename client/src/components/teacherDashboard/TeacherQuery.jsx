@@ -6,7 +6,7 @@ import {
   updateTeacherConnectStatus,
 } from '../../redux/teacher/teacherQuerySlice';
 import { fetchTeacherProfile } from '../../redux/teacher/aboutSlice';
-import Header from './layout/Header';
+import Header from '../adminDashboard/layout/Header';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { toast, ToastContainer } from 'react-toastify';

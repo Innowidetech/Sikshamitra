@@ -7,7 +7,7 @@ import {
 } from '../../redux/teacher/tcurriculumSlice';
 import classImage from '../../assets/class.png';
 import syllabusImage from '../../assets/Syllabus.jpg';
-import Header from './layout/Header';
+import Header from '../adminDashboard/layout/Header';
 
 function Curriculum({ setActiveTab }) {
   const dispatch = useDispatch();

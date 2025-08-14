@@ -153,43 +153,50 @@ function About() {
       )}
 
       {/* Edit Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-[90%] max-w-xl shadow-xl relative">
-            <h2 className="text-xl font-semibold text-[#285A87] mb-4">Edit Personal Details</h2>
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
-              onClick={() => setShowEditModal(false)}
-            >
-              &times;
-            </button>
-            <form className="space-y-4 grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit}>
-              {['fullname', 'email', 'phoneNumber', 'gender', 'dob', 'pob', 'address'].map((field) => (
-                <div key={field} className="flex flex-col">
-                  <label className="block text-sm font-medium text-gray-700 capitalize">
-                    {field.replace(/([A-Z])/g, ' $1')}
-                  </label>
-                  <input
-                    type={field === 'dob' ? 'date' : 'text'}
-                    name={field}
-                    value={formData[field]}
-                    onChange={handleChange}
-                    className="w-full mt-1 p-2 border rounded-md"
-                  />
-                </div>
-              ))}
-              <div className="col-span-2 flex justify-end gap-4">
-                <button
-                  type="submit"
-                  className="bg-[#146192] text-white px-4 py-2 rounded-lg hover:bg-[#0e4a70]"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+{showEditModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+    <div className="bg-white p-6 rounded-xl w-full max-w-xl shadow-xl relative max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl font-semibold text-[#285A87] mb-4">Edit Personal Details</h2>
+      <button
+        className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl"
+        onClick={() => setShowEditModal(false)}
+      >
+        &times;
+      </button>
+
+      <form
+        className="space-y-4 grid grid-cols-1 sm:grid-cols-2 gap-4"
+        onSubmit={handleSubmit}
+      >
+        {['fullname', 'email', 'phoneNumber', 'gender', 'dob', 'pob', 'address'].map((field) => (
+          <div key={field} className="flex flex-col col-span-1">
+            <label className="block text-sm font-medium text-gray-700 capitalize">
+              {field.replace(/([A-Z])/g, ' $1')}
+            </label>
+            <input
+              type={field === 'dob' ? 'date' : 'text'}
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="mt-1 p-2 border rounded-md w-full"
+            />
           </div>
+        ))}
+
+        <div className="col-span-1 sm:col-span-2 flex justify-end">
+          <button
+            type="submit"
+            className="bg-[#146192] text-white px-4 py-2 rounded-lg hover:bg-[#0e4a70] w-full sm:w-auto"
+          >
+            Save Changes
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
+
+
     </>
   );
 }

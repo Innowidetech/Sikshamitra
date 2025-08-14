@@ -10,7 +10,7 @@ const  AdminTrans = () => {
   const navigate = useNavigate(); // ✅
 
   const { transDetails, loading, error } = useSelector(
-    (state) => state.transportation
+    (state) => state.trans
   );
 
   useEffect(() => {

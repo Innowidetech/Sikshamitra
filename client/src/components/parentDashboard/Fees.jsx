@@ -97,24 +97,24 @@ function Fees() {
         description: purpose,
         order_id: orderData.newExpense.paymentDetails.razorpayOrderId || orderData.newExpense.paymentDetails.razorpayOrderId,
         handler: async (response) => {
-//           console.log("🔍 Sending for verification:", {
-//   razorpayOrderId: response.razorpay_order_id,
-//   razorpayPaymentId: response.razorpay_payment_id,
-//   razorpaySignature: response.razorpay_signature,
-// });
+          //           console.log("🔍 Sending for verification:", {
+          //   razorpayOrderId: response.razorpay_order_id,
+          //   razorpayPaymentId: response.razorpay_payment_id,
+          //   razorpaySignature: response.razorpay_signature,
+          // });
 
-const verifyRes = await fetch('https://sikshamitra.onrender.com/api/parent/verifyFeePayment', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  },
-  body: JSON.stringify({
-    razorpayOrderId: response.razorpay_order_id,
-    razorpayPaymentId: response.razorpay_payment_id,
-    razorpaySignature: response.razorpay_signature,
-  }),
-});
+          const verifyRes = await fetch('https://sikshamitra.onrender.com/api/parent/verifyFeePayment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            }),
+          });
 
           const verifyData = await verifyRes.json();
           if (verifyRes.ok && verifyData.message) {
@@ -302,12 +302,11 @@ const verifyRes = await fetch('https://sikshamitra.onrender.com/api/parent/verif
         ))}
       </div>
 
-      {/* Payment Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4 overflow-y-auto">
           <form
             onSubmit={handlePaymentSubmit}
-            className="bg-white p-6 rounded-lg w-full max-w-md relative shadow-lg"
+            className="bg-white p-6 rounded-lg w-full max-w-md relative shadow-lg max-h-[90vh] overflow-y-auto"
           >
             <button
               type="button"
@@ -395,7 +394,9 @@ const verifyRes = await fetch('https://sikshamitra.onrender.com/api/parent/verif
 
             {purpose === 'Other' && (
               <div>
-                <label className="block mb-2 font-medium text-gray-700">Reason <span className="text-red-600">*</span></label>
+                <label className="block mb-2 font-medium text-gray-700">
+                  Reason <span className="text-red-600">*</span>
+                </label>
                 <input
                   type="text"
                   value={itemName}
@@ -416,7 +417,9 @@ const verifyRes = await fetch('https://sikshamitra.onrender.com/api/parent/verif
           </form>
         </div>
       )}
+
     </div>
+
   );
 }
 

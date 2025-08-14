@@ -10,7 +10,6 @@ import {
   clearResults,
 } from "../../redux/parent/results";
 import Header from "./layout/Header";
-import schoolLogo from '../../../src/assets/img.png';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -42,9 +41,13 @@ function Results() {
       dispatch(fetchStudentResults({ studentName: selectedStudentName }))
         .then((action) => {
           if (action.payload?.result) {
-            const uniqueExamTypes = [...new Set(
-              action.payload.result.map(item => item.exam.examType)
-            )];
+            const uniqueExamTypes = [
+              ...new Set(
+                action.payload.result
+                  .filter(item => item?.exam?.examType)
+                  .map(item => item.exam.examType)
+              ),
+            ];
             setExamTypes(uniqueExamTypes);
             setFilteredResults(action.payload.result);
           }
@@ -60,7 +63,7 @@ function Results() {
     if (results?.result) {
       if (selectedExamType) {
         const filtered = results.result.filter(
-          item => item.exam.examType === selectedExamType
+          item => item.exam?.examType === selectedExamType
         );
         setFilteredResults(filtered);
       } else {
@@ -83,15 +86,14 @@ function Results() {
     if (!resultDiv) return;
 
     const canvas = await html2canvas(resultDiv);
-    const imgData = canvas.toDataURL('image/png');
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Result_${selectedStudentName || 'Student'}_${index + 1}.pdf`);
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Result_${selectedStudentName || "Student"}_${index + 1}.pdf`);
   };
 
   return (
@@ -101,7 +103,7 @@ function Results() {
           <h1 className="text-2xl font-light text-black xl:text-[38px]">Results</h1>
           <hr className="mt-2 border-[#146192] border-[1px] w-[150px]" />
           <h1 className="mt-2">
-            <span className="xl:text-[17px] text-xl">Home</span> {">"}
+            <span className="xl:text-[17px] text-xl">Home</span> {">"}{" "}
             <span className="xl:text-[17px] text-xl font-medium text-[#146192]">Results</span>
           </h1>
         </div>
@@ -157,7 +159,7 @@ function Results() {
                 >
                   <div className="text-center mb-8">
                     <img
-                      src={results.banner}
+                      src={results?.banner}
                       alt="Institute Logo"
                       className="h-36 mx-auto w-full object-contain mb-4"
                     />
@@ -165,13 +167,13 @@ function Results() {
 
                   <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
                     <div className="space-y-2 w-full">
-                      <p className="text-lg"><strong>Name:</strong> {resultItem.student.studentProfile.fullname}</p>
-                      <p className="text-lg"><strong>Class:</strong> {resultItem.class}</p>
-                      <p className="text-lg"><strong>Section:</strong> {resultItem.section}</p>
-                      <p className="text-lg"><strong>Exam Type:</strong> {resultItem.exam.examType}</p>
+                      <p className="text-lg"><strong>Name:</strong> {resultItem?.student?.studentProfile?.fullname}</p>
+                      <p className="text-lg"><strong>Class:</strong> {resultItem?.class}</p>
+                      <p className="text-lg"><strong>Section:</strong> {resultItem?.section}</p>
+                      <p className="text-lg"><strong>Exam Type:</strong> {resultItem?.exam?.examType}</p>
                     </div>
                     <img
-                      src={resultItem.student.studentProfile.photo}
+                      src={resultItem?.student?.studentProfile?.photo}
                       alt="Student"
                       className="w-32 h-40 object-cover border-2 border-gray-300"
                     />
@@ -189,7 +191,7 @@ function Results() {
                         </tr>
                       </thead>
                       <tbody>
-                        {resultItem.result.map((item, idx) => (
+                        {resultItem?.result?.map((item, idx) => (
                           <tr key={idx} className="hover:bg-gray-50">
                             <td className="border border-gray-300 px-4 py-3">{item.subjectCode}</td>
                             <td className="border border-gray-300 px-4 py-3">{item.subject}</td>
@@ -200,13 +202,12 @@ function Results() {
                         ))}
                         <tr className="bg-gray-50 font-semibold">
                           <td colSpan="2" className="border border-gray-300 px-4 py-3 text-right">Total Marks:</td>
-                          <td colSpan="3" className="border border-gray-300 px-4 py-3">{resultItem.total}</td>
+                          <td colSpan="3" className="border border-gray-300 px-4 py-3">{resultItem?.total}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  {/* Download Button */}
                   <div className="mt-4 text-right">
                     <button
                       onClick={() => handleDownloadPdf(index)}

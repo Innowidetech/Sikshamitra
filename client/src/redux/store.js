@@ -35,7 +35,7 @@ import syllabusSliceReducer from './student/syllabusSlice';
 import syllabusViewSliceReducer from './student/syllabusViewSlice';
 import classPlanSliceReducer from './student/classPlanSlice';
 import resultSliceReducer from './student/resultSlice';
-
+import adminEntranceReducer from './adminEntranceSlice';
 import aboutSliceReducer from './teacher/aboutSlice';
 import createExamSliceReducer from './teacher/createExamSlice';
 import studyMSliceReducer from './teacher/studyMSlice';
@@ -48,7 +48,7 @@ import teaAttendanceReducer from './teacher/teaAttendanceSlice';
 import teacherDashboardReducer from './teacher/teacherDashboardSlice';
 import bookReducer from './student/bookSlice';
 import connectQueriesReducer from './student/connectQueriesSlice';
-
+import entranceReducer from './users/entranceSlice';
 import parentProfileSliceReducer from './parent/parentProfileSlice';
 
 import staffDashboardReducer from './staff/staffDashboardSlice';
@@ -59,7 +59,8 @@ import createMeetingReducer from './teacher/createMeetingSlice';
 import transReducer from './transSlice';
 import stransportationReducer from './student/stransportationSlice';
 import forgotPasswordReducer from './forgotPasswordSlice';
-
+import ptransportationReducer from './parent/ptransportationSlice';
+import transportationReducer from './driver/transportationSlice';
 
 const store = configureStore({
   reducer: {
@@ -98,6 +99,7 @@ const store = configureStore({
     // admissions: admissionsReducer, // Duplicate
     assignment: assignmentSliceReducer,
     assignments: assignmentsReducer,
+    adminEntrance: adminEntranceReducer,
     // auth: authReducer, // Duplicate
     book: bookReducer,
     classPlan: classPlanSliceReducer,
@@ -108,7 +110,7 @@ const store = configureStore({
     // dashboard: dashboardReducer, // Duplicate
     // exam: examSliceReducer, // Duplicate
     // exams: examReducer, // Duplicate
-
+      ptransportation: ptransportationReducer,
 
     expenses: expensesReducer,
     query: queryReducer,
@@ -139,9 +141,11 @@ const store = configureStore({
     meeting: meetingReducer,
     teacherQuery: teacherQueryReducer,
     createmeeting: createMeetingReducer,
-    transportation: transReducer,
+    trans: transReducer,
     stransportation: stransportationReducer,
       forgotPassword: forgotPasswordReducer,
+      transportation: transportationReducer,
+      entrance: entranceReducer,
   },
 });
 

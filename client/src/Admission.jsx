@@ -7,11 +7,12 @@ import Admissionimg5 from "./assets/admissionimg5.png";
 import Admissionimg6 from "./assets/admissionimg6.png";
 import Admissionimg7 from "./assets/admissionimg7.png";
 import Admissionimg8 from "./assets/admissionimg8.png";
+import processimg from "./assets/processimg.png";
+
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import processimg from './assets/processimg.png'; // adjust path if needed
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Admission() {
   const [modelopen, Setmodelopen] = useState(false);
@@ -19,25 +20,24 @@ function Admission() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loginModelOpen, setLoginModelOpen] = useState(false);
+  const [examId, setExamId] = useState("");
+  const [email, setEmail] = useState("");
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    dob: '',
-    address: '',
-    collegeName: '',
+    fullname: "",
+    phoneNumber: "",
+    dob: "",
+    email: "",
+    address: "",
+    schoolName: "",
+    className: "",
+    examId: "",
+    resultPercentage: "",
   });
-
-  const { firstName, lastName, phoneNumber, dob, address, collegeName } = formData;
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
 
   const getSchoolList = async () => {
     try {
-      let response = await axios.get('https://sikshamitra.onrender.com/api/user/schools');
+      let response = await axios.get("https://sikshamitra.onrender.com/api/user/schools");
       SetSchoolList(response.data.schools);
     } catch (error) {
       console.error("Error fetching school list:", error);
@@ -48,74 +48,121 @@ function Admission() {
     getSchoolList();
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-  //post
+  // ✅ Updated Login Submit with new API
+const handleLoginSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const response = await axios.post(
+      "https://sikshamitra.onrender.com/api/user/apply-online-login",
+      { examId, email }
+    );
+
+    if (response.status === 200 && response.data.message === "Login successful.") {
+      toast.success(response.data.message, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      setLoginModelOpen(false);
+      navigate("/student-form");
+    } else {
+      toast.error(response.data.message || "Invalid credentials", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message || "Something went wrong",
+      {
+        position: "top-right",
+        autoClose: 2000,
+      }
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  const handleApplyOnlineClick = () => {
+    setLoginModelOpen(true);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await axios.post('https://sikshamitra.onrender.com/api/user/offline', formData);
+      const response = await axios.post("https://sikshamitra.onrender.com/api/user/offline", formData);
 
       if (response.status === 200) {
-        toast.success('Message sent successfully! We will get back to you soon.', {
+        toast.success("Message sent successfully! We will get back to you soon.", {
           position: "top-right",
           autoClose: 2000,
           hideProgressBar: false,
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-          progress: undefined,
         });
 
         setSubmitted(true);
 
         setFormData({
-          firstName: '',
-          lastName: '',
-          phoneNumber: '',
-          dob: '',
-          address: '',
-          collegeName: '',
+          fullname: "",
+          phoneNumber: "",
+          dob: "",
+          email: "",
+          address: "",
+          schoolName: "",
+          className: "",
+          examId: "",
+          resultPercentage: "",
         });
-
-
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error sending message. Please try again later.', {
+      toast.error(error.response?.data?.message || "Error sending message. Please try again later.", {
         position: "top-right",
         autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        progress: undefined,
       });
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <>
-      <section className="xl:min-w-[1440px] bg-[#FF9F1C]  flex flex-col xl:flex-row overflow-hidden max-w-full relative ">
+      <section className="xl:min-w-[1440px] bg-[#FF9F1C] flex flex-col xl:flex-row overflow-hidden max-w-full relative ">
         <div className="p-4 xl:p-0 text-white md:flex md:flex-col md:justify-center xl:ml-[80px] xl:w-[50%] md:order-1 order-2">
-
-          <h3 className=" font-medium text-sm lg:text-3xl grid  justify-end xl:grid  xl:justify-start">
+          <h3 className=" font-medium text-sm lg:text-3xl grid justify-end xl:grid xl:justify-start">
             <span className="block xl:mt-6 xl:text-[60px]">ENTRANCE EXAM</span>
-            <p className="block xl:mt-10 xl:text-lg md:justify-center ">Apply to EShikshamitra – a cloud-powered school <br />
+            <p className="block xl:mt-10 xl:text-lg md:justify-center">
+              Apply to EShikshamitra – a cloud-powered school <br />
               management system that streamlines enrollment with <br />
-              a digital, secure, and transparent application process.</p>
+              a digital, secure, and transparent application process.
+            </p>
           </h3>
-          <div className="xl:mb-10 xl:mt-5 flex gap-2  md:justify-start ">
-            <button className="bg-white text-xs font-thin md:w-[250px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e] "  onClick={() => navigate('/entranceexam')} >
-              APPLY FOR ENTERNCE EXAM
+          <div className="xl:mb-10 xl:mt-5 flex gap-2 md:justify-start ">
+            <button
+              className="bg-white text-xs font-thin md:w-[250px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e] "
+              onClick={() => navigate('/entranceexam')}
+            >
+              APPLY FOR ENTRANCE EXAM
             </button>
-            {/* <button className="bg-white text-xs font-thin md:w-[150px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e]" onClick={()=>Setmodelopen(true)}>
-              APPLY OFFLINE
-            </button> */}
           </div>
         </div>
 
@@ -135,13 +182,10 @@ function Admission() {
             style={{ fontFamily: "Poppins" }}
           >
             <span className="text-[#1982C4] font-medium">WELCOME TO </span>{" "}
-            <span className="text-[#1982C4] font-medium">ADMISSTIONS !</span>
+            <span className="text-[#1982C4] font-medium">ADMISSIONS !</span>
           </h1>
         </div>
-
       </section>
-
-
 
       <section className="xl:max-w-[1100px] xl:min-h-[400px] bg-[#FF9F1C] rounded-3xl xl:mx-auto xl:py-[62px] xl:px-[58px] mx-6 py-6 px-6 -translate-y-10 md:translate-y-0 md:mx-6">
         <div>
@@ -156,12 +200,79 @@ function Admission() {
           className="flex flex-col md:flex-row gap-4 md:gap-6 mt-10 md:mt-14 justify-center items-center"
           style={{ fontFamily: "Poppins" }}
         >
-          <button className="bg-white  text-[#1982C4] px-6 py-3 xl:text-[22px]  border shadow-md shadow-gray-800  hover:bg-[#1982C4] hover:text-white transition-all rounded-xl" onClick={() => navigate('/applyonline')}>
+          <button
+            className="bg-white text-xs font-thin md:w-[150px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e]"
+            onClick={(handleApplyOnlineClick) => setLoginModelOpen(true)}
+          >
             Apply Online
           </button>
 
-          <button className="bg-white text-[#1982C4] px-6 py-3 xl:text-[22px] border shadow-md shadow-gray-800 hover:bg-[#1982C4] hover:text-white transition-all rounded-xl">
-            Apply Offline
+          {/* Login Modal */}
+          {loginModelOpen && (
+            <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+              <div className="p-6 lg:w-[700px] opacity-100 overflow-y-scroll h-[400px] md:overflow-hidden md:h-auto">
+                <div className="bg-[#1982C4] p-6 rounded-t-3xl">
+                  <button
+                    onClick={() => setLoginModelOpen(false)}
+                    className="flex justify-self-end text-3xl text-white"
+                    style={{ fontFamily: 'Poppins' }}
+                  >
+                    &times;
+                  </button>
+                  <h2
+                    className="text-center text-lg font-semibold mb-4 text-white lg:text-2xl xl:text-3xl"
+                    style={{ fontFamily: 'Poppins' }}
+                  >
+                    LOGIN TO APPLY ONLINE
+                  </h2>
+                </div>
+                <div className="bg-white xl:py-8 rounded-b-3xl">
+                  <form onSubmit={handleLoginSubmit}>
+                    <div
+                      className="grid md:grid-cols-2 mx-6 lg:gap-6 xl:mx-10 md:gap-4"
+                      style={{ fontFamily: 'Poppins' }}
+                    >
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Exam ID *</label>
+                        <input
+                          type="text"
+                          name="examId"
+                          placeholder="Exam ID"
+                          value={examId}
+                          onChange={(e) => setExamId(e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                          required
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Email ID *</label>
+                        <input
+                          type="email"
+                          name="email"
+                          placeholder="Email ID"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 text-center">
+                      <button
+                        type="submit"
+                        className="bg-[#1982C4] text-white py-2 px-4 rounded-full mb-4"
+                        disabled={loading}
+                      >
+                        {loading ? 'Logging in...' : 'Login and Apply Online'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+          <button className="bg-white text-xs font-thin md:w-[150px] p-2 md:h-[52px] text-[#1982C4] md:font-medium xl:text-[15px] rounded-xl xl:rounded-2xl shadow-inner shadow-[#605e5e]" onClick={() => Setmodelopen(true)}>
+            APPLY OFFLINE
           </button>
         </div>
 
@@ -287,131 +398,183 @@ function Admission() {
           </div>
         </div>
       </section>
+      {modelopen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white lg:w-[700px] w-[90%] h-[90vh] rounded-3xl overflow-hidden flex flex-col">
 
+            {/* Modal Header */}
+            <div className="bg-[#1982C4] p-6 rounded-t-3xl relative">
+              <button
+                onClick={() => Setmodelopen(false)}
+                className="absolute right-6 top-6 text-3xl text-white"
+                style={{ fontFamily: 'Poppins' }}
+              >
+                &times;
+              </button>
+              <h2
+                className="text-center text-lg font-semibold text-white lg:text-2xl xl:text-3xl"
+                style={{ fontFamily: 'Poppins' }}
+              >
+                APPLY OFFLINE
+              </h2>
+            </div>
 
-      {
-        modelopen && (
-          <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
-            <div className="p-6  lg:w-[700px] opacity-100 overflow-y-scroll h-[600px] md:overflow-hidden md:h-auto">
-              <div className="bg-[#1982C4] p-6 rounded-t-3xl">
-                <button
-                  onClick={() => Setmodelopen(false)}
-                  className="flex justify-self-end text-3xl text-white"
-                  style={{ fontFamily: 'Poppins' }}
-                >
-                  &times;
-                </button>
-                <h2 className="text-center text-lg font-semibold mb-4 text-white lg:text-2xl xl:text-3xl" style={{ fontFamily: 'Poppins' }}>APPLY OFFLINE</h2>
-              </div>
-              <div className="bg-white xl:py-8 rounded-b-3xl">
-                <form onSubmit={handleSubmit}>
-                  <div className="grid md:grid-cols-2 mx-6 lg:gap-6 xl:mx-10 md:gap-4" style={{ fontFamily: 'Poppins' }}>
-                    <div className="mt-4 ">
-                      <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        placeholder="Riya"
-                        value={firstName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                    <div className="mt-4 ">
-                      <label htmlFor="lastName" className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        placeholder="Williams"
-                        value={lastName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                    <div className="mt-4 md:mt-0">
-                      <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        name="phoneNumber"
-                        placeholder="+91 9111111111"
-                        value={phoneNumber}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        pattern="^[0-9]{10}$"
-                        maxLength={10}
-                        inputMode="numeric"
-                        required
-                      />
-                    </div>
-                    <div className="mt-4 md:mt-0">
-                      <label htmlFor="dob" className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        Date of Birth *
-                      </label>
-                      <input
-                        type="date"
-                        name="dob"
-                        value={dob}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                    <div className="md:col-span-2 mt-4 md:mt-0">
-                      <label htmlFor="address" className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        Address *
-                      </label>
-                      <textarea
-                        name="address"
-                        placeholder="lorem"
-                        value={address}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">
-                        Choose University / College
-                      </label>
-                      <select
-                        name="collegeName"
-                        value={collegeName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      >
-                        <option value="">Select a school/university</option>
-                        {schoolList.map((school) => (
-                          <option key={school._id} value={school.schoolName}>
-                            {school.schoolName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto px-4 xl:px-6 py-6 flex-1" style={{ fontFamily: 'Poppins' }}>
+              <form onSubmit={handleSubmit}>
+                <div className="grid md:grid-cols-2 lg:gap-6 md:gap-4">
+
+                  {/* Full Name */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Full Name *</label>
+                    <input
+                      type="text"
+                      name="fullname"
+                      placeholder="Riya"
+                      value={formData.fullname || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
                   </div>
-                  <div className="mt-4 text-center">
-                    <button
-                      type="submit"
-                      className="bg-[#1982C4] text-white py-2 px-4 rounded-full mb-4"
-                      disabled={loading}
+
+                  {/* Class */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Class *</label>
+                    <input
+                      type="text"
+                      name="className"
+                      placeholder="Williams"
+                      value={formData.className || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Phone Number *</label>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      placeholder="+91 9111111111"
+                      value={formData.phoneNumber || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      required
+                    />
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Date of Birth *</label>
+                    <input
+                      type="date"
+                      name="dob"
+                      value={formData.dob || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Email *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="abc@gmail.com"
+                      value={formData.email || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      required
+                    />
+                  </div>
+
+                  {/* School/College Name */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Choose School Name *</label>
+                    <select
+                      name="schoolName"
+                      value={formData.schoolName || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      required
                     >
-                      {loading ? 'Submitting...' : submitted ? 'Submitted' : 'Submit'}
-                    </button>
+                      <option value="">Choose the college</option>
+                      {schoolList.map((school) => (
+                        <option key={school._id} value={school.schoolName}>
+                          {school.schoolName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </form>
-              </div>
+
+                  {/* Address */}
+                  <div className="md:col-span-2 mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Address *</label>
+                    <textarea
+                      name="address"
+                      placeholder="Enter your address"
+                      value={formData.address || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      maxLength={200}
+                      required
+                    />
+                  </div>
+
+                  {/* Exam ID */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Exam ID</label>
+                    <input
+                      type="text"
+                      name="examId"
+                      placeholder="Enter exam ID"
+                      value={formData.examId || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+
+                  {/* Exam Percentage */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-[#1982C4] lg:text-lg">Exam Percentage</label>
+                    <input
+                      type="number"
+                      name="resultPercentage"
+                      placeholder="Enter exam %"
+                      value={formData.resultPercentage || ""}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      min={0}
+                      max={100}
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="mt-6 text-center">
+                  <button
+                    type="submit"
+                    className="bg-[#1982C4] text-white py-2 px-6 rounded-full mb-2"
+                    disabled={loading}
+                  >
+                    {loading ? 'Submitting...' : submitted ? 'Submitted' : 'Submit'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
+
+
       <ToastContainer
         position="top-right"
         autoClose={2000}

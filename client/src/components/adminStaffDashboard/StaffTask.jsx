@@ -31,7 +31,7 @@ const StaffTask = () => {
       <Header />
 
       <div className="p-4 md:p-6">
-        
+
         {/* Breadcrumb */}
         <div className="flex justify-between items-center mx-8 py-6 md:ml-64 pt-10">
           <div className="inline-block">
@@ -54,7 +54,8 @@ const StaffTask = () => {
         ) : (
           <div className="md:ml-64">
             <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">Pending Tasks</h2>
-            <div className="overflow-x-auto rounded-lg shadow-md bg-white">
+            {/* Desktop View */}
+            <div className="overflow-x-auto rounded-lg shadow-md bg-white hidden md:block">
               <table className="w-full text-sm text-gray-800 border border-collapse">
                 <thead className="bg-[#01497c] text-white">
                   <tr>
@@ -88,9 +89,8 @@ const StaffTask = () => {
                             className="text-xs p-1 rounded border bg-white text-gray-700"
                           >
                             <option value="pending">Pending</option>
-<option value="process">Progress</option>
-<option value="completed">Completed</option>
-
+                            <option value="process">Progress</option>
+                            <option value="completed">Completed</option>
                           </select>
                         </td>
                       </tr>
@@ -99,6 +99,58 @@ const StaffTask = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+              {pendingTasks.length === 0 ? (
+                <div className="text-center p-4 text-gray-500 bg-white rounded-lg shadow-md">
+                  No pending tasks available.
+                </div>
+              ) : (
+                pendingTasks.map((task, index) => (
+                  <div
+                    key={task._id}
+                    className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden"
+                  >
+                    {[
+                      { label: "S. No", value: index + 1 },
+                      { label: "Start Date", value: formatDate(task.startDate) },
+                      { label: "Due Date", value: formatDate(task.dueDate) },
+                      { label: "Title", value: task.title },
+                      { label: "Description", value: task.description },
+                    ].map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex border-b last:border-b-0"
+                      >
+                        <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">
+                          {item.label}
+                        </div>
+                        <div className="w-[60%] p-2 text-sm">{item.value}</div>
+                      </div>
+                    ))}
+                    {/* Status Dropdown */}
+                    <div className="flex">
+                      <div className="w-[40%] bg-[#01497c] text-white p-2 border-r text-sm font-medium">
+                        Status
+                      </div>
+                      <div className="w-[60%] p-2 text-sm">
+                        <select
+                          value={task.status}
+                          onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                          className="text-xs p-1 rounded border bg-white text-gray-700 w-full"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="process">Progress</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
           </div>
         )}
       </div>

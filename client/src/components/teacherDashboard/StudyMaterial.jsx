@@ -214,7 +214,8 @@ function StudyMaterial() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
+            {/* Desktop Table */}
+            <table className="min-w-full bg-white rounded-lg overflow-hidden hidden md:table">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <TableHeader label="Teacher Name" />
@@ -227,7 +228,7 @@ function StudyMaterial() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {teacherMaterial.map(item => (
+                {teacherMaterial.map((item) => (
                   <tr key={item._id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm">{item.teacherName}</td>
                     <td className="px-4 py-3 text-sm">{item.chapter}</td>
@@ -235,7 +236,7 @@ function StudyMaterial() {
                     <td className="px-4 py-3 text-sm">{item.section}</td>
                     <td className="px-4 py-3 text-sm">{item.subject}</td>
                     <td className="px-4 py-3 text-sm">
-                      {new Date(item.createdAt).toLocaleDateString('en-US')}
+                      {new Date(item.createdAt).toLocaleDateString("en-US")}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2">
@@ -260,6 +261,54 @@ function StudyMaterial() {
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile Card List */}
+            <div className="md:hidden space-y-4">
+              {teacherMaterial.map((item) => (
+                <div
+                  key={item._id}
+                  className="bg-white rounded-lg p-4 shadow space-y-2"
+                >
+                  <p>
+                    <span className="font-semibold">Teacher Name:</span> {item.teacherName}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Chapter:</span> {item.chapter}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Class:</span> {item.class}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Section:</span> {item.section}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Subject Name:</span> {item.subject}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Date:</span>{" "}
+                    {new Date(item.createdAt).toLocaleDateString("en-US")}
+                  </p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <button
+                      className="text-green-600 bg-green-100 hover:bg-green-200 px-3 py-1 rounded-md text-xs"
+                      onClick={() => handleDownload(item.material)}
+                      disabled={loading}
+                    >
+                      Download PDF
+                    </button>
+                    <button
+                      onClick={() => confirmDelete(item._id)}
+                      className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                      title="Delete"
+                      disabled={loading}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
         </section>
       </div>
