@@ -1895,7 +1895,19 @@ exports.getAdmissionRequests = async (req, res) => {
       return res.status(404).json({ message: 'No school is associated to the loggedin user' })
     };
 
-    const onlineRequests = await ApplyOnline.find({ 'studentDetails.schoolName': school.schoolName, approval: false }).sort({ createdAt: -1 });
+    // const onlineRequests = await ApplyOnline.find({ 'studentDetails.schoolName': school.schoolName, approval: false }).sort({ createdAt: -1 });
+    const onlineRequests = await await ApplyOnline.aggregate([
+      {
+        $lookup: {
+          from: 'applyforentranceexams', 
+          localField: 'studentDetails.examId',
+          foreignField: 'examId',
+          as: 'examApplication'
+        }
+      },
+      { $unwind: { path: "$examApplication", preserveNullAndEmptyArrays: true } }, // Optional: flatten
+      { $sort: { createdAt: -1 } }
+    ])
     const offlineRequests = await ApplyOffline.find({ schoolName: school.schoolName }).sort({ createdAt: -1 });
     res.status(200).json({ onlineRequests, offlineRequests });
   }
